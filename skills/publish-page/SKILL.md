@@ -57,14 +57,13 @@ Use this workflow for the user's public HTML gallery.
    - The Pages workflow injects both at deploy time when missing, so this is also enforced centrally.
 
 5. Add meaningful interaction events when the page is interactive.
+   - GA4 Enhanced Measurement already tracks outbound clicks, form interactions, 90% scroll, and 10s engagement; do not add custom events for these.
    - The shared helper automatically tracks:
-     - section navigation
-     - outbound links
-     - button clicks
+     - section navigation (in-page `#` links)
+     - button clicks, for buttons with an `id`, `aria-label`, or `data-analytics-label` (give meaningful buttons one of these)
      - content copy (length bucket only; never copied text)
-     - form submissions (form ID only; never form values)
-     - scroll depth at 25/50/75/90%
-     - 10s/30s engagement signals
+     - scroll depth at 25/50/75%
+     - a 30s engagement signal
    - For page-specific actions, prefer declarative attributes:
 
      ```html

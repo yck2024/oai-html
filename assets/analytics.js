@@ -4,6 +4,17 @@
   const MEASUREMENT_ID = "G-QLFWNZWDSS";
   const sentOnce = new Set();
 
+  // GA4 Enhanced Measurement already tracks page views, outbound clicks,
+  // form interactions, 90% scroll, and 10s engaged sessions. This helper only
+  // adds what it does not, so events are not double-counted.
+
+  // gtag.js only processes `arguments` objects pushed to dataLayer, not arrays,
+  // so queue through a real gtag function if the page snippet hasn't defined one.
+  window.dataLayer = window.dataLayer || [];
+  if (typeof window.gtag !== "function") {
+    window.gtag = function gtag() { window.dataLayer.push(arguments); };
+  }
+
   function clean(value, max = 80) {
     return String(value || "")
       .replace(/\s+/g, " ")
@@ -11,29 +22,13 @@
       .slice(0, max);
   }
 
-  function pageContext() {
-    return {
-      page_path: location.pathname,
-      page_title: document.title,
-      content_group: "oai-html"
-    };
-  }
-
   function send(eventName, params = {}) {
     const event = clean(eventName, 40).toLowerCase().replace(/[^a-z0-9_]/g, "_");
     if (!event) return;
 
-    const payload = { ...pageContext(), ...params };
-
     // Privacy rule: never automatically send text content, form values,
     // selected/copy text, query strings, or other user-entered content.
-    if (typeof window.gtag === "function") {
-      window.gtag("event", event, payload);
-      return;
-    }
-
-    window.dataLayer = window.dataLayer || [];
-    window.dataLayer.push(["event", event, payload]);
+    window.gtag("event", event, { content_group: "oai-html", ...params });
   }
 
   function once(key, eventName, params = {}) {
@@ -53,7 +48,7 @@
   };
 
   document.addEventListener("click", (event) => {
-    const el = event.target.closest("[data-analytics-event], a, button");
+    const el = event.target.closest("[data-analytics-event], a[href^='#'], button");
     if (!el) return;
 
     const explicitEvent = el.dataset.analyticsEvent;
@@ -66,35 +61,18 @@
     }
 
     if (el.tagName === "A") {
-      const href = el.getAttribute("href") || "";
-
-      if (href.startsWith("#")) {
-        send("section_nav", {
-          target_section: clean(href.slice(1), 60),
-          element_label: declaredLabel(el)
-        });
-        return;
-      }
-
-      try {
-        const target = new URL(el.href, location.href);
-        if (target.origin !== location.origin) {
-          send("outbound_link", {
-            target_host: clean(target.hostname, 80),
-            element_label: declaredLabel(el)
-          });
-        }
-      } catch (_) {
-        // Ignore malformed or non-HTTP links.
-      }
+      send("section_nav", {
+        target_section: clean(el.getAttribute("href").slice(1), 60),
+        element_label: declaredLabel(el)
+      });
       return;
     }
 
-    if (el.tagName === "BUTTON") {
-      send("button_click", {
-        element_id: clean(el.id || el.dataset.analyticsId || "anonymous_button", 60),
-        element_label: declaredLabel(el)
-      });
+    // Only identifiable buttons; anonymous clicks are noise in reports.
+    const elementId = clean(el.id || el.dataset.analyticsId, 60);
+    const elementLabel = declaredLabel(el);
+    if (elementId || elementLabel) {
+      send("button_click", { element_id: elementId, element_label: elementLabel });
     }
   });
 
@@ -104,15 +82,9 @@
     send("content_copy", { selection_length_bucket: bucket });
   });
 
-  document.addEventListener("submit", (event) => {
-    const form = event.target;
-    if (!(form instanceof HTMLFormElement)) return;
-    send("form_submit", {
-      form_id: clean(form.id || form.dataset.analyticsId || "anonymous_form", 60)
-    });
-  });
-
-  const scrollThresholds = [25, 50, 75, 90];
+  // 90% is covered by Enhanced Measurement's built-in `scroll` event.
+  // Same parameter name so one custom dimension covers both.
+  const scrollThresholds = [25, 50, 75];
   let ticking = false;
 
   function checkScroll() {
@@ -122,7 +94,7 @@
 
     for (const threshold of scrollThresholds) {
       if (percent >= threshold) {
-        once("scroll_" + threshold, "scroll_depth", { percent: threshold });
+        once("scroll_" + threshold, "scroll_depth", { percent_scrolled: threshold });
       }
     }
     ticking = false;
@@ -139,13 +111,4 @@
       once("engaged_30s", "engaged_30s");
     }
   }, 30000);
-
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") {
-      const seconds = Math.round(performance.now() / 1000);
-      if (seconds >= 10) {
-        once("engaged_10s", "engaged_10s");
-      }
-    }
-  });
 })();

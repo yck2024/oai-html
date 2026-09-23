@@ -95,7 +95,7 @@ jobs:
 
               if "G-QLFWNZWDSS" not in html:
                   additions.append(ga)
-              if "oai-html/assets/analytics.js" not in html and "./assets/analytics.js" not in html:
+              if "assets/analytics.js" not in html:
                   additions.append(helper)
 
               if not additions:

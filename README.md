@@ -40,16 +40,15 @@ GA4 measurement ID: `G-QLFWNZWDSS`
 
 The deployment workflow guarantees the Google tag and shared `assets/analytics.js` helper are present on every HTML page.
 
-Default interaction events include:
+GA4 Enhanced Measurement already tracks page views, outbound clicks (`click`), form interactions (`form_start` / `form_submit`), 90% scroll (`scroll`), and 10s engaged sessions. The helper adds only what it does not:
 
-- `section_nav`
-- `outbound_link`
-- `button_click`
+- `section_nav` (in-page `#` links; `target_section`)
+- `button_click` (buttons with an `id`, `data-analytics-id`, `aria-label`, or `data-analytics-label` only)
 - `content_copy` (selection length bucket only)
-- `form_submit` (form ID only)
-- `scroll_depth` (25/50/75/90)
-- `engaged_10s`
+- `scroll_depth` (25/50/75; `percent_scrolled`, same parameter as the built-in 90% `scroll` event)
 - `engaged_30s`
+
+Event parameters (`element_id`, `element_label`, `target_section`, `percent_scrolled`, `selection_length_bucket`) only appear in GA reports after they are registered as event-scoped custom dimensions in GA Admin → Custom definitions.
 
 Interactive pages can add semantic events with `data-analytics-event` / `data-analytics-label` or `window.oaiTrack(eventName, params)`.
 
