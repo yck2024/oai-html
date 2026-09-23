@@ -12,7 +12,8 @@ Use this workflow for the user's public HTML gallery.
 - GitHub repository: `yck2024/oai-html`
 - Default branch: `main`
 - Public base URL: `https://yck2024.github.io/oai-html/`
-- Root `index.html` is the navigator/gallery and must stay up to date.
+- `pages.json` is the source of truth for the root gallery.
+- Root `index.html` renders the navigator from `pages.json`; do not manually add cards or page counts.
 
 ## Workflow
 
@@ -32,11 +33,8 @@ Use this workflow for the user's public HTML gallery.
    - Publish the artifact as `<slug>/index.html`.
    - This makes the public URL `https://yck2024.github.io/oai-html/<slug>/`.
 
-4. Publish to GitHub.
-   - If the path is new, create it.
-   - If the slug already exists and the user is clearly updating that page, fetch the current file SHA and update it instead of creating a duplicate.
-   - Preserve interactive HTML/CSS/JS whenever possible.
-   - Add the Google Analytics tag immediately after `<head>` unless the page already contains `G-QLFWNZWDSS`:
+4. Preserve analytics on the source page.
+   - Unless already present, add the Google Analytics tag immediately after `<head>`:
 
      ```html
      <!-- Google tag (gtag.js) -->
@@ -50,26 +48,73 @@ Use this workflow for the user's public HTML gallery.
      </script>
      ```
 
-     The Pages workflow also injects this tag at deploy time into any page missing it, as a safety net.
+   - Unless already present, add the shared interaction helper:
 
-5. Update the gallery.
-   - Fetch the latest root `index.html`.
-   - Add a clear card linking to `./<slug>/`.
-   - Include a concise title, description, and useful tags.
-   - Update the published-page count.
-   - Do not remove or overwrite unrelated existing cards.
+     ```html
+     <script defer src="https://yck2024.github.io/oai-html/assets/analytics.js"></script>
+     ```
 
-6. Verify deployment.
+   - The Pages workflow injects both at deploy time when missing, so this is also enforced centrally.
+
+5. Add meaningful interaction events when the page is interactive.
+   - The shared helper automatically tracks:
+     - section navigation
+     - outbound links
+     - button clicks
+     - content copy (length bucket only; never copied text)
+     - form submissions (form ID only; never form values)
+     - scroll depth at 25/50/75/90%
+     - 10s/30s engagement signals
+   - For page-specific actions, prefer declarative attributes:
+
+     ```html
+     <button
+       data-analytics-event="challenge_complete"
+       data-analytics-label="vim-movement-01">
+       Complete challenge
+     </button>
+     ```
+
+   - Or call:
+
+     ```js
+     window.oaiTrack?.('challenge_complete', {
+       challenge_id: 'vim-movement-01'
+     });
+     ```
+
+   - Never send user-entered text, copied content, credentials, email addresses, query-string contents, or other sensitive/private values as analytics parameters.
+
+6. Publish to GitHub.
+   - If the path is new, create it.
+   - If the slug already exists and the user is clearly updating that page, fetch the current file SHA and update it instead of creating a duplicate.
+   - Preserve interactive HTML/CSS/JS whenever possible.
+
+7. Update `pages.json`.
+   - Add or update exactly one object for the slug.
+   - Keep existing unrelated entries.
+   - Required fields:
+     - `slug`
+     - `title`
+     - `description`
+     - `icon`
+     - `tags`
+     - `status` (normally `live`)
+   - Do **not** manually edit root gallery cards or page counts; `index.html` renders them from the manifest.
+   - Deployment validation fails if a top-level published `<slug>/index.html` exists without a manifest entry, or vice versa.
+
+8. Verify deployment.
    - Confirm the GitHub write succeeded.
-   - Check the public page URL and the root gallery URL after Pages deploys.
-   - If GitHub Actions/Pages is still deploying, report the repository write as complete and distinguish that from public deployment status.
+   - Confirm the Pages workflow passed manifest validation and deployment.
+   - Check the public page URL and the root gallery URL.
+   - If GitHub Actions/Pages is still deploying, report repository write status separately from public deployment status.
 
-7. Report back with:
+9. Report back with:
    - Public page URL
    - Gallery URL
-   - Skill/repo changes if relevant
+   - Analytics/custom events added, if any
    - Any intentional public-safety edits
 
 ## Trigger shorthand
 
-When the user says only **“publish page”** after creating an HTML page, treat that as authorization to run the workflow above for that page. Do not ask them to repeat the repository or base URL.
+When the user says only **“publish page”** after creating an HTML page, treat that as authorization to run the workflow above for that page. Do not ask them to repeat the repository, analytics ID, or base URL.
