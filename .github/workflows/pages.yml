@@ -27,6 +27,26 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
+      - name: Add Google Analytics tag to pages missing it
+        env:
+          GA_TAG: |
+            <!-- Google tag (gtag.js) -->
+            <script async src="https://www.googletagmanager.com/gtag/js?id=G-QLFWNZWDSS"></script>
+            <script>
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+
+              gtag('config', 'G-QLFWNZWDSS', { content_group: 'oai-html' });
+            </script>
+        run: |
+          find . -name '*.html' -not -path './.git/*' -print0 |
+          while IFS= read -r -d '' f; do
+            grep -q 'G-QLFWNZWDSS' "$f" && continue
+            perl -0pi -e 's/<head>/<head>\n$ENV{GA_TAG}/i' "$f"
+            echo "Injected GA tag: $f"
+          done
+
       - name: Upload site
         uses: actions/upload-pages-artifact@v4
         with:

@@ -36,6 +36,21 @@ Use this workflow for the user's public HTML gallery.
    - If the path is new, create it.
    - If the slug already exists and the user is clearly updating that page, fetch the current file SHA and update it instead of creating a duplicate.
    - Preserve interactive HTML/CSS/JS whenever possible.
+   - Add the Google Analytics tag immediately after `<head>` unless the page already contains `G-QLFWNZWDSS`:
+
+     ```html
+     <!-- Google tag (gtag.js) -->
+     <script async src="https://www.googletagmanager.com/gtag/js?id=G-QLFWNZWDSS"></script>
+     <script>
+       window.dataLayer = window.dataLayer || [];
+       function gtag(){dataLayer.push(arguments);}
+       gtag('js', new Date());
+
+       gtag('config', 'G-QLFWNZWDSS', { content_group: 'oai-html' });
+     </script>
+     ```
+
+     The Pages workflow also injects this tag at deploy time into any page missing it, as a safety net.
 
 5. Update the gallery.
    - Fetch the latest root `index.html`.
