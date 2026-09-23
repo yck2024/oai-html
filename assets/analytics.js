@@ -25,7 +25,8 @@
 
     const payload = { ...pageContext(), ...params };
 
-    // Never send form values, selected/copy text, query-string contents, or other user-entered content.
+    // Privacy rule: never automatically send text content, form values,
+    // selected/copy text, query strings, or other user-entered content.
     if (typeof window.gtag === "function") {
       window.gtag("event", event, payload);
       return;
@@ -39,6 +40,10 @@
     if (sentOnce.has(key)) return;
     sentOnce.add(key);
     send(eventName, params);
+  }
+
+  function declaredLabel(el) {
+    return clean(el.dataset.analyticsLabel || el.getAttribute("aria-label"), 80);
   }
 
   window.oaiTrack = send;
@@ -55,19 +60,18 @@
     if (explicitEvent) {
       send(explicitEvent, {
         element_id: clean(el.id || el.dataset.analyticsId, 60),
-        element_label: clean(el.dataset.analyticsLabel || el.getAttribute("aria-label") || el.textContent, 80)
+        element_label: declaredLabel(el)
       });
       return;
     }
 
     if (el.tagName === "A") {
       const href = el.getAttribute("href") || "";
-      const label = clean(el.getAttribute("aria-label") || el.textContent, 80);
 
       if (href.startsWith("#")) {
         send("section_nav", {
           target_section: clean(href.slice(1), 60),
-          element_label: label
+          element_label: declaredLabel(el)
         });
         return;
       }
@@ -77,7 +81,7 @@
         if (target.origin !== location.origin) {
           send("outbound_link", {
             target_host: clean(target.hostname, 80),
-            element_label: label
+            element_label: declaredLabel(el)
           });
         }
       } catch (_) {
@@ -88,8 +92,8 @@
 
     if (el.tagName === "BUTTON") {
       send("button_click", {
-        element_id: clean(el.id || el.dataset.analyticsId, 60),
-        element_label: clean(el.getAttribute("aria-label") || el.textContent, 80)
+        element_id: clean(el.id || el.dataset.analyticsId || "anonymous_button", 60),
+        element_label: declaredLabel(el)
       });
     }
   });
