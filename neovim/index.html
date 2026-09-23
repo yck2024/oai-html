@@ -150,6 +150,40 @@ footer{padding:35px 0 60px;color:var(--muted);font-size:.9rem}
  .topnav,.quizbox{display:none}
  a{color:#111}
 }
+.vim-lab{border:1px solid #36566c;border-radius:20px;background:#0b1722;overflow:hidden;box-shadow:var(--shadow)}
+.lab-top,.lab-file,.lab-status,.lab-history{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px}
+.lab-top{background:linear-gradient(100deg,#142d30,#15243b);border-bottom:1px solid var(--line)}
+.lab-top .tag{margin:0}.lab-top>span:last-child{font-size:.85rem;color:var(--green)}
+.lab-layout{display:grid;grid-template-columns:290px minmax(0,1fr)}
+.lab-sidebar{padding:20px;border-right:1px solid var(--line);background:#0f1e2a}
+.lab-sidebar select{width:100%;margin:10px 0 22px;font-size:.9rem}.lab-sidebar h3{font-size:1.2rem}
+.lab-sidebar p{font-size:.93rem}.lab-actions{display:flex;flex-wrap:wrap;gap:8px}
+.lab-actions button{font-size:.8rem}.lab-small{font-size:.78rem!important}
+.lab-main{min-width:0}.lab-file{color:var(--muted);font-family:monospace;border-bottom:1px solid var(--line)}
+.lab-file button{font-size:.8rem}.lab-file #lab-dirty{color:var(--amber)}
+#lab-editor{height:295px;overflow:auto;padding:16px 0;background:#07111b;font:16px/1.85 "SFMono-Regular",Consolas,monospace;outline:none;white-space:pre;tab-size:2;cursor:text}
+#lab-editor:focus{box-shadow:inset 0 0 0 2px var(--cyan)}
+.lab-line{min-height:1.85em;padding-right:20px;width:max-content;min-width:100%}.lab-line.active{background:#122435}
+.lab-ln{display:inline-block;width:48px;padding-right:16px;text-align:right;color:#607c93;user-select:none}
+.lab-cursor{background:var(--green);color:#06111b}.lab-insert .lab-cursor{background:#123644;color:#eaf2f8;box-shadow:inset 2px 0 var(--cyan)}
+.lab-selection{background:#513f70;color:#fff}.lab-match{background:#5c4e21;color:#fff}
+.lab-status{background:#14293a;min-height:43px;font:.8rem monospace}.lab-status strong{color:var(--green)}
+#lab-position{margin-left:auto}#lab-pending{color:var(--amber)}
+#lab-command{min-height:34px;padding:5px 18px;color:var(--amber);overflow-wrap:anywhere}
+#lab-message{min-height:48px;padding:6px 18px;font-size:.86rem;color:var(--cyan)}
+.lab-history{justify-content:flex-start;font-size:.8rem;border-top:1px solid var(--line);flex-wrap:wrap}#lab-keys{overflow-wrap:anywhere}
+#lab-access{padding:0 18px}.lab-controls{padding:18px;border-top:1px solid var(--line)}
+#lab-keypad{display:flex;flex-wrap:wrap;gap:7px}#lab-keypad button{font-family:monospace;min-width:40px;padding:9px;background:#132536}
+#lab-keypad button[data-keys="Escape"]{border-color:var(--green)}
+#lab-text-form{margin:18px 0}#lab-text-form label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:7px}
+.lab-input-row{display:flex;gap:8px}.lab-input-row input{min-width:0;width:100%}
+.lab-controls details{font-size:.85rem;color:var(--muted)}.lab-controls summary{cursor:pointer;color:var(--cyan)}
+#lab-result{margin:14px 0;color:var(--green);font-weight:700}#lab-next{border-color:var(--green)}
+.vim-lab button:focus-visible,.vim-lab select:focus-visible,.vim-lab input:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+@media(max-width:760px){.lab-layout{grid-template-columns:1fr}.lab-sidebar{border-right:0;border-bottom:1px solid var(--line)}.lab-sidebar select{margin-bottom:12px}#lab-editor{height:250px}.lab-input-row{flex-wrap:wrap}.lab-input-row button{width:100%}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{#playground{display:none}}
+
 </style>
 </head>
 <body>
@@ -166,11 +200,46 @@ footer{padding:35px 0 60px;color:var(--muted);font-size:.9rem}
       <kbd>Esc</kbd> → <kbd>:</kbd> → <span class="mono">wq</span> → <kbd>Enter</kbd> means “save + quit.”
     </div>
     <nav class="topnav">
+      <a href="#playground" style="color:var(--green);border-color:var(--green)">▶ Try commands live</a>
       <a href="#mental-model">Mental model</a><a href="#modes">Modes</a><a href="#grammar">Vim grammar</a>
       <a href="#commands">Commands</a><a href="#files">Files & buffers</a><a href="#plugins">Plugins</a>
       <a href="#workflow">Your workflow</a><a href="#practice">Practice</a>
     </nav>
   </header>
+
+    <section id="playground" aria-labelledby="lab-heading">
+    <div class="section-title"><div class="num">▶</div><h2 id="lab-heading">Learn by doing</h2></div>
+    <p class="muted">A tiny practice editor, right here. Click <strong>Start typing</strong>, then use your keyboard — or tap the command keys below. No installation needed.</p>
+    <div class="vim-lab">
+      <div class="lab-top"><span class="tag green">INTERACTIVE LAB</span><span id="lab-progress">0 / 10 challenges</span></div>
+      <div class="lab-layout">
+        <aside class="lab-sidebar">
+          <label for="lab-lesson"><strong>Choose a challenge</strong></label>
+          <select id="lab-lesson"></select>
+          <h3 id="lab-title"></h3><p id="lab-goal"></p>
+          <div class="lab-actions"><button id="lab-hint">Show hint</button><button id="lab-reset">Reset exercise</button></div>
+          <p id="lab-hint-text" class="muted" hidden></p>
+          <div id="lab-result" role="status"></div>
+          <button id="lab-next" hidden>Next challenge →</button>
+          <p class="lab-small muted">Progress stays in this browser. Reset exercise restores its sample text.</p>
+        </aside>
+        <div class="lab-main">
+          <div class="lab-file"><span>practice.txt <span id="lab-dirty"></span></span><button id="lab-focus">Start typing</button></div>
+          <div id="lab-editor" tabindex="0" role="region" aria-label="Vim practice editor. Press i to insert. Escape returns to Normal mode. Tab leaves the editor." aria-describedby="lab-access" spellcheck="false"></div>
+          <div class="lab-status"><strong id="lab-mode">NORMAL</strong><span id="lab-pending"></span><span id="lab-position"></span></div>
+          <div id="lab-command" class="mono" aria-live="polite"></div>
+          <div id="lab-message" role="status"></div>
+          <div class="lab-history"><span class="muted">Recent keys</span><span id="lab-keys" class="mono">—</span></div>
+          <p id="lab-access" class="lab-small muted">Keys work only while the editor is focused. Esc returns to Normal; Tab moves out. On mobile, use the keys and text input below.</p>
+        </div>
+      </div>
+      <div class="lab-controls">
+        <div id="lab-keypad" aria-label="Clickable Vim commands"></div>
+        <form id="lab-text-form"><label for="lab-text">Text to type in Insert mode, or a search / command</label><div class="lab-input-row"><input id="lab-text" autocomplete="off" placeholder="Try: hello, /config, or :w"><button type="submit">Send text</button></div></form>
+        <details><summary>What can I practice?</summary><p><code>h j k l · arrows · w b e · 0 $ · gg G · counts (3j, 2dw) · i a I A o O · Esc · x dd dw de d$ · ciw ci" · yy p · u Ctrl-r · . · v V → d/y · /text → Enter · n N · :w :q :wq :x :q!</code></p><p class="muted">This is a JavaScript teaching simulator, not a full Neovim instance. Search is literal and case-sensitive. Save keeps a snapshot for this exercise only; quit closes the simulated buffer. Plugins, terminal, filesystem, regex, advanced operators and unlisted commands are not simulated.</p></details>
+      </div>
+    </div>
+  </section>
 
   <section id="mental-model">
     <div class="section-title"><div class="num">1</div><h2>The mental model</h2></div>
@@ -514,6 +583,139 @@ function showQuiz(){
 }
 document.getElementById("nextQuiz").addEventListener("click",()=>{qi=(qi+1)%quiz.length;showQuiz();});
 showQuiz();
+</script>
+<script>
+// Self-contained, deliberately bounded Vim teaching engine. No network or dependencies.
+(()=>{
+'use strict';
+class PracticeVim {
+  constructor(text){this.lines=text.split('\n');this.r=0;this.c=0;this.mode='NORMAL';this.pending='';this.command='';this.saved=text;this.register={text:'',line:false};this.undo=[];this.redo=[];this.last=[];this.record=null;this.replaying=false;this.search='';this.events=new Set();this.message='Click Start typing, or try the command keys below.';this.anchor=null;}
+  get text(){return this.lines.join('\n');}
+  snapshot(){return {lines:[...this.lines],r:this.r,c:this.c};}
+  restore(s){this.lines=[...s.lines];this.r=s.r;this.c=s.c;this.mode='NORMAL';this.pending='';this.anchor=null;this.clamp();}
+  clamp(){this.r=Math.max(0,Math.min(this.r,this.lines.length-1));this.c=Math.max(0,Math.min(this.c,Math.max(0,this.lines[this.r].length-(this.mode==='INSERT'?0:1))));}
+  offset(){return this.lines.slice(0,this.r).reduce((n,l)=>n+l.length+1,0)+this.c;}
+  locate(p){p=Math.max(0,Math.min(p,this.text.length));this.r=0;while(this.r<this.lines.length-1&&p>this.lines[this.r].length){p-=this.lines[this.r++].length+1;}this.c=p;this.clamp();}
+  start(keys){this.undo.push(this.snapshot());this.redo=[];this.record=[...keys];}
+  finish(){if(this.record&&!this.replaying)this.last=[...this.record];this.record=null;}
+  replace(a,b,text){const s=this.text;this.lines=(s.slice(0,a)+text+s.slice(b)).split('\n');this.locate(a);}
+  kind(ch){return !ch||/\s/.test(ch)?0:/[\p{L}\p{N}_]/u.test(ch)?1:2;}
+  word(p,key){const s=this.text;if(key==='w'){const k=this.kind(s[p]);while(p<s.length&&this.kind(s[p])===k)p++;while(p<s.length&&!this.kind(s[p]))p++;}else if(key==='b'){p=Math.max(0,p-1);while(p>0&&!this.kind(s[p]))p--;const k=this.kind(s[p]);while(p>0&&this.kind(s[p-1])===k)p--;}else{p=Math.min(s.length-1,p+1);while(p<s.length&&!this.kind(s[p]))p++;const k=this.kind(s[p]);while(p+1<s.length&&this.kind(s[p+1])===k)p++;}return Math.max(0,Math.min(p,s.length));}
+  move(key,n){if(key==='h')this.c-=n;if(key==='l')this.c+=n;if(key==='j')this.r+=n;if(key==='k')this.r-=n;if(key==='0')this.c=0;if(key==='$')this.c=this.lines[this.r].length-1;if(key==='gg'){this.r=n-1;this.c=0;}if(key==='G'){this.r=n? n-1:this.lines.length-1;this.c=0;}if('wbe'.includes(key)&&key.length===1){let p=this.offset();for(let i=0;i<n;i++)p=this.word(p,key);this.locate(p);}this.clamp();this.events.add('move:'+key);this.message='Moved with '+key+'.';}
+  find(back=false){if(!this.search){this.message='Type /text and Enter to search first.';return;}let p=this.offset();const s=this.text;let at=back?(p>0?s.lastIndexOf(this.search,p-1):-1):s.indexOf(this.search,p+1);if(at<0)at=back?s.lastIndexOf(this.search):s.indexOf(this.search);if(at<0){this.message='Pattern not found: '+this.search;return;}this.locate(at);this.events.add(back?'search:previous':'search:next');this.message='Found “'+this.search+'”. Search wraps around the buffer.';}
+  selection(){const a=this.anchor??this.offset(),b=this.offset();if(this.mode==='VISUAL LINE'){const s=this.text;const start=s.lastIndexOf('\n',Math.min(a,b)-1)+1;let end=s.indexOf('\n',Math.max(a,b));if(end<0)end=s.length;else end++;return [start,end];}return [Math.min(a,b),Math.min(this.text.length,Math.max(a,b)+1)];}
+  key(key){
+    if(this.mode==='CLOSED'){this.message='Buffer closed. Choose Reset exercise to open it again.';return;}
+    if(key==='Escape'){
+      if(this.mode==='INSERT'){if(this.record)this.record.push(key);this.c=Math.max(0,this.c-1);this.finish();}
+      this.mode='NORMAL';this.anchor=null;this.pending='';this.command='';this.clamp();this.events.add('escape');this.message='NORMAL: keys now move or edit instead of typing.';return;
+    }
+    if(this.mode==='INSERT'){
+      if(!['Backspace','Enter','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(key)&&[...key].length!==1){this.message='Use text, Enter, Backspace, or Esc in Insert mode.';return;}
+      if(this.record)this.record.push(key);
+      if(key==='Backspace'){const p=this.offset();if(p>0){this.replace(p-1,p,'');this.locate(p-1);}}
+      else if(key==='Enter'){const p=this.offset();this.replace(p,p,'\n');this.locate(p+1);}
+      else if(key.startsWith('Arrow')){this.move({ArrowLeft:'h',ArrowRight:'l',ArrowUp:'k',ArrowDown:'j'}[key],1);}
+      else {const p=this.offset();this.replace(p,p,key);this.locate(p+key.length);}
+      this.events.add('insert');this.message='INSERT: type your text. Press Esc when finished.';return;
+    }
+    if(this.mode==='COMMAND'||this.mode==='SEARCH'){
+      if(key==='Backspace'){this.command=this.command.slice(0,-1);return;}
+      if(key!=='Enter'){if(key.length===1)this.command+=key;return;}
+      const mode=this.mode,cmd=this.command.trim();this.mode='NORMAL';this.command='';
+      if(mode==='SEARCH'){if(cmd)this.search=cmd;this.find();this.events.add('search');return;}
+      if(['w','wq','x'].includes(cmd)){this.saved=this.text;this.events.add('save');this.message='Saved a snapshot in this exercise (no disk file is written).';}
+      if(['q','wq','x','q!'].includes(cmd)){
+        if(cmd==='q'&&this.text!==this.saved){this.message='E37: Unsaved changes. Use :w then :q, or :q! to discard.';return;}
+        if(cmd==='q!')this.lines=this.saved.split('\n');this.mode='CLOSED';this.events.add('quit');this.message=cmd==='q!'?'Quit; unsaved edits discarded. Reset exercise to reopen.':'Buffer closed. Reset exercise to reopen.';
+      }else if(cmd!=='w')this.message='Not simulated: :'+cmd+'. Try :w, :q, :wq, :x or :q!.';
+      return;
+    }
+    if(key==='Ctrl-r'){const s=this.redo.pop();if(s){this.undo.push(this.snapshot());this.restore(s);this.events.add('redo');this.message='Redid one change.';}else this.message='Nothing to redo.';return;}
+    key=({ArrowLeft:'h',ArrowRight:'l',ArrowUp:'k',ArrowDown:'j'})[key]||key;
+    if(this.mode.startsWith('VISUAL')&&['d','y','x'].includes(key)){
+      const line=this.mode==='VISUAL LINE';const [a,b]=this.selection();this.register={text:this.text.slice(a,b),line};
+      if(key!=='y'){this.start([]);this.replace(a,b,'');if(line&&this.lines.length>1&&this.lines.at(-1)==='')this.lines.pop();this.finish();}
+      this.mode='NORMAL';this.anchor=null;this.clamp();this.events.add('visual:'+key);this.message=key==='y'?'Selection copied. Use p to paste.':'Selection deleted. Use u to undo.';return;
+    }
+    if(key==='u'){const s=this.undo.pop();if(s){this.redo.push(this.snapshot());this.restore(s);this.events.add('undo');this.message='Undid one change.';}else this.message='Nothing to undo.';return;}
+    if(key==='.'&&!this.pending){if(this.last.length){const keys=[...this.last];this.replaying=true;for(const k of keys)this.key(k);this.replaying=false;this.events.add('repeat');this.message='Repeated the last change.';}else this.message='Make an edit first, then repeat it with dot.';return;}
+    if((key===':'||key==='/')&&!this.pending){this.mode=key===':'?'COMMAND':'SEARCH';this.command='';return;}
+    if((key==='n'||key==='N')&&!this.pending){this.find(key==='N');return;}
+    if((key==='v'||key==='V')&&!this.pending){if(this.mode==='NORMAL'){this.anchor=this.offset();this.mode=key==='v'?'VISUAL':'VISUAL LINE';this.message='Move to extend the selection, then d to delete or y to copy.';}else {this.mode='NORMAL';this.anchor=null;}return;}
+    const raw=this.pending+key;const match=raw.match(/^(\d*)(.*)$/);let digits=match[1],op=match[2];
+    if(raw==='0'){digits='';op='0';}
+    if((/^\d+$/.test(raw)&&raw!=='0')||['g','d','c','y','ci','di','yi'].includes(op)){this.pending=raw;this.message='Waiting for the rest of the command…';return;}
+    this.pending='';const n=Math.min(100,Number(digits)||1);
+    if(['h','j','k','l','w','b','e','0','$','gg','G'].includes(op)){this.move(op,op==='G'&&!digits?0:n);return;}
+    if(['i','a','I','A','o','O'].includes(op)&&!digits){this.start([...raw]);this.mode='INSERT';if(op==='a')this.c=Math.min(this.c+1,this.lines[this.r].length);if(op==='I')this.c=Math.max(0,this.lines[this.r].search(/\S/));if(op==='A')this.c=this.lines[this.r].length;if(op==='o'||op==='O'){if(op==='o')this.r++;this.lines.splice(this.r,0,'');this.c=0;}this.message='INSERT: type text, then Esc to return home.';return;}
+    if(['dd','yy'].includes(op)){
+      const removed=this.lines.slice(this.r,this.r+n);this.register={text:removed.join('\n'),line:true};
+      if(op==='dd'){this.start([...raw]);this.lines.splice(this.r,n);if(!this.lines.length)this.lines=[''];this.clamp();this.finish();}
+      this.events.add(op);this.message=op==='dd'?'Deleted line(s). Press u to undo or p to put them back.':'Copied line(s). Press p to paste below.';return;
+    }
+    if(op==='p'){
+      if(!this.register.text){this.message='Copy or delete something first.';return;}this.start([...raw]);
+      if(this.register.line){const lines=this.register.text.replace(/\n$/,'').split('\n');this.lines.splice(this.r+1,0,...Array.from({length:n},()=>lines).flat());this.r++;this.c=0;}
+      else {const p=this.offset()+(this.lines[this.r].length?1:0),text=this.register.text.repeat(n);this.replace(p,p,text);this.locate(p+text.length-1);}
+      this.finish();this.events.add('paste');this.message='Pasted from the practice register.';return;
+    }
+    if(['x','dw','de','d$','ciw','diw','yiw','ci"','di"','yi"'].includes(op)){
+      let a=this.offset(),b=a;const line=this.lines[this.r];
+      if(op==='x')b=a+Math.min(n,line.length-this.c);
+      else if(op==='d$')b=a+line.length-this.c;
+      else if(op==='dw'||op==='de'){for(let i=0;i<n;i++)b=this.word(b,op==='dw'?'w':'e');if(op==='de')b++;if(op==='dw'&&this.locLine(b)>this.r&&n===1)b=a+line.length-this.c;}
+      else if(op.endsWith('iw')){const kind=this.kind(this.text[a]);while(a>0&&this.text[a-1]!=='\n'&&this.kind(this.text[a-1])===kind)a--;b=this.offset();while(b<this.text.length&&this.text[b]!=='\n'&&this.kind(this.text[b])===kind)b++;}
+      else {const quotes=[...line.matchAll(/"/g)].map(m=>m.index);let pair=null;for(let i=0;i+1<quotes.length;i+=2)if(quotes[i+1]>=this.c){pair=[quotes[i],quotes[i+1]];break;}if(!pair){this.message='No pair of double quotes on this line.';return;}const base=a-this.c;a=base+pair[0]+1;b=base+pair[1];}
+      this.register={text:this.text.slice(a,b),line:false};
+      if(!op.startsWith('y')){this.start([...raw]);if(op.startsWith('c'))this.mode='INSERT';this.replace(a,b,'');if(this.mode!=='INSERT')this.finish();}
+      this.events.add(op);this.message=op.startsWith('c')?'Text removed. Type the replacement, then Esc.':op.startsWith('y')?'Text copied.':'Deleted text. Press u to undo.';return;
+    }
+    this.message='Not simulated: '+raw+'. Open “What can I practice?” for supported commands.';
+  }
+  locLine(p){return this.text.slice(0,p).split('\n').length-1;}
+}
+const lessons=[
+ {title:'01 · Move without a mouse',text:'Move through this little file.\nFind the word target below.\ntarget is your destination.',goal:'Move to the first character of “target” on line 3.',hint:'Press j twice, or type 2j. h / j / k / l = left / down / up / right.',test:v=>v.r===2&&v.c===0},
+ {title:'02 · Enter and leave Insert',text:'world',goal:'Add “hello ” before world, then return to Normal mode.',hint:'i → type hello and a space → Esc.',test:v=>v.text==='hello world'&&v.mode==='NORMAL'},
+ {title:'03 · Replace a whole word',text:'slow editor\nsmall commands, big results',goal:'Change slow to fast. Finish in Normal mode.',hint:'ciw → type fast → Esc. c = change; iw = inner word.',test:v=>v.text==='fast editor\nsmall commands, big results'&&v.mode==='NORMAL'},
+ {title:'04 · Edit inside quotes',text:'const theme = "light";',cursor:15,goal:'Change the quoted value to dark, keeping both quote marks.',hint:'ci" → type dark → Esc.',test:v=>v.text==='const theme = "dark";'&&v.mode==='NORMAL'},
+ {title:'05 · Delete, then undo',text:'Keep this line.\nExperiments are reversible.\nKeep this one too.',goal:'Delete the first line with dd, then bring it back with u.',hint:'d → d → u. Ctrl-r would redo the deletion.',test:v=>v.events.has('dd')&&v.events.has('undo')&&v.text==='Keep this line.\nExperiments are reversible.\nKeep this one too.'},
+ {title:'06 · Copy and paste',text:'Ship small improvements.\nReview the result.',goal:'Make two consecutive copies of the first line.',hint:'yy copies the current line. p puts a copy below it.',test:v=>v.text==='Ship small improvements.\nShip small improvements.\nReview the result.'},
+ {title:'07 · Search and jump',text:'config = "local"\nread the documentation\nconfig = "production"\nconfig = "test"',goal:'Search for config, then use n to reach the match on line 4.',hint:'/config → Enter → n. Searches start after the cursor and wrap.',test:v=>v.search==='config'&&v.r===3&&v.c===0&&v.events.has('search')},
+ {title:'08 · Repeat your edit',text:'slow slow',goal:'Change both words to fast, using dot to repeat your first edit.',hint:'ciw → fast → Esc → w → .',test:v=>v.text==='fast fast'&&v.events.has('repeat')&&v.mode==='NORMAL'},
+ {title:'09 · Select and delete',text:'Remove me\nKeep me',goal:'Use Visual Line mode to delete the first line.',hint:'Shift-v (capital V) selects a whole line. Then d deletes it.',test:v=>v.text==='Keep me'&&v.events.has('visual:d')},
+ {title:'10 · Save and quit',text:'Ready',goal:'Add ! to the end, then save and quit this simulated buffer.',hint:'A → ! → Esc → :wq → Enter. :q alone refuses unsaved changes.',test:v=>v.saved==='Ready!'&&v.mode==='CLOSED'},
+ {title:'Free play · Your command sandbox',text:'const theme = "light";\nconst editor = "neovim";\n\nSmall commands make big changes.\nTry copying this line.\nSearch for theme, then change a word.\n\nHave fun. Undo is your friend.',goal:'Explore freely. Try 2dw, o, yy, p, v, /theme, or :w. Reset whenever you like.',hint:'Try ciw → type something → Esc → w → . to repeat your edit.',test:()=>false}
+];
+const $=id=>document.getElementById(id);let vim,index=0,history=[],complete=new Set();
+try{const saved=JSON.parse(localStorage.getItem('neovim-lab-progress-v1')||'[]');if(Array.isArray(saved))complete=new Set(saved.filter(n=>Number.isInteger(n)&&n>=0&&n<10));}catch{}
+const picker=$('lab-lesson');
+lessons.forEach((l,i)=>{const o=document.createElement('option');o.value=i;o.textContent=l.title;picker.append(o);});
+function load(i){index=i;picker.value=String(i);vim=new PracticeVim(lessons[i].text);vim.c=lessons[i].cursor||0;history=[];$('lab-title').textContent=lessons[i].title.split(' · ')[1];$('lab-goal').textContent=lessons[i].goal;$('lab-hint-text').textContent=lessons[i].hint;$('lab-hint-text').hidden=true;$('lab-hint').textContent='Show hint';$('lab-text').value='';render();}
+function render(){
+  const editor=$('lab-editor');editor.classList.toggle('lab-insert',vim.mode==='INSERT');editor.replaceChildren();let offset=0;
+  const sel=vim.mode.startsWith('VISUAL')?vim.selection():null;
+  vim.lines.forEach((line,r)=>{const row=document.createElement('div');row.className='lab-line'+(r===vim.r?' active':'');const num=document.createElement('span');num.className='lab-ln';num.textContent=r+1;num.setAttribute('aria-hidden','true');row.append(num);
+    for(let c=0;c<Math.max(line.length,1)+(vim.mode==='INSERT'&&line.length&&vim.c===line.length&&r===vim.r?1:0);c++){const ch=document.createElement('span');ch.textContent=line[c]||' ';if(sel&&offset+c>=sel[0]&&offset+c<sel[1])ch.classList.add('lab-selection');if(vim.search&&line.slice(c,c+vim.search.length)===vim.search)ch.classList.add('lab-match');if(r===vim.r&&c===vim.c&&vim.mode!=='CLOSED')ch.classList.add('lab-cursor');row.append(ch);}editor.append(row);offset+=line.length+1;
+  });
+  $('lab-mode').textContent=vim.mode;$('lab-pending').textContent=vim.pending?vim.pending+' …':'';$('lab-position').textContent=`${vim.r+1}:${vim.c+1}`;$('lab-dirty').textContent=vim.text!==vim.saved?'[+]':'';$('lab-command').textContent=vim.mode==='COMMAND'?':'+vim.command+'▏':vim.mode==='SEARCH'?'/'+vim.command+'▏':'';$('lab-message').textContent=vim.message;$('lab-keys').textContent=history.join(' ');
+  const passed=lessons[index].test(vim);if(passed){complete.add(index);try{localStorage.setItem('neovim-lab-progress-v1',JSON.stringify([...complete]));}catch{}}
+  $('lab-result').textContent=passed?'✓ You did it!':complete.has(index)?'Previously completed — try it again.':'';$('lab-next').hidden=!passed||index>=10;$('lab-progress').textContent=complete.size+' / 10 challenges';
+  [...picker.options].forEach((o,i)=>o.textContent=(complete.has(i)?'✓ ':'')+lessons[i].title);
+  const cursor=editor.querySelector('.lab-cursor');if(cursor){const row=cursor.parentElement;const top=row.offsetTop-editor.offsetTop;if(top<editor.scrollTop||top+row.offsetHeight>editor.scrollTop+editor.clientHeight)editor.scrollTop=top;}
+}
+function send(key){history.push(key==='Escape'?'Esc':key===' '?'Space':key);history=history.slice(-16);vim.key(key);render();}
+$('lab-editor').addEventListener('keydown',e=>{if(e.key==='Tab'||e.metaKey||e.altKey||e.isComposing)return;if(e.ctrlKey&&e.key.toLowerCase()!=='r')return;if(['Shift','Control','CapsLock'].includes(e.key))return;e.preventDefault();send(e.ctrlKey?'Ctrl-r':e.key);});
+$('lab-focus').onclick=()=>{$('lab-editor').focus({preventScroll:true});vim.message='Keyboard active. Try a command. Tab leaves the editor.';render();};
+picker.onchange=()=>load(Number(picker.value));$('lab-reset').onclick=()=>load(index);$('lab-next').onclick=()=>load(index+1);
+$('lab-hint').onclick=()=>{const p=$('lab-hint-text');p.hidden=!p.hidden;$('lab-hint').textContent=p.hidden?'Show hint':'Hide hint';};
+const buttons=[['Esc','Escape'],['h','h'],['j','j'],['k','k'],['l','l'],['w','w'],['b','b'],['e','e'],['0','0'],['$','$'],['gg','gg'],['G','G'],['i','i'],['a','a'],['A','A'],['o','o'],['v','v'],['V','V'],['x','x'],['dd','dd'],['dw','dw'],['ciw','ciw'],['ci"','ci"'],['yy','yy'],['p','p'],['u','u'],['Ctrl-r','Ctrl-r'],['.','.'],['/','/'],['n','n'],['N','N'],[':',':'],['Enter','Enter'],['⌫','Backspace']];
+buttons.forEach(([label,keys])=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.dataset.keys=keys;b.setAttribute('aria-label','Send '+label);b.onclick=()=>{const sequence=['Escape','Ctrl-r','Enter','Backspace'].includes(keys)?[keys]:[...keys];for(const k of sequence)send(k);};$('lab-keypad').append(b);});
+$('lab-text-form').onsubmit=e=>{e.preventDefault();const input=$('lab-text'),text=input.value;if(!text)return;if(vim.mode==='NORMAL'&&!['/',':'].includes(text[0])){vim.message='Press i first to enter Insert mode, then send your text.';render();return;}for(const c of text)send(c);if(vim.mode==='SEARCH'||vim.mode==='COMMAND')send('Enter');input.value='';};
+load(0);
+})();
+
 </script>
 </body>
 </html>
