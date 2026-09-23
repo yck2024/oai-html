@@ -1,0 +1,34 @@
+{
+  "site": {
+    "title": "OAI HTML Gallery",
+    "description": "A growing collection of visual guides and interactive HTML pages.",
+    "baseUrl": "https://yck2024.github.io/oai-html/",
+    "analyticsMeasurementId": "G-QLFWNZWDSS"
+  },
+  "pages": [
+    {
+      "slug": "neovim",
+      "title": "Neovim: Zero → Useful",
+      "description": "Beginner visual guide to modes, Vim grammar, essential commands, files/buffers, plugins, and an AI-assisted workflow.",
+      "icon": "⌨️",
+      "tags": ["Learning", "2026"],
+      "status": "live"
+    },
+    {
+      "slug": "herdr-keyboard",
+      "title": "Herdr Keyboard Visual Guide",
+      "description": "A bilingual visual guide to Herdr’s tmux-style keyboard model, core shortcuts, panes, sessions, and everyday navigation.",
+      "icon": "⌨️",
+      "tags": ["Herdr", "EN / 繁中"],
+      "status": "live"
+    },
+    {
+      "slug": "pi-luna-automic-vault",
+      "title": "Pi + Luna + Automic Vault",
+      "description": "Deep visual notes on agentic development: Pi with Luna, signed-in Chrome control, secret handling with Automic Vault, and real-world verification.",
+      "icon": "🔐",
+      "tags": ["Agents", "Workflow"],
+      "status": "live"
+    }
+  ]
+}

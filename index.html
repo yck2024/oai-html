@@ -7,9 +7,9 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-QLFWNZWDSS', { content_group: 'oai-html' });
 </script>
+<script defer src="./assets/analytics.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="A growing collection of visual guides and interactive HTML pages.">
@@ -34,7 +34,15 @@ body{
 .eyebrow{color:var(--green);font-weight:800;letter-spacing:.14em;text-transform:uppercase;font-size:.76rem}
 h1{font-size:clamp(2.6rem,8vw,5.6rem);line-height:.94;letter-spacing:-.055em;margin:.55rem 0 1rem}
 .grad{background:linear-gradient(100deg,var(--green),var(--cyan),var(--violet));-webkit-background-clip:text;color:transparent}
-.lead{max-width:690px;color:#c5d3df;font-size:1.14rem;line-height:1.65;margin-bottom:42px}
+.lead{max-width:690px;color:#c5d3df;font-size:1.14rem;line-height:1.65;margin-bottom:30px}
+.library-tools{display:flex;gap:10px;align-items:center;margin-bottom:34px;flex-wrap:wrap}
+.search{
+  flex:1;min-width:240px;background:rgba(14,26,37,.82);color:var(--text);
+  border:1px solid var(--line);border-radius:14px;padding:12px 14px;font:inherit;
+}
+.search:focus{outline:2px solid rgba(121,192,255,.55);outline-offset:2px}
+.search::placeholder{color:#72879a}
+.hint{color:var(--muted);font-size:.82rem}
 .sectionhead{display:flex;justify-content:space-between;gap:16px;align-items:end;margin-bottom:14px}
 .sectionhead h2{margin:0;font-size:1.12rem}
 .count{color:var(--muted);font-size:.9rem}
@@ -53,7 +61,11 @@ h1{font-size:clamp(2.6rem,8vw,5.6rem);line-height:.94;letter-spacing:-.055em;mar
 .card h3{font-size:1.35rem;margin:0 0 7px}
 .card p{color:var(--muted);line-height:1.55;margin:0 0 24px}
 .open{display:flex;align-items:center;gap:8px;color:var(--cyan);font-weight:750}
-.future{border:1px dashed var(--line);border-radius:20px;padding:22px;color:var(--muted);display:flex;align-items:center;justify-content:center;min-height:250px;text-align:center}
+.future,.state{
+  border:1px dashed var(--line);border-radius:20px;padding:22px;color:var(--muted);
+  display:flex;align-items:center;justify-content:center;min-height:250px;text-align:center;
+}
+.state{grid-column:1/-1;min-height:150px}
 footer{color:var(--muted);font-size:.88rem;margin-top:38px}
 @media(max-width:700px){.wrap{padding:48px 0}.grid{grid-template-columns:1fr}.future{min-height:150px}}
 </style>
@@ -64,43 +76,131 @@ footer{color:var(--muted);font-size:.88rem;margin-top:38px}
   <h1>Guides worth<br><span class="grad">sharing.</span></h1>
   <p class="lead">A growing collection of interactive visual guides. Each topic lives on its own permanent URL, while this page stays the navigator.</p>
 
+  <div class="library-tools">
+    <input id="gallerySearch" class="search" type="search" placeholder="Search guides, topics, tags…" autocomplete="off" aria-label="Search published pages">
+    <span class="hint">The gallery is generated from <code>pages.json</code>.</span>
+  </div>
+
   <div class="sectionhead">
     <h2>Published pages</h2>
-    <div class="count">3 pages</div>
+    <div id="pageCount" class="count">Loading…</div>
   </div>
 
-  <div class="grid">
-    <a class="card" href="./neovim/">
-      <div class="icon">⌨️</div>
-      <div class="meta"><span class="tag live">Live</span><span class="tag">Learning</span><span class="tag">2026</span></div>
-      <h3>Neovim: Zero → Useful</h3>
-      <p>Beginner visual guide to modes, Vim grammar, essential commands, files/buffers, plugins, and an AI-assisted workflow.</p>
-      <div class="open">Open guide <span aria-hidden="true">→</span></div>
-    </a>
-
-
-    <a class="card" href="./herdr-keyboard/">
-      <div class="icon">⌨️</div>
-      <div class="meta"><span class="tag live">Live</span><span class="tag">Herdr</span><span class="tag">EN / 繁中</span></div>
-      <h3>Herdr Keyboard Visual Guide</h3>
-      <p>A bilingual visual guide to Herdr’s tmux-style keyboard model, core shortcuts, panes, sessions, and everyday navigation.</p>
-      <div class="open">Open guide <span aria-hidden="true">→</span></div>
-    </a>
-
-    <a class="card" href="./pi-luna-automic-vault/">
-      <div class="icon">🔐</div>
-      <div class="meta"><span class="tag live">Live</span><span class="tag">Agents</span><span class="tag">Workflow</span></div>
-      <h3>Pi + Luna + Automic Vault</h3>
-      <p>Deep visual notes on agentic development: Pi with Luna, signed-in Chrome control, secret handling with Automic Vault, and real-world verification.</p>
-      <div class="open">Open guide <span aria-hidden="true">→</span></div>
-    </a>
-
-    <div class="future">
-      <div><strong style="color:var(--text)">More pages coming</strong><br>Future guides will appear here.</div>
-    </div>
+  <div id="pageGrid" class="grid" aria-live="polite">
+    <div class="state">Loading published pages…</div>
   </div>
+
+  <noscript>
+    <div class="state" style="margin-top:16px">JavaScript is required to load the gallery index.</div>
+  </noscript>
 
   <footer>yck2024 / oai-html · GitHub Pages</footer>
 </main>
+
+<script>
+(() => {
+  const grid = document.getElementById('pageGrid');
+  const count = document.getElementById('pageCount');
+  const search = document.getElementById('gallerySearch');
+  let pages = [];
+  let searchTracked = false;
+
+  const text = value => String(value || '').trim();
+
+  function createTag(label, extraClass = '') {
+    const span = document.createElement('span');
+    span.className = 'tag' + (extraClass ? ' ' + extraClass : '');
+    span.textContent = label;
+    return span;
+  }
+
+  function createCard(page) {
+    const card = document.createElement('a');
+    card.className = 'card';
+    card.href = './' + page.slug + '/';
+    card.dataset.analyticsEvent = 'gallery_open';
+    card.dataset.analyticsLabel = page.slug;
+
+    const icon = document.createElement('div');
+    icon.className = 'icon';
+    icon.textContent = page.icon || '📄';
+
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.appendChild(createTag(page.status || 'live', page.status === 'live' ? 'live' : ''));
+    for (const tag of page.tags || []) meta.appendChild(createTag(tag));
+
+    const title = document.createElement('h3');
+    title.textContent = page.title;
+
+    const description = document.createElement('p');
+    description.textContent = page.description || '';
+
+    const open = document.createElement('div');
+    open.className = 'open';
+    open.innerHTML = 'Open guide <span aria-hidden="true">→</span>';
+
+    card.append(icon, meta, title, description, open);
+    return card;
+  }
+
+  function createFutureCard() {
+    const box = document.createElement('div');
+    box.className = 'future';
+    const inner = document.createElement('div');
+    const strong = document.createElement('strong');
+    strong.style.color = 'var(--text)';
+    strong.textContent = 'More pages coming';
+    inner.append(strong, document.createElement('br'), document.createTextNode('Future guides will appear here automatically.'));
+    box.appendChild(inner);
+    return box;
+  }
+
+  function render(query = '') {
+    const q = query.toLowerCase().trim();
+    const visible = !q ? pages : pages.filter(page => {
+      const haystack = [page.title, page.description, page.slug, ...(page.tags || [])].map(text).join(' ').toLowerCase();
+      return haystack.includes(q);
+    });
+
+    grid.replaceChildren();
+    count.textContent = q ? visible.length + ' of ' + pages.length + ' pages' : pages.length + (pages.length === 1 ? ' page' : ' pages');
+
+    if (!visible.length) {
+      const empty = document.createElement('div');
+      empty.className = 'state';
+      empty.textContent = 'No matching guides.';
+      grid.appendChild(empty);
+      return;
+    }
+
+    visible.forEach(page => grid.appendChild(createCard(page)));
+    if (!q) grid.appendChild(createFutureCard());
+  }
+
+  fetch('./pages.json', { cache: 'no-store' })
+    .then(response => {
+      if (!response.ok) throw new Error('Could not load pages.json');
+      return response.json();
+    })
+    .then(data => {
+      pages = Array.isArray(data.pages) ? data.pages : [];
+      render();
+    })
+    .catch(error => {
+      console.error(error);
+      count.textContent = 'Unavailable';
+      grid.innerHTML = '<div class="state">The gallery manifest could not be loaded. Individual published URLs still work.</div>';
+    });
+
+  search.addEventListener('input', () => {
+    if (!searchTracked && search.value.trim()) {
+      searchTracked = true;
+      if (window.oaiTrack) window.oaiTrack('gallery_search_used');
+    }
+    render(search.value);
+  });
+})();
+</script>
 </body>
 </html>

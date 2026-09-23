@@ -27,25 +27,89 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
-      - name: Add Google Analytics tag to pages missing it
-        env:
-          GA_TAG: |
-            <!-- Google tag (gtag.js) -->
-            <script async src="https://www.googletagmanager.com/gtag/js?id=G-QLFWNZWDSS"></script>
-            <script>
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-
-              gtag('config', 'G-QLFWNZWDSS', { content_group: 'oai-html' });
-            </script>
+      - name: Validate page manifest
         run: |
-          find . -name '*.html' -not -path './.git/*' -print0 |
-          while IFS= read -r -d '' f; do
-            grep -q 'G-QLFWNZWDSS' "$f" && continue
-            perl -0pi -e 's/<head>/<head>\n$ENV{GA_TAG}/i' "$f"
-            echo "Injected GA tag: $f"
-          done
+          python - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+
+          manifest = json.loads(Path("pages.json").read_text(encoding="utf-8"))
+          pages = manifest.get("pages", [])
+          if not isinstance(pages, list):
+              raise SystemExit("pages.json: 'pages' must be a list")
+
+          slugs = []
+          for page in pages:
+              slug = page.get("slug", "")
+              if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", slug):
+                  raise SystemExit(f"Invalid slug: {slug!r}")
+              if not page.get("title") or not page.get("description"):
+                  raise SystemExit(f"Missing title/description for {slug}")
+              slugs.append(slug)
+
+          if len(slugs) != len(set(slugs)):
+              raise SystemExit("Duplicate slugs in pages.json")
+
+          listed = set(slugs)
+          actual = {
+              p.parent.name
+              for p in Path(".").glob("*/index.html")
+              if not p.parent.name.startswith(".")
+          }
+
+          missing_files = listed - actual
+          missing_manifest = actual - listed
+          if missing_files:
+              raise SystemExit(f"Manifest entries without pages: {sorted(missing_files)}")
+          if missing_manifest:
+              raise SystemExit(f"Published pages missing from pages.json: {sorted(missing_manifest)}")
+
+          print(f"Validated {len(slugs)} published pages")
+          PY
+
+      - name: Add analytics to pages missing it
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+
+          ga = """<!-- Google tag (gtag.js) -->
+          <script async src="https://www.googletagmanager.com/gtag/js?id=G-QLFWNZWDSS"></script>
+          <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-QLFWNZWDSS', { content_group: 'oai-html' });
+          </script>"""
+
+          helper = '<script defer src="https://yck2024.github.io/oai-html/assets/analytics.js"></script>'
+
+          for path in Path(".").rglob("*.html"):
+              if ".git" in path.parts:
+                  continue
+
+              html = path.read_text(encoding="utf-8")
+              additions = []
+
+              if "G-QLFWNZWDSS" not in html:
+                  additions.append(ga)
+              if "oai-html/assets/analytics.js" not in html and "./assets/analytics.js" not in html:
+                  additions.append(helper)
+
+              if not additions:
+                  continue
+
+              match = re.search(r"<head\b[^>]*>", html, flags=re.IGNORECASE)
+              if not match:
+                  raise SystemExit(f"No <head> found in {path}")
+
+              injected = match.group(0) + "\n" + "\n".join(additions)
+              html = html[:match.start()] + injected + html[match.end():]
+              path.write_text(html, encoding="utf-8")
+              print(f"Injected analytics: {path}")
+          PY
 
       - name: Upload site
         uses: actions/upload-pages-artifact@v4
