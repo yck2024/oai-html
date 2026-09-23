@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Herdr Keyboard — EN / 繁中 Visual Guide</title>
+<style>
+  :root{
+    --bg:#0b0d12;
+    --panel:#121722;
+    --panel2:#171d2b;
+    --text:#eef2ff;
+    --muted:#9aa4b7;
+    --line:#283044;
+    --accent:#a6e3a1;
+    --accent2:#89b4fa;
+    --accent3:#f5c2e7;
+    --warn:#f9e2af;
+    --danger:#f38ba8;
+    --shadow:0 20px 60px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    background:
+      radial-gradient(900px 500px at 8% -10%, rgba(137,180,250,.13), transparent 55%),
+      radial-gradient(800px 500px at 95% 0%, rgba(245,194,231,.10), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+      "PingFang TC","Noto Sans TC","Microsoft JhengHei", Arial, sans-serif;
+    line-height:1.55;
+  }
+  a{color:var(--accent2)}
+  .wrap{max-width:1160px;margin:0 auto;padding:28px 22px 80px}
+  .topbar{
+    position:sticky;top:0;z-index:10;
+    display:flex;justify-content:space-between;gap:16px;align-items:center;
+    padding:12px 0 18px;
+    backdrop-filter: blur(16px);
+    background:linear-gradient(to bottom, rgba(11,13,18,.94), rgba(11,13,18,.72), transparent);
+  }
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.02em}
+  .mark{
+    width:34px;height:34px;border-radius:10px;
+    display:grid;place-items:center;
+    background:linear-gradient(135deg,var(--accent2),var(--accent3));
+    color:#0b0d12;font-weight:1000;box-shadow:0 8px 24px rgba(137,180,250,.22)
+  }
+  .controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+  button,.pill{
+    border:1px solid var(--line);background:#111622;color:var(--text);
+    border-radius:12px;padding:9px 12px;font-weight:700;cursor:pointer;
+  }
+  button.active{background:var(--text);color:#0b0d12;border-color:var(--text)}
+  .hero{
+    margin-top:12px;padding:34px;border:1px solid var(--line);border-radius:28px;
+    background:linear-gradient(140deg,rgba(23,29,43,.95),rgba(14,18,28,.94));
+    box-shadow:var(--shadow);overflow:hidden;position:relative;
+  }
+  .hero:after{
+    content:"";position:absolute;right:-100px;top:-110px;width:340px;height:340px;border-radius:50%;
+    background:radial-gradient(circle,rgba(166,227,161,.18),transparent 68%);pointer-events:none
+  }
+  .eyebrow{font-size:13px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+  h1{font-size:clamp(34px,6vw,66px);line-height:1.02;margin:10px 0 16px;max-width:900px}
+  .lede{font-size:18px;color:#c9d2e4;max-width:860px;margin:0}
+  .hero-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:22px;margin-top:28px;align-items:stretch}
+  .prefix-box,.mental{
+    background:rgba(8,11,17,.72);border:1px solid var(--line);border-radius:22px;padding:22px
+  }
+  .prefix-flow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px}
+  .kbd{
+    display:inline-flex;align-items:center;justify-content:center;min-width:42px;height:42px;
+    padding:0 12px;border-radius:9px;
+    border:1px solid #424b61;border-bottom-width:4px;
+    background:linear-gradient(#232a39,#151a24);color:white;font-weight:900;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    box-shadow:0 6px 12px rgba(0,0,0,.25);
+  }
+  .kbd.sm{height:32px;min-width:32px;padding:0 9px;border-radius:8px;border-bottom-width:3px;font-size:13px}
+  .arrow{font-size:24px;color:var(--muted)}
+  .release{color:var(--warn);font-weight:800;font-size:13px}
+  .mental .tree{margin-top:16px;display:grid;gap:9px}
+  .node{padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#101521}
+  .node strong{color:var(--accent2)}
+  .indent1{margin-left:18px}.indent2{margin-left:36px}.indent3{margin-left:54px}
+
+  section{margin-top:34px}
+  .section-head{display:flex;align-items:end;justify-content:space-between;gap:16px;margin-bottom:15px}
+  h2{font-size:28px;margin:0}
+  .sub{color:var(--muted);font-size:14px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .card{
+    border:1px solid var(--line);border-radius:18px;background:rgba(18,23,34,.86);
+    padding:18px;min-height:150px;transition:.18s ease;
+  }
+  .card:hover{transform:translateY(-2px);border-color:#46516b;background:#151b28}
+  .card.must{outline:1px solid rgba(166,227,161,.25)}
+  .tag{display:inline-block;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;
+    padding:5px 8px;border-radius:999px;background:rgba(166,227,161,.1);color:var(--accent);margin-bottom:12px}
+  .action{font-size:18px;font-weight:850;margin-bottom:7px}
+  .zh{display:block;color:#cbd4e5;font-size:14px;margin-top:2px}
+  .keys{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:13px}
+  .note{margin-top:12px;color:var(--muted);font-size:13px}
+  .split-demo{
+    display:grid;grid-template-columns:1fr 1fr;gap:7px;height:72px;margin-top:12px
+  }
+  .pane{border:1px solid #3c4660;border-radius:9px;background:#0d121c;display:grid;place-items:center;color:#7f8ba3;font-size:12px}
+  .split-down{grid-template-columns:1fr;grid-template-rows:1fr 1fr}
+  .hjkl{
+    display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(2,52px);gap:8px;
+    justify-content:center;margin:16px 0 6px
+  }
+  .hjkl .kbd{height:52px;padding:0}
+  .hjkl .h{grid-column:1;grid-row:2}.hjkl .j{grid-column:2;grid-row:2}.hjkl .k{grid-column:2;grid-row:1}.hjkl .l{grid-column:3;grid-row:2}
+  .direction-label{text-align:center;color:var(--muted);font-size:13px}
+  .strip{
+    display:grid;grid-template-columns:repeat(6,1fr);gap:10px
+  }
+  .quick{
+    border:1px solid var(--line);background:#101521;border-radius:16px;padding:15px;text-align:center
+  }
+  .quick .qtitle{font-weight:850;font-size:14px;margin-bottom:8px}
+  .quick .qzh{font-size:12px;color:var(--muted);margin-top:7px}
+  .callout{
+    border-left:4px solid var(--accent2);background:rgba(137,180,250,.08);
+    padding:16px 18px;border-radius:0 14px 14px 0;color:#dbe6ff
+  }
+  .callout.warn{border-color:var(--warn);background:rgba(249,226,175,.07)}
+  .copy-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .copy-map{border:1px solid var(--line);border-radius:18px;background:#101521;padding:18px}
+  .copy-row{display:flex;gap:8px;flex-wrap:wrap;margin:9px 0 14px;align-items:center}
+  .label{color:var(--muted);font-size:13px;min-width:92px}
+  .optional{
+    background:linear-gradient(145deg,rgba(137,180,250,.09),rgba(245,194,231,.06));
+    border:1px solid #31405f;border-radius:22px;padding:22px
+  }
+  code{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    background:#0b1018;border:1px solid var(--line);padding:2px 6px;border-radius:6px;color:#d8e7ff
+  }
+  pre{
+    white-space:pre-wrap;background:#080b10;border:1px solid var(--line);border-radius:14px;
+    padding:16px;overflow:auto;color:#dfe8f7;font-size:13px
+  }
+  .footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+  .hidden{display:none!important}
+
+  @media (max-width:900px){
+    .hero-grid,.copy-grid{grid-template-columns:1fr}
+    .grid{grid-template-columns:1fr 1fr}
+    .strip{grid-template-columns:repeat(3,1fr)}
+  }
+  @media (max-width:620px){
+    .wrap{padding:18px 14px 60px}
+    .hero{padding:22px}
+    .grid{grid-template-columns:1fr}
+    .strip{grid-template-columns:1fr 1fr}
+    .topbar{align-items:flex-start}
+    .brand span:last-child{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand"><div class="mark">H</div><span>Herdr Keyboard Visual Guide</span></div>
+    <div class="controls">
+      <button id="enBtn" class="active" onclick="setLang('en')">EN</button>
+      <button id="zhBtn" onclick="setLang('zh')">繁中</button>
+      <button id="coreBtn" class="active" onclick="setMode('core')"><span data-en="Core" data-zh="核心">Core</span></button>
+      <button id="allBtn" onclick="setMode('all')"><span data-en="All" data-zh="全部">All</span></button>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="eyebrow" data-en="Herdr keyboard, decoded" data-zh="Herdr 快捷鍵，一次看懂">Herdr keyboard, decoded</div>
+    <h1 data-en="Stop memorizing symbols. Learn the model." data-zh="不要背符號。先懂它的操作邏輯。">Stop memorizing symbols. Learn the model.</h1>
+    <p class="lede" data-en="The default model is tmux-style: first enter Herdr command mode with Ctrl+B, release it, then press the action key. You do not hold all keys together."
+       data-zh="Herdr 預設採 tmux 風格：先按 Ctrl+B 進入 Herdr 指令模式，放開，再按動作鍵。不是把所有鍵一起按住。">
+      The default model is tmux-style: first enter Herdr command mode with Ctrl+B, release it, then press the action key. You do not hold all keys together.
+    </p>
+
+    <div class="hero-grid">
+      <div class="prefix-box">
+        <div class="tag">#1 <span data-en="The one thing to remember" data-zh="最重要的一件事">The one thing to remember</span></div>
+        <div class="prefix-flow">
+          <span class="kbd">Ctrl</span><span>+</span><span class="kbd">B</span>
+          <span class="arrow">→</span><span class="release" data-en="RELEASE" data-zh="放開">RELEASE</span>
+          <span class="arrow">→</span><span class="kbd">C</span>
+        </div>
+        <div class="note" data-en="Result: new tab. Think “call Herdr, then give it a command.”"
+             data-zh="結果：新增分頁。把它想成「先叫 Herdr，再告訴它要做什麼」。">
+          Result: new tab. Think “call Herdr, then give it a command.”
+        </div>
+      </div>
+      <div class="mental">
+        <div class="tag" data-en="Mental model" data-zh="心智模型">Mental model</div>
+        <div class="tree">
+          <div class="node"><strong>Workspace</strong> <span data-en="— project / context" data-zh="— 專案 / 工作情境">— project / context</span></div>
+          <div class="node indent1"><strong>Tab</strong> <span data-en="— task group" data-zh="— 任務群組">— task group</span></div>
+          <div class="node indent2"><strong>Pane</strong> <span data-en="— terminal area" data-zh="— 終端區塊">— terminal area</span></div>
+          <div class="node indent3"><strong>Agent</strong> <span data-en="— Claude / Pi / Codex…" data-zh="— Claude / Pi / Codex…">— Claude / Pi / Codex…</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section>
+    <div class="section-head">
+      <div>
+        <div class="eyebrow" data-en="Day-one shortcuts" data-zh="第一天先學這些">Day-one shortcuts</div>
+        <h2 data-en="Your 6-command survival kit" data-zh="6 個就能開始工作的核心快捷鍵">Your 6-command survival kit</h2>
+      </div>
+      <div class="sub" data-en="Every shortcut below starts with Ctrl+B → release"
+           data-zh="下面每個快捷鍵都先：Ctrl+B → 放開">
+        Every shortcut below starts with Ctrl+B → release
+      </div>
+    </div>
+    <div class="strip">
+      <div class="quick"><div class="qtitle">New tab</div><span class="kbd sm">C</span><div class="qzh">新增分頁</div></div>
+      <div class="quick"><div class="qtitle">Split right</div><span class="kbd sm">V</span><div class="qzh">右側分割</div></div>
+      <div class="quick"><div class="qtitle">Split down</div><span class="kbd sm">-</span><div class="qzh">下方分割</div></div>
+      <div class="quick"><div class="qtitle">Move pane</div><span class="kbd sm">H J K L</span><div class="qzh">窗格移動</div></div>
+      <div class="quick"><div class="qtitle">Workspace</div><span class="kbd sm">W</span><div class="qzh">工作區導航</div></div>
+      <div class="quick"><div class="qtitle">Detach</div><span class="kbd sm">Q</span><div class="qzh">離開但保持執行</div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">H / J / K / L</div>
+        <h2 data-en="Pane movement = Vim directions" data-zh="窗格移動 = Vim 方向邏輯">Pane movement = Vim directions</h2>
+      </div>
+    </div>
+    <div class="card must">
+      <div class="hjkl">
+        <span class="kbd k">K ↑</span>
+        <span class="kbd h">H ←</span>
+        <span class="kbd j">J ↓</span>
+        <span class="kbd l">L →</span>
+      </div>
+      <div class="direction-label" data-en="Prefix + H/J/K/L moves focus between panes."
+           data-zh="Prefix + H/J/K/L：在不同窗格之間移動焦點。">
+        Prefix + H/J/K/L moves focus between panes.
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <div><div class="eyebrow" data-en="Panes" data-zh="窗格 Pane">Panes</div><h2 data-en="Control the terminal layout" data-zh="控制終端版面">Control the terminal layout</h2></div>
+    </div>
+    <div class="grid">
+      <div class="card must core">
+        <div class="tag" data-en="Essential" data-zh="核心">Essential</div>
+        <div class="action" data-en="Split right" data-zh="向右分割">Split right</div>
+        <div class="keys"><span class="kbd sm">Ctrl+B</span><span>→</span><span class="kbd sm">V</span></div>
+        <div class="split-demo"><div class="pane">A</div><div class="pane">B</div></div>
+      </div>
+      <div class="card must core">
+        <div class="tag" data-en="Essential" data-zh="核心">Essential</div>
+        <div class="action" data-en="Split down" data-zh="向下分割">Split down</div>
+        <div class="keys"><span class="kbd sm">Ctrl+B</span><span>→</span><span class="kbd sm">-</span></div>
+        <div class="split-demo split-down"><div class="pane">A</div><div class="pane">B</div></div>
+      </div>
+      <div class="card must core">
+        <div class="tag" data-en="Essential" data-zh="核心">Essential</div>
+        <div class="action" data-en="Focus another pane" data-zh="切換窗格焦點">Focus another pane</div>
+        <span class="zh" data-en="Left / down / up / right" data-zh="左 / 下 / 上 / 右">Left / down / up / right</span>
+        <div class="keys"><span class="kbd sm">H</span><span class="kbd sm">J</span><span class="kbd sm">K</span><span class="kbd sm">L</span></div>
+      </div>
+      <div class="card core">
+        <div class="action" data-en="Close pane" data-zh="關閉窗格">Close pane</div>
+        <div class="keys"><span class="kbd sm">Ctrl+B</span><span>→</span><span class="kbd sm">X</span></div>
+      </div>
+      <div class="card extra">
+        <div class="action" data-en="Zoom focused pane" data-zh="放大目前窗格">Zoom focused pane</div>
+        <div class="keys"><span class="kbd sm">Ctrl+B</span><span>→</span><span class="kbd sm">Z</span></div>
+        <div class="note" data-en="Toggle a pane between normal and enlarged view." data-zh="在一般大小與放大顯示之間切換。">Toggle a pane between normal and enlarged view.</div>
+      </div>
+      <div class="card extra">
+        <div class="action" data-en="Resize mode" data-zh="調整窗格大小模式">Resize mode</div>
+        <div class="keys"><span class="kbd sm">Ctrl+B</span><span>→</span><span class="kbd sm">R</span></div>
+        <div class="note" data-en="Then use H/L for width, J/K for height; Esc exits." data-zh="進入後用 H/L 調寬度、J/K 調高度；Esc 離開。">Then use H/L for width, J/K for height; Esc exits.</div>
+      </div>
+      <div class="card extra">
+        <div class="action" data-en="Swap pane position" data-zh="交換窗格位置">Swap pane position</div>
+        <div class="keys"><span class="kbd sm">Ctrl+B</span><span>→</span><span class="kbd sm">Shift</span><span>+</span><span class="kbd sm">H/J/K/L</span></div>
+      </div>
+      <div class="card extra">
+        <div class="action" data-en="Cycle panes" data-zh="依序切換窗格">Cycle panes</div>
+        <div class="keys"><span class="kbd sm">Ctrl+B</span><span>→</span><span class="kbd sm">Tab</span></div>
+        <div class="note" data-en="Shift+Tab cycles backward." data-zh="Shift+Tab 反向切換。">Shift+Tab cycles backward.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <div><div class="eyebrow" data-en="Tabs" data-zh="分頁 Tab">Tabs</div><h2 data-en="Move between task groups" data-zh="在不同任務群組之間切換">Move between task groups</h2></div>
+    </div>
+    <div class="grid">
+      <div class="card must core"><div class="tag" data-en="Essential" data-zh="核心">Essential</div><div class="action" data-en="New tab" data-zh="新增分頁">New tab</div><div class="keys"><span class="kbd sm">Ctrl+B</span><span>→</span><span class="kbd sm">C</span></div></div>
+      <div class="card core"><div class="action" data-en="Next / previous tab" data-zh="下一個 / 上一個分頁">Next / previous tab</div><div class="keys"><span class="kbd sm">N</span><span>/</span><span class="kbd sm">P</span></div><div class="note" data-en="Always after the prefix." data-zh="兩者都先按 Prefix。">Always after the prefix.</div></div>
+      <div class="card core"><div class="action" data-en="Jump to tab 1–9" data-zh="直接跳到分頁 1–9">Jump to tab 1–9</div><div class="keys"><span class="kbd sm">1 … 9</span></div></div>
+      <div class="card extra"><div class="action" data-en="Rename tab" data-zh="重新命名分頁">Rename tab</div><div class="keys"><span class="kbd sm">Shift</span><span>+</span><span class="kbd sm">T</span></div></div>
+      <div class="card extra"><div class="action" data-en="Close tab" data-zh="關閉分頁">Close tab</div><div class="keys"><span class="kbd sm">Shift</span><span>+</span><span class="kbd sm">X</span></div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <div><div class="eyebrow" data-en="Workspaces + session" data-zh="工作區與 Session">Workspaces + session</div><h2 data-en="Control the bigger context" data-zh="控制更高一層的工作情境">Control the bigger context</h2></div>
+    </div>
+    <div class="grid">
+      <div class="card must core"><div class="tag" data-en="Essential" data-zh="核心">Essential</div><div class="action" data-en="Workspace navigator" data-zh="工作區導航">Workspace navigator</div><div class="keys"><span class="kbd sm">Ctrl+B</span><span>→</span><span class="kbd sm">W</span></div></div>
+      <div class="card core"><div class="action" data-en="New workspace" data-zh="新增工作區">New workspace</div><div class="keys"><span class="kbd sm">Shift</span><span>+</span><span class="kbd sm">N</span></div></div>
+      <div class="card extra"><div class="action" data-en="Rename workspace" data-zh="重新命名工作區">Rename workspace</div><div class="keys"><span class="kbd sm">Shift</span><span>+</span><span class="kbd sm">W</span></div></div>
+      <div class="card extra"><div class="action" data-en="Close workspace" data-zh="關閉工作區">Close workspace</div><div class="keys"><span class="kbd sm">Shift</span><span>+</span><span class="kbd sm">D</span></div></div>
+      <div class="card core"><div class="action" data-en="Goto picker" data-zh="快速前往選擇器">Goto picker</div><div class="keys"><span class="kbd sm">Ctrl+B</span><span>→</span><span class="kbd sm">G</span></div></div>
+      <div class="card core"><div class="action" data-en="Toggle sidebar" data-zh="顯示 / 隱藏側邊欄">Toggle sidebar</div><div class="keys"><span class="kbd sm">Ctrl+B</span><span>→</span><span class="kbd sm">B</span></div></div>
+      <div class="card must core"><div class="tag" data-en="Important" data-zh="重要">Important</div><div class="action" data-en="Detach client" data-zh="離開 Herdr，但保持任務執行">Detach client</div><div class="keys"><span class="kbd sm">Ctrl+B</span><span>→</span><span class="kbd sm">Q</span></div><div class="note" data-en="Your Herdr server and running agents stay alive." data-zh="Herdr server 與正在執行的 agents 會繼續跑。">Your Herdr server and running agents stay alive.</div></div>
+      <div class="card extra"><div class="action" data-en="New worktree" data-zh="新增 worktree">New worktree</div><div class="keys"><span class="kbd sm">Shift</span><span>+</span><span class="kbd sm">G</span></div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <div><div class="eyebrow" data-en="Help" data-zh="救命鍵">Help</div><h2 data-en="When you forget everything" data-zh="全部忘光時，只要記得這個">When you forget everything</h2></div>
+    </div>
+    <div class="callout">
+      <strong><span class="kbd sm">Ctrl+B</span> → <span class="kbd sm">?</span></strong>
+      <span data-en=" opens Herdr's live keybinding help. Press / inside help to filter."
+            data-zh=" 會打開 Herdr 即時快捷鍵說明。進入後按 / 可以搜尋 / 篩選。">
+        opens Herdr's live keybinding help. Press / inside help to filter.
+      </span>
+    </div>
+  </section>
+
+  <section class="extra">
+    <div class="section-head">
+      <div><div class="eyebrow" data-en="Copy mode" data-zh="複製模式">Copy mode</div><h2 data-en="Keyboard-only scrollback & copy" data-zh="只用鍵盤查看歷史輸出與複製">Keyboard-only scrollback & copy</h2></div>
+    </div>
+    <div class="copy-grid">
+      <div class="copy-map">
+        <div class="action" data-en="Enter copy mode" data-zh="進入複製模式">Enter copy mode</div>
+        <div class="keys"><span class="kbd sm">Ctrl+B</span><span>→</span><span class="kbd sm">[</span></div>
+        <div class="copy-row"><span class="label" data-en="Move" data-zh="移動">Move</span><span class="kbd sm">H</span><span class="kbd sm">J</span><span class="kbd sm">K</span><span class="kbd sm">L</span></div>
+        <div class="copy-row"><span class="label" data-en="Start select" data-zh="開始選取">Start select</span><span class="kbd sm">V</span><span data-en="or" data-zh="或">or</span><span class="kbd sm">Space</span></div>
+        <div class="copy-row"><span class="label" data-en="Copy" data-zh="複製">Copy</span><span class="kbd sm">Y</span><span data-en="or" data-zh="或">or</span><span class="kbd sm">Enter</span></div>
+        <div class="copy-row"><span class="label" data-en="Exit" data-zh="離開">Exit</span><span class="kbd sm">Q</span><span data-en="or" data-zh="或">or</span><span class="kbd sm">Esc</span></div>
+      </div>
+      <div class="copy-map">
+        <div class="action" data-en="Search inside scrollback" data-zh="搜尋歷史輸出">Search inside scrollback</div>
+        <div class="copy-row"><span class="label" data-en="Forward" data-zh="向後搜尋">Forward</span><span class="kbd sm">/</span></div>
+        <div class="copy-row"><span class="label" data-en="Backward" data-zh="向前搜尋">Backward</span><span class="kbd sm">?</span></div>
+        <div class="copy-row"><span class="label" data-en="Next result" data-zh="下一筆">Next result</span><span class="kbd sm">N</span></div>
+        <div class="note" data-en="Mouse drag-select still works without entering copy mode."
+             data-zh="如果你不想背這些，滑鼠拖曳選取仍然可以直接用。">
+          Mouse drag-select still works without entering copy mode.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="extra">
+    <div class="optional">
+      <div class="eyebrow" data-en="Optional: make Herdr feel more “normal”" data-zh="可選：讓 Herdr 更像一般 App">Optional: make Herdr feel more “normal”</div>
+      <h2 data-en="Add prefix-free Ctrl+Alt shortcuts" data-zh="加上不用 Prefix 的 Ctrl+Alt 快捷鍵">Add prefix-free Ctrl+Alt shortcuts</h2>
+      <p data-en="Herdr's docs recommend Ctrl+Alt as a relatively safe family for direct terminal shortcuts. Keep the defaults and add direct chords on top."
+         data-zh="Herdr 官方文件建議 Ctrl+Alt 是相對安全的直接快捷鍵組合。你可以保留原本 Prefix 鍵，同時額外加上直接快捷鍵。">
+        Herdr's docs recommend Ctrl+Alt as a relatively safe family for direct terminal shortcuts. Keep the defaults and add direct chords on top.
+      </p>
+      <pre>[keys]
+focus_pane_left  = ["prefix+h", "ctrl+alt+h"]
+focus_pane_down  = ["prefix+j", "ctrl+alt+j"]
+focus_pane_up    = ["prefix+k", "ctrl+alt+k"]
+focus_pane_right = ["prefix+l", "ctrl+alt+l"]
+
+new_tab          = ["prefix+c", "ctrl+alt+c"]
+split_vertical   = ["prefix+v", "ctrl+alt+d"]
+split_horizontal = ["prefix+minus", "ctrl+alt+shift+d"]
+zoom             = ["prefix+z", "ctrl+alt+z"]</pre>
+      <div class="callout warn">
+        <strong data-en="Mac note:" data-zh="Mac 注意：">Mac note:</strong>
+        <span data-en=" direct shortcuts must survive macOS + Terminal.app/iTerm/Ghostty before Herdr can receive them. If one does nothing, the outer terminal may have captured it."
+              data-zh=" 直接快捷鍵必須先通過 macOS 與 Terminal.app / iTerm / Ghostty，Herdr 才收得到。如果沒反應，通常是外層終端先吃掉了快捷鍵。">
+          direct shortcuts must survive macOS + Terminal.app/iTerm/Ghostty before Herdr can receive them. If one does nothing, the outer terminal may have captured it.
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="extra">
+    <div class="section-head">
+      <div><div class="eyebrow" data-en="Utility" data-zh="其他常用">Utility</div><h2 data-en="Useful, but not day-one" data-zh="好用，但不用第一天就背">Useful, but not day-one</h2></div>
+    </div>
+    <div class="grid">
+      <div class="card"><div class="action" data-en="Settings" data-zh="設定">Settings</div><div class="keys"><span class="kbd sm">Ctrl+B</span><span>→</span><span class="kbd sm">S</span></div></div>
+      <div class="card"><div class="action" data-en="Reload config" data-zh="重新載入設定">Reload config</div><div class="keys"><span class="kbd sm">Shift</span><span>+</span><span class="kbd sm">R</span></div></div>
+      <div class="card"><div class="action" data-en="Open notification target" data-zh="開啟通知目標">Open notification target</div><div class="keys"><span class="kbd sm">Ctrl+B</span><span>→</span><span class="kbd sm">O</span></div></div>
+    </div>
+  </section>
+
+  <div class="footer">
+    <div><strong data-en="Sources:" data-zh="資料來源：">Sources:</strong>
+      <a href="https://herdr.dev/docs/keyboard/" target="_blank">Herdr Keyboard docs</a> ·
+      <a href="https://github.com/herdrdev/herdr/blob/master/docs/next/website/src/content/docs/keyboard.mdx" target="_blank">Keyboard source</a> ·
+      <a href="https://github.com/herdrdev/herdr/blob/master/src/main.rs" target="_blank">Current default keymap</a>
+    </div>
+    <div style="margin-top:8px" data-en="Built as a learning guide, not a replacement for Herdr's live Prefix + ? help. Defaults can change and are configurable."
+         data-zh="這是一份學習用速查頁，不取代 Herdr 內建的 Prefix + ? 即時說明。預設鍵位未來可能變動，而且可以自訂。">
+      Built as a learning guide, not a replacement for Herdr's live Prefix + ? help. Defaults can change and are configurable.
+    </div>
+  </div>
+</div>
+
+<script>
+let lang='en', mode='core';
+function setLang(l){
+  lang=l;
+  document.documentElement.lang = l==='zh' ? 'zh-Hant' : 'en';
+  document.querySelectorAll('[data-en]').forEach(el=>{
+    el.textContent = el.dataset[l];
+  });
+  document.getElementById('enBtn').classList.toggle('active',l==='en');
+  document.getElementById('zhBtn').classList.toggle('active',l==='zh');
+}
+function setMode(m){
+  mode=m;
+  document.querySelectorAll('.extra').forEach(el=>el.classList.toggle('hidden',m==='core'));
+  document.getElementById('coreBtn').classList.toggle('active',m==='core');
+  document.getElementById('allBtn').classList.toggle('active',m==='all');
+}
+setLang('en');
+setMode('core');
+</script>
+</body>
+</html>
