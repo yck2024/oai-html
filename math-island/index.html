@@ -1,79 +1,76 @@
 <!doctype html>
 <html lang="ja">
-  <head>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-QLFWNZWDSS"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-QLFWNZWDSS', { content_group: 'oai-html' });
-    </script>
-    <script defer src="https://yck2024.github.io/oai-html/assets/analytics.js"></script>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#83cce5" />
-    <title>Number Garden</title>
-    <link rel="stylesheet" href="./style.css" />
-  </head>
-  <body>
-    <main class="game-shell">
-      <div id="world" aria-hidden="true"></div>
-
-      <header id="game-header" class="hud" aria-label="Game progress">
-        <div class="brand"><span class="brand-mark">✿</span><span id="brand-name">かずのにわ</span></div>
-        <div class="progress-wrap">
-          <span class="progress-label" id="round-label">Ready to play</span>
-          <div class="progress-track" aria-hidden="true"><div id="progress-fill"></div></div>
-        </div>
-        <div class="hud-tools">
-          <div id="language-toggle" class="language-toggle" role="group" aria-label="Language">
-            <button type="button" data-language="ja">日本語</button>
-            <button type="button" data-language="en">English</button>
-          </div>
-          <div id="star-score" class="star-score" aria-label="Total stars saved in this browser"><span>★</span><b id="score">0</b></div>
-        </div>
-      </header>
-
-      <section class="play-area" aria-live="polite">
-        <div id="intro-card" class="card intro-card">
-          <div class="eyebrow" id="intro-eyebrow">ちいさな さんすう ぼうけん</div>
-          <h1 id="intro-title">このせかいを<br /><span>そだてよう！</span></h1>
-          <p id="intro-description">みえるものを かぞえて、あう かずを えらんでね。</p>
-          <div id="world-choices" class="world-choices" aria-label="Choose a world">
-            <button class="world-choice selected" data-world="garden" type="button"><span>🌼</span><span id="world-garden-label">にわ</span></button>
-            <button class="world-choice" data-world="ocean" type="button"><span>🐚</span><span id="world-ocean-label">うみ</span></button>
-            <button class="world-choice" data-world="space" type="button"><span>🪐</span><span id="world-space-label">うちゅう</span></button>
-          </div>
-          <button id="start-button" class="primary-button" type="button">あそぼう <span>➜</span></button>
-          <div class="saved-row"><span id="saved-note" role="status"></span><button id="reset-progress" type="button">ほしをリセット</button></div>
-          <div id="speech-status" class="speech-status" role="status">🔊 きょうりょくな こえを つかうよ</div>
-        </div>
-
-        <div id="question-card" class="card question-card" hidden>
-          <div id="question-kicker" class="eyebrow">よく みてね</div>
-          <h1 id="question">いくつ みえるかな？</h1>
-          <p id="hint" class="hint">あう かずを タップしてね。</p>
-          <button id="speak-question" class="speak-button" type="button">🔊 もういちど きく</button>
-          <div id="question-speech-status" class="speech-status" role="status"></div>
-          <div id="answers" class="answers" role="group" aria-label="Choose your answer"></div>
-          <div id="feedback" class="feedback" aria-live="assertive"></div>
-        </div>
-
-        <div id="finish-card" class="card finish-card" hidden>
-          <div class="finish-flower">🌻</div>
-          <div class="eyebrow" id="finish-eyebrow">ぼうけん クリア！</div>
-          <h1 id="finish-title">やったね！</h1>
-          <p id="finish-message">せかいが きれいに そだったよ。</p>
-          <div class="finish-stars"><span>★</span><b id="final-score">0</b><span id="finish-stars-label">ほし</span></div>
-          <button id="again-button" class="primary-button" type="button">もういちど あそぶ <span>↻</span></button>
-        </div>
-      </section>
-
-      <footer class="footer-tip"><span class="tip-icon">✦</span><span id="world-tip">ゆっくり かぞえてみよう！</span></footer>
-      <div id="style-switcher" class="style-switcher" hidden aria-label="Preview worlds"></div>
-    </main>
-    <script src="./three.min.js"></script>
-    <script src="./game.js"></script>
-  </body>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#73cde0">
+  <title>Math Island｜かずのゲーム</title>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-QLFWNZWDSS"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-QLFWNZWDSS', { content_group: 'oai-html' });
+  </script>
+  <script defer src="https://yck2024.github.io/oai-html/assets/analytics.js"></script>
+  <style>
+    :root{font-family:"Hiragino Maru Gothic ProN","Yu Gothic","Meiryo",system-ui,sans-serif;color:#24405b;font-synthesis:none;text-rendering:optimizeLegibility}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 12% 12%,#fff3a9 0 7%,transparent 7.5%),radial-gradient(ellipse at 88% 20%,#f6b9e5 0 8%,transparent 8.5%),linear-gradient(155deg,#55c8dc 0%,#89d5c0 43%,#b4a5f1 100%);padding:24px}
+    .hub{width:min(980px,100%);margin:0 auto;min-height:calc(100vh - 48px);display:flex;flex-direction:column}
+    .back{align-self:flex-start;padding:10px 15px;border:2px solid #ffffffad;border-radius:999px;background:#ffffffd9;color:#42677a;text-decoration:none;font-size:14px;font-weight:900;box-shadow:0 4px 0 #397b8960}
+    .back:hover{transform:translateY(-2px)}
+    header{text-align:center;padding:28px 12px 24px;color:#fff;text-shadow:0 3px 12px #315d7890}
+    .eyebrow{display:inline-block;border:1px solid #ffffff99;border-radius:999px;background:#ffffff30;padding:7px 14px;font-weight:900;font-size:13px;letter-spacing:.06em}
+    h1{margin:12px 0 8px;font-size:clamp(36px,7vw,64px);line-height:1.08;letter-spacing:-.04em}
+    h1 span{display:block;font-size:clamp(21px,4vw,32px);letter-spacing:0;margin-top:8px}
+    header p{margin:12px auto 0;max-width:520px;font-size:16px;font-weight:800;line-height:1.7;color:#fffdf4}
+    .games{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;margin:auto 0 20px}
+    .game-card{position:relative;display:flex;min-height:335px;flex-direction:column;align-items:center;padding:25px 26px 23px;border:4px solid #fff;border-radius:32px;text-align:center;text-decoration:none;color:inherit;box-shadow:0 10px 0 #315d783d,0 24px 45px #264e6338;transition:transform .16s,box-shadow .16s}
+    .game-card:hover{transform:translateY(-6px) rotate(-.5deg);box-shadow:0 15px 0 #315d783d,0 28px 50px #264e6338}
+    .poko{background:linear-gradient(155deg,#fff7d9,#ffe9a8)}
+    .garden{background:linear-gradient(155deg,#e4fff0,#b3f0cf)}
+    .game-number{border-radius:999px;padding:5px 11px;background:#ffffffb8;color:#527282;font-weight:1000;font-size:11px;letter-spacing:.12em}
+    .game-icon{margin:8px 0 2px;font-size:64px;line-height:1.2;filter:drop-shadow(0 5px 1px #315d7828)}
+    h2{margin:4px 0 8px;color:#285469;font-size:clamp(23px,3.5vw,31px);line-height:1.2}
+    .game-card p{margin:0;max-width:390px;color:#5b7782;font-size:15px;line-height:1.65;font-weight:750}
+    .tags{margin:15px 0 18px;padding:7px 11px;border-radius:999px;background:#ffffffb8;color:#64818b;font-size:12px;font-weight:900}
+    .play{display:flex;justify-content:center;align-items:center;gap:14px;width:100%;margin-top:auto;padding:13px 16px;border-radius:17px;background:#47a96e;color:#fff;font-size:17px;font-weight:1000;box-shadow:0 5px 0 #318553}
+    .poko .play{background:#ee8c35;box-shadow:0 5px 0 #c56c24}
+    .play span{font-size:22px}
+    footer{text-align:center;padding:4px 10px 12px;color:#fff;font-size:13px;font-weight:850;text-shadow:0 2px 5px #315d7880}
+    @media(max-width:700px){body{padding:14px}.hub{min-height:calc(100vh - 28px)}header{padding:22px 8px 17px}.games{grid-template-columns:1fr;gap:15px}.game-card{min-height:285px;padding:19px 20px 18px;border-radius:27px}.game-icon{font-size:54px}.tags{margin:12px 0 15px}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
+  </style>
+</head>
+<body>
+  <main class="hub">
+    <a class="back" href="../" aria-label="ギャラリーにもどる">← OAI HTML ギャラリー</a>
+    <header>
+      <div class="eyebrow">ちいさな さんすう ぼうけん</div>
+      <h1>Math Island<span>どのゲームで あそぶ？</span></h1>
+      <p>すきなゲームをえらんでね。どちらも日本語の音声つきだよ！</p>
+    </header>
+    <section class="games" aria-label="かずのゲームをえらぶ">
+      <a class="game-card poko" href="./poko/" data-analytics-event="game_launch" data-analytics-label="poko-island">
+        <span class="game-number">GAME 1</span>
+        <span class="game-icon" aria-hidden="true">🦊🍎⭐</span>
+        <h2>ポコと ほしの島</h2>
+        <p>ポコと いっしょに りんごを かぞえて、やさしい たしざんに ちょうせん！</p>
+        <span class="tags">かずを かぞえる · 5までの たしざん</span>
+        <span class="play">このゲームで あそぶ <span aria-hidden="true">➜</span></span>
+      </a>
+      <a class="game-card garden" href="./number-garden/" data-analytics-event="game_launch" data-analytics-label="number-garden">
+        <span class="game-number">GAME 2</span>
+        <span class="game-icon" aria-hidden="true">🌼🐚🪐</span>
+        <h2>かずのにわ</h2>
+        <p>にわ・うみ・うちゅうを ぼうけんして、かぞえたり たしざんしたり しよう！</p>
+        <span class="tags">3つの せかい · かずを かぞえる · たしざん</span>
+        <span class="play">このゲームで あそぶ <span aria-hidden="true">➜</span></span>
+      </a>
+    </section>
+    <footer>あそびたいゲームをいつでもえらびなおせるよ ✨</footer>
+  </main>
+</body>
 </html>

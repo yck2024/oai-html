@@ -41,9 +41,9 @@
     },
     {
       "slug": "math-island",
-      "title": "Number Garden | かずのにわ",
-      "description": "A gentle Japanese 3D math game for young children, with garden, ocean, and space worlds, spoken prompts, and local progress.",
-      "icon": "🌼",
+      "title": "Math Island | かずあそび",
+      "description": "Choose between two Japanese math games for young children: Poko's apple-counting island or Number Garden's colorful 3D worlds.",
+      "icon": "🏝️",
       "tags": [
         "Kids",
         "Math",

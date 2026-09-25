@@ -20,6 +20,11 @@ API_URL = "https://api.aivis-project.com/v1/tts/synthesize"
 DEFAULT_MODEL_UUID = "a59cb814-0083-4369-8542-f51a29e72af7"  # Aivis demo default: まお
 ROOT = Path(__file__).parent
 AUDIO_DIR = ROOT / "audio"
+POKO_AUDIO_DIR = ROOT.parent / "poko" / "audio"
+
+
+def audio_dir_for(name: str) -> Path:
+    return POKO_AUDIO_DIR if name.startswith("poko-") else AUDIO_DIR
 
 
 def build_clips() -> dict[str, str]:
@@ -30,10 +35,16 @@ def build_clips() -> dict[str, str]:
         "correct": "せいかい！すごいね！",
         "try-again": "おしい！いっしょにかぞえてみよう。",
         "finish": "ぼうけんクリア！やったね！",
+        "poko-count": "りんごは なんこ あるかな？",
+        "poko-correct": "せいかい！すごいね！",
+        "poko-try-again": "おしい！りんごを もういちど かぞえてみよう。",
+        "poko-finish": "ほしを 8こ あつめたよ！ポコと いっしょに おいわいしよう。",
     }
     for first in range(1, 6):
         for second in range(1, 10 - first):
             clips[f"addition-{first}-{second}"] = f"{first}たす{second}は、いくつかな？"
+    for first, second in ((1, 1), (1, 2), (1, 3), (1, 4), (2, 1), (2, 2), (2, 3), (3, 1), (3, 2)):
+        clips[f"poko-add-{first}-{second}"] = f"{first}こ と {second}こ。あわせて いくつかな？"
     return clips
 
 
@@ -65,7 +76,7 @@ def main() -> int:
 
     clips = build_clips()
     chars = sum(len(text) for text in clips.values())
-    missing = {name: text for name, text in clips.items() if args.overwrite or not (AUDIO_DIR / f"{name}.mp3").exists()}
+    missing = {name: text for name, text in clips.items() if args.overwrite or not (audio_dir_for(name) / f"{name}.mp3").exists()}
     missing_chars = sum(len(text) for text in missing.values())
     estimated_yen = missing_chars * 440 / 10000
     print(f"{len(clips)} clips total; {len(missing)} need generation; {missing_chars} billed characters.")
@@ -86,6 +97,7 @@ def main() -> int:
         print("No API key entered; no requests were made.")
         return 2
     AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+    POKO_AUDIO_DIR.mkdir(parents=True, exist_ok=True)
 
     for index, (name, text) in enumerate(missing.items(), start=1):
         payload = {
@@ -120,12 +132,12 @@ def main() -> int:
         if not audio or (content_type and "audio" not in content_type.lower()):
             print(f"Aivis returned an unexpected response for {name}; stopped after {index - 1} clips.")
             return 1
-        (AUDIO_DIR / f"{name}.mp3").write_bytes(audio)
+        (audio_dir_for(name) / f"{name}.mp3").write_bytes(audio)
         print(f"Generated {index}/{len(missing)}: {name}")
         if index < len(missing):
             time.sleep(max(0, args.delay))
 
-    print(f"Saved {len(missing)} audio clips to {AUDIO_DIR}.")
+    print(f"Saved {len(missing)} audio clips to {AUDIO_DIR} and {POKO_AUDIO_DIR}.")
     return 0
 
 

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-QLFWNZWDSS"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-QLFWNZWDSS', { content_group: 'oai-html' });
+    </script>
+    <script defer src="https://yck2024.github.io/oai-html/assets/analytics.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#83cce5" />
+    <title>Number Garden</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="game-shell">
+      <div id="world" aria-hidden="true"></div>
+
+      <header id="game-header" class="hud" aria-label="Game progress">
+        <a class="brand" href="../" aria-label="Math Island のゲーム一覧にもどる"><span class="brand-mark">✿</span><span id="brand-name">かずのにわ</span></a>
+        <div class="progress-wrap">
+          <span class="progress-label" id="round-label">Ready to play</span>
+          <div class="progress-track" aria-hidden="true"><div id="progress-fill"></div></div>
+        </div>
+        <div class="hud-tools">
+          <div id="language-toggle" class="language-toggle" role="group" aria-label="Language">
+            <button type="button" data-language="ja">日本語</button>
+            <button type="button" data-language="en">English</button>
+          </div>
+          <div id="star-score" class="star-score" aria-label="Total stars saved in this browser"><span>★</span><b id="score">0</b></div>
+        </div>
+      </header>
+
+      <section class="play-area" aria-live="polite">
+        <div id="intro-card" class="card intro-card">
+          <div class="eyebrow" id="intro-eyebrow">ちいさな さんすう ぼうけん</div>
+          <h1 id="intro-title">このせかいを<br /><span>そだてよう！</span></h1>
+          <p id="intro-description">みえるものを かぞえて、あう かずを えらんでね。</p>
+          <div id="world-choices" class="world-choices" aria-label="Choose a world">
+            <button class="world-choice selected" data-world="garden" type="button"><span>🌼</span><span id="world-garden-label">にわ</span></button>
+            <button class="world-choice" data-world="ocean" type="button"><span>🐚</span><span id="world-ocean-label">うみ</span></button>
+            <button class="world-choice" data-world="space" type="button"><span>🪐</span><span id="world-space-label">うちゅう</span></button>
+          </div>
+          <button id="start-button" class="primary-button" type="button">あそぼう <span>➜</span></button>
+          <div class="saved-row"><span id="saved-note" role="status"></span><button id="reset-progress" type="button">ほしをリセット</button></div>
+          <div id="speech-status" class="speech-status" role="status">🔊 きょうりょくな こえを つかうよ</div>
+        </div>
+
+        <div id="question-card" class="card question-card" hidden>
+          <div id="question-kicker" class="eyebrow">よく みてね</div>
+          <h1 id="question">いくつ みえるかな？</h1>
+          <p id="hint" class="hint">あう かずを タップしてね。</p>
+          <button id="speak-question" class="speak-button" type="button">🔊 もういちど きく</button>
+          <div id="question-speech-status" class="speech-status" role="status"></div>
+          <div id="answers" class="answers" role="group" aria-label="Choose your answer"></div>
+          <div id="feedback" class="feedback" aria-live="assertive"></div>
+        </div>
+
+        <div id="finish-card" class="card finish-card" hidden>
+          <div class="finish-flower">🌻</div>
+          <div class="eyebrow" id="finish-eyebrow">ぼうけん クリア！</div>
+          <h1 id="finish-title">やったね！</h1>
+          <p id="finish-message">せかいが きれいに そだったよ。</p>
+          <div class="finish-stars"><span>★</span><b id="final-score">0</b><span id="finish-stars-label">ほし</span></div>
+          <button id="again-button" class="primary-button" type="button">もういちど あそぶ <span>↻</span></button>
+        </div>
+      </section>
+
+      <footer class="footer-tip"><span class="tip-icon">✦</span><span id="world-tip">ゆっくり かぞえてみよう！</span></footer>
+      <div id="style-switcher" class="style-switcher" hidden aria-label="Preview worlds"></div>
+    </main>
+    <script src="./three.min.js"></script>
+    <script src="./game.js"></script>
+  </body>
+</html>
