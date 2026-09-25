@@ -13,6 +13,7 @@ The gallery is manifest-driven. Published page metadata lives in `pages.json`, a
 - Neovim beginner visual guide
 - Herdr Keyboard Visual Guide (EN / 繁中)
 - Pi + Luna + Automic Vault
+- Number Garden (Japanese math game)
 
 ## Publishing architecture
 
