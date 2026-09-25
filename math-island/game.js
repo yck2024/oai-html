@@ -1,14 +1,14 @@
 const worlds = {
   garden: {
-    label: 'Garden', clear: 0x9ed8ed, ground: 0x70bd78, accent: 0x438f55, token: 0xe84d45,
+    label: 'Garden', clear: 0x83cce5, ground: 0x4ba850, accent: 0x2f8145, token: 0xf13f49,
     tipEn: 'Take your time. You can count out loud!', tipJa: 'ゆっくり かぞえてみよう！', tokenEn: 'apple', tokenJa: 'りんご',
   },
   ocean: {
-    label: 'Ocean', clear: 0x7bcbd7, ground: 0x3da6b3, accent: 0xdba84c, token: 0xf07850,
+    label: 'Ocean', clear: 0x4fc2d8, ground: 0x17889b, accent: 0xf6b631, token: 0xf3633d,
     tipEn: 'Look carefully through the bubbles!', tipJa: 'あわの なかを よく みてね！', tokenEn: 'shell', tokenJa: 'かいがら',
   },
   space: {
-    label: 'Space', clear: 0x817bd1, ground: 0x5c55a7, accent: 0xe6bd51, token: 0x42bfe5,
+    label: 'Space', clear: 0x6e5bc4, ground: 0x41348c, accent: 0xffc52f, token: 0x08a9dc,
     tipEn: 'Count the glowing space rocks!', tipJa: 'ひかる ほしのいしを かぞえてね！', tokenEn: 'space rock', tokenJa: 'ほしのいし',
   },
 };
@@ -66,11 +66,11 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.0;
+renderer.toneMappingExposure = 0.84;
 worldRoot.append(renderer.domElement);
 
-scene.add(new THREE.HemisphereLight(0xffffff, 0x8ab5a5, 1.45));
-const sun = new THREE.DirectionalLight(0xfff3d2, 2.15);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x648b79, 0.95));
+const sun = new THREE.DirectionalLight(0xfff3d2, 1.55);
 sun.position.set(-5, 10, 7);
 sun.castShadow = true;
 sun.shadow.mapSize.set(1024, 1024);
@@ -207,11 +207,11 @@ function makeShell(color) {
   return group;
 }
 
-function makeStarRock(color) {
+function makeStarRock(color, tipColor = 0xffcf21) {
   const group = new THREE.Group();
   const center = addMesh(group, new THREE.IcosahedronGeometry(0.31, 1), material(color, 0.4), [0, 0.36, 0], [1.05, 1.08, 0.92]);
   center.rotation.set(0.2, 0.4, 0.1);
-    const crystal = material(0xffdf77, 0.38);
+  const crystal = material(tipColor, 0.38);
   for (let i = 0; i < 4; i++) {
     const a = i * Math.PI / 2 + 0.35;
     const point = addMesh(group, new THREE.ConeGeometry(0.12, 0.36, 5), crystal, [Math.cos(a) * 0.33, 0.36, Math.sin(a) * 0.33]);
@@ -221,10 +221,16 @@ function makeStarRock(color) {
   return group;
 }
 
-function makeToken(world) {
-  if (world === 'ocean') return makeShell(worlds.ocean.token);
-  if (world === 'space') return makeStarRock(worlds.space.token);
-  return makeApple(worlds.garden.token);
+function makeToken(world, index = 0) {
+  const palettes = {
+    garden: [0xf13f49, 0xff7a27, 0xf3c22e, 0xe8438a],
+    ocean: [0xf3633d, 0xffc82e, 0xaa61dc, 0x36c8b2],
+    space: [0x08a9dc, 0xf044a1, 0xff8a24, 0xa6d938],
+  };
+  const color = palettes[world][index % palettes[world].length];
+  if (world === 'ocean') return makeShell(color);
+  if (world === 'space') return makeStarRock(color, index % 2 === 0 ? 0xffcf21 : 0xfff06a);
+  return makeApple(color);
 }
 
 function clearTargets() {
@@ -436,7 +442,7 @@ function dropTokens(question) {
     const cx = groupCenters[groupIndex];
     const cols = Math.min(4, count);
     for (let i = 0; i < count; i++) {
-      const token = makeToken(selectedWorld);
+      const token = makeToken(selectedWorld, i + groupIndex * 4);
       const col = i % cols;
       const row = Math.floor(i / cols);
       const x = cx + (col - (cols - 1) / 2) * 0.92;
@@ -450,7 +456,7 @@ function dropTokens(question) {
     }
   });
   if (groups.length === 2) {
-    const ringMat = material(selectedWorld === 'space' ? 0xb8a8ff : selectedWorld === 'ocean' ? 0xffefb5 : 0xf8f0c7);
+    const ringMat = material(selectedWorld === 'space' ? 0xffc52f : selectedWorld === 'ocean' ? 0xffd36e : 0xffd24a, 0.62);
     [-2.1, 2.1].forEach((x) => {
       const ring = new THREE.Mesh(new THREE.TorusGeometry(1.66, 0.045, 6, 40), ringMat);
       ring.rotation.x = -Math.PI / 2;

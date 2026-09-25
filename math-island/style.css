@@ -11,7 +11,7 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
-body { background: #9ed8ed; }
+body { background: #83cce5; }
 button { font: inherit; }
 .game-shell { position: relative; width: 100%; height: 100%; min-height: 560px; overflow: hidden; isolation: isolate; }
 #world { position: absolute; inset: 0; z-index: -1; }
@@ -65,9 +65,9 @@ h1 { margin: 15px 0 8px; color: #26535a; font-size: clamp(31px, 5vw, 43px); line
 .speak-button { display: inline-flex; align-items: center; justify-content: center; min-height: 37px; margin-top: 12px; padding: 6px 14px; border: 2px solid #cbe5d5; border-radius: 13px; background: #edfaef; color: #377454; font-size: 14px; font-weight: 900; cursor: pointer; }
 .speak-button:hover { background: #e1f5e5; transform: translateY(-1px); }
 .answers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 22px; }
-.answer-button { min-height: 76px; border: 3px solid #fff; border-radius: 20px; background: #f3e7ff; color: #7256a4; font-size: 37px; font-weight: 900; cursor: pointer; box-shadow: 0 5px 0 #d7c9eb; transition: transform .12s, background .15s, box-shadow .12s; }
-.answer-button:nth-child(2) { background: #fff0bf; color: #a77218; box-shadow: 0 5px 0 #eed98e; }
-.answer-button:nth-child(3) { background: #dff2ff; color: #367799; box-shadow: 0 5px 0 #bdddea; }
+.answer-button { min-height: 76px; border: 3px solid #fff; border-radius: 20px; background: #ead6ff; color: #6539a1; font-size: 37px; font-weight: 900; cursor: pointer; box-shadow: 0 5px 0 #c7a8e8; transition: transform .12s, background .15s, box-shadow .12s; }
+.answer-button:nth-child(2) { background: #ffe36e; color: #805000; box-shadow: 0 5px 0 #e4bc38; }
+.answer-button:nth-child(3) { background: #9edfff; color: #176b91; box-shadow: 0 5px 0 #66b9da; }
 .answer-button:hover { transform: translateY(-3px) rotate(-2deg); }
 .answer-button:active { transform: translateY(3px); box-shadow: 0 2px 0 #d7c9eb; }
 .answer-button:disabled { cursor: default; opacity: .7; }
