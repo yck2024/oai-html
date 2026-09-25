@@ -11,7 +11,10 @@
       "title": "Neovim: Zero → Useful",
       "description": "Beginner visual guide to modes, Vim grammar, essential commands, files/buffers, plugins, and an AI-assisted workflow.",
       "icon": "⌨️",
-      "tags": ["Learning", "2026"],
+      "tags": [
+        "Learning",
+        "2026"
+      ],
       "status": "live"
     },
     {
@@ -19,7 +22,10 @@
       "title": "Herdr Keyboard Visual Guide",
       "description": "A bilingual visual guide to Herdr’s tmux-style keyboard model, core shortcuts, panes, sessions, and everyday navigation.",
       "icon": "⌨️",
-      "tags": ["Herdr", "EN / 繁中"],
+      "tags": [
+        "Herdr",
+        "EN / 繁中"
+      ],
       "status": "live"
     },
     {
@@ -27,7 +33,22 @@
       "title": "Pi + Luna + Automic Vault",
       "description": "Deep visual notes on agentic development: Pi with Luna, signed-in Chrome control, secret handling with Automic Vault, and real-world verification.",
       "icon": "🔐",
-      "tags": ["Agents", "Workflow"],
+      "tags": [
+        "Agents",
+        "Workflow"
+      ],
+      "status": "live"
+    },
+    {
+      "slug": "math-island",
+      "title": "ポコと ほしの島",
+      "description": "A gentle Japanese counting and addition game for young children, with a 3D island adventure, visual hints, and spoken prompts.",
+      "icon": "🦊",
+      "tags": [
+        "Kids",
+        "Math",
+        "Japanese"
+      ],
       "status": "live"
     }
   ]
