@@ -7,6 +7,7 @@ const { execFileSync } = require('node:child_process');
 const test = require('node:test');
 const vm = require('node:vm');
 const { GOAL, TOPICS, createGame, createSpeechPlayer } = require('./game.js');
+const { POSES, ART, TIMING, comboText } = require('./arena.js');
 const prompts = require('./audio/prompts.json');
 
 const steadyRandom = () => 0.3;
@@ -108,12 +109,41 @@ class FakeAudio {
   play() { return Promise.resolve(); }
 }
 
-function createAppFixture(game) {
+// Runs the arena's timers on demand so a test can step through each beat of a power move.
+function createClock() {
+  let now = 0;
+  let nextId = 0;
+  const tasks = new Map();
+  return {
+    setTimeout(callback, delay = 0) {
+      nextId += 1;
+      tasks.set(nextId, { at: now + delay, callback });
+      return nextId;
+    },
+    clearTimeout(id) {
+      tasks.delete(id);
+    },
+    tick(ms) {
+      const end = now + ms;
+      for (;;) {
+        const [due] = [...tasks.entries()].filter(([, task]) => task.at <= end).sort((a, b) => a[1].at - b[1].at);
+        if (!due) break;
+        tasks.delete(due[0]);
+        now = due[1].at;
+        due[1].callback();
+      }
+      now = end;
+    },
+  };
+}
+
+function createAppFixture(game, globals = {}) {
   const ids = [
     'answerOptions', 'questionEnglish', 'questionChinese', 'questionPicture', 'equation', 'feedback',
     'nextButton', 'questionPanel', 'finishPanel', 'arenaStage', 'arenaMessage', 'scoreStars',
     'scoreCount', 'speechStatus', 'muteButton', 'heroEmoji', 'heroName', 'buddyEmoji', 'buddyName',
     'rivalPower', 'moveBubble', 'restartButton', 'playAgainButton', 'replayPromptButton',
+    'heroArt', 'buddyArt', 'comboBadge', 'comboCount', 'stageEffects',
   ];
   const elements = new Map(ids.map(id => [`#${id}`, new FakeElement(id === 'nextButton' ? 'button' : 'div')]));
   elements.get('#scoreStars').children = Array.from({ length: 3 }, () => new FakeElement('span'));
@@ -134,6 +164,7 @@ function createAppFixture(game) {
     return button;
   });
   const document = {
+    documentElement: new FakeElement('html'),
     querySelector: selector => elements.get(selector),
     querySelectorAll: selector => ({
       '.champion-card': championCards,
@@ -153,8 +184,19 @@ function createAppFixture(game) {
       return super.play();
     }
   }
-  vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'app.js'), 'utf8'), { window, document, Audio: RecordingAudio });
-  return { elements, played, speechLanguageButtons, topicTabs, answerOptions: elements.get('#answerOptions'), nextButton: elements.get('#nextButton'), muteButton: elements.get('#muteButton') };
+  const clock = createClock();
+  const context = vm.createContext({ window, document, Audio: RecordingAudio, setTimeout: clock.setTimeout, clearTimeout: clock.clearTimeout, ...globals });
+  for (const script of ['arena.js', 'app.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, script), 'utf8'), context);
+  return { elements, played, clock, document, championCards, speechLanguageButtons, topicTabs, answerOptions: elements.get('#answerOptions'), nextButton: elements.get('#nextButton'), muteButton: elements.get('#muteButton') };
+}
+
+function clickAnswer(app, game, correct = true) {
+  const { answerId } = game.getState().question;
+  app.answerOptions.children.find(button => (button.dataset.choice === answerId) === correct).click();
+}
+
+function poses(app) {
+  return `${app.elements.get('#heroArt').dataset.pose}/${app.elements.get('#buddyArt').dataset.pose}`;
 }
 
 test('addition questions stay within five and offer three distinct choices', () => {
@@ -503,4 +545,181 @@ test('speech remains optional when the browser has no audio player', () => {
   assert.equal(player.play('math-1-1', 'en'), false);
   assert.equal(unavailable, 1);
   assert.doesNotThrow(() => player.stop());
+});
+
+function readWebp(file) {
+  const art = fs.readFileSync(path.join(__dirname, file));
+  assert.equal(art.toString('latin1', 0, 4), 'RIFF', `${file} is a RIFF file`);
+  assert.equal(art.toString('latin1', 8, 16), 'WEBPVP8X', `${file} is an extended WebP`);
+  assert.ok(art[20] & 0x10, `${file} has a transparent alpha channel`);
+  return { bytes: art.length, width: art.readUIntLE(24, 3) + 1, height: art.readUIntLE(27, 3) + 1 };
+}
+
+test('champion pose sheets and arena sprites are bundled original art sized for a phone page', () => {
+  const expected = {
+    './images/champion-rex.webp': [256 * POSES.length, 256, 64],
+    './images/champion-bobo.webp': [256 * POSES.length, 256, 64],
+    './images/arena-star.webp': [96, 96, 8],
+    './images/arena-swish.webp': [128, 128, 16],
+    './images/arena-bubbles.webp': [128, 128, 16],
+    './images/arena-trophy.webp': [192, 192, 16],
+  };
+  assert.deepEqual([...ART].sort(), Object.keys(expected).sort());
+  let totalBytes = 0;
+  for (const [file, [width, height, maxKb]] of Object.entries(expected)) {
+    const art = readWebp(file);
+    assert.equal(art.width, width, `${file} width`);
+    assert.equal(art.height, height, `${file} height`);
+    assert.ok(art.bytes < maxKb * 1024, `${file} stays under ${maxKb} KB`);
+    totalBytes += art.bytes;
+  }
+  assert.ok(totalBytes < 160 * 1024, 'all arena art together stays light for a phone');
+});
+
+test('the stylesheet maps each pose to its frame of the champion sheet', () => {
+  const css = fs.readFileSync(path.join(__dirname, 'game.css'), 'utf8');
+  assert.match(css, /\.champion-art\[data-character="dino"\] \{ background-image: url\("\.\/images\/champion-rex\.webp"\); \}/);
+  assert.match(css, /\.champion-art\[data-character="monster"\] \{ background-image: url\("\.\/images\/champion-bobo\.webp"\); \}/);
+  assert.match(css, /\.champion-art \{ display: block; background: no-repeat 0 0 \/ 600% 100%; \}/);
+  POSES.slice(1).forEach((pose, index) => {
+    const position = (index + 1) * (100 / (POSES.length - 1));
+    assert.ok(css.includes(`.champion-art[data-pose="${pose}"] { background-position: ${position}% 0; }`), `${pose} shows frame ${index + 2}`);
+  });
+  for (const file of ART) assert.ok(css.includes(`url("${file}")`), `${file} is used by the stylesheet`);
+});
+
+test('a right answer plays the power move, then the buddy wobbles and giggles as stars fly', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  const stage = app.elements.get('#arenaStage');
+  const effects = app.elements.get('#stageEffects');
+  assert.equal(poses(app), 'ready/ready');
+  assert.equal(app.elements.get('#moveBubble').dataset.move, 'swish');
+
+  clickAnswer(app, game);
+  assert.equal(poses(app), 'power/ready');
+  assert.ok(stage.classList.contains('do-spar'));
+  app.clock.tick(TIMING.land);
+  assert.equal(poses(app), 'power/giggle');
+  assert.equal(effects.children.length, 7);
+  assert.ok(effects.children.every(star => star.className === 'burst-star'));
+  app.clock.tick(TIMING.settle - TIMING.land);
+  assert.equal(poses(app), 'ready/ready');
+  assert.equal(stage.classList.contains('do-spar'), false);
+
+  app.nextButton.click();
+  assert.equal(effects.children.length, 0, 'the next question starts on a calm stage');
+});
+
+test('a miss is a pillow block with no penalty that quietly restarts the right-in-a-row combo', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  const combo = app.elements.get('#comboBadge');
+  const message = app.elements.get('#arenaMessage');
+
+  clickAnswer(app, game);
+  assert.equal(combo.classList.contains('is-shown'), false, 'one right answer is not a streak yet');
+  assert.doesNotMatch(message.textContent, /in a row/);
+  app.nextButton.click();
+  clickAnswer(app, game);
+  assert.ok(combo.classList.contains('is-shown'));
+  assert.equal(app.elements.get('#comboCount').textContent, '2');
+  assert.match(message.textContent, /2 in a row! 連續答對 2 題！$/);
+
+  app.nextButton.click();
+  clickAnswer(app, game, false);
+  assert.equal(poses(app), 'ready/block');
+  assert.ok(app.elements.get('#arenaStage').classList.contains('thinking'));
+  assert.equal(combo.classList.contains('is-shown'), false);
+  assert.match(message.textContent, /Pillow block/);
+  assert.equal(game.getState().stars, 2, 'a miss never takes a star away');
+  app.clock.tick(TIMING.blockSettle);
+  assert.equal(poses(app), 'ready/ready');
+
+  clickAnswer(app, game);
+  assert.doesNotMatch(message.textContent, /in a row/, 'the streak counts again from the next right answer');
+  assert.equal(comboText(1), '');
+  assert.equal(comboText(4), '4 in a row! 連續答對 4 題！');
+});
+
+test('the winning answer ends with the buddy bowing and a shared high-five under falling stars', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  const stage = app.elements.get('#arenaStage');
+  const effects = app.elements.get('#stageEffects');
+  for (let star = 1; star <= GOAL; star += 1) {
+    clickAnswer(app, game);
+    if (star < GOAL) app.nextButton.click();
+  }
+  assert.equal(game.getState().finished, true);
+  assert.match(app.elements.get('#arenaMessage').textContent, /bow and high-five! .* 3 in a row!/);
+  app.clock.tick(TIMING.bow);
+  assert.equal(poses(app), 'ready/bow');
+  assert.ok(stage.classList.contains('is-bowing'));
+  app.clock.tick(TIMING.highFive - TIMING.bow);
+  assert.equal(poses(app), 'high5/high5');
+  assert.ok(stage.classList.contains('is-victory'));
+  assert.equal(stage.classList.contains('is-bowing'), false);
+  assert.equal(effects.children.length, 12);
+  assert.ok(effects.children.every(star => star.className === 'shower-star'));
+  app.clock.tick(10000);
+  assert.equal(poses(app), 'high5/high5', 'the champions keep their high-five until play again');
+
+  app.elements.get('#playAgainButton').click();
+  assert.equal(poses(app), 'ready/ready');
+  assert.equal(stage.classList.contains('is-victory'), false);
+  assert.equal(effects.children.length, 0);
+  clickAnswer(app, game);
+  assert.match(app.elements.get('#arenaMessage').textContent, /4 in a row!/, 'a new match keeps the right-in-a-row streak going');
+});
+
+test('choosing a champion swaps both fighters and the power move art', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  const heroArt = app.elements.get('#heroArt');
+  const buddyArt = app.elements.get('#buddyArt');
+  assert.deepEqual([heroArt.dataset.character, buddyArt.dataset.character], ['dino', 'monster']);
+
+  app.championCards.find(card => card.dataset.champion === 'monster').click();
+  assert.deepEqual([heroArt.dataset.character, buddyArt.dataset.character], ['monster', 'dino']);
+  assert.equal(app.elements.get('#moveBubble').dataset.move, 'bubbles');
+  assert.equal(app.elements.get('#moveBubble').textContent, '🫧', 'the emoji move stays as the fallback');
+  assert.equal(app.elements.get('#heroEmoji').textContent, '👾');
+  assert.equal(app.elements.get('#arenaMessage').textContent, 'Bobo is ready to spar!');
+  assert.ok(app.elements.get('#arenaStage').classList.contains('do-ready'));
+});
+
+test('reduced motion keeps every pose but skips the flying stars', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game, { matchMedia: query => ({ matches: query === '(prefers-reduced-motion: reduce)' }) });
+  for (let star = 1; star <= GOAL; star += 1) {
+    clickAnswer(app, game);
+    app.clock.tick(TIMING.land);
+    assert.equal(poses(app), 'power/giggle');
+    assert.equal(app.elements.get('#stageEffects').children.length, 0);
+    if (star < GOAL) app.nextButton.click();
+  }
+  app.clock.tick(TIMING.highFive);
+  assert.equal(poses(app), 'high5/high5');
+  assert.equal(app.elements.get('#stageEffects').children.length, 0);
+});
+
+test('champions fall back to emoji when the arena pictures cannot load', () => {
+  const requested = [];
+  class MissingImage {
+    addEventListener(type, callback) {
+      if (type === 'error') this.fail = callback;
+    }
+
+    set src(source) {
+      requested.push(source);
+      this.fail();
+    }
+  }
+  const app = createAppFixture(createGame(steadyRandom), { Image: MissingImage });
+  assert.deepEqual(requested, ART);
+  assert.ok(app.document.documentElement.classList.contains('no-champion-art'));
+
+  const loaded = createAppFixture(createGame(steadyRandom));
+  assert.equal(loaded.document.documentElement.classList.contains('no-champion-art'), false);
 });

@@ -29,12 +29,12 @@
       </div>
       <div class="champion-options">
         <button class="champion-card is-selected" type="button" data-champion="dino" aria-pressed="true">
-          <span class="champion-emoji" aria-hidden="true">🦖</span>
+          <span class="champion-emoji champion-art" data-character="dino" data-pose="ready" aria-hidden="true"><span class="art-fallback">🦖</span></span>
           <span class="champion-copy"><strong>Rex the Dino</strong><small>雷克斯恐龍</small></span>
           <span class="pick-mark" aria-hidden="true">✓</span>
         </button>
         <button class="champion-card" type="button" data-champion="monster" aria-pressed="false">
-          <span class="champion-emoji" aria-hidden="true">👾</span>
+          <span class="champion-emoji champion-art" data-character="monster" data-pose="ready" aria-hidden="true"><span class="art-fallback">👾</span></span>
           <span class="champion-copy"><strong>Bobo the Monster</strong><small>波波怪獸</small></span>
           <span class="pick-mark" aria-hidden="true">✓</span>
         </button>
@@ -45,23 +45,26 @@
       <section class="arena-card" aria-label="The sparring arena 對打擂台">
         <div class="arena-heading"><span>THE SPARRING ARENA · 對打擂台</span><span class="heart-dots" aria-hidden="true">♥ ♥ ♥</span></div>
         <div class="arena-stage" id="arenaStage">
+          <div class="stage-bunting" aria-hidden="true"></div>
+          <div class="stage-rainbow" aria-hidden="true"></div>
           <div class="cloud cloud-one" aria-hidden="true">✦</div>
           <div class="cloud cloud-two" aria-hidden="true">✦</div>
+          <div class="stage-mat" aria-hidden="true"></div>
+          <span class="combo-badge" id="comboBadge" aria-hidden="true"><span class="combo-star">★</span><span class="combo-copy"><strong>×<span id="comboCount">2</span></strong><small>in a row · 連續</small></span></span>
           <div class="fighter fighter-hero" id="heroFighter">
-            <span class="fighter-spark" aria-hidden="true">✨</span>
-            <span class="fighter-face" id="heroEmoji" aria-hidden="true">🦖</span>
+            <span class="fighter-body" aria-hidden="true"><span class="fighter-art champion-art" id="heroArt" data-character="dino" data-pose="ready"><span class="fighter-face art-fallback" id="heroEmoji">🦖</span></span></span>
             <span class="fighter-name" id="heroName">Rex</span>
             <span class="fighter-side">YOUR CHAMPION</span>
           </div>
           <span class="versus" aria-hidden="true">VS</span>
           <div class="fighter fighter-buddy" id="buddyFighter">
-            <span class="fighter-spark" aria-hidden="true">💫</span>
-            <span class="fighter-face" id="buddyEmoji" aria-hidden="true">👾</span>
+            <span class="fighter-body" aria-hidden="true"><span class="fighter-art champion-art" id="buddyArt" data-character="monster" data-pose="ready"><span class="fighter-face art-fallback" id="buddyEmoji">👾</span></span></span>
             <span class="fighter-name" id="buddyName">Bobo</span>
             <span class="power-meter" id="rivalPower" aria-hidden="true"><span>⚡</span><span>⚡</span><span>⚡</span></span>
             <span class="fighter-side">SPARRING BUDDY</span>
           </div>
-          <span class="move-bubble" id="moveBubble" aria-hidden="true">🌀</span>
+          <span class="move-bubble" id="moveBubble" data-move="swish" aria-hidden="true">🌀</span>
+          <div class="stage-effects" id="stageEffects" aria-hidden="true"></div>
         </div>
         <p class="arena-message" id="arenaMessage" role="status" aria-live="polite">Ready, team? Pick any challenge!</p>
         <div class="score-row" aria-label="Power move stars">
@@ -108,7 +111,7 @@
         </div>
 
         <section class="finish-panel" id="finishPanel" aria-labelledby="finishTitle" hidden>
-          <span class="party-art" aria-hidden="true">🎉 🦖 🧡 👾 🎉</span>
+          <span class="party-art" aria-hidden="true"><span class="champion-art" data-character="dino" data-pose="high5"><span class="art-fallback">🦖</span></span><span class="party-trophy"><span class="art-fallback">🏆</span></span><span class="champion-art is-mirrored" data-character="monster" data-pose="high5"><span class="art-fallback">👾</span></span></span>
           <h2 id="finishTitle">You’re a Sparring Champion!</h2>
           <p>Three power moves! Your buddy is out of power, takes a bow, and gives you a high-five.<br>三招成功！對手沒電了，鞠躬擊掌！</p>
           <button class="next-button replay-button" id="playAgainButton" type="button">Play again · 再玩一次 <span aria-hidden="true">↻</span></button>
@@ -119,6 +122,7 @@
     <footer>Everybody gets a cheer. Try again any time! · 每個人都很棒，想試幾次都可以！</footer>
   </main>
   <script src="./game.js"></script>
+  <script src="./arena.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>

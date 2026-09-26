@@ -41,6 +41,44 @@ Cells in reading order, left to right, top to bottom:
 Make ONE square atlas with exactly 9 separate icons in a strict 3-by-3 equal-cell grid. One original icon per cell; consistent scale and style; transparent background; ample clear gutters and margins; do not overlap or connect cells. No letters, numbers, labels, watermark, or logos.
 ```
 
+## Champion art and the arena show
+
+Rex and Bobo are original characters drawn for this game in the same sticker style as the face and family pictures. `images/champion-rex.webp` and `images/champion-bobo.webp` are six-frame pose sheets (256×256 frames, left to right: ready, power move, pillow block, wobble-and-giggle, bow, high-five); the stylesheet picks a frame with `background-position`, and the sparring buddy on the right is mirrored so the two champions face each other. `images/arena-star.webp`, `arena-swish.webp` (Rex's Tail Swish), `arena-bubbles.webp` (Bobo's Bubble Blast), and `arena-trophy.webp` are the flying stars, the move effects, and the finish trophy. If any of these pictures cannot load, the champions, moves, and trophy go back to their emoji (🦖 👾 🌀 🫧 🏆) and the game plays the same.
+
+`arena.js` runs the show without changing the question rules. A right answer plays the champion's power move: the move flies across, the buddy wobbles and giggles, and a burst of stars pops. Answers right in a row show a combo badge above the champion; it keeps counting into the next match and quietly fades on a miss, with no penalty. A miss is the buddy's pillow block. The winning answer continues into the buddy's bow and a shared high-five under a rainbow and a gentle star shower, and the finish card shows both champions with the trophy. Movement is soft and flash-free; with reduced motion the poses still change, but nothing flies, falls, or bobs. On a phone-width screen at least 560px tall, the arena card stays pinned at the top while the child scrolls to the answers, so the power move they earned is on screen with the question (checked at 360×740 and 390×844), and focused controls scroll clear of it.
+
+The art came from one `gpt-image-1.5` image request on 2026-09-26 (quality `low`, transparent background, PNG, 1024×1024 requested and 1254×1254 returned): a 4×4 sheet with the twelve poses and the four effect sprites. After inspecting the whole sheet, each sprite was cropped along the sheet's measured gutters, faint background haze below alpha 16 was cleared, and the twelve poses were placed on one shared scale and feet baseline. The pose sheets were saved as WebP with alpha, about 100 KB for both, and the four sprites about 25 KB together. Only the final images are committed. The prompt, with the grid paragraph added by the generation script at the end:
+
+```text
+Original, friendly character sprites for a gentle pretend-sparring learning game for a five-year-old. Style: cute flat sticker illustration like a warm children's picture book, simple rounded shapes, one consistent thick smooth dark plum-brown outline on every sprite, soft pastel colors with gentle two-tone cel shading, bold simple shapes that stay readable when shown small on a phone. Every sprite is centered in its own cell on a fully transparent background with no drop shadow, ground, frame, badge, circle, or backdrop.
+
+There are two original characters, not based on any existing character, mascot, toy, game, or show. Both are soft, round, and plush-toy cute, the same height, and always drawn as the same character in every cell.
+- Rex: a chubby baby dinosaur with a soft leaf-green body, a big round head, a pale butter-yellow belly, rosy cheeks, a row of small rounded coral-orange back plates from the head down to the tail tip, tiny arms, short sturdy legs, and a short thick tail. Big friendly dark dot eyes with a white shine and a wide happy smile with no teeth. No clothes, shoes, saddle, or shell.
+- Bobo: a small round fluffy monster shaped like a plump bean, soft lavender-purple fuzzy body, a lighter lilac tummy patch, two short rounded cream horns, rosy cheeks, short stubby arms with mitten hands, and short feet. Two big friendly dark eyes with a white shine and a wide happy smile with no teeth. No clothes.
+
+Every character pose shows the whole body from head to feet and tail, fills about 75 percent of the cell height at the same scale, and is drawn in a three-quarter view turned toward the RIGHT side of the picture, as if facing a friend who stands to the right. The mood is playful pretend play: nobody is hurt, scared, or angry.
+
+Cells in reading order, left to right, top to bottom:
+1. Rex ready: standing in a bouncy, playful ready stance, tiny arms raised in soft little fists, knees slightly bent, a confident happy smile.
+2. Rex Tail Swish: twirling playfully so the tail swishes out toward the right, two or three soft curved motion swoosh lines beside the tail, eyes happily closed.
+3. Rex pillow block: hugging a big soft sky-blue square pillow held up in front like a shield, peeking over the top with a cheeky smile.
+4. Rex wobble and giggle: wobbling off balance on one foot and leaning backward, eyes squeezed shut, laughing as if tickled, with two small curved wiggle lines beside the body.
+5. Rex bow: taking a polite, happy bow toward the right, bending forward, eyes closed, smiling, one tiny arm across the tummy.
+6. Rex high-five: stepping forward with one tiny arm raised high toward the upper right for a high-five, open hand, big joyful grin.
+7. Bobo ready: standing in a bouncy, playful ready stance, mitten hands raised in soft little fists, a confident happy smile.
+8. Bobo Bubble Blast: cheeks puffed, blowing a stream of shiny round soap bubbles from a small bubble wand held in one hand, the bubbles floating toward the right inside the cell.
+9. Bobo pillow block: hugging the same big soft sky-blue square pillow held up in front like a shield, peeking over the top with a cheeky smile.
+10. Bobo wobble and giggle: wobbling off balance on one foot and leaning backward, eyes squeezed shut, laughing as if tickled, with two small curved wiggle lines beside the body.
+11. Bobo bow: taking a polite, happy bow toward the right, bending forward, eyes closed, smiling, one mitten hand across the tummy.
+12. Bobo high-five: stepping forward with one mitten hand raised high toward the upper right for a high-five, open hand, big joyful grin.
+13. Star: one plump five-point golden-yellow star with rounded points and a white shine highlight, no face.
+14. Bubbles: a cluster of three shiny soap bubbles of different sizes, pale sky-blue with a soft rainbow sheen and white highlights, each clearly outlined.
+15. Swish: a playful curly wind swirl made of two soft mint-green swoosh curls with three small round green leaves.
+16. Trophy: a small shiny golden trophy cup with two round handles, a short base, and a simple star shape on the front.
+
+Make ONE square atlas with exactly 16 separate icons in a strict 4-by-4 equal-cell grid. One original icon per cell; consistent scale and style; transparent background; ample clear gutters and margins; do not overlap or connect cells. No letters, numbers, labels, watermark, or logos.
+```
+
 ## Local speech assets
 
 `audio/prompts.json` is the source for the 15 question prompts in each language. All 45 prompt clips are generated at build time with [Gemini 3.8 Flash TTS](https://aistudio.google.com/learn/gemini-3-8-flash-tts-developer-guide): English uses the child-friendly Aoede voice, Taiwan Mandarin uses Kore with the `zh-TW` locale and explicit Taiwan-Mandarin direction, and Japanese uses the `ja-jp-tutor-1` Tokyo Japanese voice. The Mandarin `family-sister` audio input uses 姐姐 (*jiějie*) to avoid Gemini reading 姊姊 with 姊's literary *zǐ* pronunciation; the visible prompt and answer label remain 姊姊. The game loads only bundled MP3s and makes no speech-service requests at runtime.
