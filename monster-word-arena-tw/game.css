@@ -62,9 +62,6 @@ h1 { margin: 4px 0 4px; color: #41405e; font-size: clamp(31px, 5vw, 46px); line-
 .arena-layout { flex: 1; display: grid; grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); align-items: stretch; gap: 16px; margin-top: 14px; }
 .arena-card, .challenge-card { min-width: 0; padding: 17px; }
 .arena-card { display: flex; flex-direction: column; background: linear-gradient(155deg, #e7f8e9, #d7f0f2); }
-/* Keep the stage in view above the answers so the child sees the move they earned. */
-@media (min-height: 560px) { .arena-card { position: sticky; z-index: 5; top: 8px; align-self: start; } }
-@media (max-width: 760px) and (min-height: 560px) { html { scroll-padding-top: calc(var(--arena-card-height, 0px) + 8px); } }
 .arena-heading { display: flex; align-items: center; justify-content: space-between; color: #658578; font-size: 10px; font-weight: 1000; letter-spacing: .12em; }
 .heart-dots { color: #e88a91; font-size: 14px; letter-spacing: .14em; }
 .arena-stage { position: relative; isolation: isolate; min-height: 310px; display: flex; align-items: stretch; justify-content: space-between; overflow: hidden; margin: 11px 0 8px; padding: 0 1%; border: 3px solid #fff; border-radius: 22px; background: linear-gradient(180deg, #a7dfec 0%, #d4f4e0 60%, #c9e7ab 61%, #add58e 100%); }
@@ -244,7 +241,6 @@ footer { padding: 12px 0 0; color: #7c7b8c; text-align: center; font-size: 11px;
   .intro { padding: 8px 0 12px; }
   .arena-layout { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
   .arena-card, .challenge-card { padding: 14px; }
-  .arena-card { top: 0; align-self: stretch; }
   .arena-stage { min-height: 244px; }
   .fighter-body { width: min(100%, 158px); }
   .fighter-face { font-size: clamp(72px, 19vw, 96px); }
@@ -311,6 +307,18 @@ footer { padding: 12px 0 0; color: #7c7b8c; text-align: center; font-size: 11px;
   .finish-panel { padding-top: 14px; }
   .finish-panel h2 { font-size: 21px; }
   .finish-panel p { font-size: 12px; }
+}
+/* On a phone the stage stays pinned above the answers so the child sees the move they earned; it compacts to leave most of the screen for the challenge. */
+@media (max-width: 760px) and (min-height: 560px) {
+  html { scroll-padding-top: calc(var(--arena-card-height, 0px) + 8px); }
+  .arena-card { position: sticky; z-index: 5; top: 0; padding-top: 8px; padding-bottom: 8px; }
+  .arena-stage { min-height: 168px; margin: 6px 0 4px; }
+  .fighter { padding: 30px 0 5px; }
+  .fighter-body { width: min(100%, 104px); }
+  .fighter-face { font-size: 68px; }
+  .arena-message { min-height: 34px; font-size: 11px; line-height: 1.35; }
+  .score-row { padding-top: 2px; }
+  .score-stars { font-size: 22px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }

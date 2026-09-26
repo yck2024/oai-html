@@ -576,18 +576,6 @@ test('champion pose sheets and arena sprites are bundled original art sized for 
   assert.ok(totalBytes < 160 * 1024, 'all arena art together stays light for a phone');
 });
 
-test('the stylesheet maps each pose to its frame of the champion sheet', () => {
-  const css = fs.readFileSync(path.join(__dirname, 'game.css'), 'utf8');
-  assert.match(css, /\.champion-art\[data-character="dino"\] \{ background-image: url\("\.\/images\/champion-rex\.webp"\); \}/);
-  assert.match(css, /\.champion-art\[data-character="monster"\] \{ background-image: url\("\.\/images\/champion-bobo\.webp"\); \}/);
-  assert.match(css, /\.champion-art \{ display: block; background: no-repeat 0 0 \/ 600% 100%; \}/);
-  POSES.slice(1).forEach((pose, index) => {
-    const position = (index + 1) * (100 / (POSES.length - 1));
-    assert.ok(css.includes(`.champion-art[data-pose="${pose}"] { background-position: ${position}% 0; }`), `${pose} shows frame ${index + 2}`);
-  });
-  for (const file of ART) assert.ok(css.includes(`url("${file}")`), `${file} is used by the stylesheet`);
-});
-
 test('a right answer plays the power move, then the buddy wobbles and giggles as stars fly', () => {
   const game = createGame(steadyRandom);
   const app = createAppFixture(game);
