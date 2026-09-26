@@ -93,6 +93,7 @@
 
     function recordWin(champion) {
       load();
+      const rewarded = state.wins < MAX_WINS;
       const wins = Math.min(state.wins + 1, MAX_WINS);
       const unlocked = COSTUMES.find(costume => costume.unlockAt === wins) || null;
       const wearing = { ...state.wearing };
@@ -101,6 +102,7 @@
       save();
       return {
         wins,
+        rewarded,
         sticker: { ...stickerForWin(wins) },
         firstTime: wins <= STICKERS.length,
         unlocked: unlocked && { ...unlocked },

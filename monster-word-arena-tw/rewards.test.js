@@ -422,6 +422,23 @@ test('a win shows the new sticker, and a costume unlock dresses the champion wit
   assert.equal(page.heroFighter.querySelector('.costume-overlay'), null, 'Bobo wears their own costume choice');
 });
 
+test('wins at the storage cap do not leave a sticker reward note', () => {
+  const storage = new MemoryStorage({ [STORAGE_KEY]: JSON.stringify({ v: 1, wins: 9998 }) });
+  const page = loadPage({ storage });
+  const finalReward = page.window.ArenaRewards.recordWin('dino');
+  assert.equal(finalReward.wins, 9999);
+  assert.equal(finalReward.rewarded, true);
+  assert.match(page.finishPanel.querySelector('#rewardNote').textContent, /Another sticker!/);
+
+  const cappedWin = page.window.ArenaRewards.recordWin('dino');
+  assert.equal(cappedWin.wins, 9999);
+  assert.equal(cappedWin.rewarded, false);
+  assert.equal(saved(storage).wins, 9999);
+  assert.equal(page.finishPanel.querySelector('#rewardNote'), null);
+  page.action('open').click();
+  assert.match(page.element('stickerBookIntro').textContent, /You won 9999 matches!/);
+});
+
 test('the sticker book shows collected stickers, lets the child change costumes, and has a two-step grown-up reset', () => {
   const storage = new MemoryStorage({ [STORAGE_KEY]: JSON.stringify({ v: 1, wins: 3, wearing: { dino: 'crown', monster: null } }) });
   const page = loadPage({ storage });

@@ -245,8 +245,8 @@
     const result = rewards.recordWin(champion);
     render();
     const finishPanel = $('#finishPanel');
-    if (finishPanel) {
-      finishPanel.querySelector('#rewardNote')?.remove();
+    finishPanel?.querySelector('#rewardNote')?.remove();
+    if (result.rewarded && finishPanel) {
       const note = rewardNote(result, champion);
       const playAgain = $('#playAgainButton');
       if (playAgain && playAgain.parentNode === finishPanel) finishPanel.insertBefore(note, playAgain);
