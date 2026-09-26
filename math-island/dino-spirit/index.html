@@ -26,9 +26,7 @@
     <section class="game-layout" aria-label="ひかりだまを あつめるゲーム">
       <section class="forest-card" aria-label="ラグとポワのいる森">
         <div class="scene-wrap">
-          <svg class="forest-scene" viewBox="0 0 600 330" role="img" aria-labelledby="sceneTitle sceneDescription" xmlns="http://www.w3.org/2000/svg">
-            <title id="sceneTitle">ラグとポワ、こだま森のなかまたち</title>
-            <desc id="sceneDescription">葉っぱの背びれをもつ緑の小さな恐竜ラグと、星のように光る森の精ポワが、木々のあいだで冒険しています。</desc>
+          <svg class="forest-scene" viewBox="0 0 600 330" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#bceee8"/><stop offset="1" stop-color="#f2f6c6"/></linearGradient>
               <linearGradient id="hill" x2="0" y2="1"><stop stop-color="#a9d993"/><stop offset="1" stop-color="#70b879"/></linearGradient>
@@ -50,35 +48,16 @@
               <circle class="forest-light" cx="486" cy="214" r="7" fill="url(#glow)"/>
               <circle class="forest-light" cx="566" cy="176" r="8" fill="url(#glow)"/>
             </g>
-            <g class="rag" aria-hidden="true">
-              <!-- Rag, the leaf-backed dinosaur -->
-              <path d="M175 248q-30 5-51-11 21 2 33-16 0 21 24 27" fill="#4d9e6f"/>
-              <ellipse cx="246" cy="221" rx="77" ry="54" fill="#68b77b"/>
-              <path d="M267 185q-12-27-31-37 27-2 39 21 6-28 29-39-2 29-13 47 30-23 48-17-13 27-46 39" fill="#38845e"/>
-              <path d="M201 255q-8 28 1 39h25q10-12 2-37M270 258q-5 24 7 36h24q9-12-1-35" fill="#58a96f"/>
-              <ellipse cx="311" cy="197" rx="47" ry="40" fill="#78c887"/>
-              <ellipse cx="347" cy="214" rx="27" ry="20" fill="#8bd394"/>
-              <ellipse cx="327" cy="188" rx="5" ry="7" fill="#183d40"/>
-              <circle cx="329" cy="185" r="1.7" fill="#fff"/>
-              <path d="M345 222q10 5 17-2" fill="none" stroke="#397957" stroke-width="3" stroke-linecap="round"/>
-              <circle cx="315" cy="210" r="6" fill="#f49d92" opacity=".7"/>
-              <g fill="#d9f29e"><circle cx="230" cy="213" r="8"/><circle cx="264" cy="231" r="7"/><circle cx="218" cy="239" r="5"/></g>
-            </g>
-            <g class="powa" aria-hidden="true">
-              <!-- Powa, a tiny forest light -->
-              <path d="M428 119q4 13 18 15-14 3-18 17-4-14-18-17 14-2 18-15" fill="#fff2a1" stroke="#e4bb52" stroke-width="2"/>
-              <circle cx="424" cy="133" r="2" fill="#526b56"/><circle cx="432" cy="133" r="2" fill="#526b56"/>
-              <path d="M424 139q4 4 8 0" fill="none" stroke="#526b56" stroke-width="1.7" stroke-linecap="round"/>
-              <circle cx="403" cy="158" r="5" fill="url(#glow)"/><circle cx="461" cy="181" r="7" fill="url(#glow)"/>
-            </g>
             <path d="M0 292q60-24 119 0t118 0 118 0 118 0 127 0" fill="none" stroke="#d8ef9a" stroke-width="5" stroke-linecap="round"/>
             <g fill="#eaf6bf"><path d="M87 283q-13-22-27-13 10 19 27 13m0 0q15-21 27-12-9 18-27 12"/><path d="M510 278q-11-19-24-11 9 16 24 11m0 0q13-18 25-10-8 16-25 10"/></g>
           </svg>
+          <img class="character-art rag" src="./images/rag.webp" alt="葉っぱの背びれと茶色のかばんを持った、緑の恐竜ラグ" width="759" height="894" decoding="async">
+          <img class="character-art powa" src="./images/powa.webp" alt="葉っぱのかんむりをかぶり、光るしっぽを引く森のせいポワ" width="617" height="997" decoding="async">
         </div>
         <div class="forest-caption">
-          <span class="character-name">🦕 ラグ</span>
+          <span class="character-name">ラグ</span>
           <span class="caption-divider" aria-hidden="true">＋</span>
-          <span class="character-name spirit-name">✨ ポワ</span>
+          <span class="character-name spirit-name">ポワ</span>
         </div>
         <p class="forest-hint" id="forestHint">こたえが あたると、森に ひかりが もどるよ。</p>
       </section>
