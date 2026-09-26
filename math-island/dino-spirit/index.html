@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#d9f4cf">
+  <title>ラグと こだま森のひかり｜Math Island</title>
+  <link rel="stylesheet" href="./game.css">
+</head>
+<body>
+  <main class="page-shell">
+    <header class="topbar">
+      <a class="menu-link" href="../index.html" aria-label="Math Island のゲーム一覧にもどる">← ゲームを えらぶ</a>
+      <div class="top-actions">
+        <span class="game-label">GAME 3</span>
+        <button class="restart-button" id="restartButton" type="button">↻ はじめから</button>
+      </div>
+    </header>
+
+    <section class="intro" aria-labelledby="gameTitle">
+      <p class="eyebrow">こだま森の ぼうけん</p>
+      <h1 id="gameTitle">ラグと こだま森のひかり</h1>
+      <p class="intro-copy">ちいさな きょうりゅうのラグと、森のせいポワ。<br class="desktop-break">かくれた ひかりだまを みつけよう！</p>
+    </section>
+
+    <section class="game-layout" aria-label="ひかりだまを あつめるゲーム">
+      <section class="forest-card" aria-label="ラグとポワのいる森">
+        <div class="scene-wrap">
+          <svg class="forest-scene" viewBox="0 0 600 330" role="img" aria-labelledby="sceneTitle sceneDescription" xmlns="http://www.w3.org/2000/svg">
+            <title id="sceneTitle">ラグとポワ、こだま森のなかまたち</title>
+            <desc id="sceneDescription">葉っぱの背びれをもつ緑の小さな恐竜ラグと、星のように光る森の精ポワが、木々のあいだで冒険しています。</desc>
+            <defs>
+              <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#bceee8"/><stop offset="1" stop-color="#f2f6c6"/></linearGradient>
+              <linearGradient id="hill" x2="0" y2="1"><stop stop-color="#a9d993"/><stop offset="1" stop-color="#70b879"/></linearGradient>
+              <radialGradient id="glow"><stop stop-color="#fff9b3"/><stop offset="1" stop-color="#f4c95d"/></radialGradient>
+            </defs>
+            <rect width="600" height="330" rx="24" fill="url(#sky)"/>
+            <circle cx="500" cy="57" r="29" fill="#fff5b0" opacity=".9"/>
+            <path d="M0 202Q112 115 222 205T442 193T650 200V330H0Z" fill="#c2e4a5"/>
+            <path d="M0 246Q133 178 275 240T600 226V330H0Z" fill="url(#hill)"/>
+            <g fill="#579a69">
+              <path d="M40 217V119h18v98zM20 152q29-59 58 0z"/><path d="M525 222V105h20v117zM500 146q35-69 70 0z"/>
+              <path d="M111 230V164h13v66zM94 183q24-44 48 0z"/><path d="M445 226V159h13v67zM427 178q24-45 49 0z"/>
+            </g>
+            <g fill="#86c784" opacity=".9"><circle cx="81" cy="80" r="6"/><circle cx="145" cy="55" r="4"/><circle cx="416" cy="75" r="5"/><circle cx="545" cy="93" r="4"/></g>
+            <g aria-hidden="true">
+              <!-- Rag, the leaf-backed dinosaur -->
+              <path d="M175 248q-30 5-51-11 21 2 33-16 0 21 24 27" fill="#4d9e6f"/>
+              <ellipse cx="246" cy="221" rx="77" ry="54" fill="#68b77b"/>
+              <path d="M267 185q-12-27-31-37 27-2 39 21 6-28 29-39-2 29-13 47 30-23 48-17-13 27-46 39" fill="#38845e"/>
+              <path d="M201 255q-8 28 1 39h25q10-12 2-37M270 258q-5 24 7 36h24q9-12-1-35" fill="#58a96f"/>
+              <ellipse cx="311" cy="197" rx="47" ry="40" fill="#78c887"/>
+              <ellipse cx="347" cy="214" rx="27" ry="20" fill="#8bd394"/>
+              <ellipse cx="327" cy="188" rx="5" ry="7" fill="#183d40"/>
+              <circle cx="329" cy="185" r="1.7" fill="#fff"/>
+              <path d="M345 222q10 5 17-2" fill="none" stroke="#397957" stroke-width="3" stroke-linecap="round"/>
+              <circle cx="315" cy="210" r="6" fill="#f49d92" opacity=".7"/>
+              <g fill="#d9f29e"><circle cx="230" cy="213" r="8"/><circle cx="264" cy="231" r="7"/><circle cx="218" cy="239" r="5"/></g>
+              <!-- Powa, a tiny forest light -->
+              <path d="M428 119q4 13 18 15-14 3-18 17-4-14-18-17 14-2 18-15" fill="#fff2a1" stroke="#e4bb52" stroke-width="2"/>
+              <circle cx="424" cy="133" r="2" fill="#526b56"/><circle cx="432" cy="133" r="2" fill="#526b56"/>
+              <path d="M424 139q4 4 8 0" fill="none" stroke="#526b56" stroke-width="1.7" stroke-linecap="round"/>
+              <circle cx="403" cy="158" r="5" fill="url(#glow)"/><circle cx="461" cy="181" r="7" fill="url(#glow)"/>
+            </g>
+            <path d="M0 292q60-24 119 0t118 0 118 0 118 0 127 0" fill="none" stroke="#d8ef9a" stroke-width="5" stroke-linecap="round"/>
+            <g fill="#eaf6bf"><path d="M87 283q-13-22-27-13 10 19 27 13m0 0q15-21 27-12-9 18-27 12"/><path d="M510 278q-11-19-24-11 9 16 24 11m0 0q13-18 25-10-8 16-25 10"/></g>
+          </svg>
+        </div>
+        <div class="forest-caption">
+          <span class="character-name">🦕 ラグ</span>
+          <span class="caption-divider" aria-hidden="true">＋</span>
+          <span class="character-name spirit-name">✨ ポワ</span>
+        </div>
+        <p class="forest-hint" id="forestHint">こたえが あたると、森に ひかりが もどるよ。</p>
+      </section>
+
+      <section class="quiz-card" aria-label="たしざんクイズ">
+        <div class="progress-top">
+          <span class="progress-title">ひかりだま</span>
+          <span id="progressText" class="progress-count">1 / 5</span>
+        </div>
+        <div id="progressBar" class="progress-track" role="progressbar" aria-label="あつめた ひかりだま" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0">
+          <div id="progressFill" class="progress-fill"></div>
+        </div>
+        <div class="progress-dots" id="progressDots" aria-hidden="true"></div>
+
+        <div id="questionArea">
+          <p class="question-label" id="questionLabel">もんだい 1</p>
+          <p class="instruction">ひかりだまは あわせて いくつ？</p>
+          <div class="equation" id="equation" aria-label="たしざんの もんだい"></div>
+          <p class="key-hint">こたえを タップしてね <span>（1・2・3キーも つかえるよ）</span></p>
+          <div class="answers" id="answers" role="group" aria-label="こたえを えらぶ"></div>
+          <p class="feedback" id="feedback" role="status" aria-live="polite" aria-atomic="true"></p>
+          <button class="next-button" id="nextButton" type="button" hidden>つぎの ひかりへ <span aria-hidden="true">➜</span></button>
+        </div>
+
+        <section id="finishPanel" class="finish-panel" aria-labelledby="finishTitle" hidden>
+          <div class="reward-icon" aria-hidden="true">🌟</div>
+          <h2 id="finishTitle">やったね！</h2>
+          <p>5この ひかりだまが あつまった！<br>こだま森に あかるいひかりが もどったよ。</p>
+          <div class="reward-badge">🏅 こだま森の たんけんバッジ</div>
+          <button class="next-button replay-button" id="replayButton" type="button">もういちど あそぶ <span aria-hidden="true">↻</span></button>
+        </section>
+      </section>
+    </section>
+    <p class="page-footer">ゆっくり かんがえて だいじょうぶ 🌱</p>
+  </main>
+  <script src="./game.js"></script>
+</body>
+</html>
