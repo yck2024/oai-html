@@ -26,7 +26,7 @@ To regenerate clips, install `ffmpeg`, provide `GEMINI_JOHN_API_KEY` through a p
 python3 monster-word-arena-tw/generate_gemini_audio.py --confirm
 ```
 
-Without `--overwrite`, only missing clips are generated. `--overwrite` regenerates existing clips, `--clip <clip-id>` (repeatable) limits generation to selected prompts or reactions, and `--language en|zh|ja` (repeatable) limits languages. For example, regenerate every English and Taiwan Mandarin prompt with Gemini:
+Without `--overwrite`, only missing clips are generated. `--overwrite` regenerates existing clips, `--clip <clip-id>` (repeatable) limits generation to selected prompts or reactions, and `--language en|zh|ja` (repeatable) limits languages. For example, regenerate every English and Taiwan Mandarin prompt and reaction clip with Gemini:
 
 ```sh
 python3 monster-word-arena-tw/generate_gemini_audio.py --overwrite --language en --language zh --confirm
