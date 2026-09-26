@@ -19,6 +19,8 @@
   const topicTabs = [...document.querySelectorAll('.topic-tab')];
   const speechLanguageButtons = [...document.querySelectorAll('.speech-language')];
   const speechStatus = document.querySelector('#speechStatus');
+  const speechControls = document.querySelector('#speechControls');
+  const speechInvite = document.querySelector('#speechInvite');
   const muteButton = document.querySelector('#muteButton');
   const musicButton = document.querySelector('#musicButton');
   const heroEmoji = document.querySelector('#heroEmoji');
@@ -36,6 +38,8 @@
   let speechLanguage = 'en';
   let speechEnabled = false;
   let speechMuted = false;
+  let reactionPlaying = false;
+  const reactionTurns = {};
   let questionAudio = null;
   try {
     if (typeof Audio !== 'undefined') {
@@ -58,14 +62,34 @@
 
   function playCurrentQuestion() {
     const state = game.getState();
-    if (!speechEnabled || speechMuted || state.finished) return;
+    reactionPlaying = false;
+    if (!speechEnabled || speechMuted || state.finished) {
+      speechPlayer.stop();
+      return;
+    }
     speechStatus.textContent = '';
     speechPlayer.play(state.question.audioId, speechLanguage);
   }
 
+  // Reactions share the question's audio element, so a new clip always cuts off the last one.
+  function playReaction(type) {
+    if (!speechEnabled || speechMuted) {
+      speechPlayer.stop();
+      return;
+    }
+    const variants = window.FriendlyArena.REACTIONS[type];
+    const turn = reactionTurns[type] || 0;
+    reactionTurns[type] = turn + 1;
+    reactionPlaying = true;
+    speechStatus.textContent = '';
+    speechPlayer.play(variants[turn % variants.length], speechLanguage);
+  }
+
   function renderSpeechControls() {
+    speechControls.classList.toggle('needs-voice', !speechEnabled);
+    speechInvite.hidden = speechEnabled;
     speechLanguageButtons.forEach(button => {
-      const selected = button.dataset.language === speechLanguage;
+      const selected = speechEnabled && button.dataset.language === speechLanguage;
       button.classList.toggle('is-active', selected);
       button.setAttribute('aria-pressed', String(selected));
     });
@@ -210,11 +234,12 @@
       void arenaStage.offsetWidth;
       arenaStage.classList.add('thinking');
       arenaMessage.textContent = 'Pillow block! Let’s think together! 枕頭擋住了！我們一起想一想！';
+      playReaction('try-again');
       sounds.play('boing', { delay: 0.04 });
       return;
     }
 
-    speechPlayer.stop();
+    playReaction(state.finished ? 'finish' : 'praise');
     button.classList.add('right-answer');
     sounds.play('sparkle', { delay: 0.03 });
     answerOptions.querySelectorAll('button').forEach(choice => { choice.disabled = true; });
@@ -246,6 +271,7 @@
 
   document.querySelector('#replayPromptButton').addEventListener('click', () => {
     speechEnabled = true;
+    renderSpeechControls();
     playCurrentQuestion();
   });
 
@@ -259,6 +285,7 @@
       return;
     }
     speechEnabled = true;
+    renderSpeechControls();
     speechStatus.textContent = '';
     playCurrentQuestion();
   });
@@ -271,6 +298,8 @@
 
   championCards.forEach(card => card.addEventListener('click', () => {
     if (!game.chooseChampion(card.dataset.champion)) return;
+    if (reactionPlaying) speechPlayer.stop();
+    reactionPlaying = false;
     sounds.play('tap');
     renderChampion(game.getState());
     arenaMessage.textContent = `${CHAMPIONS[card.dataset.champion].name} is ready to spar! ${CHAMPIONS[card.dataset.champion].emoji}`;
