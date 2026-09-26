@@ -6,8 +6,9 @@ const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 const test = require('node:test');
 const vm = require('node:vm');
-const { GOAL, TOPICS, createGame, createSpeechPlayer } = require('./game.js');
+const { GOAL, TOPICS, REACTIONS, createGame, createSpeechPlayer } = require('./game.js');
 const prompts = require('./audio/prompts.json');
+const reactions = require('./audio/reactions.json');
 
 const steadyRandom = () => 0.3;
 
@@ -28,6 +29,7 @@ class FakeElement {
     this.disabled = false;
     this.hidden = false;
     this.offsetWidth = 1;
+    this.style = {};
     const classes = new Set();
     this.classList = {
       add: (...names) => names.forEach(name => classes.add(name)),
@@ -108,12 +110,18 @@ class FakeAudio {
   play() { return Promise.resolve(); }
 }
 
+function clickAnswer(app, game, correct) {
+  const { answerId } = game.getState().question;
+  app.answerOptions.children.find(button => (button.dataset.choice === answerId) === correct).click();
+}
+
 function createAppFixture(game) {
   const ids = [
     'answerOptions', 'questionEnglish', 'questionChinese', 'questionPicture', 'equation', 'feedback',
     'nextButton', 'questionPanel', 'finishPanel', 'arenaStage', 'arenaMessage', 'scoreStars',
     'scoreCount', 'speechStatus', 'muteButton', 'heroEmoji', 'heroName', 'buddyEmoji', 'buddyName',
     'rivalPower', 'moveBubble', 'restartButton', 'playAgainButton', 'replayPromptButton',
+    'speechControls', 'speechInvite',
   ];
   const elements = new Map(ids.map(id => [`#${id}`, new FakeElement(id === 'nextButton' ? 'button' : 'div')]));
   elements.get('#scoreStars').children = Array.from({ length: 3 }, () => new FakeElement('span'));
@@ -144,17 +152,19 @@ function createAppFixture(game) {
     createTextNode: text => ({ textContent: String(text) }),
   };
   const window = {
-    FriendlyArena: { GOAL, createGame: () => game, createSpeechPlayer },
+    FriendlyArena: { GOAL, REACTIONS, createGame: () => game, createSpeechPlayer },
   };
   const played = [];
+  const audioState = { pauses: 0 };
   class RecordingAudio extends FakeAudio {
+    pause() { audioState.pauses += 1; }
     play() {
       played.push(this.src);
       return super.play();
     }
   }
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'app.js'), 'utf8'), { window, document, Audio: RecordingAudio });
-  return { elements, played, speechLanguageButtons, topicTabs, answerOptions: elements.get('#answerOptions'), nextButton: elements.get('#nextButton'), muteButton: elements.get('#muteButton') };
+  return { elements, played, audioState, championCards, topicTabs, speechLanguageButtons, answerOptions: elements.get('#answerOptions'), nextButton: elements.get('#nextButton'), muteButton: elements.get('#muteButton') };
 }
 
 test('addition questions stay within five and offer three distinct choices', () => {
@@ -329,6 +339,24 @@ test('every math and vocabulary prompt has bundled English, Taiwan Mandarin, and
   }
 });
 
+test('every spoken reaction has bundled English, Taiwan Mandarin, and Japanese audio', () => {
+  const reactionIds = Object.values(REACTIONS).flat();
+  assert.deepEqual(Object.keys(REACTIONS), ['praise', 'try-again', 'finish']);
+  assert.deepEqual([...reactionIds].sort(), Object.keys(reactions).sort());
+  for (const variants of Object.values(REACTIONS)) assert.ok(variants.length >= 1 && variants.length <= 3);
+  for (const audioId of reactionIds) {
+    assert.equal(prompts[audioId], undefined, `${audioId} does not collide with a question prompt`);
+    for (const language of ['en', 'zh', 'ja']) {
+      assert.ok(reactions[audioId][language], `${audioId} has ${language} text`);
+      const audioPath = path.join(__dirname, 'audio', language, `${audioId}.mp3`);
+      assert.ok(fs.existsSync(audioPath), `${audioPath} is bundled`);
+      assert.ok(fs.statSync(audioPath).size > 1024, `${audioPath} contains audio`);
+    }
+  }
+  assert.match(reactions['reaction-try-again-1'].zh, /[\u3400-\u9fff]/);
+  assert.match(reactions['reaction-finish-1'].ja, /[\u3040-\u30ff]/);
+});
+
 test('Gemini generator config covers all languages and routes only the sister clip through the voiced spelling', () => {
   const python = String.raw`
 import importlib.util, json
@@ -337,14 +365,16 @@ module_path = Path.cwd() / 'generate_gemini_audio.py'
 spec = importlib.util.spec_from_file_location('gemini_audio', module_path)
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
-prompts = json.loads(module.PROMPTS.read_text(encoding='utf-8'))
+prompts = module.load_clip_texts()
 clips = module.selected_clips(prompts, list(module.LANGUAGES), None, True)
+missing_only = module.selected_clips(prompts, list(module.LANGUAGES), None, False)
 repeated = module.selected_clips(prompts, ['en', 'en', 'zh', 'zh'], ['family-sister', 'family-sister'], True)
 print(json.dumps({
     'model': module.MODEL,
     'languages': module.LANGUAGES,
     'clips': clips,
     'repeated': repeated,
+    'missing_only': missing_only,
 }, ensure_ascii=False))
 `;
   const generated = JSON.parse(execFileSync('python3', ['-B', '-c', python], { cwd: __dirname, encoding: 'utf8' }));
@@ -354,10 +384,11 @@ print(json.dumps({
     Object.fromEntries(Object.entries(generated.languages).map(([key, config]) => [key, [config.locale, config.voice]])),
     { en: ['en-US', 'Aoede'], zh: ['zh-TW', 'Kore'], ja: ['ja-JP', 'ja-jp-tutor-1'] },
   );
-  assert.equal(generated.clips.length, 45);
+  assert.equal(generated.clips.length, 3 * (Object.keys(prompts).length + Object.keys(reactions).length));
+  assert.deepEqual(generated.missing_only, [], 'a default run regenerates no bundled clip');
   assert.deepEqual(generated.repeated, [['en', 'family-sister', 'Find your older sister!'], ['zh', 'family-sister', '誰是姐姐？']]);
   const audioText = new Map(generated.clips.map(([language, audioId, text]) => [`${language}/${audioId}`, text]));
-  for (const [audioId, translations] of Object.entries(prompts)) {
+  for (const [audioId, translations] of Object.entries({ ...prompts, ...reactions })) {
     for (const language of ['en', 'zh', 'ja']) {
       const expectedText = language === 'zh' && audioId === 'family-sister' ? '誰是姐姐？' : translations[language];
       assert.equal(audioText.get(`${language}/${audioId}`), expectedText);
@@ -503,4 +534,116 @@ test('speech remains optional when the browser has no audio player', () => {
   assert.equal(player.play('math-1-1', 'en'), false);
   assert.equal(unavailable, 1);
   assert.doesNotThrow(() => player.stop());
+});
+
+test('the voice picker shows no voice selected and keeps the invitation visible until audio is turned on', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  const invite = app.elements.get('#speechInvite');
+  const controls = app.elements.get('#speechControls');
+  const pressed = () => app.speechLanguageButtons.filter(button => button.getAttribute('aria-pressed') === 'true').map(button => button.dataset.language);
+  assert.deepEqual(pressed(), []);
+  assert.equal(invite.hidden, false);
+  assert.equal(controls.classList.contains('needs-voice'), true);
+
+  app.muteButton.click();
+  assert.deepEqual(pressed(), [], 'muting does not pick a voice');
+  assert.equal(invite.hidden, false);
+  app.muteButton.click();
+  assert.deepEqual(pressed(), ['en'], 'unmuting turns on the English voice it plays');
+  assert.equal(invite.hidden, true);
+  assert.equal(controls.classList.contains('needs-voice'), false);
+
+  const replayApp = createAppFixture(createGame(steadyRandom));
+  replayApp.elements.get('#replayPromptButton').click();
+  assert.deepEqual(replayApp.speechLanguageButtons.filter(button => button.getAttribute('aria-pressed') === 'true').map(button => button.dataset.language), ['en']);
+  assert.equal(replayApp.elements.get('#speechInvite').hidden, true);
+
+  const pickApp = createAppFixture(createGame(steadyRandom));
+  pickApp.speechLanguageButtons.find(button => button.dataset.language === 'ja').click();
+  assert.deepEqual(pickApp.speechLanguageButtons.filter(button => button.getAttribute('aria-pressed') === 'true').map(button => button.dataset.language), ['ja']);
+});
+
+test('reactions stay silent while the voice invitation shows, then follow the chosen language', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  const invite = app.elements.get('#speechInvite');
+  clickAnswer(app, game, false);
+  clickAnswer(app, game, true);
+  assert.deepEqual(app.played, [], 'no reaction before a voice, replay, or unmute');
+  assert.equal(invite.hidden, false, 'the invitation stays up while cheers are silent');
+
+  app.nextButton.click();
+  app.speechLanguageButtons.find(button => button.dataset.language === 'zh').click();
+  assert.equal(invite.hidden, true, 'choosing a voice turns on the questions and cheers together');
+  clickAnswer(app, game, false);
+  clickAnswer(app, game, false);
+  clickAnswer(app, game, true);
+  app.nextButton.click();
+  clickAnswer(app, game, true);
+  assert.equal(game.getState().finished, true);
+  const questionId = () => /\/(math-\d-\d)\.mp3$/;
+  assert.deepEqual(app.played.map(src => src.replace(questionId(), '/<question>.mp3')), [
+    './audio/zh/<question>.mp3',
+    './audio/zh/reaction-try-again-1.mp3',
+    './audio/zh/reaction-try-again-2.mp3',
+    './audio/zh/reaction-praise-1.mp3',
+    './audio/zh/<question>.mp3',
+    './audio/zh/reaction-finish-1.mp3',
+  ]);
+});
+
+test('a reaction never outlives the moment it belongs to', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  const last = () => app.played[app.played.length - 1];
+  app.speechLanguageButtons.find(button => button.dataset.language === 'en').click();
+
+  clickAnswer(app, game, true);
+  assert.match(last(), /reaction-praise-1/);
+  app.speechLanguageButtons.find(button => button.dataset.language === 'ja').click();
+  assert.match(last(), /^\.\/audio\/ja\/math-/, 'switching language replaces the reaction with the question');
+
+  app.nextButton.click();
+  clickAnswer(app, game, false);
+  assert.match(last(), /ja\/reaction-try-again-1/);
+  const pausesBeforeChampion = app.audioState.pauses;
+  app.championCards.find(card => card.dataset.champion === 'monster').click();
+  assert.ok(app.audioState.pauses > pausesBeforeChampion, 'switching champion stops the reaction');
+  const pausesAfterChampion = app.audioState.pauses;
+  app.championCards.find(card => card.dataset.champion === 'dino').click();
+  assert.equal(app.audioState.pauses, pausesAfterChampion, 'switching champion leaves question narration alone');
+
+  clickAnswer(app, game, false);
+  app.topicTabs.find(tab => tab.dataset.topic === 'colors').click();
+  assert.match(last(), /^\.\/audio\/ja\/colors-/, 'switching topic replaces the reaction with the new question');
+
+  clickAnswer(app, game, true);
+  assert.match(last(), /reaction-praise/);
+  app.elements.get('#restartButton').click();
+  assert.match(last(), /^\.\/audio\/ja\/colors-/, 'restarting replaces the reaction with the new question');
+
+  const count = app.played.length;
+  app.muteButton.click();
+  clickAnswer(app, game, false);
+  clickAnswer(app, game, true);
+  assert.equal(app.played.length, count, 'muted reactions stay silent');
+  app.muteButton.click();
+  assert.match(last(), /^\.\/audio\/ja\/colors-/, 'unmuting speaks the question, not a stale reaction');
+});
+
+test('the finish cheer stops when the language changes on the finish screen', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  app.speechLanguageButtons.find(button => button.dataset.language === 'en').click();
+  for (let star = 1; star <= GOAL; star += 1) {
+    clickAnswer(app, game, true);
+    if (star < GOAL) app.nextButton.click();
+  }
+  assert.match(app.played[app.played.length - 1], /en\/reaction-finish-1/);
+  const count = app.played.length;
+  const pauses = app.audioState.pauses;
+  app.speechLanguageButtons.find(button => button.dataset.language === 'zh').click();
+  assert.equal(app.played.length, count);
+  assert.ok(app.audioState.pauses > pauses);
 });
