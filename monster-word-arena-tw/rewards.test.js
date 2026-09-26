@@ -352,12 +352,13 @@ function loadPage({ storage = new MemoryStorage(), withApp = false, recordWin } 
       return storage;
     },
   });
-  const context = { window, document: page.document, Audio: FakeAudio };
+  const context = { window, document: page.document, Audio: FakeAudio, setInterval, clearInterval };
   const run = file => vm.runInNewContext(fs.readFileSync(path.join(__dirname, file), 'utf8'), context);
   let game = null;
   if (withApp) {
     game = gameApi.createGame(() => 0.3);
     window.FriendlyArena = { ...gameApi, createGame: () => game };
+    run('sounds.js');
     run('app.js');
   }
   run('rewards.js');
