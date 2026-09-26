@@ -106,7 +106,7 @@ Make ONE square atlas with exactly 16 separate icons in a strict 4-by-4 equal-ce
 
 A reason to replay, with nothing to lose: winning a match (three right answers) earns the next of 12 stickers (star, rainbow, heart, balloon, sun, medal, cupcake, bubbles, flower, moon, dino egg, lollipop), shown on the finish screen and collected in the **Sticker book** (貼紙本). After all 12, further wins add a ×2, ×3 count to each sticker in turn, up to a storage-safety limit of 9,999 recorded wins; later wins do not add stickers. The 2nd, 4th, 6th, and 8th wins unlock a crown, party hat, flower crown, and propeller cap; each unlock is put on the champion who just won, and the sticker book lets the child dress Rex or Bobo in any unlocked costume or take it off. There are no timers, streaks, penalties, losses, or purchases, and a miss never removes anything.
 
-A costume is a small overlay placed just above the champion picture in the arena and on the champion card, so it keeps working if the champion art changes. Rewards live in `rewards.js` (saved-state rules) and `rewards-app.js` (sticker book, finish-screen note, and overlays); `app.js` only calls `window.ArenaRewards?.recordWin(champion)` when a match is won, so the game plays normally without them. Every sticker and costume has its Traditional Chinese and English name as text; the pictures carry the same bilingual alt text inside elements hidden from screen readers, and each falls back to an emoji (⭐ 🌈 💖 🎈 ☀️ 🏅 🧁 🫧 🌼 🌙 🥚 🍭 👑 🎉 🌸 🧢) if its picture cannot load.
+A costume is a small overlay placed just above the champion picture in the arena and on the champion card, so it keeps working if the champion art changes. Rewards live in `rewards.js` (saved-state rules) and `rewards-app.js` (sticker book, finish-screen note, and overlays); `app.js` only calls `window.ArenaRewards?.recordWin(state.champion)` when a match is won, so the game plays normally without them. Every sticker and costume has its Traditional Chinese and English name as text; the pictures carry the same bilingual alt text inside elements hidden from screen readers, and each falls back to an emoji (⭐ 🌈 💖 🎈 ☀️ 🏅 🧁 🫧 🌼 🌙 🥚 🍭 👑 🎉 🌸 🧢) if its picture cannot load.
 
 The 16 sticker and costume pictures in `images/sticker-*.webp` and `images/costume-*.webp` are original illustrations made for this game in the same style as the face and family pictures. They came from one `gpt-image-1.5` image request on 2026-09-26 (quality `low`, transparent background, PNG, 1024×1024 requested and 1254×1254 returned): a 4×4 sheet with all 16 pictures, none unused. After inspecting the whole sheet, each picture was separated by its connected shapes (a few cross the equal-cell lines), faint background haze below alpha 16 was cleared, and each was fitted to its own square (costumes aligned to the bottom so they sit on a head) and saved as a 160×160 WebP with alpha, about 120 KB for all 16. Only the cropped pictures are committed. The prompt, with the grid paragraph added by the generation script at the end:
 
@@ -163,6 +163,6 @@ Effects and music play on their own `AudioContext`, never on the shared speech `
 ## Local checks
 
 ```sh
-node --test monster-word-arena-tw/game.test.js
+node --test monster-word-arena-tw/*.test.js
 python3 .github/scripts/validate_pages.py
 ```
