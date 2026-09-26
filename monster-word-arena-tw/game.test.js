@@ -1056,6 +1056,7 @@ test('a right answer plays the power move, then the buddy wobbles and giggles as
   const app = createAppFixture(game);
   const stage = app.elements.get('#arenaStage');
   const effects = app.elements.get('#stageEffects');
+  assert.equal(app.elements.get('#comboCount').textContent, '0');
   assert.equal(poses(app), 'ready/ready');
   assert.equal(app.elements.get('#moveBubble').dataset.move, 'swish');
 
@@ -1123,8 +1124,9 @@ test('the winning answer ends with the buddy bowing and a shared high-five under
   assert.equal(poses(app), 'high5/high5');
   assert.ok(stage.classList.contains('is-victory'));
   assert.equal(stage.classList.contains('is-bowing'), false);
-  assert.equal(effects.children.length, 12);
-  assert.ok(effects.children.every(star => star.className === 'shower-star'));
+  assert.equal(effects.children.length, 13);
+  assert.ok(effects.children.slice(0, 12).every(star => star.className === 'shower-star'));
+  assert.equal(effects.children[12].className, 'high-five-pop');
   app.clock.tick(10000);
   assert.equal(poses(app), 'high5/high5', 'the champions keep their high-five until play again');
 
@@ -1132,8 +1134,21 @@ test('the winning answer ends with the buddy bowing and a shared high-five under
   assert.equal(poses(app), 'ready/ready');
   assert.equal(stage.classList.contains('is-victory'), false);
   assert.equal(effects.children.length, 0);
+  assert.equal(app.elements.get('#comboBadge').classList.contains('is-shown'), false);
+  assert.equal(app.elements.get('#comboCount').textContent, '0');
   clickAnswer(app, game);
-  assert.match(app.elements.get('#arenaMessage').textContent, /4 in a row!/, 'a new match keeps the right-in-a-row streak going');
+  assert.doesNotMatch(app.elements.get('#arenaMessage').textContent, /in a row/);
+  assert.equal(app.elements.get('#comboCount').textContent, '1');
+  app.nextButton.click();
+  clickAnswer(app, game);
+  assert.match(app.elements.get('#arenaMessage').textContent, /2 in a row!/);
+
+  app.elements.get('#restartButton').click();
+  assert.equal(app.elements.get('#comboBadge').classList.contains('is-shown'), false);
+  assert.equal(app.elements.get('#comboCount').textContent, '0');
+  clickAnswer(app, game);
+  assert.doesNotMatch(app.elements.get('#arenaMessage').textContent, /in a row/);
+  assert.equal(app.elements.get('#comboCount').textContent, '1');
 });
 
 test('choosing a champion swaps both fighters and the power move art', () => {
@@ -1184,11 +1199,25 @@ function imageThatFires(outcome, requested) {
   };
 }
 
-test('champions fall back to emoji when the arena pictures cannot load', () => {
+test('champions and star effects fall back when the arena pictures cannot load', () => {
   const missing = [];
-  const app = createAppFixture(createGame(steadyRandom), { Image: imageThatFires('error', missing) });
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game, { Image: imageThatFires('error', missing) });
   assert.deepEqual(missing, ART);
   assert.ok(app.document.documentElement.classList.contains('no-champion-art'));
+
+  clickAnswer(app, game);
+  app.clock.tick(TIMING.land);
+  assert.ok(app.elements.get('#stageEffects').children.every(star => star.textContent === '★'));
+  app.nextButton.click();
+  clickAnswer(app, game);
+  app.nextButton.click();
+  clickAnswer(app, game);
+  app.clock.tick(TIMING.highFive);
+  const victoryStars = app.elements.get('#stageEffects').children;
+  assert.equal(victoryStars.filter(star => star.className === 'shower-star').length, 12);
+  assert.equal(victoryStars.filter(star => star.className === 'high-five-pop').length, 1);
+  assert.ok(victoryStars.every(star => star.textContent === '★'));
 
   const found = [];
   const loaded = createAppFixture(createGame(steadyRandom), { Image: imageThatFires('load', found) });

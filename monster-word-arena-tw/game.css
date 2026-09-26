@@ -121,7 +121,7 @@ h1 { margin: 4px 0 4px; color: #41405e; font-size: clamp(31px, 5vw, 46px); line-
 
 /* Stars: a burst where the move lands, and a gentle shower for the win. */
 .stage-effects { position: absolute; z-index: 5; inset: 0; pointer-events: none; }
-.burst-star, .shower-star, .is-victory .stage-effects::before { position: absolute; width: 30px; height: 30px; background: url("./images/arena-star.webp") no-repeat center / contain; }
+.burst-star, .shower-star, .high-five-pop { position: absolute; width: 30px; height: 30px; background: url("./images/arena-star.webp") no-repeat center / contain; font-size: 0; }
 .burst-star { top: 46%; left: 74%; animation: star-burst .95s ease-out both; }
 .burst-star:nth-child(1) { --dx: -64px; --dy: -52px; --spin: -150deg; }
 .burst-star:nth-child(2) { --dx: -10px; --dy: -86px; --spin: 120deg; width: 36px; height: 36px; }
@@ -143,7 +143,9 @@ h1 { margin: 4px 0 4px; color: #41405e; font-size: clamp(31px, 5vw, 46px); line-
 .shower-star:nth-child(10) { --delay: 1.2s; left: 47%; width: 26px; height: 26px; }
 .shower-star:nth-child(11) { --delay: .9s; left: 69%; width: 20px; height: 20px; }
 .shower-star:nth-child(12) { --delay: 1.4s; left: 91%; width: 24px; height: 24px; }
-.is-victory .stage-effects::before { top: 30%; left: 50%; width: 58px; height: 58px; animation: high-five-pop .7s ease-out .25s both; content: ""; }
+.high-five-pop { top: 30%; left: 50%; width: 58px; height: 58px; animation: high-five-pop .7s ease-out .25s both; }
+.no-champion-art .burst-star, .no-champion-art .shower-star, .no-champion-art .high-five-pop { display: grid; place-items: center; background: none; color: #eab543; font-size: 26px; line-height: 1; text-shadow: 0 1px #fff; }
+.no-champion-art .high-five-pop { font-size: 52px; }
 
 /* Right answers in a row: a combo badge that grows with each one and quietly fades on a miss. */
 .combo-badge { position: absolute; z-index: 4; top: 15px; left: 24.5%; display: flex; align-items: center; gap: 4px; padding: 3px 10px 3px 5px; border: 3px solid #fff; border-radius: 999px; background: #fff3c2; color: #8b5a17; box-shadow: 0 3px 0 #e4bd6280; opacity: 0; visibility: hidden; transform: translate(-50%, -6px) scale(.8); transition: opacity .35s, transform .35s, visibility 0s .35s; }

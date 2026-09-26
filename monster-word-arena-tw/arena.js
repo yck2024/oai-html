@@ -77,14 +77,15 @@
       effects.append(...Array.from({ length: count }, () => {
         const star = doc.createElement('span');
         star.className = className;
+        star.textContent = '★';
         return star;
       }));
     }
 
     function renderCombo() {
+      comboCount.textContent = String(streak);
       comboBadge.classList.toggle('is-shown', streak >= 2);
       if (streak < 2) return;
-      comboCount.textContent = String(streak);
       comboBadge.classList.remove('is-bumped');
       void comboBadge.offsetWidth;
       comboBadge.classList.add('is-bumped');
@@ -95,6 +96,12 @@
       stage.classList.remove(...ACTION_CLASSES);
       effects.replaceChildren();
       pose('ready', 'ready');
+    }
+
+    function startMatch() {
+      settle();
+      streak = 0;
+      renderCombo();
     }
 
     function setChampion(champion) {
@@ -128,6 +135,7 @@
           stage.classList.add('is-victory');
           effects.replaceChildren();
           sparkle('shower-star', SHOWER_STARS);
+          sparkle('high-five-pop', 1);
         });
       } else {
         later(TIMING.settle, () => {
@@ -148,7 +156,8 @@
       later(TIMING.blockSettle, () => pose('ready', 'ready'));
     }
 
-    return { setChampion, powerMove, block, settle };
+    renderCombo();
+    return { setChampion, startMatch, powerMove, block, settle };
   }
 
   const api = { POSES, MOVES, ART, TIMING, comboText, createArenaStage };

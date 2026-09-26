@@ -322,7 +322,7 @@
   function restart() {
     const state = game.restart();
     sounds.play('tap');
-    stage.settle();
+    stage.startMatch();
     arenaMessage.textContent = 'Ready, team? Pick any challenge!';
     renderChampion(state);
     renderQuestion(state);
