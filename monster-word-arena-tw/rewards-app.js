@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const { STICKERS, createRewards } = window.ArenaRewardsCore;
+  const { STICKERS, STORAGE_KEY, createRewards } = window.ArenaRewardsCore;
   const CHAMPIONS = {
     dino: { name: 'Rex', nameZh: '雷克斯' },
     monster: { name: 'Bobo', nameZh: '波波' },
@@ -10,7 +10,7 @@
   function deviceStorage() {
     try {
       const storage = window.localStorage;
-      const probe = `${window.ArenaRewardsCore.STORAGE_KEY}.probe`;
+      const probe = `${STORAGE_KEY}.probe`;
       storage.setItem(probe, '1');
       storage.removeItem(probe);
       return storage;
@@ -281,6 +281,7 @@
   });
   // Runs after app.js's own champion listener, so the selected card is already updated.
   document.querySelectorAll('.champion-card').forEach(card => card.addEventListener('click', render));
+  window.addEventListener('storage', event => { if (event.key === STORAGE_KEY) render(); });
 
   window.ArenaRewards = { recordWin, openBook };
   render();

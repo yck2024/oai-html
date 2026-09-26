@@ -62,8 +62,6 @@
       } catch (_error) {}
     }
 
-    load();
-
     function save() {
       if (!storage) return;
       try {
@@ -75,6 +73,7 @@
     }
 
     function getState() {
+      load();
       const { wins } = state;
       const stickers = STICKERS.map((sticker, index) => ({
         ...sticker,

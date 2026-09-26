@@ -86,6 +86,10 @@ test('a second open tab never overwrites newer progress saved by the other tab',
   const otherTab = createRewards(storage);
   otherTab.recordWin('dino');
   otherTab.recordWin('dino');
+  const shown = staleTab.getState();
+  assert.equal(shown.wins, 2, 'the other tab\'s wins show up right away');
+  assert.equal(shown.collected, 2);
+  assert.deepEqual(shown.wearing, { dino: 'crown', monster: null });
   assert.equal(staleTab.wear('monster', 'crown'), true, 'a costume won in the other tab can be worn');
   assert.deepEqual(saved(storage).wearing, { dino: 'crown', monster: 'crown' });
   otherTab.recordWin('dino');
@@ -97,6 +101,7 @@ test('a second open tab never overwrites newer progress saved by the other tab',
   assert.deepEqual(saved(storage), { v: 1, wins: 6, wearing: { dino: 'party-hat', monster: 'flower-crown' } });
 
   otherTab.reset();
+  assert.equal(staleTab.getState().wins, 0, 'a grown-up reset in the other tab shows up right away');
   assert.equal(staleTab.recordWin('dino').wins, 1, 'a grown-up reset in the other tab is respected');
   assert.deepEqual(saved(storage), { v: 1, wins: 1, wearing: { dino: null, monster: null } });
 });
@@ -336,7 +341,11 @@ class FakeAudio {
 
 function loadPage({ storage = new MemoryStorage(), withApp = false, recordWin } = {}) {
   const page = createPage();
-  const window = {};
+  const listeners = {};
+  const window = {
+    addEventListener(type, callback) { (listeners[type] ||= []).push(callback); },
+    dispatch(type, event) { (listeners[type] || []).forEach(callback => callback(event)); },
+  };
   Object.defineProperty(window, 'localStorage', {
     get() {
       if (storage === 'throws') throw new Error('storage disabled');
@@ -466,6 +475,24 @@ test('tapping inside the sticker book keeps it open, and only a tap on the backd
   assert.equal(book.open, true, 'a keyboard press on a button inside keeps it open');
   book.dispatch('click', { clientX: 40, clientY: 300 });
   assert.equal(book.open, false, 'a tap on the backdrop closes it');
+});
+
+test('progress saved in another tab shows up in this tab without a reload', () => {
+  const storage = new MemoryStorage();
+  const page = loadPage({ storage });
+  const otherTab = createRewards(storage);
+  otherTab.recordWin('dino');
+  otherTab.recordWin('dino');
+  page.window.dispatch('storage', { key: STORAGE_KEY });
+  assert.match(page.element('rewardSummary').textContent, /2 \/ 12 stickers/);
+  assert.ok(page.heroFighter.querySelector('.costume-overlay'), 'Rex wears the crown won in the other tab');
+
+  otherTab.reset();
+  page.window.dispatch('storage', { key: 'someOtherGame' });
+  assert.match(page.element('rewardSummary').textContent, /2 \/ 12 stickers/, 'other saved keys are ignored');
+  page.window.dispatch('storage', { key: STORAGE_KEY });
+  assert.match(page.element('rewardSummary').textContent, /0 \/ 12 stickers/);
+  assert.equal(page.heroFighter.querySelector('.costume-overlay'), null);
 });
 
 test('when the browser blocks storage the game still plays and the book says rewards last for this visit', () => {
