@@ -105,6 +105,10 @@
         <div id="questionArea">
           <p class="question-label" id="questionLabel">もんだい 1</p>
           <p class="instruction">ひかりだまは あわせて いくつ？</p>
+          <button class="speak-button" id="speakButton" type="button" aria-label="もんだいを きく">
+            <span aria-hidden="true">🔊</span> <span>もんだいを きく</span>
+          </button>
+          <p class="speech-status" id="speechStatus" role="status" aria-live="polite" aria-atomic="true"></p>
           <div class="equation" id="equation" aria-label="たしざんの もんだい"></div>
           <p class="key-hint">こたえを タップしてね <span>（1・2・3キーも つかえるよ）</span></p>
           <div class="answers" id="answers" role="group" aria-label="こたえを えらぶ"></div>
