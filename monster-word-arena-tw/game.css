@@ -111,6 +111,7 @@ h1 { margin: 4px 0 4px; color: #41405e; font-size: clamp(31px, 5vw, 46px); line-
 .speech-language, .speech-control { min-height: 40px; border: 2px solid #e8dfd0; border-radius: 12px; padding: 6px 11px; background: #fff; color: #5f5a72; font-size: 12px; font-weight: 950; cursor: pointer; touch-action: manipulation; }
 .speech-language.is-active { border-color: #9386ce; background: #eeeaff; color: #534b85; }
 .speech-control { background: #f2f7ec; }
+.music-toggle.is-active { border-color: #82c29c; background: #dff4e6; color: #3f6f52; }
 .speech-language:hover, .speech-control:hover { border-color: #c1b5de; }
 .speech-status { min-height: 18px; margin: 5px 2px 0; color: #7d7887; text-align: center; font-size: 10px; font-weight: 800; line-height: 1.4; }
 .question-panel { text-align: center; }
