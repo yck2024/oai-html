@@ -257,7 +257,11 @@
 
   action('open').addEventListener('click', openBook);
   closeButton.addEventListener('click', closeBook);
-  book.addEventListener('click', event => { if (event.target === book) closeBook(); });
+  book.addEventListener('click', event => {
+    const box = book.getBoundingClientRect();
+    const outside = event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom;
+    if (event.target === book && outside) closeBook();
+  });
   book.addEventListener('close', () => returnFocus?.focus?.());
   resetButton.addEventListener('click', () => {
     showResetConfirm(true);

@@ -247,6 +247,7 @@ footer { padding: 12px 0 0; color: #7c7b8c; text-align: center; font-size: 11px;
 .reward-note .reward-unlock { color: #6a5aa6; font-size: 13px; }
 .reward-book-link { justify-self: start; min-height: 44px; border: 2px solid #eadcff; border-radius: 12px; padding: 6px 12px; background: #fff; color: #5d5190; font-size: 12px; font-weight: 950; cursor: pointer; touch-action: manipulation; }
 .sticker-book { width: min(560px, calc(100% - 24px)); max-height: calc(100% - 24px); overflow: auto; border: 3px solid #fff; border-radius: 24px; padding: 16px; background: linear-gradient(160deg, #fffdf6, #f8f0ff); color: var(--ink); box-shadow: 0 16px 40px #3a2f5a40; }
+.sticker-book:not([open]) { display: none; }
 .sticker-book::backdrop { background: #3a2f5a66; }
 .sticker-book-head .pill-button { flex: none; white-space: nowrap; }
 .sticker-book-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }

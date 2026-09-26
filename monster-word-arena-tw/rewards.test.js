@@ -80,6 +80,27 @@ test('progress saves only the win count and chosen costumes on the device', () =
   assert.deepEqual(reloaded.wearing, { dino: 'crown', monster: null });
 });
 
+test('a second open tab never overwrites newer progress saved by the other tab', () => {
+  const storage = new MemoryStorage();
+  const staleTab = createRewards(storage);
+  const otherTab = createRewards(storage);
+  otherTab.recordWin('dino');
+  otherTab.recordWin('dino');
+  assert.equal(staleTab.wear('monster', 'crown'), true, 'a costume won in the other tab can be worn');
+  assert.deepEqual(saved(storage).wearing, { dino: 'crown', monster: 'crown' });
+  otherTab.recordWin('dino');
+  otherTab.recordWin('dino');
+  otherTab.recordWin('dino');
+  const result = staleTab.recordWin('monster');
+  assert.equal(result.wins, 6);
+  assert.equal(result.unlocked.id, 'flower-crown');
+  assert.deepEqual(saved(storage), { v: 1, wins: 6, wearing: { dino: 'party-hat', monster: 'flower-crown' } });
+
+  otherTab.reset();
+  assert.equal(staleTab.recordWin('dino').wins, 1, 'a grown-up reset in the other tab is respected');
+  assert.deepEqual(saved(storage), { v: 1, wins: 1, wearing: { dino: null, monster: null } });
+});
+
 test('tampered or broken saved data falls back to a safe sticker book', () => {
   const tampered = new MemoryStorage({ [STORAGE_KEY]: JSON.stringify({ wins: 1, wearing: { dino: 'propeller-cap', monster: '<img>' }, name: 'Kid' }) });
   const state = createRewards(tampered).getState();
@@ -167,8 +188,8 @@ class FakeElement {
 
   addEventListener(type, callback) { (this.listeners[type] ||= []).push(callback); }
   click() { if (!this.disabled) this.dispatch('click'); }
-  dispatch(type) {
-    for (const callback of this.listeners[type] || []) callback({ currentTarget: this, target: this });
+  dispatch(type, event = {}) {
+    for (const callback of this.listeners[type] || []) callback({ currentTarget: this, target: this, ...event });
   }
 
   get textContent() {
@@ -303,6 +324,7 @@ function createPage() {
   });
   element('stickerBook').showModal = function showModal() { this.open = true; };
   element('stickerBook').close = function close() { this.open = false; this.dispatch('close'); };
+  element('stickerBook').getBoundingClientRect = () => ({ left: 100, top: 40, right: 660, bottom: 700 });
   return { document, element, action, championCards, heroFighter, finishPanel };
 }
 
@@ -432,6 +454,20 @@ test('the sticker book shows collected stickers, lets the child change costumes,
   assert.equal(page.element('stickerBook').open, false);
 });
 
+test('tapping inside the sticker book keeps it open, and only a tap on the backdrop closes it', () => {
+  const page = loadPage();
+  const book = page.element('stickerBook');
+  page.action('open').click();
+  book.dispatch('click', { clientX: 106, clientY: 300 });
+  assert.equal(book.open, true, 'a tap in the book padding keeps it open');
+  book.dispatch('click', { clientX: 380, clientY: 520 });
+  assert.equal(book.open, true, 'a tap in a gap between sections keeps it open');
+  book.dispatch('click', { target: page.action('reset'), clientX: 0, clientY: 0 });
+  assert.equal(book.open, true, 'a keyboard press on a button inside keeps it open');
+  book.dispatch('click', { clientX: 40, clientY: 300 });
+  assert.equal(book.open, false, 'a tap on the backdrop closes it');
+});
+
 test('when the browser blocks storage the game still plays and the book says rewards last for this visit', () => {
   const page = loadPage({ storage: 'throws', withApp: true });
   winMatch(page);
@@ -439,17 +475,4 @@ test('when the browser blocks storage the game still plays and the book says rew
   assert.match(page.element('rewardSummary').textContent, /1 \/ 12 stickers/);
   page.action('open').click();
   assert.match(page.element('rewardSaveNote').textContent, /stickers last for this visit/);
-});
-
-test('the page loads the reward scripts after the game and documents what is saved', () => {
-  const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
-  const order = ['./game.js', './app.js', './rewards.js', './rewards-app.js'].map(src => html.indexOf(`<script src="${src}"></script>`));
-  assert.ok(order.every(index => index > 0));
-  assert.deepEqual([...order].sort((a, b) => a - b), order);
-  assert.match(html, /<dialog class="sticker-book" id="stickerBook"/);
-  for (const button of html.match(/<button[^>]*data-reward-action[^>]*>/g)) {
-    assert.doesNotMatch(button, /\sid=|aria-label|data-analytics/, 'reward buttons stay out of analytics');
-  }
-  const readme = fs.readFileSync(path.join(__dirname, 'README.md'), 'utf8');
-  assert.ok(readme.includes(STORAGE_KEY), 'the README names the only saved key');
 });

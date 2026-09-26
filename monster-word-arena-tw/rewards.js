@@ -54,14 +54,15 @@
     let persistent = Boolean(storage);
     let state = { wins: 0, wearing: emptyWearing() };
 
-    if (storage) {
+    function load() {
+      if (!storage || !persistent) return;
       try {
         const raw = storage.getItem(STORAGE_KEY);
-        if (raw) state = cleanSave(JSON.parse(raw));
-      } catch (_error) {
-        state = { wins: 0, wearing: emptyWearing() };
-      }
+        state = raw ? cleanSave(JSON.parse(raw)) : { wins: 0, wearing: emptyWearing() };
+      } catch (_error) {}
     }
+
+    load();
 
     function save() {
       if (!storage) return;
@@ -92,6 +93,7 @@
     }
 
     function recordWin(champion) {
+      load();
       const wins = Math.min(state.wins + 1, MAX_WINS);
       const unlocked = COSTUMES.find(costume => costume.unlockAt === wins) || null;
       const wearing = { ...state.wearing };
@@ -108,6 +110,7 @@
 
     function wear(champion, costumeId) {
       if (!CHAMPIONS.includes(champion)) return false;
+      load();
       if (costumeId !== null && !isUnlocked(costumeId, state.wins)) return false;
       state = { ...state, wearing: { ...state.wearing, [champion]: costumeId } };
       save();
