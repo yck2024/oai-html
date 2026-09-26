@@ -141,7 +141,6 @@
     button.addEventListener('click', () => chooseAnswer(button, option.id));
 
     if (question.topic === 'colors') {
-      button.classList.add('color-option');
       const swatch = document.createElement('span');
       swatch.className = 'color-swatch';
       swatch.style.backgroundColor = option.swatch;
