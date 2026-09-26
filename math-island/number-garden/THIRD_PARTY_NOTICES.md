@@ -8,4 +8,4 @@ Source: https://github.com/mrdoob/three.js
 
 Japanese speech clips in `audio/` were generated with Aivis Cloud using the Mao voice. Attribution: **AivisSpeech: まお**.
 
-Source: Aivis Cloud API text-to-speech, https://api.aivis-project.com/v1/tts/synthesize (the production endpoint used by `generate_aivis_audio.py`)
+Source: https://api.aivis-project.com/v1/demo/realtime-streaming

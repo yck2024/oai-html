@@ -100,7 +100,7 @@ class FakeDocument {
   dispatchEvent(type, event) { (this.listeners[type] || []).forEach((listener) => listener(event)); }
 }
 
-function startGame({ play } = {}) {
+function startGame({ play, random = () => 0.999 } = {}) {
   const document = new FakeDocument();
   let audio;
   class FakeAudio {
@@ -117,7 +117,7 @@ function startGame({ play } = {}) {
     }
   }
   const deterministicMath = Object.create(Math);
-  deterministicMath.random = () => 0.999;
+  deterministicMath.random = random;
   vm.runInNewContext(gameScript, { document, Audio: FakeAudio, Math: deterministicMath });
   return { document, elements: document.elements, audio };
 }
@@ -205,4 +205,36 @@ test('autoplay blocked by browser policy retries on the first ordinary interacti
   document.dispatchEvent('click', { target: elements.get('#answers').children[0] });
   assert.equal(audio.attempts.length, 2, 'first game interaction should retry the current prompt');
   assert.equal(audio.attempts[0], audio.attempts[1]);
+});
+
+test('subtraction rounds stay in ascending difficulty on load, restart, and mode switch for any shuffle', () => {
+  const ascending = [[2, 1], [4, 1], [6, 2], [8, 3], [10, 4]];
+  const additionOrders = new Set();
+  for (const seed of [0, 0.1, 0.25, 0.5, 0.75, 0.9]) {
+    let state = seed;
+    const random = () => {
+      state = (state * 9301 + 0.49297) % 1;
+      return state;
+    };
+    const { elements } = startGame({ random });
+    const playRounds = () => Array.from({ length: 5 }, () => {
+      const { left, right } = answerCurrentProblem(elements);
+      return [left, right];
+    });
+
+    assert.deepEqual(playRounds(), ascending, `initial load with seed ${seed}`);
+    elements.get('#replayButton').click();
+    assert.deepEqual(playRounds(), ascending, `restart with seed ${seed}`);
+    elements.get('#additionModeButton').click();
+    const additionOrder = playRounds();
+    assert.deepEqual(
+      [...additionOrder].sort((a, b) => a[0] - b[0] || a[1] - b[1]),
+      [[2, 1], [3, 4], [4, 1], [5, 2], [6, 3]],
+      `addition keeps its question set with seed ${seed}`,
+    );
+    additionOrders.add(JSON.stringify(additionOrder));
+    elements.get('#subtractionModeButton').click();
+    assert.deepEqual(playRounds(), ascending, `mode switch with seed ${seed}`);
+  }
+  assert.ok(additionOrders.size > 1, 'addition rounds should still be shuffled');
 });

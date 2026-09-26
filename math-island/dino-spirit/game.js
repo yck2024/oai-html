@@ -45,7 +45,7 @@
   const forestLights = document.querySelectorAll('.forest-light');
 
   let operation = 'subtraction';
-  let rounds = shuffled(questionSets[operation]);
+  let rounds = roundsFor(operation);
   let roundIndex = 0;
   let wrongCount = 0;
   let finished = false;
@@ -57,6 +57,10 @@
       [result[index], result[other]] = [result[other], result[index]];
     }
     return result;
+  }
+
+  function roundsFor(nextOperation) {
+    return nextOperation === 'subtraction' ? questionSets.subtraction : shuffled(questionSets.addition);
   }
 
   function setProgress(collected) {
@@ -203,7 +207,7 @@
   function selectOperation(nextOperation) {
     if (operation === nextOperation) return;
     operation = nextOperation;
-    rounds = shuffled(questionSets[operation]);
+    rounds = roundsFor(operation);
     roundIndex = 0;
     wrongCount = 0;
     finished = false;
@@ -218,7 +222,7 @@
   }
 
   function restart() {
-    rounds = shuffled(questionSets[operation]);
+    rounds = roundsFor(operation);
     roundIndex = 0;
     wrongCount = 0;
     finished = false;
