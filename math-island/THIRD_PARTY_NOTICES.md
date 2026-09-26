@@ -18,4 +18,4 @@ Source: https://github.com/mrdoob/three.js
 
 Japanese speech clips in Poko, Number Garden, and Rag and the Echo Forest were generated with Aivis Cloud using the Mao voice. Attribution: **AivisSpeech: まお**.
 
-Source: https://api.aivis-project.com/v1/demo/realtime-streaming
+Source: Aivis Cloud API text-to-speech, https://api.aivis-project.com/v1/tts/synthesize (the production endpoint used by number-garden/generate_aivis_audio.py)
