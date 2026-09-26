@@ -495,6 +495,26 @@ test('tapping inside the sticker book keeps it open, and only a tap on the backd
   assert.equal(book.open, false, 'a tap on the backdrop closes it');
 });
 
+test('a storage refresh preserves costume focus and falls back when the choice locks', () => {
+  const storage = new MemoryStorage({ [STORAGE_KEY]: JSON.stringify({ v: 1, wins: 2, wearing: { dino: 'crown', monster: null } }) });
+  const page = loadPage({ storage });
+  page.action('open').click();
+  const choice = () => page.element('costumeRows').querySelector('[data-champion="dino"][data-costume="crown"]');
+  const original = choice();
+  original.focus();
+
+  const otherTab = createRewards(storage);
+  otherTab.recordWin('monster');
+  page.window.dispatch('storage', { key: STORAGE_KEY });
+  assert.notEqual(choice(), original, 'the book rebuilt its costume choices');
+  assert.equal(page.document.activeElement, choice(), 'focus follows the still-available choice');
+
+  otherTab.reset();
+  page.window.dispatch('storage', { key: STORAGE_KEY });
+  assert.equal(choice().disabled, true, 'the reset made the focused choice unavailable');
+  assert.equal(page.document.activeElement, page.action('close'), 'focus falls back to the dialog close button');
+});
+
 test('progress saved in another tab shows up in this tab without a reload', () => {
   const storage = new MemoryStorage();
   const page = loadPage({ storage });

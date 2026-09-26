@@ -281,7 +281,18 @@
   });
   // Runs after app.js's own champion listener, so the selected card is already updated.
   document.querySelectorAll('.champion-card').forEach(card => card.addEventListener('click', render));
-  window.addEventListener('storage', event => { if (event.key === STORAGE_KEY) render(); });
+  window.addEventListener('storage', event => {
+    if (event.key !== STORAGE_KEY) return;
+    const focused = document.activeElement;
+    const choice = focused?.classList.contains('costume-choice')
+      ? [focused.dataset.champion, focused.dataset.costume]
+      : null;
+    render();
+    if (!choice) return;
+    const replacement = costumeRows.querySelector(`[data-champion="${choice[0]}"][data-costume="${choice[1]}"]`);
+    if (replacement && !replacement.disabled) replacement.focus();
+    else closeButton.focus();
+  });
 
   window.ArenaRewards = { recordWin };
   render();
