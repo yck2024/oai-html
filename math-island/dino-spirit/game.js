@@ -18,6 +18,10 @@
   const questionLabel = document.querySelector('#questionLabel');
   const equation = document.querySelector('#equation');
   const answers = document.querySelector('#answers');
+  const speakButton = document.querySelector('#speakButton');
+  const speechStatus = document.querySelector('#speechStatus');
+  const questionAudio = new Audio();
+  questionAudio.preload = 'none';
   const feedback = document.querySelector('#feedback');
   const nextButton = document.querySelector('#nextButton');
   const questionArea = document.querySelector('#questionArea');
@@ -57,7 +61,33 @@
     return shuffled([answer - 1, answer, answer + 1]);
   }
 
+  let speechAttempt = 0;
+
+  function stopQuestionAudio() {
+    speechAttempt += 1;
+    questionAudio.pause();
+    questionAudio.currentTime = 0;
+  }
+
+  function speakQuestion() {
+    stopQuestionAudio();
+    const attempt = speechAttempt;
+    const round = rounds[roundIndex];
+    const clip = `question-${round.left}-${round.right}.mp3`;
+    questionAudio.src = `./audio/${clip}`;
+    questionAudio.load();
+    speakButton.lastElementChild.textContent = 'もういちど きく';
+    speakButton.setAttribute('aria-label', 'もういちど きく');
+    speechStatus.textContent = '';
+    questionAudio.play().catch(() => {
+      if (attempt === speechAttempt) {
+        speechStatus.textContent = 'おとを ならせないよ。もういちど タップしてね。';
+      }
+    });
+  }
+
   function renderRound({ focusAnswer = false } = {}) {
+    stopQuestionAudio();
     const round = rounds[roundIndex];
     const correctAnswer = round.left + round.right;
     questionLabel.textContent = `もんだい ${roundIndex + 1}`;
@@ -76,6 +106,9 @@
     });
     feedback.textContent = '';
     feedback.classList.remove('try-again');
+    speakButton.lastElementChild.textContent = 'もんだいを きく';
+    speakButton.setAttribute('aria-label', 'もんだいを きく');
+    speechStatus.textContent = '';
     forestCard.classList.remove('cheer');
     nextButton.hidden = true;
     nextButton.textContent = roundIndex === rounds.length - 1 ? 'さいごの ひかりを とどける' : 'つぎの ひかりへ';
@@ -106,6 +139,7 @@
   }
 
   function showFinish() {
+    stopQuestionAudio();
     finished = true;
     questionArea.hidden = true;
     finishPanel.hidden = false;
@@ -139,13 +173,14 @@
     dot.className = 'progress-dot';
     progressDots.append(dot);
   });
+  speakButton.addEventListener('click', speakQuestion);
   nextButton.addEventListener('click', advance);
   restartButton.addEventListener('click', restart);
   replayButton.addEventListener('click', restart);
   document.addEventListener('keydown', (event) => {
     if (!['1', '2', '3'].includes(event.key) || finished || !nextButton.hidden) return;
     const activeElement = document.activeElement;
-    if (activeElement !== document.body && !answers.contains(activeElement)) return;
+    if (activeElement !== document.body && activeElement !== speakButton && !answers.contains(activeElement)) return;
     event.preventDefault();
     answers.querySelectorAll('button')[Number(event.key) - 1]?.click();
   });

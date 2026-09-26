@@ -12,12 +12,12 @@ All three games are static HTML, CSS, JavaScript, and bundled assets. They do no
 
 Open index.html locally to start. Browser storage can behave differently for file pages; for a shareable link and reliable local progress, the games are published under the OAI HTML GitHub Pages gallery. Each visitor's progress remains in that visitor's own browser.
 
-Japanese AivisSpeech voice clips are packaged in the Poko and Number Garden audio folders, so no text or API key is sent to Aivis during play. Credit: **AivisSpeech: まお**. The optional generator in number-garden/generate_aivis_audio.py can recreate Number Garden's clips after you provide a private Aivis API key; it previews the character count, respects a 1,000-character cap, and asks before making requests. Keep API keys out of this public repository.
+Japanese AivisSpeech voice clips are packaged in the Poko, Number Garden, and Rag and the Echo Forest audio folders, so no text or API key is sent to Aivis during play. Credit: **AivisSpeech: まお**. The optional generator in number-garden/generate_aivis_audio.py can recreate Number Garden's clips after you provide a private Aivis API key; it previews the character count, respects a 1,000-character cap, and asks before making requests. Keep API keys out of this public repository.
 
 ## Files
 
 - index.html — game chooser and link back to the gallery
 - poko/ — original Poko game and its narration clips
 - number-garden/ — 3D Number Garden game, assets, and audio generator
-- dino-spirit/ — Rag and the Echo Forest, an original addition game with local HTML, CSS, and JavaScript
+- dino-spirit/ — Rag and the Echo Forest, an original addition game and its question narration clips
 - THIRD_PARTY_NOTICES.md — library and voice attribution
