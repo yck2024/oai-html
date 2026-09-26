@@ -47,7 +47,7 @@ GA4 Enhanced Measurement already tracks page views, outbound clicks (`click`), f
 
 - `section_nav` (in-page `#` links; `target_section`)
 - `button_click` (buttons with an `id`, `data-analytics-id`, `aria-label`, or `data-analytics-label` only, outside `data-analytics-ignore` containers)
-- `content_copy` (selection length bucket only)
+- `content_copy` (selection length bucket only, excluding selections intersecting `data-analytics-ignore` containers)
 - `scroll_depth` (25/50/75; `percent_scrolled`, same parameter as the built-in 90% `scroll` event)
 - `engaged_30s`
 
@@ -55,7 +55,7 @@ Event parameters (`element_id`, `element_label`, `target_section`, `percent_scro
 
 Interactive pages can add semantic events with `data-analytics-event` / `data-analytics-label` or `window.oaiTrack(eventName, params)`.
 
-Do not send user-entered text, copied content, credentials, private identifiers, or other sensitive data to analytics. Taiwan storybook selection and page turns stay in page state without URL or history changes; clicks are excluded, and gallery-wide page-view URLs, referrers, and titles omit story and page identifiers.
+Do not send user-entered text, copied content, credentials, private identifiers, or other sensitive data to analytics. Taiwan storybook selection and page turns stay in page state without URL or history changes; clicks and copies from the storybook are excluded, and gallery-wide page-view URLs, referrers, and titles omit story and page identifiers. Listening mode, 注音 visibility, and auto-turn preference are remembered only in this browser; no identity, answers, or reading history are stored.
 
 ## Taiwan story references
 

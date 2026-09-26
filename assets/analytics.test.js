@@ -29,11 +29,17 @@ function storybookPageviewHarness(href, referrer) {
 function analyticsHarness() {
   const events = [];
   const listeners = {};
-  const window = { gtag: (...args) => events.push(args) };
+  const ignoredRoot = {};
+  let selection = null;
+  const window = {
+    gtag: (...args) => events.push(args),
+    getSelection: () => selection,
+  };
   const document = {
     visibilityState: 'hidden',
     documentElement: { scrollHeight: 1 },
     addEventListener: (name, handler) => { listeners[name] = handler; },
+    querySelectorAll: selector => selector === '[data-analytics-ignore]' ? [ignoredRoot] : [],
   };
   const context = {
     window,
@@ -55,7 +61,6 @@ function analyticsHarness() {
         dataset: {},
         getAttribute: name => name === 'aria-label' ? label : null,
       };
-      const ignoredRoot = {};
       const target = {
         closest(selector) {
           if (selector === '[data-analytics-ignore]') return ignored ? ignoredRoot : null;
@@ -64,6 +69,17 @@ function analyticsHarness() {
         },
       };
       listeners.click({ target });
+    },
+    copy(intersections, text) {
+      const ranges = intersections.map(intersectsIgnored => ({
+        intersectsNode: node => node === ignoredRoot && intersectsIgnored,
+      }));
+      selection = {
+        rangeCount: ranges.length,
+        getRangeAt: index => ranges[index],
+        toString: () => text,
+      };
+      listeners.copy();
     },
   };
 }
@@ -90,4 +106,15 @@ test('automatic click analytics skip ignored story content without changing acce
   assert.equal(analytics.events.length, 1);
   assert.equal(analytics.events[0][1], 'button_click');
   assert.equal(analytics.events[0][2].element_label, 'Read aloud');
+});
+
+test('copy analytics skip selections intersecting ignored story content', () => {
+  const analytics = analyticsHarness();
+  analytics.copy([false, true], 'selected story text');
+  assert.equal(analytics.events.length, 0);
+
+  analytics.copy([false], 'ordinary notes');
+  assert.equal(analytics.events.length, 1);
+  assert.equal(analytics.events[0][1], 'content_copy');
+  assert.equal(analytics.events[0][2].selection_length_bucket, '1_39');
 });
