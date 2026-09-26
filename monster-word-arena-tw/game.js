@@ -20,6 +20,12 @@
     { id: 'brother', zh: '哥哥', en: 'older brother', icon: '👦', image: './images/family-brother.webp' },
     { id: 'sister', zh: '姊姊', en: 'older sister', icon: '👧', image: './images/family-sister.webp' },
   ];
+  // Spoken reaction clips (audio/reactions.json); variants take turns so repeats feel fresh.
+  const REACTIONS = {
+    praise: ['reaction-praise-1', 'reaction-praise-2'],
+    'try-again': ['reaction-try-again-1', 'reaction-try-again-2'],
+    finish: ['reaction-finish-1'],
+  };
   const ADDITION = [
     { left: 1, right: 1 },
     { left: 1, right: 2 },
@@ -202,7 +208,7 @@
     return { play, stop };
   }
 
-  const api = { GOAL, TOPICS, createGame, createSpeechPlayer };
+  const api = { GOAL, TOPICS, REACTIONS, createGame, createSpeechPlayer };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof window !== 'undefined') window.FriendlyArena = api;
 })();
