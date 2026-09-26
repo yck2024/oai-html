@@ -129,7 +129,7 @@ h1 { margin: 4px 0 4px; color: #41405e; font-size: clamp(31px, 5vw, 46px); line-
 .color-swatch { width: 24px; height: 24px; border: 2px solid #ffffff; border-radius: 50%; box-shadow: 0 0 0 1px #b9b5af; }
 .color-label { font-size: 11px; line-height: 1.2; }
 .answer-icon { flex: none; font-size: 23px; }
-.word-art { display: block; object-fit: contain; }
+.word-art { display: block; object-fit: contain; pointer-events: none; user-select: none; -webkit-user-select: none; -webkit-user-drag: none; -webkit-touch-callout: none; }
 .question-picture .word-art { width: 72px; height: 72px; margin: 0 auto; }
 .answer-icon .word-art { width: 44px; height: 44px; }
 .answer-label { display: grid; color: #55536c; font-size: 14px; line-height: 1.25; }

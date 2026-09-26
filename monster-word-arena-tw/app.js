@@ -90,11 +90,16 @@
     });
   }
 
+  function wordLabel(option) {
+    return `${option.zh} ${option.en}`;
+  }
+
   function showArt(holder, image, fallback, label) {
     const art = document.createElement('img');
     art.addEventListener('error', () => art.replaceWith(fallback));
     art.className = 'word-art';
     art.alt = label;
+    art.draggable = false;
     art.width = 192;
     art.height = 192;
     art.decoding = 'async';
@@ -127,7 +132,7 @@
     } else {
       const icon = document.createElement('span');
       icon.className = 'answer-icon';
-      showArt(icon, option.image, option.icon, `${option.zh} ${option.en}`);
+      showArt(icon, option.image, option.icon, wordLabel(option));
       icon.setAttribute('aria-hidden', 'true');
       const label = document.createElement('span');
       label.className = 'answer-label';
@@ -144,7 +149,7 @@
     const question = state.question;
     questionEnglish.textContent = question.promptEn;
     questionChinese.textContent = question.promptZh;
-    if (question.pictureImage) showArt(questionPicture, question.pictureImage, question.picture, question.pictureLabel);
+    if (question.pictureImage) showArt(questionPicture, question.pictureImage, question.picture, wordLabel(question.options.find(option => option.id === question.answerId)));
     else questionPicture.textContent = question.picture;
     questionPicture.hidden = !question.picture;
     equation.textContent = question.display;

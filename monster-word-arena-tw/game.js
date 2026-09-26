@@ -79,7 +79,6 @@
         display: '',
         picture: target.icon,
         pictureImage: target.image,
-        pictureLabel: `${target.zh} ${target.en}`,
         answerId: target.id,
         options: shuffled(FACE_PARTS, random),
       };
@@ -95,7 +94,6 @@
         display: '',
         picture: target.icon,
         pictureImage: target.image,
-        pictureLabel: `${target.zh} ${target.en}`,
         answerId: target.id,
         options: shuffled(FAMILY, random),
       };

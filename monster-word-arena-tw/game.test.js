@@ -205,7 +205,6 @@ test('every word prompt shows the picture of its matching answer for pre-readers
       assert.equal(question.options.filter(option => option.icon === question.picture).length, 1);
       if (topic === 'colors') continue;
       assert.equal(question.pictureImage, target.image, `${topic} art matches the answer`);
-      assert.equal(question.pictureLabel, `${target.zh} ${target.en}`);
       assert.equal(question.options.filter(option => option.image === question.pictureImage).length, 1);
     }
   }
@@ -393,16 +392,19 @@ test('face and family art renders with bilingual labels and falls back to emoji 
   app.topicTabs.find(tab => tab.dataset.topic === 'face').click();
 
   const { question } = game.getState();
+  const answer = question.options.find(option => option.id === question.answerId);
   const [art] = questionPicture.children;
   assert.equal(art.tagName, 'IMG');
   assert.equal(art.src, question.pictureImage);
-  assert.equal(art.alt, question.pictureLabel);
+  assert.equal(art.alt, `${answer.zh} ${answer.en}`, 'the question picture carries its answer\'s bilingual label');
+  assert.equal(art.draggable, false, 'pressing the picture never starts an image drag');
   for (const button of app.answerOptions.children) {
     const option = question.options.find(choice => choice.id === button.dataset.choice);
     const [icon, label] = button.children;
     assert.equal(icon.getAttribute('aria-hidden'), 'true');
     assert.equal(icon.children[0].src, option.image);
     assert.equal(icon.children[0].alt, `${option.zh} ${option.en}`);
+    assert.equal(icon.children[0].draggable, false, 'pressing the answer picture never starts an image drag');
     assert.equal(label.textContent, `${option.zh}${option.en}`, 'the button keeps its Chinese and English text label');
   }
 
