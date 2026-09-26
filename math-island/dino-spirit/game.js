@@ -180,7 +180,7 @@
   document.addEventListener('keydown', (event) => {
     if (!['1', '2', '3'].includes(event.key) || finished || !nextButton.hidden) return;
     const activeElement = document.activeElement;
-    if (activeElement !== document.body && !answers.contains(activeElement)) return;
+    if (activeElement !== document.body && activeElement !== speakButton && !answers.contains(activeElement)) return;
     event.preventDefault();
     answers.querySelectorAll('button')[Number(event.key) - 1]?.click();
   });
