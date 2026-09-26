@@ -46,7 +46,7 @@ The deployment workflow guarantees the Google tag and shared `assets/analytics.j
 GA4 Enhanced Measurement already tracks page views, outbound clicks (`click`), form interactions (`form_start` / `form_submit`), 90% scroll (`scroll`), and 10s engaged sessions. The helper adds only what it does not:
 
 - `section_nav` (in-page `#` links; `target_section`)
-- `button_click` (buttons with an `id`, `data-analytics-id`, `aria-label`, or `data-analytics-label` only)
+- `button_click` (buttons with an `id`, `data-analytics-id`, `aria-label`, or `data-analytics-label` only, outside `data-analytics-ignore` containers)
 - `content_copy` (selection length bucket only)
 - `scroll_depth` (25/50/75; `percent_scrolled`, same parameter as the built-in 90% `scroll` event)
 - `engaged_30s`
@@ -55,7 +55,7 @@ Event parameters (`element_id`, `element_label`, `target_section`, `percent_scro
 
 Interactive pages can add semantic events with `data-analytics-event` / `data-analytics-label` or `window.oaiTrack(eventName, params)`.
 
-Do not send user-entered text, copied content, credentials, private identifiers, or other sensitive data to analytics. The Taiwan storybooks use only the gallery-wide analytics already present on every page; they do not send story-specific selection or completion events.
+Do not send user-entered text, copied content, credentials, private identifiers, or other sensitive data to analytics. The Taiwan storybooks use only the gallery-wide analytics already present on every page; their clicks and story text are excluded from analytics.
 
 ## Taiwan story references
 

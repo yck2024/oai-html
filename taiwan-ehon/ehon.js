@@ -56,12 +56,6 @@
     return text.replace(RUBY, '$1');
   }
 
-  // The narrator reads the furigana, so kanji can never be misread; the word spaces that
-  // help a young reader are dropped so the speech flows naturally.
-  function spokenJapanese(text) {
-    return text.replace(RUBY, '$2').replace(/[ 　]+/g, '');
-  }
-
   function hanCount(text) {
     let count = 0;
     for (const char of text) if (HAN.test(char)) count += 1;
@@ -261,7 +255,6 @@
     clipPath,
     parseRuby,
     plainJapanese,
-    spokenJapanese,
     hanCount,
     zhuyinSyllables,
     zhuyinSegments,

@@ -48,6 +48,7 @@
   };
 
   document.addEventListener("click", (event) => {
+    if (event.target.closest("[data-analytics-ignore]")) return;
     const el = event.target.closest("[data-analytics-event], a[href^='#'], button");
     if (!el) return;
 

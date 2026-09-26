@@ -320,6 +320,7 @@
   function readLine(lineId, lang) {
     clearTimeout(turnTimer);
     unmute();
+    listening = false;
     queueKind = 'line';
     speechStatus.textContent = '';
     narrator.play(book.story.id, [{ lineId, lang }]);
