@@ -1,5 +1,5 @@
 (() => {
-  const rounds = [
+  const questions = [
     { left: 2, right: 1 },
     { left: 4, right: 1 },
     { left: 3, right: 4 },
@@ -24,7 +24,10 @@
   const finishPanel = document.querySelector('#finishPanel');
   const restartButton = document.querySelector('#restartButton');
   const replayButton = document.querySelector('#replayButton');
+  const forestCard = document.querySelector('.forest-card');
+  const forestLights = document.querySelectorAll('.forest-light');
 
+  let rounds = shuffled(questions);
   let roundIndex = 0;
   let wrongCount = 0;
   let finished = false;
@@ -44,6 +47,9 @@
     progressFill.style.width = `${(collected / rounds.length) * 100}%`;
     [...progressDots.children].forEach((dot, index) => {
       dot.classList.toggle('collected', index < collected);
+    });
+    forestLights.forEach((light, index) => {
+      light.classList.toggle('lit', index < collected);
     });
   }
 
@@ -70,6 +76,7 @@
     });
     feedback.textContent = '';
     feedback.classList.remove('try-again');
+    forestCard.classList.remove('cheer');
     nextButton.hidden = true;
     nextButton.textContent = roundIndex === rounds.length - 1 ? 'さいごの ひかりを とどける' : 'つぎの ひかりへ';
     nextButton.insertAdjacentHTML('beforeend', ' <span aria-hidden="true">➜</span>');
@@ -93,6 +100,7 @@
     feedback.classList.remove('try-again');
     feedback.textContent = `せいかい！ ${correctAnswer}この ひかりだまが とどいた！`;
     setProgress(roundIndex + 1);
+    forestCard.classList.add('cheer');
     nextButton.hidden = false;
     nextButton.focus();
   }
@@ -101,10 +109,7 @@
     finished = true;
     questionArea.hidden = true;
     finishPanel.hidden = false;
-    progressText.textContent = `${rounds.length} / ${rounds.length}`;
-    progressBar.setAttribute('aria-valuenow', String(rounds.length));
-    progressFill.style.width = '100%';
-    [...progressDots.children].forEach((dot) => dot.classList.add('collected'));
+    setProgress(rounds.length);
     document.querySelector('#forestHint').textContent = 'こだま森に ひかりが もどったよ！';
     replayButton.focus();
   }
@@ -119,6 +124,7 @@
   }
 
   function restart() {
+    rounds = shuffled(questions);
     roundIndex = 0;
     wrongCount = 0;
     finished = false;
