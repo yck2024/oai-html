@@ -72,10 +72,7 @@
   }
 
   function makeChoices(answer) {
-    const choices = [...new Set([answer, answer - 1, answer + 1, answer + 2])]
-      .filter((value) => value >= 0)
-      .slice(0, 3);
-    return shuffled(choices);
+    return shuffled([answer - 1, answer, answer + 1]);
   }
 
   let speechAttempt = 0;

@@ -133,6 +133,7 @@ function answerCurrentProblem(elements) {
   const answer = operation === 'ひく' ? left - right : left + right;
   const choices = elements.get('#answers').children;
   assert.ok(choices.every((choice) => Number(choice.textContent) >= 0), 'answer choices must stay non-negative');
+  assert.equal(new Set(choices.map((choice) => choice.textContent)).size, 3, 'answer choices must be three distinct values');
   const correctChoice = choices.find((choice) => Number(choice.textContent) === answer);
   assert.ok(correctChoice, `missing correct answer ${answer}`);
   correctChoice.click();
