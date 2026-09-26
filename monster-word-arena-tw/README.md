@@ -18,19 +18,21 @@ Research suggests the value of play, choice, practice, and linguistic relevance;
 
 ## Local speech assets
 
-`audio/prompts.json` is the source for the 15 question prompts in all three languages. On macOS, regenerate the English and Taiwan Mandarin clips with the built-in Samantha and Meijia voices and `ffmpeg` installed:
+`audio/prompts.json` is the source for the 15 question prompts in each language. All 45 prompt clips are generated at build time with [Gemini 3.8 Flash TTS](https://aistudio.google.com/learn/gemini-3-8-flash-tts-developer-guide): English uses the child-friendly Aoede voice, Taiwan Mandarin uses Kore with the `zh-TW` locale and explicit Taiwan-Mandarin direction, and Japanese uses the `ja-jp-tutor-1` Tokyo Japanese voice. The Mandarin `family-sister` audio input uses 姐姐 (*jiějie*) to avoid Gemini reading 姊姊 with 姊's literary *zǐ* pronunciation; the visible prompt and answer label remain 姊姊. The game loads only bundled MP3s and makes no speech-service requests at runtime.
 
-```sh
-python3 monster-word-arena-tw/generate_audio.py
-```
-
-Japanese clips use the official [Gemini TTS guide](https://ai.google.dev/gemini-api/docs/speech-generation), `gemini-3.8-flash-tts`, and the available `ja-jp-tutor-1` Tokyo Japanese voice. To rebuild them, set `GEMINI_JOHN_API_KEY` in a private build environment and run:
+To regenerate clips, install `ffmpeg`, provide `GEMINI_JOHN_API_KEY` through a private build environment, and confirm the paid API requests:
 
 ```sh
 python3 monster-word-arena-tw/generate_gemini_audio.py --confirm
 ```
 
-Only the fixed prompt text is sent during this build-time generation. Never commit the key. The game loads only bundled MP3s and makes no speech-service requests at runtime. Speech is optional: language selection, replay, and mute are available in-game, while answer buttons remain usable if playback is unavailable.
+`--overwrite` regenerates existing clips, `--clip <prompt-id>` (repeatable) limits generation to selected prompts, and `--language en|zh|ja` (repeatable) limits languages. For example, regenerate every English and Taiwan Mandarin prompt with Gemini:
+
+```sh
+python3 monster-word-arena-tw/generate_gemini_audio.py --overwrite --language en --language zh --confirm
+```
+
+Check current [Gemini API pricing](https://ai.google.dev/gemini-api/docs/pricing) before authorizing generation. Only the fixed prompt text is sent to Gemini during build-time generation. Never commit or expose the key. Speech is optional: language selection, replay, and mute are available in-game, while answer buttons remain usable if playback is unavailable.
 
 ## Local checks
 

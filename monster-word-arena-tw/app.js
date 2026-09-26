@@ -223,6 +223,7 @@
       return;
     }
     speechEnabled = true;
+    speechStatus.textContent = '';
     playCurrentQuestion();
   });
 
