@@ -14,6 +14,7 @@ The gallery is manifest-driven. Published page metadata lives in `pages.json`, a
 - Herdr Keyboard Visual Guide (EN / 繁中)
 - Pi + Luna + Automic Vault
 - Math Island (three Japanese math games)
+- Dino & Monster Word Arena (a separate bilingual Taiwan Chinese-English game with gentle battles and addition)
 
 ## Publishing architecture
 

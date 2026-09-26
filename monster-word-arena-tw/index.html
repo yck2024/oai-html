@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fff1d6">
+  <meta name="description" content="A pretend-sparring dinosaur and monster game with easy addition and Taiwan Traditional Chinese-English word play for little learners.">
+  <title>Dino &amp; Monster Word Arena｜恐龍怪獸友誼擂台</title>
+  <link rel="stylesheet" href="./game.css">
+</head>
+<body>
+  <main class="page-shell">
+    <header class="topbar">
+      <a class="pill-link" href="../index.html">← Gallery</a>
+      <span class="top-label">PLAY · LEARN · CHEER</span>
+      <button class="pill-button" id="restartButton" type="button">↻ Start over</button>
+    </header>
+
+    <section class="intro" aria-labelledby="gameTitle">
+      <p class="eyebrow">A pretend sparring face-off · 假裝對打，不會受傷</p>
+      <h1 id="gameTitle">Dino &amp; Monster<br class="small-break"> Word Arena</h1>
+      <p>Pick a champion, solve a little challenge, and launch a silly power move!<br class="desktop-break">選一位小隊長，答對就出招！</p>
+    </section>
+
+    <section class="champion-picker" aria-label="Choose your champion 選一位小隊長">
+      <div class="picker-heading">
+        <div><span class="section-kicker">YOUR TEAM · 你的小隊</span><h2>Who will spar for you?</h2></div>
+        <span class="soft-note">Pretend moves, no ouchies 🧡</span>
+      </div>
+      <div class="champion-options">
+        <button class="champion-card is-selected" type="button" data-champion="dino" aria-pressed="true">
+          <span class="champion-emoji" aria-hidden="true">🦖</span>
+          <span class="champion-copy"><strong>Rex the Dino</strong><small>雷克斯恐龍</small></span>
+          <span class="pick-mark" aria-hidden="true">✓</span>
+        </button>
+        <button class="champion-card" type="button" data-champion="monster" aria-pressed="false">
+          <span class="champion-emoji" aria-hidden="true">👾</span>
+          <span class="champion-copy"><strong>Bobo the Monster</strong><small>波波怪獸</small></span>
+          <span class="pick-mark" aria-hidden="true">✓</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="arena-layout" aria-label="Sparring word and math game">
+      <section class="arena-card" aria-label="The sparring arena 對打擂台">
+        <div class="arena-heading"><span>THE SPARRING ARENA · 對打擂台</span><span class="heart-dots" aria-hidden="true">♥ ♥ ♥</span></div>
+        <div class="arena-stage" id="arenaStage">
+          <div class="cloud cloud-one" aria-hidden="true">✦</div>
+          <div class="cloud cloud-two" aria-hidden="true">✦</div>
+          <div class="fighter fighter-hero" id="heroFighter">
+            <span class="fighter-spark" aria-hidden="true">✨</span>
+            <span class="fighter-face" id="heroEmoji" aria-hidden="true">🦖</span>
+            <span class="fighter-name" id="heroName">Rex</span>
+            <span class="fighter-side">YOUR CHAMPION</span>
+          </div>
+          <span class="versus" aria-hidden="true">VS</span>
+          <div class="fighter fighter-buddy" id="buddyFighter">
+            <span class="fighter-spark" aria-hidden="true">💫</span>
+            <span class="fighter-face" id="buddyEmoji" aria-hidden="true">👾</span>
+            <span class="fighter-name" id="buddyName">Bobo</span>
+            <span class="power-meter" id="rivalPower" aria-hidden="true"><span>⚡</span><span>⚡</span><span>⚡</span></span>
+            <span class="fighter-side">SPARRING BUDDY</span>
+          </div>
+          <span class="move-bubble" id="moveBubble" aria-hidden="true">🌀</span>
+        </div>
+        <p class="arena-message" id="arenaMessage" role="status" aria-live="polite">Ready, team? Pick any challenge!</p>
+        <div class="score-row" aria-label="Power move stars">
+          <span class="score-label">TEAM STARS</span>
+          <div class="score-stars" id="scoreStars" aria-hidden="true"><span>☆</span><span>☆</span><span>☆</span></div>
+          <span class="score-count" id="scoreCount">0 / 3</span>
+        </div>
+      </section>
+
+      <section class="challenge-card" aria-label="Choose and answer a challenge">
+        <div class="challenge-title">
+          <div><span class="section-kicker">YOUR NEXT MOVE · 換你出招</span><h2>Pick a challenge!</h2></div>
+          <span class="thinking-icon" aria-hidden="true">🧠</span>
+        </div>
+        <div class="topic-tabs" role="group" aria-label="Learning challenges 學習挑戰">
+          <button class="topic-tab is-active" type="button" data-topic="math" aria-pressed="true"><span aria-hidden="true">➕</span><span>Math<small>數學</small></span></button>
+          <button class="topic-tab" type="button" data-topic="colors" aria-pressed="false"><span aria-hidden="true">🎨</span><span>Colors<small>顏色</small></span></button>
+          <button class="topic-tab" type="button" data-topic="face" aria-pressed="false"><span aria-hidden="true">🙂</span><span>Face<small>五官</small></span></button>
+          <button class="topic-tab" type="button" data-topic="family" aria-pressed="false"><span aria-hidden="true">🏠</span><span>Family<small>家人</small></span></button>
+        </div>
+
+        <div class="question-panel" id="questionPanel">
+          <p class="question-en" id="questionEnglish">How many altogether?</p>
+          <p class="question-zh" id="questionChinese">加起來有多少？</p>
+          <p class="question-picture" id="questionPicture" aria-hidden="true">🥚 + 🥚</p>
+          <p class="equation" id="equation">1 + 1 = ?</p>
+          <p class="answer-hint">Tap your answer · 點一個答案</p>
+          <div class="answer-options" id="answerOptions" role="group" aria-label="Choose an answer 選一個答案"></div>
+          <p class="feedback" id="feedback" role="status" aria-live="polite" aria-atomic="true">No rush—thinking is a superpower!</p>
+          <button class="next-button" id="nextButton" type="button" hidden>Next power move · 下一招 <span aria-hidden="true">➜</span></button>
+        </div>
+
+        <section class="finish-panel" id="finishPanel" aria-labelledby="finishTitle" hidden>
+          <span class="party-art" aria-hidden="true">🎉 🦖 🧡 👾 🎉</span>
+          <h2 id="finishTitle">You’re a Sparring Champion!</h2>
+          <p>Three power moves! Your buddy is out of power, takes a bow, and gives you a high-five.<br>三招成功！對手沒電了，鞠躬擊掌！</p>
+          <button class="next-button replay-button" id="playAgainButton" type="button">Play again · 再玩一次 <span aria-hidden="true">↻</span></button>
+        </section>
+      </section>
+    </section>
+
+    <footer>Everybody gets a cheer. Try again any time! · 每個人都很棒，想試幾次都可以！</footer>
+  </main>
+  <script src="./game.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>

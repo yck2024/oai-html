@@ -50,6 +50,19 @@
         "Japanese"
       ],
       "status": "live"
+    },
+    {
+      "slug": "monster-word-arena-tw",
+      "title": "Dino & Monster Word Arena | 恐龍怪獸友誼擂台",
+      "description": "A gentle dinosaur-and-monster face-off with small addition and playful English / Taiwan Traditional Chinese word challenges.",
+      "icon": "🦖",
+      "tags": [
+        "Kids",
+        "Math",
+        "English",
+        "繁體中文"
+      ],
+      "status": "live"
     }
   ]
 }
