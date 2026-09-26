@@ -298,16 +298,9 @@
     muteButton.setAttribute('aria-label', muted ? 'おとを だす 開啟聲音' : 'おとを けす 靜音');
   }
 
-  function unmute() {
-    if (!muted) return;
-    muted = false;
-    updatePlayback();
-  }
-
   function readPage() {
-    if (!book) return;
+    if (!book || muted) return;
     clearTimeout(turnTimer);
-    unmute();
     listening = true;
     queueKind = 'page';
     speechStatus.textContent = '';
@@ -316,8 +309,8 @@
   }
 
   function readLine(lineId, lang) {
+    if (!book || muted) return;
     clearTimeout(turnTimer);
-    unmute();
     listening = false;
     queueKind = 'line';
     speechStatus.textContent = '';
@@ -373,8 +366,7 @@
       narrator.pause();
       listening = false;
       clearTimeout(turnTimer);
-    } else if (narrator.state === 'paused') {
-      unmute();
+    } else if (narrator.state === 'paused' && !muted) {
       listening = queueKind === 'page';
       narrator.resume();
     } else {
@@ -410,7 +402,7 @@
       if (!input.checked) return;
       settings.mode = input.value;
       saveSettings();
-      const wasReading = narrator.state !== 'idle' && queueKind === 'page';
+      const wasReading = narrator.state === 'playing' && queueKind === 'page';
       renderText();
       if (wasReading) readPage();
     });

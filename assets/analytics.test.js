@@ -84,15 +84,16 @@ function analyticsHarness() {
   };
 }
 
-test('storybook page-view metadata excludes fragments without changing URL history', () => {
+test('storybook page-view metadata strips queries and fragments without changing URL history', () => {
   const page = storybookPageviewHarness(
-    'https://gallery.example/taiwan-ehon/?lang=ja#bai-zei-qi/7',
-    'https://gallery.example/#taiwan-ehon/shooting-the-sun/12',
+    'https://gallery.example/taiwan-ehon/?learnerId=child-123&lang=ja#bai-zei-qi/7',
+    'https://gallery.example/?learnerId=child-123#taiwan-ehon/shooting-the-sun/12',
   );
 
+  assert.equal(page.location.search, '?learnerId=child-123&lang=ja');
   assert.equal(page.location.hash, '#bai-zei-qi/7');
   assert.deepEqual(page.replacements, []);
-  assert.equal(page.config.page_location, 'https://gallery.example/taiwan-ehon/?lang=ja');
+  assert.equal(page.config.page_location, 'https://gallery.example/taiwan-ehon/');
   assert.equal(page.config.page_referrer, 'https://gallery.example/');
   assert.equal(page.config.page_title, 'Taiwan story picture books');
 });
