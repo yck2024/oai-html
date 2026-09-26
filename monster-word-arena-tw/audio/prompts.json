@@ -73,5 +73,205 @@
     "en": "Find your older sister!",
     "zh": "誰是姊姊？",
     "ja": "おねえさんはどれかな？"
+  },
+  "math-count": {
+    "en": "How many eggs? Let's count!",
+    "zh": "數一數，有幾顆蛋？",
+    "ja": "たまごはいくつあるかな？かぞえてみよう！"
+  },
+  "math-3-3": {
+    "en": "Three plus three. How many altogether?",
+    "zh": "三加三，總共是多少？",
+    "ja": "さんたすさんは、ぜんぶでいくつかな？"
+  },
+  "math-4-2": {
+    "en": "Four plus two. How many altogether?",
+    "zh": "四加二，總共是多少？",
+    "ja": "よんたすには、ぜんぶでいくつかな？"
+  },
+  "math-5-2": {
+    "en": "Five plus two. How many altogether?",
+    "zh": "五加二，總共是多少？",
+    "ja": "ごたすには、ぜんぶでいくつかな？"
+  },
+  "math-3-4": {
+    "en": "Three plus four. How many altogether?",
+    "zh": "三加四，總共是多少？",
+    "ja": "さんたすよんは、ぜんぶでいくつかな？"
+  },
+  "math-4-4": {
+    "en": "Four plus four. How many altogether?",
+    "zh": "四加四，總共是多少？",
+    "ja": "よんたすよんは、ぜんぶでいくつかな？"
+  },
+  "math-5-3": {
+    "en": "Five plus three. How many altogether?",
+    "zh": "五加三，總共是多少？",
+    "ja": "ごたすさんは、ぜんぶでいくつかな？"
+  },
+  "math-6-3": {
+    "en": "Six plus three. How many altogether?",
+    "zh": "六加三，總共是多少？",
+    "ja": "ろくたすさんは、ぜんぶでいくつかな？"
+  },
+  "math-4-5": {
+    "en": "Four plus five. How many altogether?",
+    "zh": "四加五，總共是多少？",
+    "ja": "よんたすごは、ぜんぶでいくつかな？"
+  },
+  "math-5-5": {
+    "en": "Five plus five. How many altogether?",
+    "zh": "五加五，總共是多少？",
+    "ja": "ごたすごは、ぜんぶでいくつかな？"
+  },
+  "math-6-4": {
+    "en": "Six plus four. How many altogether?",
+    "zh": "六加四，總共是多少？",
+    "ja": "ろくたすよんは、ぜんぶでいくつかな？"
+  },
+  "colors-blue": {
+    "en": "Find blue!",
+    "zh": "找出藍色！",
+    "ja": "あおいろをみつけてね！"
+  },
+  "colors-orange": {
+    "en": "Find orange!",
+    "zh": "找出橘色！",
+    "ja": "オレンジいろをみつけてね！"
+  },
+  "colors-purple": {
+    "en": "Find purple!",
+    "zh": "找出紫色！",
+    "ja": "むらさきいろをみつけてね！"
+  },
+  "colors-pink": {
+    "en": "Find pink!",
+    "zh": "找出粉紅色！",
+    "ja": "ピンクいろをみつけてね！"
+  },
+  "colors-brown": {
+    "en": "Find brown!",
+    "zh": "找出咖啡色！",
+    "ja": "ちゃいろをみつけてね！"
+  },
+  "face-mouth": {
+    "en": "Find the mouth!",
+    "zh": "找一找：嘴巴！",
+    "ja": "くちをみつけてね！"
+  },
+  "face-tooth": {
+    "en": "Find the tooth!",
+    "zh": "找一找：牙齒！",
+    "ja": "お口の中にある歯を見つけてね！"
+  },
+  "face-hair": {
+    "en": "Find the hair!",
+    "zh": "找一找：頭髮！",
+    "ja": "かみのけをみつけてね！"
+  },
+  "face-hands": {
+    "en": "Find the hands!",
+    "zh": "找一找：手！",
+    "ja": "おててをみつけてね！"
+  },
+  "face-feet": {
+    "en": "Find the feet!",
+    "zh": "找一找：腳！",
+    "ja": "あしをみつけてね！"
+  },
+  "family-grandpa": {
+    "en": "Find your grandpa!",
+    "zh": "誰是爺爺？",
+    "ja": "おじいちゃんはどれかな？"
+  },
+  "family-grandma": {
+    "en": "Find your grandma!",
+    "zh": "誰是奶奶？",
+    "ja": "おばあちゃんはどれかな？"
+  },
+  "family-baby": {
+    "en": "Find the baby!",
+    "zh": "誰是寶寶？",
+    "ja": "あかちゃんはどれかな？"
+  },
+  "animals-dog": {
+    "en": "Where is the dog?",
+    "zh": "小狗在哪裡？",
+    "ja": "いぬはどこかな？"
+  },
+  "animals-cat": {
+    "en": "Where is the cat?",
+    "zh": "小貓在哪裡？",
+    "ja": "ねこはどこかな？"
+  },
+  "animals-rabbit": {
+    "en": "Where is the rabbit?",
+    "zh": "兔子在哪裡？",
+    "ja": "うさぎはどこかな？"
+  },
+  "animals-bird": {
+    "en": "Where is the bird?",
+    "zh": "小鳥在哪裡？",
+    "ja": "ことりはどこかな？"
+  },
+  "animals-fish": {
+    "en": "Where is the fish?",
+    "zh": "小魚在哪裡？",
+    "ja": "おさかなはどこかな？"
+  },
+  "animals-elephant": {
+    "en": "Where is the elephant?",
+    "zh": "大象在哪裡？",
+    "ja": "ぞうさんはどこかな？"
+  },
+  "animals-pig": {
+    "en": "Where is the pig?",
+    "zh": "小豬在哪裡？",
+    "ja": "ぶたさんはどこかな？"
+  },
+  "animals-monkey": {
+    "en": "Where is the monkey?",
+    "zh": "猴子在哪裡？",
+    "ja": "おさるさんはどこかな？"
+  },
+  "fruit-apple": {
+    "en": "Find the apple!",
+    "zh": "找出蘋果！",
+    "ja": "りんごをみつけてね！"
+  },
+  "fruit-banana": {
+    "en": "Find the banana!",
+    "zh": "找出香蕉！",
+    "ja": "バナナをみつけてね！"
+  },
+  "fruit-grapes": {
+    "en": "Find the grapes!",
+    "zh": "找出葡萄！",
+    "ja": "ぶどうをみつけてね！"
+  },
+  "fruit-strawberry": {
+    "en": "Find the strawberry!",
+    "zh": "找出草莓！",
+    "ja": "いちごをみつけてね！"
+  },
+  "fruit-watermelon": {
+    "en": "Find the watermelon!",
+    "zh": "找出西瓜！",
+    "ja": "すいかをみつけてね！"
+  },
+  "fruit-pineapple": {
+    "en": "Find the pineapple!",
+    "zh": "找出鳳梨！",
+    "ja": "パイナップルをみつけてね！"
+  },
+  "fruit-mango": {
+    "en": "Find the mango!",
+    "zh": "找出芒果！",
+    "ja": "マンゴーをみつけてね！"
+  },
+  "fruit-cherries": {
+    "en": "Find the cherries!",
+    "zh": "找出櫻桃！",
+    "ja": "さくらんぼをみつけてね！"
   }
 }
