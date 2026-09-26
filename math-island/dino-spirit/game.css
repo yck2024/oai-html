@@ -57,7 +57,12 @@ h1 { margin: 4px 0 5px; color: #315b54; font-size: clamp(28px, 4vw, 43px); font-
 .forest-card { min-width: 0; display: flex; flex-direction: column; justify-content: center; padding: 18px; background: linear-gradient(155deg, #edf8d7, #d4f0d1); }
 .scene-wrap { position: relative; overflow: hidden; border: 3px solid #fff; border-radius: 22px; background: #bceee8; }
 .forest-scene { display: block; width: 100%; height: auto; aspect-ratio: 20 / 11; }
-.character-art { position: absolute; z-index: 1; bottom: 0; height: 94%; object-fit: contain; object-position: center bottom; pointer-events: none; user-select: none; }
+.forest-prop, .character-art { position: absolute; z-index: 1; object-fit: contain; pointer-events: none; user-select: none; }
+.forest-prop { object-position: center bottom; }
+.prop-acorn { left: 4%; bottom: 4%; width: 9%; height: 32%; }
+.prop-flower { left: 54%; bottom: 3%; width: 11%; height: 32%; }
+.prop-blue-mushroom { right: 4%; bottom: 3%; width: 12%; height: 32%; }
+.character-art { bottom: 0; height: 94%; object-position: center bottom; }
 .character-art.rag { left: 3%; width: 54%; }
 .character-art.powa { right: 1%; height: 98%; width: 40%; }
 .character-art, .forest-light { transform-box: fill-box; transform-origin: center bottom; }
