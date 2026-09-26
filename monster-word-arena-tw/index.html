@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#fff1d6">
-  <meta name="description" content="A pretend-sparring dinosaur and monster game with easy addition and Taiwan Traditional Chinese-English word play for little learners.">
+  <meta name="description" content="A pretend-sparring dinosaur and monster game with easy or harder counting and addition and Taiwan Traditional Chinese-English word play for little learners.">
   <title>Dino &amp; Monster Word Arena｜恐龍怪獸友誼擂台</title>
   <link rel="stylesheet" href="./game.css">
 </head>
@@ -79,8 +79,15 @@
         <div class="topic-tabs" role="group" aria-label="Learning challenges 學習挑戰">
           <button class="topic-tab is-active" type="button" data-topic="math" aria-pressed="true"><span aria-hidden="true">➕</span><span>Math<small>數學</small></span></button>
           <button class="topic-tab" type="button" data-topic="colors" aria-pressed="false"><span aria-hidden="true">🎨</span><span>Colors<small>顏色</small></span></button>
-          <button class="topic-tab" type="button" data-topic="face" aria-pressed="false"><span aria-hidden="true">🙂</span><span>Face<small>五官</small></span></button>
+          <button class="topic-tab" type="button" data-topic="face" aria-pressed="false"><span aria-hidden="true">🙂</span><span>Body<small>身體</small></span></button>
           <button class="topic-tab" type="button" data-topic="family" aria-pressed="false"><span aria-hidden="true">🏠</span><span>Family<small>家人</small></span></button>
+          <button class="topic-tab" type="button" data-topic="animals" aria-pressed="false"><span aria-hidden="true">🐾</span><span>Animals<small>動物</small></span></button>
+          <button class="topic-tab" type="button" data-topic="fruit" aria-pressed="false"><span aria-hidden="true">🍎</span><span>Fruit<small>水果</small></span></button>
+        </div>
+        <div class="level-choice" role="group" aria-label="Level 難度">
+          <span class="speech-label">LEVEL · 難度</span>
+          <button class="level-option is-active" type="button" data-level="easy" aria-pressed="true"><span aria-hidden="true">🌱</span> Easy 簡單</button>
+          <button class="level-option" type="button" data-level="harder" aria-pressed="false"><span aria-hidden="true">🌟</span> Harder 進階</button>
         </div>
         <div class="speech-controls needs-voice" id="speechControls">
           <p class="speech-invite" id="speechInvite"><span aria-hidden="true">🔈</span> Choose a voice to turn on the questions and cheers. · 選擇語音即可開啟題目朗讀和加油聲。 · 音声を選ぶと、問題の読み上げと応援の声が始まります。</p>

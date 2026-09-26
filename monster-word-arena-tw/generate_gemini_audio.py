@@ -58,7 +58,14 @@ LANGUAGES = {
 
 # 姊姊 is sometimes read with 姊's literary zǐ reading; 姐姐 is the same-sounding
 # Taiwan Mandarin family term and gives the intended jiějie pronunciation.
-PRONUNCIATION_OVERRIDES = {("zh", "family-sister"): "誰是姐姐？"}
+# 貓 was read with a rising máo; the 猫 form keeps the dictionary's level māo.
+# Japanese くち and パイナップル were misread; kanji spellings keep them clear.
+PRONUNCIATION_OVERRIDES = {
+    ("zh", "family-sister"): "誰是姐姐？",
+    ("zh", "animals-cat"): "小猫在哪裡？",
+    ("ja", "face-mouth"): "お口を見つけてね！",
+    ("ja", "fruit-pineapple"): "パイナップルを見つけてね！",
+}
 
 
 def request_wav(api_key, text, language_config):
