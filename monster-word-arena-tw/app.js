@@ -114,6 +114,23 @@
     });
   }
 
+  function wordLabel(option) {
+    return `${option.zh} ${option.en}`;
+  }
+
+  function showArt(holder, image, fallback, label) {
+    const art = document.createElement('img');
+    art.addEventListener('error', () => art.replaceWith(fallback));
+    art.className = 'word-art';
+    art.alt = label;
+    art.draggable = false;
+    art.width = 192;
+    art.height = 192;
+    art.decoding = 'async';
+    art.src = image;
+    holder.replaceChildren(art);
+  }
+
   function makeAnswerButton(option, question) {
     const button = document.createElement('button');
     button.type = 'button';
@@ -139,7 +156,7 @@
     } else {
       const icon = document.createElement('span');
       icon.className = 'answer-icon';
-      icon.textContent = option.icon;
+      showArt(icon, option.image, option.icon, wordLabel(option));
       icon.setAttribute('aria-hidden', 'true');
       const label = document.createElement('span');
       label.className = 'answer-label';
@@ -156,7 +173,8 @@
     const question = state.question;
     questionEnglish.textContent = question.promptEn;
     questionChinese.textContent = question.promptZh;
-    questionPicture.textContent = question.picture;
+    if (question.pictureImage) showArt(questionPicture, question.pictureImage, question.picture, wordLabel(question.options.find(option => option.id === question.answerId)));
+    else questionPicture.textContent = question.picture;
     questionPicture.hidden = !question.picture;
     equation.textContent = question.display;
     equation.hidden = !question.display;
