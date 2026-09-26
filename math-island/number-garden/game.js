@@ -455,15 +455,26 @@ function dropTokens(question) {
       targetGroup.add(token);
     }
   });
+  const ringMat = material(selectedWorld === 'space' ? 0xffc52f : selectedWorld === 'ocean' ? 0xffd36e : 0xffd24a, 0.62);
   if (groups.length === 2) {
-    const ringMat = material(selectedWorld === 'space' ? 0xffc52f : selectedWorld === 'ocean' ? 0xffd36e : 0xffd24a, 0.62);
     [-2.1, 2.1].forEach((x) => {
       const ring = new THREE.Mesh(new THREE.TorusGeometry(1.66, 0.045, 6, 40), ringMat);
       ring.rotation.x = -Math.PI / 2;
       ring.position.set(x, 0.01, 1.9);
       ring.castShadow = false;
+      ring.userData.targetBoundary = true;
       targetGroup.add(ring);
     });
+  } else {
+    const columns = Math.min(4, groups[0]);
+    const rows = Math.ceil(groups[0] / columns);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(1, 0.055, 8, 48), ringMat);
+    ring.rotation.x = -Math.PI / 2;
+    ring.scale.set((columns - 1) * 0.46 + 0.72, (rows - 1) * 0.46 + 0.72, 1);
+    ring.position.set(0, 0.01, 1.9);
+    ring.castShadow = false;
+    ring.userData.targetBoundary = true;
+    targetGroup.add(ring);
   }
 }
 
