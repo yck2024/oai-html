@@ -123,11 +123,13 @@
     let position = -1;
     let storyId = '';
     let state = 'idle';
+    let pendingAdvance = null;
 
     function reset() {
       token += 1;
       steps = [];
       position = -1;
+      pendingAdvance = null;
       state = 'idle';
       if (audio) {
         audio.pause();
@@ -165,7 +167,18 @@
         const following = steps[index + 1];
         const pause = following && following.lineId === step.lineId ? PAUSE_BETWEEN_LANGUAGES : PAUSE_BETWEEN_SENTENCES;
         if (!following) playAt(current, index + 1);
-        else wait(pause, () => playAt(current, index + 1));
+        else {
+          const advance = { index: index + 1, ready: false };
+          pendingAdvance = advance;
+          wait(pause, () => {
+            if (current !== token || pendingAdvance !== advance) return;
+            advance.ready = true;
+            if (state !== 'paused') {
+              pendingAdvance = null;
+              playAt(current, advance.index);
+            }
+          });
+        }
       };
       audio.onerror = () => fail(current);
       audio.src = clipPath(storyId, step.lang, step.lineId);
@@ -198,8 +211,17 @@
 
     function resume() {
       if (state !== 'paused') return false;
-      state = 'playing';
       const current = token;
+      if (pendingAdvance) {
+        const advance = pendingAdvance;
+        state = 'playing';
+        if (advance.ready) {
+          pendingAdvance = null;
+          playAt(current, advance.index);
+        }
+        return true;
+      }
+      state = 'playing';
       try {
         const playback = audio.play();
         if (playback && typeof playback.catch === 'function') playback.catch(() => fail(current));

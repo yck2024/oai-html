@@ -81,6 +81,49 @@ test('page navigation clamps safely and swipe gestures only turn on a horizontal
   assert.equal(E.swipeDirection(20, 80), null);
 });
 
+test('pausing during language and sentence gaps suspends advancement until resume', async t => {
+  const cases = [
+    {
+      name: 'language gap',
+      steps: [{ lineId: 'line-1', lang: 'ja' }, { lineId: 'line-1', lang: 'zh' }],
+      delay: E.PAUSE_BETWEEN_LANGUAGES,
+      nextClip: './audio/story/zh/line-1.mp3',
+    },
+    {
+      name: 'sentence gap',
+      steps: [{ lineId: 'line-1', lang: 'ja' }, { lineId: 'line-2', lang: 'ja' }],
+      delay: E.PAUSE_BETWEEN_SENTENCES,
+      nextClip: './audio/story/ja/line-2.mp3',
+    },
+  ];
+
+  for (const scenario of cases) {
+    await t.test(scenario.name, () => {
+      const played = [];
+      const waits = [];
+      const audio = {
+        pause() {},
+        play() { played.push(this.src); return Promise.resolve(); },
+      };
+      const narrator = E.createNarrator(audio, {}, (ms, fn) => waits.push({ ms, fn }));
+      narrator.play('story', scenario.steps);
+      audio.onended();
+      assert.equal(waits[0].ms, scenario.delay);
+
+      assert.equal(narrator.pause(), true);
+      waits[0].fn();
+      assert.equal(narrator.state, 'paused');
+      assert.deepEqual(played, ['./audio/story/ja/line-1.mp3']);
+
+      assert.equal(narrator.resume(), true);
+      assert.equal(narrator.state, 'playing');
+      assert.deepEqual(played, ['./audio/story/ja/line-1.mp3', scenario.nextClip]);
+      waits[0].fn();
+      assert.deepEqual(played, ['./audio/story/ja/line-1.mp3', scenario.nextClip]);
+    });
+  }
+});
+
 test('narration highlights each queued language clip and advances one sentence at a time', () => {
   const played = [];
   const highlighted = [];
