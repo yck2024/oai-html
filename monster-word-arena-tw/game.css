@@ -127,7 +127,6 @@ h1 { margin: 4px 0 4px; color: #41405e; font-size: clamp(31px, 5vw, 46px); line-
 .question-zh { margin: 3px 0 0; color: #846e8d; font-size: 17px; font-weight: 1000; line-height: 1.35; }
 .question-picture { min-height: 48px; margin: 6px 0 0; font-size: 37px; line-height: 1.2; }
 .question-picture.dense-picture { font-size: 27px; line-height: 1.35; }
-.question-swatch { display: block; width: 64px; height: 64px; margin: 4px auto; border-width: 4px; }
 .equation { min-height: 48px; margin: 2px 0 0; color: #4e5a71; font-size: 38px; font-weight: 1000; letter-spacing: .05em; line-height: 1.2; font-variant-numeric: tabular-nums; }
 .answer-hint { margin: 8px 0 6px; color: #8b8a95; font-size: 11px; font-weight: 850; }
 .answer-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
@@ -139,6 +138,7 @@ h1 { margin: 4px 0 4px; color: #41405e; font-size: clamp(31px, 5vw, 46px); line-
 .number-choice { color: #63568a; font-size: 31px; font-variant-numeric: tabular-nums; }
 .color-option { flex-direction: column; gap: 2px; }
 .color-swatch { width: 24px; height: 24px; border: 2px solid #ffffff; border-radius: 50%; box-shadow: 0 0 0 1px #b9b5af; }
+.question-swatch { display: block; width: 64px; height: 64px; margin: 4px auto; border-width: 4px; }
 .color-label { font-size: 11px; line-height: 1.2; }
 .answer-icon { flex: none; font-size: 23px; }
 .word-art { display: block; object-fit: contain; pointer-events: none; user-select: none; -webkit-user-select: none; -webkit-user-drag: none; -webkit-touch-callout: none; }
