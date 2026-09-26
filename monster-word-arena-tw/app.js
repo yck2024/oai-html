@@ -17,6 +17,7 @@
   const scoreCount = document.querySelector('#scoreCount');
   const championCards = [...document.querySelectorAll('.champion-card')];
   const topicTabs = [...document.querySelectorAll('.topic-tab')];
+  const levelButtons = [...document.querySelectorAll('.level-option')];
   const speechLanguageButtons = [...document.querySelectorAll('.speech-language')];
   const speechStatus = document.querySelector('#speechStatus');
   const muteButton = document.querySelector('#muteButton');
@@ -31,7 +32,8 @@
     dino: { name: 'Rex', nameZh: '雷克斯', emoji: '🦖', move: 'Tail Swish', moveZh: '甩尾巴', moveEmoji: '🌀', buddy: 'Bobo', buddyZh: '波波', buddyEmoji: '👾' },
     monster: { name: 'Bobo', nameZh: '波波', emoji: '👾', move: 'Bubble Blast', moveZh: '泡泡砲', moveEmoji: '🫧', buddy: 'Rex', buddyZh: '雷克斯', buddyEmoji: '🦖' },
   };
-  const TOPIC_NAMES = { math: 'Math', colors: 'Colors', face: 'Face', family: 'Family' };
+  const TOPIC_NAMES = { math: 'Math', colors: 'Colors', face: 'Body', family: 'Family', animals: 'Animals', fruit: 'Fruit' };
+  const LEVEL_NAMES = { easy: 'Easy level—small numbers, three choices! 簡單：小數字，三個選項！', harder: 'Harder level—count to ten, four choices! 進階：數到十，四個選項！' };
   let speechLanguage = 'en';
   let speechEnabled = false;
   let speechMuted = false;
@@ -149,12 +151,19 @@
     const question = state.question;
     questionEnglish.textContent = question.promptEn;
     questionChinese.textContent = question.promptZh;
-    if (question.pictureImage) showArt(questionPicture, question.pictureImage, question.picture, wordLabel(question.options.find(option => option.id === question.answerId)));
+    if (question.pictureSwatch) {
+      const swatch = document.createElement('span');
+      swatch.className = 'color-swatch question-swatch';
+      swatch.style.backgroundColor = question.pictureSwatch;
+      questionPicture.replaceChildren(swatch);
+    } else if (question.pictureImage) showArt(questionPicture, question.pictureImage, question.picture, wordLabel(question.options.find(option => option.id === question.answerId)));
     else questionPicture.textContent = question.picture;
     questionPicture.hidden = !question.picture;
+    questionPicture.classList.toggle('dense-picture', Boolean(question.dense));
     equation.textContent = question.display;
     equation.hidden = !question.display;
     answerOptions.replaceChildren(...question.options.map(option => makeAnswerButton(option, question)));
+    answerOptions.classList.toggle('four-choices', question.options.length === 4);
     answerOptions.setAttribute('aria-label', question.topic === 'math' ? 'Choose a number 選一個數字' : 'Choose a word 選一個詞');
     feedback.textContent = state.feedback === 'try-again' ? 'That’s okay! Let’s try another one. 沒關係，再試一次！' : 'No rush—thinking is a superpower! 慢慢想，你最棒！';
     feedback.classList.toggle('retry', state.feedback === 'try-again');
@@ -166,6 +175,12 @@
       tab.classList.toggle('is-active', selected);
       tab.setAttribute('aria-pressed', String(selected));
       tab.disabled = state.finished;
+    });
+    levelButtons.forEach(button => {
+      const selected = button.dataset.level === state.level;
+      button.classList.toggle('is-active', selected);
+      button.setAttribute('aria-pressed', String(selected));
+      button.disabled = state.finished;
     });
     renderScore(state);
     if (speak) playCurrentQuestion();
@@ -208,7 +223,7 @@
     if (state.finished) {
       questionPanel.hidden = true;
       finishPanel.hidden = false;
-      topicTabs.forEach(tab => { tab.disabled = true; });
+      [...topicTabs, ...levelButtons].forEach(button => { button.disabled = true; });
       document.querySelector('#playAgainButton').focus();
     } else {
       nextButton.hidden = false;
@@ -255,6 +270,13 @@
     if (!game.chooseTopic(tab.dataset.topic)) return;
     arenaStage.classList.remove('thinking', 'do-spar');
     arenaMessage.textContent = `${TOPIC_NAMES[tab.dataset.topic]} challenge—your turn!`;
+    renderQuestion(game.getState());
+  }));
+
+  levelButtons.forEach(button => button.addEventListener('click', () => {
+    if (!game.chooseLevel(button.dataset.level)) return;
+    arenaStage.classList.remove('thinking', 'do-spar');
+    arenaMessage.textContent = LEVEL_NAMES[button.dataset.level];
     renderQuestion(game.getState());
   }));
 
