@@ -21,10 +21,12 @@
   const heroName = document.querySelector('#heroName');
   const buddyEmoji = document.querySelector('#buddyEmoji');
   const buddyName = document.querySelector('#buddyName');
+  const rivalPower = document.querySelector('#rivalPower');
+  const moveBubble = document.querySelector('#moveBubble');
 
   const CHAMPIONS = {
-    dino: { name: 'Rex', emoji: '🦖', buddy: 'Bobo', buddyEmoji: '👾' },
-    monster: { name: 'Bobo', emoji: '👾', buddy: 'Rex', buddyEmoji: '🦖' },
+    dino: { name: 'Rex', nameZh: '雷克斯', emoji: '🦖', move: 'Tail Swish', moveZh: '甩尾巴', moveEmoji: '🌀', buddy: 'Bobo', buddyZh: '波波', buddyEmoji: '👾' },
+    monster: { name: 'Bobo', nameZh: '波波', emoji: '👾', move: 'Bubble Blast', moveZh: '泡泡砲', moveEmoji: '🫧', buddy: 'Rex', buddyZh: '雷克斯', buddyEmoji: '🦖' },
   };
   const TOPIC_NAMES = { math: 'Math', colors: 'Colors', face: 'Face', family: 'Family' };
 
@@ -34,6 +36,9 @@
       star.classList.toggle('earned', index < state.stars);
     });
     scoreCount.textContent = `${state.stars} / ${window.FriendlyArena.GOAL}`;
+    [...rivalPower.children].forEach((pip, index) => {
+      pip.classList.toggle('spent', index >= state.rivalPower);
+    });
   }
 
   function renderChampion(state) {
@@ -42,6 +47,7 @@
     heroName.textContent = champion.name;
     buddyEmoji.textContent = champion.buddyEmoji;
     buddyName.textContent = champion.buddy;
+    moveBubble.textContent = champion.moveEmoji;
     championCards.forEach(card => {
       const selected = card.dataset.champion === state.champion;
       card.classList.toggle('is-selected', selected);
@@ -111,11 +117,14 @@
     renderScore(state);
   }
 
-  function celebrate() {
-    arenaStage.classList.remove('do-dance');
+  function spar(state) {
+    const champion = CHAMPIONS[state.champion];
+    arenaStage.classList.remove('do-spar', 'thinking');
     void arenaStage.offsetWidth;
-    arenaStage.classList.add('do-dance');
-    arenaMessage.textContent = 'High-five! Silly dance time! 擊掌！一起跳舞！';
+    arenaStage.classList.add('do-spar');
+    arenaMessage.textContent = state.finished
+      ? `${champion.buddy} is out of power—bow and high-five! ${champion.buddyZh}沒電了，鞠躬擊掌！`
+      : `${champion.name} used ${champion.move}! ${champion.buddy} wobbles and giggles! ${champion.nameZh}${champion.moveZh}！${champion.buddyZh}晃一晃，哈哈笑！`;
   }
 
   function chooseAnswer(button, optionId) {
@@ -128,19 +137,19 @@
       button.classList.add('wrong-answer');
       feedback.textContent = 'That’s okay! Let’s try another one. 沒關係，再試一次！';
       feedback.classList.add('retry');
-      arenaStage.classList.remove('do-dance');
+      arenaStage.classList.remove('do-spar');
       void arenaStage.offsetWidth;
       arenaStage.classList.add('thinking');
-      arenaMessage.textContent = 'Let’s think together! 我們一起想一想！';
+      arenaMessage.textContent = 'Pillow block! Let’s think together! 枕頭擋住了！我們一起想一想！';
       return;
     }
 
     button.classList.add('right-answer');
     answerOptions.querySelectorAll('button').forEach(choice => { choice.disabled = true; });
-    feedback.textContent = 'You got it! Your team earned a star! 答對了！小隊得到一顆星！';
+    feedback.textContent = 'You got it! Power move! 答對了！出招成功！';
     feedback.classList.remove('retry');
     renderScore(state);
-    celebrate();
+    spar(state);
     if (state.finished) {
       questionPanel.hidden = true;
       finishPanel.hidden = false;
@@ -155,19 +164,19 @@
   championCards.forEach(card => card.addEventListener('click', () => {
     game.chooseChampion(card.dataset.champion);
     renderChampion(game.getState());
-    arenaMessage.textContent = `${CHAMPIONS[card.dataset.champion].name} picked your team! ${CHAMPIONS[card.dataset.champion].emoji}`;
+    arenaMessage.textContent = `${CHAMPIONS[card.dataset.champion].name} is ready to spar! ${CHAMPIONS[card.dataset.champion].emoji}`;
   }));
 
   topicTabs.forEach(tab => tab.addEventListener('click', () => {
     if (!game.chooseTopic(tab.dataset.topic)) return;
-    arenaStage.classList.remove('thinking', 'do-dance');
+    arenaStage.classList.remove('thinking', 'do-spar');
     arenaMessage.textContent = `${TOPIC_NAMES[tab.dataset.topic]} challenge—your turn!`;
     renderQuestion(game.getState());
   }));
 
   nextButton.addEventListener('click', () => {
     game.nextQuestion();
-    arenaStage.classList.remove('thinking', 'do-dance');
+    arenaStage.classList.remove('thinking', 'do-spar');
     arenaMessage.textContent = 'Your turn, team!';
     renderQuestion(game.getState());
     answerOptions.querySelector('button')?.focus();
@@ -175,7 +184,7 @@
 
   function restart() {
     const state = game.restart();
-    arenaStage.classList.remove('thinking', 'do-dance');
+    arenaStage.classList.remove('thinking', 'do-spar');
     arenaMessage.textContent = 'Ready, team? Pick any challenge!';
     renderChampion(state);
     renderQuestion(state);

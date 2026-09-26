@@ -73,7 +73,7 @@
         promptZh: `找一找：${target.zh}！`,
         promptEn: `Find the ${target.en}!`,
         display: '',
-        picture: '👾',
+        picture: target.icon,
         answerId: target.id,
         options: shuffled(FACE_PARTS, random),
       };
@@ -86,7 +86,7 @@
         promptZh: `誰是${target.zh}？`,
         promptEn: `Find your ${target.en}!`,
         display: '',
-        picture: '👨‍👩‍👧‍👦',
+        picture: target.icon,
         answerId: target.id,
         options: shuffled(FAMILY, random),
       };
@@ -109,6 +109,7 @@
     function getState() {
       return {
         ...state,
+        rivalPower: GOAL - state.stars,
         question: { ...state.question, options: state.question.options.map(option => ({ ...option })) },
       };
     }

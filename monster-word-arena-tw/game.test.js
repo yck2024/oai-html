@@ -48,6 +48,34 @@ test('word challenges use bilingual Taiwan Traditional Chinese vocabulary', () =
   assert.deepEqual(TOPICS, ['math', 'colors', 'face', 'family']);
 });
 
+test('every word prompt shows the picture of its matching answer for pre-readers', () => {
+  for (const seed of [0, 0.4, 0.99]) {
+    const game = createGame(() => seed);
+    for (const topic of ['colors', 'face', 'family']) {
+      game.chooseTopic(topic);
+      const question = game.getState().question;
+      const target = question.options.find(option => option.id === question.answerId);
+      assert.equal(question.picture, target.icon, `${topic} picture matches the answer`);
+      assert.equal(question.options.filter(option => option.icon === question.picture).length, 1);
+    }
+  }
+});
+
+test('each correct answer knocks one pip off the sparring buddy with no penalty for misses', () => {
+  const game = createGame(steadyRandom);
+  assert.equal(game.getState().rivalPower, GOAL);
+  const { question } = game.getState();
+  const wrong = question.options.find(option => option.id !== question.answerId);
+  game.answer(wrong.id);
+  assert.equal(game.getState().rivalPower, GOAL);
+  for (let hit = 1; hit <= GOAL; hit += 1) {
+    if (hit > 1) game.nextQuestion();
+    answerCorrectly(game);
+    assert.equal(game.getState().rivalPower, GOAL - hit);
+  }
+  assert.equal(game.restart().rivalPower, GOAL);
+});
+
 test('a wrong answer is retryable and never awards a star', () => {
   const game = createGame(steadyRandom);
   const { question } = game.getState();

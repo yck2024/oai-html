@@ -76,14 +76,17 @@ h1 { margin: 4px 0 4px; color: #41405e; font-size: clamp(31px, 5vw, 46px); line-
 .fighter-face { display: block; font-size: clamp(66px, 9vw, 97px); line-height: 1; filter: drop-shadow(0 6px 1px #58724635); }
 .fighter-name { display: inline-block; margin-top: 4px; border-radius: 999px; padding: 3px 10px; background: #ffffffde; color: #4c5f62; font-size: 14px; font-weight: 1000; }
 .fighter-side { margin-top: 3px; color: #57836d; font-size: 8px; font-weight: 1000; letter-spacing: .11em; }
-.versus { position: absolute; z-index: 3; top: 45%; left: 50%; width: 42px; height: 42px; display: grid; place-items: center; transform: translate(-50%, -50%); border: 3px solid #fff; border-radius: 50%; background: #fff8e8; color: #e68b88; font-size: 25px; box-shadow: 0 3px 8px #4b77662b; }
+.versus { position: absolute; z-index: 3; top: 45%; left: 50%; width: 42px; height: 42px; display: grid; place-items: center; transform: translate(-50%, -50%); border: 3px solid #fff; border-radius: 50%; background: #fff8e8; color: #e68b88; font-size: 14px; font-weight: 1000; box-shadow: 0 3px 8px #4b77662b; }
 .fighter-spark { position: absolute; top: 22%; color: #fff1a0; font-size: 21px; opacity: .9; }
 .fighter-hero .fighter-spark { left: 18%; }
 .fighter-buddy .fighter-spark { right: 14%; }
-.move-bubble { position: absolute; z-index: 4; top: 16%; left: 50%; width: 48px; height: 48px; display: grid; place-items: center; transform: translate(-50%, 14px) scale(.5); border: 3px solid #fff; border-radius: 50%; background: #fff4bd; font-size: 25px; opacity: 0; }
-.do-dance .move-bubble { animation: bubble-pop .95s ease both; }
-.do-dance .fighter-hero .fighter-face { animation: happy-hop .65s ease-in-out 2; }
-.do-dance .fighter-buddy .fighter-face { animation: happy-spin .85s ease-in-out; }
+.move-bubble { position: absolute; z-index: 4; top: 16%; left: 72%; width: 48px; height: 48px; display: grid; place-items: center; transform: translate(-50%, 14px) scale(.5); border: 3px solid #fff; border-radius: 50%; background: #fff4bd; font-size: 25px; opacity: 0; }
+.power-meter { display: flex; gap: 2px; margin-top: 3px; font-size: 13px; line-height: 1; }
+.power-meter span { transition: opacity .3s, filter .3s; }
+.power-meter .spent { opacity: .25; filter: grayscale(1); }
+.do-spar .move-bubble { animation: bubble-pop .95s ease both; }
+.do-spar .fighter-hero .fighter-face { animation: power-lunge .6s ease-in-out; }
+.do-spar .fighter-buddy .fighter-face { animation: silly-wobble .8s ease-in-out .2s; }
 .thinking .fighter-hero .fighter-face { animation: think-wiggle .35s ease-in-out 2; }
 .arena-message { min-height: 42px; display: grid; place-items: center; margin: 0; color: #537969; text-align: center; font-size: 14px; font-weight: 900; line-height: 1.4; }
 .score-row { display: flex; align-items: center; justify-content: center; gap: 11px; margin-top: auto; padding-top: 8px; }
@@ -136,8 +139,8 @@ h1 { margin: 4px 0 4px; color: #41405e; font-size: clamp(31px, 5vw, 46px); line-
 footer { padding: 12px 0 0; color: #7c7b8c; text-align: center; font-size: 11px; font-weight: 850; line-height: 1.45; }
 
 @keyframes idle-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-@keyframes happy-hop { 0%, 100% { transform: translateY(0) rotate(0); } 35% { transform: translateY(-17px) rotate(-7deg); } 70% { transform: translateY(0) rotate(6deg); } }
-@keyframes happy-spin { 0%, 100% { transform: rotate(0) scale(1); } 45% { transform: rotate(14deg) scale(1.13); } 75% { transform: rotate(-10deg) scale(1.04); } }
+@keyframes power-lunge { 0%, 100% { transform: translateX(0) rotate(0); } 40% { transform: translateX(28px) rotate(8deg) scale(1.08); } 70% { transform: translateX(-4px) rotate(-3deg); } }
+@keyframes silly-wobble { 0%, 100% { transform: translateX(0) rotate(0); } 30% { transform: translateX(14px) rotate(18deg); } 60% { transform: translateX(6px) rotate(-10deg); } 80% { transform: translateY(-8px) rotate(4deg); } }
 @keyframes bubble-pop { 0% { transform: translate(-50%, 14px) scale(.5); opacity: 0; } 30%, 75% { transform: translate(-50%, 0) scale(1); opacity: 1; } 100% { transform: translate(-50%, -10px) scale(.7); opacity: 0; } }
 @keyframes think-wiggle { 0%, 100% { transform: rotate(0); } 35% { transform: rotate(-5deg); } 70% { transform: rotate(5deg); } }
 @keyframes gentle-nudge { 0%, 100% { transform: translateX(0); } 45% { transform: translateX(3px); } }

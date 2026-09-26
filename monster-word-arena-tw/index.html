@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#fff1d6">
-  <meta name="description" content="A friendly dinosaur and monster game with easy addition and Taiwan Traditional Chinese-English word play for little learners.">
+  <meta name="description" content="A pretend-sparring dinosaur and monster game with easy addition and Taiwan Traditional Chinese-English word play for little learners.">
   <title>Dino &amp; Monster Word Arena｜恐龍怪獸友誼擂台</title>
   <link rel="stylesheet" href="./game.css">
 </head>
@@ -17,15 +17,15 @@
     </header>
 
     <section class="intro" aria-labelledby="gameTitle">
-      <p class="eyebrow">A friendly face-off · 一起玩，不會受傷</p>
+      <p class="eyebrow">A pretend sparring face-off · 假裝對打，不會受傷</p>
       <h1 id="gameTitle">Dino &amp; Monster<br class="small-break"> Word Arena</h1>
-      <p>Pick a champion, solve a little challenge, and cheer for a silly dance!<br class="desktop-break">選一位小隊長，答對就一起跳舞！</p>
+      <p>Pick a champion, solve a little challenge, and launch a silly power move!<br class="desktop-break">選一位小隊長，答對就出招！</p>
     </section>
 
     <section class="champion-picker" aria-label="Choose your champion 選一位小隊長">
       <div class="picker-heading">
-        <div><span class="section-kicker">YOUR TEAM · 你的小隊</span><h2>Who will cheer you on?</h2></div>
-        <span class="soft-note">Friends, not fighters 🧡</span>
+        <div><span class="section-kicker">YOUR TEAM · 你的小隊</span><h2>Who will spar for you?</h2></div>
+        <span class="soft-note">Pretend moves, no ouchies 🧡</span>
       </div>
       <div class="champion-options">
         <button class="champion-card is-selected" type="button" data-champion="dino" aria-pressed="true">
@@ -41,9 +41,9 @@
       </div>
     </section>
 
-    <section class="arena-layout" aria-label="Friendly word and math game">
-      <section class="arena-card" aria-label="The friendly arena 友誼擂台">
-        <div class="arena-heading"><span>THE FRIENDSHIP ARENA</span><span class="heart-dots" aria-hidden="true">♥ ♥ ♥</span></div>
+    <section class="arena-layout" aria-label="Sparring word and math game">
+      <section class="arena-card" aria-label="The sparring arena 對打擂台">
+        <div class="arena-heading"><span>THE SPARRING ARENA · 對打擂台</span><span class="heart-dots" aria-hidden="true">♥ ♥ ♥</span></div>
         <div class="arena-stage" id="arenaStage">
           <div class="cloud cloud-one" aria-hidden="true">✦</div>
           <div class="cloud cloud-two" aria-hidden="true">✦</div>
@@ -53,17 +53,18 @@
             <span class="fighter-name" id="heroName">Rex</span>
             <span class="fighter-side">YOUR CHAMPION</span>
           </div>
-          <span class="versus" aria-hidden="true">♡</span>
+          <span class="versus" aria-hidden="true">VS</span>
           <div class="fighter fighter-buddy" id="buddyFighter">
             <span class="fighter-spark" aria-hidden="true">💫</span>
             <span class="fighter-face" id="buddyEmoji" aria-hidden="true">👾</span>
             <span class="fighter-name" id="buddyName">Bobo</span>
-            <span class="fighter-side">FRIENDLY RIVAL</span>
+            <span class="power-meter" id="rivalPower" aria-hidden="true"><span>⚡</span><span>⚡</span><span>⚡</span></span>
+            <span class="fighter-side">SPARRING BUDDY</span>
           </div>
-          <span class="move-bubble" id="moveBubble" aria-hidden="true">✨</span>
+          <span class="move-bubble" id="moveBubble" aria-hidden="true">🌀</span>
         </div>
         <p class="arena-message" id="arenaMessage" role="status" aria-live="polite">Ready, team? Pick any challenge!</p>
-        <div class="score-row" aria-label="Friendship stars">
+        <div class="score-row" aria-label="Power move stars">
           <span class="score-label">TEAM STARS</span>
           <div class="score-stars" id="scoreStars" aria-hidden="true"><span>☆</span><span>☆</span><span>☆</span></div>
           <span class="score-count" id="scoreCount">0 / 3</span>
@@ -90,13 +91,13 @@
           <p class="answer-hint">Tap your answer · 點一個答案</p>
           <div class="answer-options" id="answerOptions" role="group" aria-label="Choose an answer 選一個答案"></div>
           <p class="feedback" id="feedback" role="status" aria-live="polite" aria-atomic="true">No rush—thinking is a superpower!</p>
-          <button class="next-button" id="nextButton" type="button" hidden>Next friendly move · 下一題 <span aria-hidden="true">➜</span></button>
+          <button class="next-button" id="nextButton" type="button" hidden>Next power move · 下一招 <span aria-hidden="true">➜</span></button>
         </div>
 
         <section class="finish-panel" id="finishPanel" aria-labelledby="finishTitle" hidden>
           <span class="party-art" aria-hidden="true">🎉 🦖 🧡 👾 🎉</span>
-          <h2 id="finishTitle">You’re a Friendship Champion!</h2>
-          <p>Three stars! Both buddies win with a happy dance.<br>三顆星！恐龍和怪獸一起開心跳舞！</p>
+          <h2 id="finishTitle">You’re a Sparring Champion!</h2>
+          <p>Three power moves! Your buddy is out of power, takes a bow, and gives you a high-five.<br>三招成功！對手沒電了，鞠躬擊掌！</p>
           <button class="next-button replay-button" id="playAgainButton" type="button">Play again · 再玩一次 <span aria-hidden="true">↻</span></button>
         </section>
       </section>
