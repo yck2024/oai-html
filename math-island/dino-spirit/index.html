@@ -92,7 +92,7 @@
         <p class="forest-hint" id="forestHint">こたえが あたると、森に ひかりが もどるよ。</p>
       </section>
 
-      <section class="quiz-card" aria-label="たしざんクイズ">
+      <section class="quiz-card" aria-label="さんすうクイズ">
         <div class="progress-top">
           <span class="progress-title">ひかりだま</span>
           <span id="progressText" class="progress-count">0 / 5</span>
@@ -101,12 +101,16 @@
           <div id="progressFill" class="progress-fill"></div>
         </div>
         <div class="progress-dots" id="progressDots" aria-hidden="true"></div>
+        <div class="mode-switch" role="group" aria-label="もんだいの しゅるい">
+          <button class="mode-button selected" id="additionModeButton" type="button" aria-pressed="true">たしざん</button>
+          <button class="mode-button" id="subtractionModeButton" type="button" aria-pressed="false">ひきざん</button>
+        </div>
 
         <div id="questionArea">
           <p class="question-label" id="questionLabel">もんだい 1</p>
-          <p class="instruction">ひかりだまは あわせて いくつ？</p>
-          <button class="speak-button" id="speakButton" type="button" aria-label="もんだいを きく">
-            <span aria-hidden="true">🔊</span> <span>もんだいを きく</span>
+          <p class="instruction" id="instruction">ひかりだまは あわせて いくつ？</p>
+          <button class="speak-button" id="speakButton" type="button" aria-label="もういちど きく">
+            <span aria-hidden="true">🔊</span> <span>もういちど きく</span>
           </button>
           <p class="speech-status" id="speechStatus" role="status" aria-live="polite" aria-atomic="true"></p>
           <div class="equation" id="equation" aria-label="たしざんの もんだい"></div>
