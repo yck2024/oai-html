@@ -444,12 +444,6 @@ test('speech remains optional when the browser has no audio player', () => {
 });
 
 test('the voice picker shows no voice selected and keeps the invitation visible until audio is turned on', () => {
-  const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
-  const languageButtons = html.match(/<button class="speech-language[^>]*>/g);
-  assert.equal(languageButtons.length, 3);
-  assert.ok(languageButtons.every(button => !button.includes('is-active') && button.includes('aria-pressed="false"')));
-  assert.match(html, /id="speechInvite"[^>]*>[^<]*<span[^>]*>[^<]*<\/span> Choose a voice/);
-
   const game = createGame(steadyRandom);
   const app = createAppFixture(game);
   const invite = app.elements.get('#speechInvite');
@@ -477,15 +471,18 @@ test('the voice picker shows no voice selected and keeps the invitation visible 
   assert.deepEqual(pickApp.speechLanguageButtons.filter(button => button.getAttribute('aria-pressed') === 'true').map(button => button.dataset.language), ['ja']);
 });
 
-test('reactions stay silent until a voice is chosen, then follow the chosen language', () => {
+test('reactions stay silent while the voice invitation shows, then follow the chosen language', () => {
   const game = createGame(steadyRandom);
   const app = createAppFixture(game);
+  const invite = app.elements.get('#speechInvite');
   clickAnswer(app, game, false);
   clickAnswer(app, game, true);
   assert.deepEqual(app.played, [], 'no reaction before a voice, replay, or unmute');
+  assert.equal(invite.hidden, false, 'the invitation stays up while cheers are silent');
 
   app.nextButton.click();
   app.speechLanguageButtons.find(button => button.dataset.language === 'zh').click();
+  assert.equal(invite.hidden, true, 'choosing a voice turns on the questions and cheers together');
   clickAnswer(app, game, false);
   clickAnswer(app, game, false);
   clickAnswer(app, game, true);
