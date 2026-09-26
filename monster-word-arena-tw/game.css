@@ -128,7 +128,10 @@ h1 { margin: 4px 0 4px; color: #41405e; font-size: clamp(31px, 5vw, 46px); line-
 .color-option { flex-direction: column; gap: 2px; }
 .color-swatch { width: 24px; height: 24px; border: 2px solid #ffffff; border-radius: 50%; box-shadow: 0 0 0 1px #b9b5af; }
 .color-label { font-size: 11px; line-height: 1.2; }
-.answer-icon { font-size: 23px; }
+.answer-icon { flex: none; font-size: 23px; }
+.word-art { display: block; object-fit: contain; pointer-events: none; user-select: none; -webkit-user-select: none; -webkit-user-drag: none; -webkit-touch-callout: none; }
+.question-picture .word-art { width: 72px; height: 72px; margin: 0 auto; }
+.answer-icon .word-art { width: 44px; height: 44px; }
 .answer-label { display: grid; color: #55536c; font-size: 14px; line-height: 1.25; }
 .answer-label small { margin-top: 2px; color: #8b8898; font-size: 10px; font-weight: 800; }
 .answer-option.right-answer { border-color: #64bd8c; background: #e2f8e8; box-shadow: 0 3px 0 #abd9b5; }
@@ -163,6 +166,7 @@ footer { padding: 12px 0 0; color: #7c7b8c; text-align: center; font-size: 11px;
   .fighter-face { font-size: clamp(72px, 19vw, 96px); }
   .challenge-card { padding-bottom: 14px; }
   .question-picture { min-height: 40px; font-size: 32px; }
+  .question-picture .word-art { width: 64px; height: 64px; }
   .equation { min-height: 40px; font-size: 34px; }
   footer { padding-bottom: 4px; }
 }
@@ -206,6 +210,8 @@ footer { padding: 12px 0 0; color: #7c7b8c; text-align: center; font-size: 11px;
   .question-en { margin-top: 9px; font-size: 15px; }
   .question-zh { font-size: 16px; }
   .question-picture { min-height: 37px; margin-top: 4px; font-size: 30px; }
+  .question-picture .word-art { width: 60px; height: 60px; }
+  .answer-icon .word-art { width: 40px; height: 40px; }
   .equation { min-height: 38px; font-size: 32px; }
   .answer-options { gap: 6px; }
   .answer-option { min-height: 60px; border-radius: 14px; padding: 5px 3px; }

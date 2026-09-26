@@ -20,6 +20,8 @@ class FakeElement {
   constructor(tagName = 'div') {
     this.tagName = tagName.toUpperCase();
     this.children = [];
+    this.parentNode = null;
+    this.text = '';
     this.dataset = {};
     this.attributes = {};
     this.listeners = {};
@@ -44,15 +46,41 @@ class FakeElement {
   }
 
   click() {
-    for (const callback of this.listeners.click || []) callback({ currentTarget: this, target: this });
+    this.dispatch('click');
+  }
+
+  dispatch(type) {
+    for (const callback of this.listeners[type] || []) callback({ currentTarget: this, target: this });
+  }
+
+  get textContent() {
+    return this.children.length ? this.children.map(child => child.textContent).join('') : this.text;
+  }
+
+  set textContent(value) {
+    this.replaceChildren();
+    this.text = String(value);
   }
 
   append(...children) {
+    children.forEach(child => { child.parentNode = this; });
     this.children.push(...children);
   }
 
   replaceChildren(...children) {
-    this.children = children;
+    this.children.forEach(child => { child.parentNode = null; });
+    this.children = [];
+    this.text = '';
+    this.append(...children);
+  }
+
+  replaceWith(...nodes) {
+    const parent = this.parentNode;
+    if (!parent) return;
+    const replacements = nodes.map(node => (typeof node === 'string' ? { textContent: node } : node));
+    replacements.forEach(node => { node.parentNode = parent; });
+    parent.children.splice(parent.children.indexOf(this), 1, ...replacements);
+    this.parentNode = null;
   }
 
   querySelectorAll(selector) {
@@ -126,7 +154,7 @@ function createAppFixture(game) {
     }
   }
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'app.js'), 'utf8'), { window, document, Audio: RecordingAudio });
-  return { elements, played, speechLanguageButtons, answerOptions: elements.get('#answerOptions'), nextButton: elements.get('#nextButton'), muteButton: elements.get('#muteButton') };
+  return { elements, played, speechLanguageButtons, topicTabs, answerOptions: elements.get('#answerOptions'), nextButton: elements.get('#nextButton'), muteButton: elements.get('#muteButton') };
 }
 
 test('addition questions stay within five and offer three distinct choices', () => {
@@ -175,8 +203,34 @@ test('every word prompt shows the picture of its matching answer for pre-readers
       const target = question.options.find(option => option.id === question.answerId);
       assert.equal(question.picture, target.icon, `${topic} picture matches the answer`);
       assert.equal(question.options.filter(option => option.icon === question.picture).length, 1);
+      if (topic === 'colors') continue;
+      assert.equal(question.pictureImage, target.image, `${topic} art matches the answer`);
+      assert.equal(question.options.filter(option => option.image === question.pictureImage).length, 1);
     }
   }
+});
+
+test('face and family pictures are bundled original art sized for a phone page', () => {
+  const game = createGame(steadyRandom);
+  const options = ['face', 'family'].flatMap(topic => {
+    game.chooseTopic(topic);
+    return game.getState().question.options;
+  });
+  assert.deepEqual(options.map(option => option.id).sort(), ['brother', 'dad', 'ears', 'eyes', 'mom', 'nose', 'sister']);
+  let totalBytes = 0;
+  for (const option of options) {
+    assert.match(option.image, /^\.\/images\/(face|family)-[a-z]+\.webp$/);
+    assert.ok(option.icon, `${option.id} keeps an emoji fallback`);
+    const art = fs.readFileSync(path.join(__dirname, option.image));
+    assert.equal(art.toString('latin1', 0, 4), 'RIFF', `${option.image} is a RIFF file`);
+    assert.equal(art.toString('latin1', 8, 16), 'WEBPVP8X', `${option.image} is an extended WebP`);
+    assert.ok(art[20] & 0x10, `${option.image} has a transparent alpha channel`);
+    assert.equal(art.readUIntLE(24, 3) + 1, 192, `${option.image} is 192px wide`);
+    assert.equal(art.readUIntLE(27, 3) + 1, 192, `${option.image} is 192px tall`);
+    assert.ok(art.length < 16 * 1024, `${option.image} stays small`);
+    totalBytes += art.length;
+  }
+  assert.ok(totalBytes < 80 * 1024, 'all seven pictures together stay light for a phone');
 });
 
 test('each correct answer knocks one pip off the sparring buddy with no penalty for misses', () => {
@@ -329,6 +383,45 @@ test('restart and play again stay silent until the child chooses a voice', () =>
   app.elements.get('#restartButton').click();
   assert.equal(app.played.length, 2);
   assert.match(app.played[1], /^\.\/audio\/zh\//);
+});
+
+test('face and family art renders with bilingual labels and falls back to emoji if a picture fails', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  const questionPicture = app.elements.get('#questionPicture');
+  app.topicTabs.find(tab => tab.dataset.topic === 'face').click();
+
+  const { question } = game.getState();
+  const answer = question.options.find(option => option.id === question.answerId);
+  const [art] = questionPicture.children;
+  assert.equal(art.tagName, 'IMG');
+  assert.equal(art.src, question.pictureImage);
+  assert.equal(art.alt, `${answer.zh} ${answer.en}`, 'the question picture carries its answer\'s bilingual label');
+  assert.equal(art.draggable, false, 'pressing the picture never starts an image drag');
+  for (const button of app.answerOptions.children) {
+    const option = question.options.find(choice => choice.id === button.dataset.choice);
+    const [icon, label] = button.children;
+    assert.equal(icon.getAttribute('aria-hidden'), 'true');
+    assert.equal(icon.children[0].src, option.image);
+    assert.equal(icon.children[0].alt, `${option.zh} ${option.en}`);
+    assert.equal(icon.children[0].draggable, false, 'pressing the answer picture never starts an image drag');
+    assert.equal(label.textContent, `${option.zh}${option.en}`, 'the button keeps its Chinese and English text label');
+  }
+
+  art.dispatch('error');
+  assert.equal(questionPicture.textContent, question.picture);
+  assert.ok(questionPicture.children.every(child => child.tagName !== 'IMG'));
+  const answerArt = app.answerOptions.children[0].children[0];
+  answerArt.children[0].dispatch('error');
+  assert.equal(answerArt.textContent, question.options.find(option => option.id === app.answerOptions.children[0].dataset.choice).icon);
+
+  app.topicTabs.find(tab => tab.dataset.topic === 'family').click();
+  const familyArt = questionPicture.children[0];
+  art.dispatch('error');
+  assert.equal(questionPicture.children[0], familyArt, 'a stale picture failure cannot replace the new question');
+  app.topicTabs.find(tab => tab.dataset.topic === 'math').click();
+  assert.equal(questionPicture.children.length, 0);
+  assert.equal(questionPicture.textContent, game.getState().question.picture);
 });
 
 test('unmuting clears stale muted status even when playback is skipped on the finish screen', () => {

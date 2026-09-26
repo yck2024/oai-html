@@ -8,16 +8,17 @@
     { id: 'yellow', zh: '黃色', en: 'YELLOW', icon: '🟡', swatch: '#ffd65b' },
     { id: 'green', zh: '綠色', en: 'GREEN', icon: '🟢', swatch: '#56bf83' },
   ];
+  // Original art; each emoji icon remains the fallback if its picture cannot load.
   const FACE_PARTS = [
-    { id: 'eyes', zh: '眼睛', en: 'eyes', icon: '👀' },
-    { id: 'nose', zh: '鼻子', en: 'nose', icon: '👃' },
-    { id: 'ears', zh: '耳朵', en: 'ears', icon: '👂' },
+    { id: 'eyes', zh: '眼睛', en: 'eyes', icon: '👀', image: './images/face-eyes.webp' },
+    { id: 'nose', zh: '鼻子', en: 'nose', icon: '👃', image: './images/face-nose.webp' },
+    { id: 'ears', zh: '耳朵', en: 'ears', icon: '👂', image: './images/face-ears.webp' },
   ];
   const FAMILY = [
-    { id: 'dad', zh: '爸爸', en: 'Dad', icon: '👨' },
-    { id: 'mom', zh: '媽媽', en: 'Mom', icon: '👩' },
-    { id: 'brother', zh: '哥哥', en: 'older brother', icon: '👦' },
-    { id: 'sister', zh: '姊姊', en: 'older sister', icon: '👧' },
+    { id: 'dad', zh: '爸爸', en: 'Dad', icon: '👨', image: './images/family-dad.webp' },
+    { id: 'mom', zh: '媽媽', en: 'Mom', icon: '👩', image: './images/family-mom.webp' },
+    { id: 'brother', zh: '哥哥', en: 'older brother', icon: '👦', image: './images/family-brother.webp' },
+    { id: 'sister', zh: '姊姊', en: 'older sister', icon: '👧', image: './images/family-sister.webp' },
   ];
   const ADDITION = [
     { left: 1, right: 1 },
@@ -77,6 +78,7 @@
         promptEn: `Find the ${target.en}!`,
         display: '',
         picture: target.icon,
+        pictureImage: target.image,
         answerId: target.id,
         options: shuffled(FACE_PARTS, random),
       };
@@ -91,6 +93,7 @@
         promptEn: `Find your ${target.en}!`,
         display: '',
         picture: target.icon,
+        pictureImage: target.image,
         answerId: target.id,
         options: shuffled(FAMILY, random),
       };
