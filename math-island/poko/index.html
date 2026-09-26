@@ -36,8 +36,11 @@ header{display:flex;justify-content:space-between;align-items:center;gap:12px;pa
 .scene{position:absolute;inset:0;background:linear-gradient(#b9edff 0%,#e6faff 54%,#b5e9b5 54%,#7bd495 100%);overflow:hidden}
 .scene canvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:1}
 .fallback-scene{position:absolute;inset:0;display:grid;place-items:center;z-index:0}
-.fallback-island{width:min(600px,85vw);height:200px;border-radius:50%;background:radial-gradient(ellipse at 50% 36%,#9be58e 0 45%,#62c781 46% 61%,#e9c98a 62% 67%,#42bce0 68% 100%);box-shadow:0 20px 0 #d8ad69;display:flex;align-items:center;justify-content:center;gap:17px;font-size:clamp(32px,6vw,58px)}
-.fallback-island span{filter:drop-shadow(0 8px 3px #476d5855)}
+.fallback-island{width:min(600px,85vw);height:200px;border-radius:50%;background:radial-gradient(ellipse at 50% 36%,#9be58e 0 45%,#62c781 46% 61%,#e9c98a 62% 67%,#42bce0 68% 100%);box-shadow:0 20px 0 #d8ad69;display:flex;align-items:center;justify-content:center;gap:clamp(6px,1.4vw,17px);font-size:clamp(32px,6vw,58px)}
+.fallback-island>span{filter:drop-shadow(0 8px 3px #476d5855)}
+.fallback-counting-tray{display:flex;align-items:center;justify-content:center;gap:2px;flex:none;padding:7px 10px;border:3px solid #fff;border-radius:999px;background:#fff4cf;box-shadow:0 4px 0 #cfb16f}
+.fallback-counting-tray span{font-size:clamp(22px,5vw,42px);line-height:1;filter:drop-shadow(0 3px 2px #476d5855)}
+.scene.three-ready .fallback-scene{display:none}
 .cloud{position:absolute;top:14%;font-size:50px;opacity:.76;filter:drop-shadow(0 4px 1px #9bdcf588);z-index:0}
 .cloud.one{left:12%}.cloud.two{right:13%;top:22%;font-size:38px}
 .scene-vignette{position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(180deg,#fff4 0%,transparent 25%,transparent 72%,#315f4620 100%)}
@@ -104,7 +107,7 @@ header{display:flex;justify-content:space-between;align-items:center;gap:12px;pa
 </header>
 <main class="game-shell" id="game">
  <div class="scene" id="scene">
-  <div class="fallback-scene" aria-hidden="true"><div class="fallback-island"><span>🦊</span><span>🍎</span><span>🍎</span><span>🌼</span></div></div>
+  <div class="fallback-scene" aria-hidden="true"><div class="fallback-island"><span>🦊</span><div class="fallback-counting-tray" id="fallbackApples"></div><span>🌼</span></div></div>
   <div class="cloud one" aria-hidden="true">☁️</div><div class="cloud two" aria-hidden="true">☁️</div>
   <div class="scene-vignette"></div>
  </div>
@@ -152,12 +155,14 @@ header{display:flex;justify-content:space-between;align-items:center;gap:12px;pa
  </div>
 </main>
 </div>
+<script src="./count-contract.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r160/three.min.js"></script>
 <script>
 (function(){
  "use strict";
  var score=0, round=0, mode="count", current=null, hintOn=false, locked=false;
  var sceneEl=document.getElementById("scene");
+ var fallbackApplesEl=document.getElementById("fallbackApples");
  var questionEl=document.getElementById("question");
  var visualEl=document.getElementById("visual");
  var feedbackEl=document.getElementById("feedback");
@@ -168,7 +173,6 @@ header{display:flex;justify-content:space-between;align-items:center;gap:12px;pa
  var intro=document.getElementById("intro");
  var ending=document.getElementById("ending");
  var applesGroup=null, renderer=null, threeScene=null, camera=null, fox=null, bobTime=0, currentAudio=null;
- var appleSpots=[[-1.65,.84,.8],[-.75,.84,1.2],[.15,.84,.9],[1.1,.84,1.25],[2.0,.84,.8]];
 
  function playAudio(clip){
   if(currentAudio){currentAudio.pause();currentAudio.currentTime=0;}
@@ -212,7 +216,7 @@ header{display:flex;justify-content:space-between;align-items:center;gap:12px;pa
   makeSphere(g,"#fff",.34*s,.04*s,0,.42*s,.33*s,.36*s);
  }
  function makeFox(){
-  var g=new THREE.Group();g.position.set(-2.0,.82,1.2);threeScene.add(g);
+  var g=new THREE.Group();g.position.set(-4.0,.82,1.2);threeScene.add(g);
   makeSphere(g,"#f38b48",0,0,0,.55,.48,.55);
   makeSphere(g,"#ffad61",.02,.44,-.06,.43,.43,.42);
   makeSphere(g,"#fff0d4",.04,.31,.3,.29,.2,.23);
@@ -254,6 +258,11 @@ header{display:flex;justify-content:space-between;align-items:center;gap:12px;pa
    var pathmat=mat("#dfc38c");
    var path=addMesh(threeScene,new THREE.SphereGeometry(1,28,14),pathmat,.35,.69,2.52,1.0,.13,1.7);
    path.rotation.y=.25;
+   var tray=PokoCountContract.tray;
+   var trayRim=mat("#d2ac68");
+   addMesh(threeScene,new THREE.CylinderGeometry(tray.outerRadius,tray.outerRadius,.16,64),trayRim,tray.centerX,.75,tray.centerZ,1,1,tray.outerDepthScale);
+   var traySurface=mat("#fff0c9");
+   addMesh(threeScene,new THREE.CylinderGeometry(tray.radiusX,tray.radiusX,.03,64),traySurface,tray.centerX,.845,tray.centerZ,1,1,tray.radiusZ/tray.radiusX);
    addTree(-3.1,-1.4,1.1);addTree(3.45,-1.5,.95);addTree(3.45,1.6,.82);
    addFlower(-3.1,.9,"#ff8aa0");addFlower(3.05,.35,"#fff1a1");addFlower(-3.4,-.1,"#c19dff");
    addCloud(-4.1,3.4,-1,.9);addCloud(3.7,4.2,-2,.7);addCloud(.2,4.8,-3,1);
@@ -262,6 +271,7 @@ header{display:flex;justify-content:space-between;align-items:center;gap:12px;pa
    resizeThree();
    window.addEventListener("resize",resizeThree);
    animate();
+   sceneEl.classList.add("three-ready");
   }catch(err){
    if(renderer){renderer.dispose();renderer.domElement.remove();renderer=null;}
   }
@@ -277,27 +287,27 @@ header{display:flex;justify-content:space-between;align-items:center;gap:12px;pa
   requestAnimationFrame(animate);
   bobTime+=.018;
   if(fox)fox.position.y=.82+Math.sin(bobTime)*.035;
-  if(applesGroup)applesGroup.children.forEach(function(a,i){a.position.y=.84+Math.sin(bobTime*1.4+i)*.045;});
+  if(applesGroup)applesGroup.children.forEach(function(a,i){a.position.y=1.16+Math.sin(bobTime*1.4+i)*.045;});
   renderer.render(threeScene,camera);
  }
  function makeApple(){
   var g=new THREE.Group();
-  makeSphere(g,"#ed5260",0,0,0,.28,.3,.28);
+  var r=PokoCountContract.appleRadius;makeSphere(g,"#ed5260",0,0,0,r,.3,r);
   makeSphere(g,"#ff7580",-.1,.06,.09,.115,.13,.12);
   addMesh(g,new THREE.CylinderGeometry(.025,.035,.13,8),mat("#795239"),0,.3,0,1,1,1);
   var leaf=makeSphere(g,"#58b95f",.09,.34,.02,.12,.045,.065);leaf.rotation.z=-.35;
   return g;
  }
  function setApples(total,split){
+  if(fallbackApplesEl){
+   fallbackApplesEl.innerHTML="";
+   for(var iconIndex=0;iconIndex<total;iconIndex++){
+    var icon=document.createElement("span");icon.textContent="🍎";fallbackApplesEl.appendChild(icon);
+   }
+  }
   if(!applesGroup||!window.THREE)return;
   while(applesGroup.children.length){applesGroup.remove(applesGroup.children[0]);}
-  var spots=appleSpots.slice();
-  if(split!==null && split!==undefined){
-   spots=[];
-   var leftCount=split, rightCount=total-split;
-   for(var i=0;i<leftCount;i++)spots.push([-2.1+(i%2)*.55,.84,.2+Math.floor(i/2)*.5]);
-   for(var j=0;j<rightCount;j++)spots.push([.05+(j%2)*.55,.84,.2+Math.floor(j/2)*.5]);
-  }
+  var spots=split===null||split===undefined?PokoCountContract.countSpots(total):PokoCountContract.additionSpots(total,split);
   for(var k=0;k<total;k++){
    var apple=makeApple(),p=spots[k%spots.length];apple.position.set(p[0],p[1],p[2]);applesGroup.add(apple);
   }
@@ -332,7 +342,7 @@ header{display:flex;justify-content:space-between;align-items:center;gap:12px;pa
   locked=false;hintOn=false;
   var answer,a,b,kind=mode;
   if(kind==="count"){
-   answer=1+Math.floor(Math.random()*5);
+   answer=PokoCountContract.countAnswer(Math.random);
    current={kind:"count",answer:answer};
    questionEl.textContent="りんごは いくつ？";
    setApples(answer,null);
