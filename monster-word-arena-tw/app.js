@@ -250,6 +250,7 @@
     if (state.finished) {
       questionPanel.hidden = true;
       finishPanel.hidden = false;
+      window.ArenaRewards?.recordWin(state.champion);
       topicTabs.forEach(tab => { tab.disabled = true; });
       document.querySelector('#playAgainButton').focus();
     } else {

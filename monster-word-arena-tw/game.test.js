@@ -227,11 +227,14 @@ function createAppFixture(game) {
   const ids = [
     'answerOptions', 'questionEnglish', 'questionChinese', 'questionPicture', 'equation', 'feedback',
     'nextButton', 'questionPanel', 'finishPanel', 'arenaStage', 'arenaMessage', 'scoreStars',
-    'scoreCount', 'speechStatus', 'muteButton', 'heroEmoji', 'heroName', 'buddyEmoji', 'buddyName',
+    'scoreCount', 'speechStatus', 'muteButton', 'heroFighter', 'heroEmoji', 'heroName', 'buddyEmoji', 'buddyName',
     'rivalPower', 'moveBubble', 'restartButton', 'playAgainButton', 'replayPromptButton', 'musicButton',
-    'speechControls', 'speechInvite',
+    'speechControls', 'speechInvite', 'rewardSummary', 'stickerBook', 'stickerBookIntro', 'stickerGrid',
+    'costumeRows', 'rewardSaveNote', 'resetStatus',
   ];
   const elements = new Map(ids.map(id => [`#${id}`, new FakeElement(id === 'nextButton' ? 'button' : 'div')]));
+  const rewardActions = new Map(['open', 'close', 'reset', 'confirm-reset', 'keep']
+    .map(name => [`[data-reward-action="${name}"]`, new FakeElement('button')]));
   elements.get('#scoreStars').children = Array.from({ length: 3 }, () => new FakeElement('span'));
   elements.get('#rivalPower').children = Array.from({ length: 3 }, () => new FakeElement('span'));
   const championCards = ['dino', 'monster'].map(champion => {
@@ -250,7 +253,7 @@ function createAppFixture(game) {
     return button;
   });
   const document = {
-    querySelector: selector => elements.get(selector),
+    querySelector: selector => elements.get(selector) || rewardActions.get(selector),
     querySelectorAll: selector => ({
       '.champion-card': championCards,
       '.topic-tab': topicTabs,
@@ -261,7 +264,7 @@ function createAppFixture(game) {
   };
   const effects = [];
   const sound = { board: null, ctx: null, timers: createFakeTimers() };
-  const window = { AudioContext: FakeAudioContext };
+  const window = { AudioContext: FakeAudioContext, addEventListener() {} };
   // The page's own scripts publish these modules; the fixture swaps in the test game and records sounds.
   const hooks = {
     FriendlyArena: api => ({ ...api, createGame: () => game }),
