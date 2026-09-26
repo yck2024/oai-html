@@ -111,6 +111,7 @@ h1 { margin: 4px 0 4px; color: #41405e; font-size: clamp(31px, 5vw, 46px); line-
 .speech-language, .speech-control { min-height: 40px; border: 2px solid #e8dfd0; border-radius: 12px; padding: 6px 11px; background: #fff; color: #5f5a72; font-size: 12px; font-weight: 950; cursor: pointer; touch-action: manipulation; }
 .speech-language.is-active { border-color: #9386ce; background: #eeeaff; color: #534b85; }
 .speech-control { background: #f2f7ec; }
+.music-toggle.is-active { border-color: #82c29c; background: #dff4e6; color: #3f6f52; }
 .speech-language:hover, .speech-control:hover { border-color: #c1b5de; }
 .speech-controls.needs-voice { border-color: #b9addf; background: #f6f2ff; box-shadow: 0 0 0 3px #eeeaff; }
 .speech-controls.needs-voice .speech-language { border-color: #b9addf; animation: voice-invite 1.8s ease-in-out infinite; }

@@ -93,6 +93,14 @@ python3 monster-word-arena-tw/generate_gemini_audio.py --overwrite --language en
 
 Check current [Gemini API pricing](https://ai.google.dev/gemini-api/docs/pricing) before authorizing generation. Only the fixed prompt and reaction text is sent to Gemini during build-time generation. Never commit or expose the key. Speech is optional: language selection, replay, and mute are available in-game, while answer buttons remain usable if playback is unavailable.
 
+## Sound effects and music
+
+`sounds.js` synthesizes every effect and the music with the Web Audio API at play time: no audio files, stock or copyrighted samples, or network requests, and about 10 KB of code. The effects are short and non-speech: a soft tap when the child answers or presses a game button, rising twinkles for a right answer, an airy whoosh with the power move, a tiny "hee-hee" wobble for the sparring buddy, a bouncy pillow boing for a miss, and a small fanfare at the win. They start from the child's own taps, so they need no voice choice first.
+
+Optional background music (a slow pentatonic lullaby loop) is off by default and has its own **🎵 Music · 音樂** toggle. The existing mute button silences everything: narration, effects, and music. Music stops while the page is hidden and resumes when it returns.
+
+Effects and music play on their own `AudioContext`, never on the shared speech `<audio>` element, so they cannot cut off a question or spoken reaction. They also duck further while speech plays. Rendered offline in Chrome, each effect's loudest 50 ms sits about 14–24 dB below the narration clips, and the music sits about 25 dB below them. To keep sounds from piling up during rapid tapping, repeats of the same effect inside a short gap are dropped and a retriggered effect replaces the one still ringing, so each effect rings at most once at a time. Without Web Audio, the game stays silent and fully playable.
+
 ## Local checks
 
 ```sh
