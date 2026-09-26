@@ -1,0 +1,77 @@
+{
+  "math-1-1": {
+    "en": "One plus one. How many altogether?",
+    "zh": "一加一，總共是多少？",
+    "ja": "いちたすいちは、ぜんぶでいくつかな？"
+  },
+  "math-1-2": {
+    "en": "One plus two. How many altogether?",
+    "zh": "一加二，總共是多少？",
+    "ja": "いちたすには、ぜんぶでいくつかな？"
+  },
+  "math-2-2": {
+    "en": "Two plus two. How many altogether?",
+    "zh": "二加二，總共是多少？",
+    "ja": "にたすには、ぜんぶでいくつかな？"
+  },
+  "math-2-1": {
+    "en": "Two plus one. How many altogether?",
+    "zh": "二加一，總共是多少？",
+    "ja": "にたすいちは、ぜんぶでいくつかな？"
+  },
+  "math-3-1": {
+    "en": "Three plus one. How many altogether?",
+    "zh": "三加一，總共是多少？",
+    "ja": "さんたすいちは、ぜんぶでいくつかな？"
+  },
+  "colors-red": {
+    "en": "Find red!",
+    "zh": "找出紅色！",
+    "ja": "あかいろをみつけてね！"
+  },
+  "colors-yellow": {
+    "en": "Find yellow!",
+    "zh": "找出黃色！",
+    "ja": "きいろをみつけてね！"
+  },
+  "colors-green": {
+    "en": "Find green!",
+    "zh": "找出綠色！",
+    "ja": "みどりいろをみつけてね！"
+  },
+  "face-eyes": {
+    "en": "Find the eyes!",
+    "zh": "找一找：眼睛！",
+    "ja": "めをみつけてね！"
+  },
+  "face-nose": {
+    "en": "Find the nose!",
+    "zh": "找一找：鼻子！",
+    "ja": "お顔のまんなかにある鼻を見つけてね！"
+  },
+  "face-ears": {
+    "en": "Find the ears!",
+    "zh": "找一找：耳朵！",
+    "ja": "みみをみつけてね！"
+  },
+  "family-dad": {
+    "en": "Find your dad!",
+    "zh": "誰是爸爸？",
+    "ja": "おとうさんはどれかな？"
+  },
+  "family-mom": {
+    "en": "Find your mom!",
+    "zh": "誰是媽媽？",
+    "ja": "おかあさんはどれかな？"
+  },
+  "family-brother": {
+    "en": "Find your older brother!",
+    "zh": "誰是哥哥？",
+    "ja": "お兄さんはどれかな？"
+  },
+  "family-sister": {
+    "en": "Find your older sister!",
+    "zh": "誰是姊姊？",
+    "ja": "おねえさんはどれかな？"
+  }
+}

@@ -42,6 +42,7 @@
       const answer = left + right;
       return {
         topic,
+        audioId: `math-${left}-${right}`,
         promptZh: '加起來有多少？',
         promptEn: 'How many altogether?',
         display: `${left} + ${right} = ?`,
@@ -57,6 +58,7 @@
       const target = COLORS[Math.floor(random() * COLORS.length)];
       return {
         topic,
+        audioId: `colors-${target.id}`,
         promptZh: `找出${target.zh}！`,
         promptEn: `Find ${target.en}!`,
         display: '',
@@ -70,6 +72,7 @@
       const target = FACE_PARTS[Math.floor(random() * FACE_PARTS.length)];
       return {
         topic,
+        audioId: `face-${target.id}`,
         promptZh: `找一找：${target.zh}！`,
         promptEn: `Find the ${target.en}!`,
         display: '',
@@ -83,6 +86,7 @@
       const target = FAMILY[Math.floor(random() * FAMILY.length)];
       return {
         topic,
+        audioId: `family-${target.id}`,
         promptZh: `誰是${target.zh}？`,
         promptEn: `Find your ${target.en}!`,
         display: '',
@@ -160,7 +164,42 @@
     return { getState, chooseTopic, chooseChampion, answer, nextQuestion, restart };
   }
 
-  const api = { GOAL, TOPICS, createGame };
+  function createSpeechPlayer(audio, onUnavailable = () => {}) {
+    let attempt = 0;
+
+    function stop() {
+      attempt += 1;
+      if (!audio) return;
+      audio.pause();
+      audio.currentTime = 0;
+    }
+
+    function play(audioId, language) {
+      stop();
+      if (!audio || !audioId || !['en', 'zh', 'ja'].includes(language)) {
+        onUnavailable();
+        return false;
+      }
+
+      const currentAttempt = attempt;
+      audio.src = `./audio/${language}/${audioId}.mp3`;
+      audio.load();
+      try {
+        const playback = audio.play();
+        playback?.catch(() => {
+          if (currentAttempt === attempt) onUnavailable();
+        });
+        return true;
+      } catch (_error) {
+        if (currentAttempt === attempt) onUnavailable();
+        return false;
+      }
+    }
+
+    return { play, stop };
+  }
+
+  const api = { GOAL, TOPICS, createGame, createSpeechPlayer };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof window !== 'undefined') window.FriendlyArena = api;
 })();
