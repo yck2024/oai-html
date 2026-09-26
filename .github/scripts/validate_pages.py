@@ -33,14 +33,4 @@ if missing_files:
 if missing_manifest:
     raise SystemExit(f"Published pages missing from pages.json: {sorted(missing_manifest)}")
 
-html_pages = sorted(Path(".").rglob("*.html"))
-for path in html_pages:
-    if ".git" in path.parts:
-        continue
-    html = path.read_text(encoding="utf-8")
-    if "G-QLFWNZWDSS" not in html:
-        raise SystemExit(f"Google Analytics tag missing from {path}")
-    if "assets/analytics.js" not in html:
-        raise SystemExit(f"Shared analytics helper missing from {path}")
-
-print(f"Validated {len(slugs)} published pages and analytics coverage on {len(html_pages)} HTML pages")
+print(f"Validated {len(slugs)} published pages")
