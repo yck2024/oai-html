@@ -1,0 +1,20 @@
+name: Validate published pages
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: ["fm/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Validate page manifest and published page directories
+        run: python .github/scripts/validate_pages.py
