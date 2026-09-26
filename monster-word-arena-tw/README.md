@@ -65,7 +65,7 @@ Check current [Gemini API pricing](https://ai.google.dev/gemini-api/docs/pricing
 
 Optional background music (a slow pentatonic lullaby loop) is off by default and has its own **🎵 Music · 音樂** toggle. The existing mute button silences everything: narration, effects, and music. Music stops while the page is hidden and resumes when it returns.
 
-Effects and music play on their own `AudioContext`, never on the shared speech `<audio>` element, so they cannot cut off a question or spoken reaction. They also duck further while speech plays. Rendered offline in Chrome, each effect's loudest 50 ms sits about 14–24 dB below the narration clips, and the music sits about 25 dB below them. To keep sounds from piling up during rapid tapping, repeats of the same effect inside a short gap are dropped, a retriggered effect replaces the one still ringing, and at most five effects ring at once. Without Web Audio, the game stays silent and fully playable.
+Effects and music play on their own `AudioContext`, never on the shared speech `<audio>` element, so they cannot cut off a question or spoken reaction. They also duck further while speech plays. Rendered offline in Chrome, each effect's loudest 50 ms sits about 14–24 dB below the narration clips, and the music sits about 25 dB below them. To keep sounds from piling up during rapid tapping, repeats of the same effect inside a short gap are dropped and a retriggered effect replaces the one still ringing, so each effect rings at most once at a time. Without Web Audio, the game stays silent and fully playable.
 
 ## Local checks
 

@@ -12,6 +12,26 @@ const prompts = require('./audio/prompts.json');
 
 const steadyRandom = () => 0.3;
 
+// index.html's <script src> list in document order, read with a real HTML parser.
+const PAGE_SCRIPTS = JSON.parse(execFileSync('python3', ['-B', '-c', `
+import json
+from html.parser import HTMLParser
+
+class Scripts(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.sources = []
+
+    def handle_starttag(self, tag, attrs):
+        src = dict(attrs).get('src')
+        if tag == 'script' and src:
+            self.sources.append(src)
+
+parser = Scripts()
+parser.feed(open('index.html', encoding='utf-8').read())
+print(json.dumps(parser.sources))
+`], { cwd: __dirname, encoding: 'utf8' }));
+
 function answerCorrectly(game) {
   const state = game.getState();
   return game.answer(state.question.answerId);
@@ -233,18 +253,24 @@ function createAppFixture(game) {
   };
   const effects = [];
   const sound = { board: null, ctx: null, timers: createFakeTimers() };
-  const window = {
-    FriendlyArena: { GOAL, createGame: () => game, createSpeechPlayer },
-    AudioContext: FakeAudioContext,
-    FriendlyArenaSounds: {
+  const window = { AudioContext: FakeAudioContext };
+  // The page's own scripts publish these modules; the fixture swaps in the test game and records sounds.
+  const hooks = {
+    FriendlyArena: api => ({ ...api, createGame: () => game }),
+    FriendlyArenaSounds: api => ({
+      ...api,
       createSoundBoard(makeContext) {
-        const board = createSoundBoard(() => { sound.ctx = makeContext(); return sound.ctx; }, sound.timers);
+        const board = api.createSoundBoard(() => { sound.ctx = makeContext(); return sound.ctx; }, sound.timers);
         sound.board = board;
         // Records only effects that actually sounded (not muted or throttled).
         return { ...board, play: (name, options) => board.play(name, options) && effects.push(name) > 0 };
       },
-    },
+    }),
   };
+  Object.entries(hooks).forEach(([name, hook]) => {
+    let published;
+    Object.defineProperty(window, name, { get: () => published, set: api => { published = hook(api); } });
+  });
   const played = [];
   const audioElements = [];
   class RecordingAudio extends FakeAudio {
@@ -267,7 +293,9 @@ function createAppFixture(game) {
       return super.play();
     }
   }
-  vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'app.js'), 'utf8'), { window, document, Audio: RecordingAudio });
+  // Runs the scripts in the order index.html lists them, as the browser does.
+  const page = vm.createContext({ window, document, Audio: RecordingAudio });
+  for (const src of PAGE_SCRIPTS) vm.runInContext(fs.readFileSync(path.join(__dirname, src), 'utf8'), page, { filename: src });
   return {
     elements, played, effects, sound, audioElements, speechLanguageButtons, topicTabs,
     answerOptions: elements.get('#answerOptions'), nextButton: elements.get('#nextButton'),
@@ -632,13 +660,24 @@ function answerWith(app, game, correct) {
 }
 
 test('sound effects are synthesized locally with no files, network, or speech element', () => {
-  const source = fs.readFileSync(path.join(__dirname, 'sounds.js'), 'utf8');
-  assert.doesNotMatch(source, /https?:|fetch\(|new Audio|\.mp3|\.wav|\.ogg/, 'effects are generated, not downloaded');
+  // A bare page with Web Audio only: no fetch, XMLHttpRequest, Audio element, or timers of its own.
+  const window = {};
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'sounds.js'), 'utf8'), { window });
+  let ctx = null;
+  const timers = createFakeTimers();
+  const board = window.FriendlyArenaSounds.createSoundBoard(() => { ctx = new FakeAudioContext(); return ctx; }, timers);
+  for (const name of EFFECTS) {
+    assert.equal(board.play(name), true, `${name} plays`);
+    ctx.currentTime += 2;
+  }
+  board.setMusic(true);
+  for (const loop of timers.timers.values()) loop();
+  assert.equal(board.getState().musicPlaying, true);
+  assert.ok(ctx.sources.length > EFFECTS.length);
+  assert.ok(ctx.sources.every(source => source.startTime !== undefined), 'every sound is an oscillator or generated noise');
   assert.deepEqual(EFFECTS, ['tap', 'sparkle', 'whoosh', 'boing', 'giggle', 'cheer']);
   assert.ok(EFFECT_LEVEL <= 0.4, 'effects stay well under the narration level');
   assert.ok(MUSIC_LEVEL < EFFECT_LEVEL, 'background music is quieter than the effects');
-  const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
-  assert.match(html, /<script src="\.\/sounds\.js"><\/script>\s*<script src="\.\/app\.js">/);
 });
 
 test('the sound board waits for a sound, keeps music off by default, and stays silent without Web Audio', () => {
@@ -654,6 +693,11 @@ test('the sound board waits for a sound, keeps music off by default, and stays s
     test.ctx.currentTime += 2;
     assert.equal(test.board.play(name), true, `${name} plays`);
   }
+  const resumed = test.ctx.resumed;
+  test.ctx.state = 'interrupted';
+  test.ctx.currentTime += 2;
+  assert.equal(test.board.play('tap'), true);
+  assert.equal(test.ctx.resumed, resumed + 1, 'a tap wakes an audio context a phone call interrupted');
   assert.equal(test.board.play('roar'), false, 'unknown effects are ignored');
 
   for (const makeContext of [null, () => { throw new Error('no Web Audio'); }]) {
@@ -675,8 +719,11 @@ test('rapid tapping retriggers an effect instead of piling copies up', () => {
   assert.equal(test.board.play('boing'), true);
   assert.equal(test.board.getState().voices, 1, 'a retriggered boing replaces the one still ringing');
 
-  for (const name of ['tap', 'sparkle', 'whoosh', 'giggle', 'cheer']) test.board.play(name);
-  assert.ok(test.board.getState().voices <= 5, 'only a handful of effects ever ring at once');
+  for (const name of ['tap', 'sparkle', 'whoosh', 'giggle', 'cheer']) assert.equal(test.board.play(name), true, `${name} is never crowded out`);
+  assert.equal(test.board.getState().voices, EFFECTS.length);
+  test.ctx.currentTime += 1.1;
+  for (const name of EFFECTS) assert.equal(test.board.play(name), true);
+  assert.equal(test.board.getState().voices, EFFECTS.length, 'each effect rings at most once at a time');
   test.ctx.currentTime += 5;
   test.board.play('tap');
   assert.equal(test.board.getState().voices, 1, 'finished effects are released');
@@ -718,6 +765,26 @@ test('mute silences effects and music, and narration ducks both', () => {
   assert.equal(test.buses.music, 0);
   test.board.setHidden(false);
   assert.equal(test.timers.timers.size, 0, 'showing the page never starts music that is off');
+});
+
+test('quickly restarting music carries on the queued tune instead of layering a second one', () => {
+  const test = createTestBoard();
+  test.board.setMusic(true);
+  const restarts = [
+    () => { test.board.setMusic(false); test.board.setMusic(true); },
+    () => { test.board.setMuted(true); test.board.setMuted(false); },
+    () => { test.board.setHidden(true); test.board.setHidden(false); },
+  ];
+  for (const restart of restarts) {
+    test.ctx.currentTime += 0.2;
+    restart();
+  }
+  const musicBus = test.ctx.gains[2];
+  const notes = test.ctx.sources.filter(source => source.connections[0].connections.includes(musicBus));
+  const starts = [...new Set(notes.map(note => note.startTime))].sort((a, b) => a - b);
+  const beats = starts.slice(1).map((time, index) => time - starts[index]);
+  assert.ok(beats.length >= 3, 'each restart keeps the tune going');
+  assert.ok(beats.every(beat => Math.abs(beat - beats[0]) < 1e-9), 'every note lands on one steady beat');
 });
 
 test('the game plays gentle effects from the child\'s own taps without a voice choice', () => {

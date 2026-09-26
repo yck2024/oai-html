@@ -7,7 +7,6 @@
   const EFFECT_LEVEL = 0.35;
   const MUSIC_LEVEL = 0.06;
   const DUCKED = { effects: 0.55, music: 0.3 };
-  const MAX_VOICES = 5;
   const MIN_GAP = { tap: 0.07, sparkle: 0.25, whoosh: 0.25, boing: 0.3, giggle: 0.3, cheer: 1 };
   const EFFECTS = Object.keys(MIN_GAP);
 
@@ -53,7 +52,7 @@
     }
 
     function wake() {
-      if (ctx?.state === 'suspended') ctx.resume?.()?.catch?.(() => {});
+      if (ctx && ctx.state !== 'running' && ctx.state !== 'closed') ctx.resume?.()?.catch?.(() => {});
     }
 
     function setLevel(param, value, immediate) {
@@ -181,7 +180,6 @@
       // Rapid taps retrigger an effect instead of stacking copies of it.
       voices.filter(voice => voice.name === name).forEach(voice => fadeOut(voice, now));
       voices = voices.filter(voice => voice.name !== name);
-      if (voices.length >= MAX_VOICES) return false;
       lastPlayed[name] = now;
       const out = ctx.createGain();
       out.gain.value = 1;
@@ -214,7 +212,7 @@
     function startMusic() {
       if (musicTimer !== null || muted || !musicOn || !context()) return;
       wake();
-      nextStepTime = ctx.currentTime + 0.1;
+      nextStepTime = Math.max(nextStepTime, ctx.currentTime + 0.1);
       scheduleMusic();
       musicTimer = setTimer(scheduleMusic, 200);
     }
@@ -227,12 +225,8 @@
 
     function setMusic(on) {
       musicOn = Boolean(on);
-      if (musicOn) {
-        startMusic();
-      } else {
-        stopMusic();
-        step = 0;
-      }
+      if (musicOn) startMusic();
+      else stopMusic();
       applyLevels();
       return musicOn;
     }
