@@ -137,7 +137,7 @@
       button.classList.add('wrong-answer');
       feedback.textContent = 'That’s okay! Let’s try another one. 沒關係，再試一次！';
       feedback.classList.add('retry');
-      arenaStage.classList.remove('do-spar');
+      arenaStage.classList.remove('do-spar', 'thinking');
       void arenaStage.offsetWidth;
       arenaStage.classList.add('thinking');
       arenaMessage.textContent = 'Pillow block! Let’s think together! 枕頭擋住了！我們一起想一想！';
@@ -162,7 +162,7 @@
   }
 
   championCards.forEach(card => card.addEventListener('click', () => {
-    game.chooseChampion(card.dataset.champion);
+    if (!game.chooseChampion(card.dataset.champion)) return;
     renderChampion(game.getState());
     arenaMessage.textContent = `${CHAMPIONS[card.dataset.champion].name} is ready to spar! ${CHAMPIONS[card.dataset.champion].emoji}`;
   }));
