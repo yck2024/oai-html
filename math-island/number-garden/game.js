@@ -434,26 +434,29 @@ function makeAnswers(answer) {
   return [...choices].sort(() => Math.random() - 0.5);
 }
 
-const TOKEN_ROW_GAP = 1.05;
-
-function tokenLayout(count) {
+function tokenLayout(count, staggered) {
+  if (!staggered) {
+    const cols = Math.min(4, count);
+    return { cols, rows: Math.ceil(count / cols), span: cols - 1, shift: 0, rowGap: 0.92 };
+  }
   const cols = count > 4 ? Math.ceil(count / 2) : count;
-  return { cols, rows: Math.ceil(count / cols), span: Math.max(cols - 1, count - cols - 0.5) };
+  return { cols, rows: Math.ceil(count / cols), span: Math.max(cols - 1, count - cols - 0.5), shift: 0.5, rowGap: 1.05 };
 }
 
 function dropTokens(question) {
   clearTargets();
   const groups = question.kind === 'add' ? [question.a, question.b] : [question.a];
   const groupCenters = groups.length === 2 ? [-2.1, 2.1] : [0];
+  const staggered = groups.length === 1;
   groups.forEach((count, groupIndex) => {
     const cx = groupCenters[groupIndex];
-    const { cols, rows, span } = tokenLayout(count);
+    const { cols, rows, span, shift, rowGap } = tokenLayout(count, staggered);
     for (let i = 0; i < count; i++) {
       const col = i % cols;
       const row = Math.floor(i / cols);
-      const token = makeToken(selectedWorld, col + row * 2 + groupIndex * 4);
-      const x = cx + (col + row * 0.5 - span / 2) * 0.92;
-      const z = (row - (rows - 1) / 2) * TOKEN_ROW_GAP + 1.9;
+      const token = makeToken(selectedWorld, staggered ? col + row * 2 : i + groupIndex * 4);
+      const x = cx + (col + row * shift - span / 2) * 0.92;
+      const z = (row - (rows - 1) / 2) * rowGap + 1.9;
       token.position.set(x, 0.02, z);
       token.rotation.y = (i * 1.7 + groupIndex) % (Math.PI * 2);
       token.scale.setScalar(1.05);
@@ -472,11 +475,11 @@ function dropTokens(question) {
       targetGroup.add(ring);
     });
   } else {
-    const { rows, span } = tokenLayout(groups[0]);
+    const { rows, span, rowGap } = tokenLayout(groups[0], true);
     const pad = rows > 1 ? 1.02 : 0.72;
     const ring = new THREE.Mesh(new THREE.TorusGeometry(1, 0.055, 8, 48), ringMat);
     ring.rotation.x = -Math.PI / 2;
-    ring.scale.set(span * 0.46 + pad, (rows - 1) * TOKEN_ROW_GAP / 2 + pad, 1);
+    ring.scale.set(span * 0.46 + pad, (rows - 1) * rowGap / 2 + pad, 1);
     ring.position.set(0, 0.01, 1.9);
     ring.castShadow = false;
     targetGroup.add(ring);
