@@ -10,12 +10,7 @@ The gallery is manifest-driven. Published page metadata lives in `pages.json`, a
 
 ## Current pages
 
-- Neovim beginner visual guide
-- Herdr Keyboard Visual Guide (EN / 繁中)
-- Pi + Luna + Automic Vault
-- Math Island (three Japanese math games)
-- Dino & Monster Word Arena (a separate bilingual Taiwan Chinese-English game with gentle battles and addition)
-- Taiwan Story Picture Books | 台灣故事繪本 (illustrated Japanese / Taiwan Mandarin folktales)
+See the [live gallery](https://yck2024.github.io/oai-html/) for the current page list; its cards are rendered from [`pages.json`](pages.json).
 
 ## Publishing architecture
 
@@ -55,7 +50,7 @@ Event parameters (`element_id`, `element_label`, `target_section`, `percent_scro
 
 Interactive pages can add semantic events with `data-analytics-event` / `data-analytics-label` or `window.oaiTrack(eventName, params)`.
 
-Do not send user-entered text, copied content, credentials, private identifiers, or other sensitive data to analytics. Taiwan storybook selection and page turns stay in page state without URL or history changes; clicks and copies from the storybook are excluded, and gallery-wide page-view URLs, referrers, and titles omit story and page identifiers. Listening mode, 注音 visibility, and auto-turn preference are remembered only in this browser; no identity, answers, or reading history are stored.
+Do not send user-entered text, copied content, credentials, private identifiers, or other sensitive data to analytics. In the storybook, story selection and page turns stay in page state without URL or history changes; clicks and copies are excluded, and its page-view URL, referrer, and title omit the selected story and page identifiers. Listening mode, 注音 visibility, and auto-turn preference are remembered only in this browser; no identity, answers, or reading history are stored.
 
 ## Taiwan story references
 
