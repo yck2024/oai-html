@@ -87,8 +87,8 @@ class FakeDocument {
     ].forEach((id) => this.elements.set(`#${id}`, new FakeElement(this, id)));
     this.elements.set('.quiz-card', new FakeElement(this));
     this.elements.set('.forest-card', new FakeElement(this));
-    this.elements.get('#additionModeButton').setAttribute('aria-pressed', 'true');
-    this.elements.get('#subtractionModeButton').setAttribute('aria-pressed', 'false');
+    this.elements.get('#additionModeButton').setAttribute('aria-pressed', 'false');
+    this.elements.get('#subtractionModeButton').setAttribute('aria-pressed', 'true');
     this.elements.get('#speakButton').append(new FakeElement(this));
     this.elements.get('#speakButton').append(new FakeElement(this));
     this.forestLights = Array.from({ length: 5 }, () => new FakeElement(this));
@@ -141,8 +141,9 @@ function answerCurrentProblem(elements) {
   return { left, operation, right, answer };
 }
 
-test('addition remains unchanged and its bundled prompt autoplays', () => {
+test('addition stays available from the toggle and its bundled prompt autoplays', () => {
   const { elements, audio } = startGame();
+  elements.get('#additionModeButton').click();
   const expected = [
     { left: 2, right: 1 },
     { left: 4, right: 1 },
@@ -150,8 +151,9 @@ test('addition remains unchanged and its bundled prompt autoplays', () => {
     { left: 5, right: 2 },
     { left: 6, right: 3 },
   ];
-  assert.equal(audio.attempts.length, 1, 'initial prompt should autoplay');
+  assert.equal(audio.attempts.length, 2, 'switching modes should autoplay the new prompt');
   assert.equal(elements.get('#additionModeButton').getAttribute('aria-pressed'), 'true');
+  assert.equal(elements.get('#subtractionModeButton').getAttribute('aria-pressed'), 'false');
   for (const question of expected) {
     const current = problemFrom(elements.get('#equation'));
     assert.deepEqual(current, { ...question, operation: 'たす' });
@@ -162,9 +164,9 @@ test('addition remains unchanged and its bundled prompt autoplays', () => {
   assert.equal(elements.get('#finishPanel').hidden, false);
 });
 
-test('subtraction rounds get gradually harder, stay non-negative, and autoplay bundled audio', () => {
-  const { document, elements, audio } = startGame();
-  elements.get('#subtractionModeButton').click();
+test('subtraction is the default mode, stays non-negative, and autoplays bundled audio', () => {
+  const { elements, audio } = startGame();
+  assert.equal(audio.attempts.length, 1, 'initial prompt should autoplay');
   assert.equal(elements.get('#subtractionModeButton').getAttribute('aria-pressed'), 'true');
   assert.equal(elements.get('#additionModeButton').getAttribute('aria-pressed'), 'false');
   assert.equal(elements.get('.quiz-card').getAttribute('aria-label'), 'ひきざんクイズ');

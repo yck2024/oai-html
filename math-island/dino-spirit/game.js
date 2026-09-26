@@ -44,7 +44,7 @@
   const forestCard = document.querySelector('.forest-card');
   const forestLights = document.querySelectorAll('.forest-light');
 
-  let operation = 'addition';
+  let operation = 'subtraction';
   let rounds = shuffled(questionSets[operation]);
   let roundIndex = 0;
   let wrongCount = 0;
