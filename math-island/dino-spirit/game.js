@@ -92,7 +92,7 @@
     const attempt = speechAttempt;
     const round = rounds[roundIndex];
     const clip = operation === 'subtraction'
-      ? `subtraction-${round.left}-${round.right}.wav`
+      ? `subtraction-${round.left}-${round.right}.mp3`
       : `question-${round.left}-${round.right}.mp3`;
     questionAudio.src = `./audio/${clip}`;
     questionAudio.load();

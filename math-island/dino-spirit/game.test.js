@@ -184,8 +184,8 @@ test('subtraction is the default mode, stays non-negative, and autoplays bundled
     assert.deepEqual(current, { ...question, operation: 'ひく' });
     assert.ok(current.left >= current.right, 'subtraction minuend must be at least the subtrahend');
     assert.ok(current.left - current.right >= 0, 'subtraction result must be non-negative');
-    assert.equal(audio.src, `./audio/subtraction-${question.left}-${question.right}.wav`);
-    assert.ok(fs.existsSync(path.join(__dirname, 'audio', `subtraction-${question.left}-${question.right}.wav`)));
+    assert.equal(audio.src, `./audio/subtraction-${question.left}-${question.right}.mp3`);
+    assert.ok(fs.existsSync(path.join(__dirname, 'audio', `subtraction-${question.left}-${question.right}.mp3`)));
     answerCurrentProblem(elements);
   }
   assert.equal(elements.get('#finishPanel').hidden, false);
