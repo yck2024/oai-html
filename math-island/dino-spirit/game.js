@@ -44,7 +44,7 @@
   const forestCard = document.querySelector('.forest-card');
   const forestLights = document.querySelectorAll('.forest-light');
 
-  let operation = 'addition';
+  let operation = 'subtraction';
   let rounds = shuffled(questionSets[operation]);
   let roundIndex = 0;
   let wrongCount = 0;
@@ -72,10 +72,7 @@
   }
 
   function makeChoices(answer) {
-    const choices = [...new Set([answer, answer - 1, answer + 1, answer + 2])]
-      .filter((value) => value >= 0)
-      .slice(0, 3);
-    return shuffled(choices);
+    return shuffled([answer - 1, answer, answer + 1]);
   }
 
   let speechAttempt = 0;
@@ -92,7 +89,7 @@
     const attempt = speechAttempt;
     const round = rounds[roundIndex];
     const clip = operation === 'subtraction'
-      ? `subtraction-${round.left}-${round.right}.wav`
+      ? `subtraction-${round.left}-${round.right}.mp3`
       : `question-${round.left}-${round.right}.mp3`;
     questionAudio.src = `./audio/${clip}`;
     questionAudio.load();

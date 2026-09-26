@@ -35,9 +35,7 @@
     <section class="game-layout" aria-label="ひかりだまを あつめるゲーム">
       <section class="forest-card" aria-label="ラグとポワのいる森">
         <div class="scene-wrap">
-          <svg class="forest-scene" viewBox="0 0 600 330" role="img" aria-labelledby="sceneTitle sceneDescription" xmlns="http://www.w3.org/2000/svg">
-            <title id="sceneTitle">ラグとポワ、こだま森のなかまたち</title>
-            <desc id="sceneDescription">葉っぱの背びれをもつ緑の小さな恐竜ラグと、星のように光る森の精ポワが、木々のあいだで冒険しています。</desc>
+          <svg class="forest-scene" viewBox="0 0 600 330" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#bceee8"/><stop offset="1" stop-color="#f2f6c6"/></linearGradient>
               <linearGradient id="hill" x2="0" y2="1"><stop stop-color="#a9d993"/><stop offset="1" stop-color="#70b879"/></linearGradient>
@@ -54,40 +52,26 @@
             <g fill="#86c784" opacity=".9"><circle cx="81" cy="80" r="6"/><circle cx="145" cy="55" r="4"/><circle cx="416" cy="75" r="5"/><circle cx="545" cy="93" r="4"/></g>
             <g class="forest-lights" aria-hidden="true">
               <circle class="forest-light" cx="70" cy="106" r="8" fill="url(#glow)"/>
-              <circle class="forest-light" cx="170" cy="148" r="7" fill="url(#glow)"/>
+              <circle class="forest-light" cx="255" cy="32" r="7" fill="url(#glow)"/>
               <circle class="forest-light" cx="372" cy="92" r="8" fill="url(#glow)"/>
-              <circle class="forest-light" cx="486" cy="214" r="7" fill="url(#glow)"/>
-              <circle class="forest-light" cx="566" cy="176" r="8" fill="url(#glow)"/>
-            </g>
-            <g class="rag" aria-hidden="true">
-              <!-- Rag, the leaf-backed dinosaur -->
-              <path d="M175 248q-30 5-51-11 21 2 33-16 0 21 24 27" fill="#4d9e6f"/>
-              <ellipse cx="246" cy="221" rx="77" ry="54" fill="#68b77b"/>
-              <path d="M267 185q-12-27-31-37 27-2 39 21 6-28 29-39-2 29-13 47 30-23 48-17-13 27-46 39" fill="#38845e"/>
-              <path d="M201 255q-8 28 1 39h25q10-12 2-37M270 258q-5 24 7 36h24q9-12-1-35" fill="#58a96f"/>
-              <ellipse cx="311" cy="197" rx="47" ry="40" fill="#78c887"/>
-              <ellipse cx="347" cy="214" rx="27" ry="20" fill="#8bd394"/>
-              <ellipse cx="327" cy="188" rx="5" ry="7" fill="#183d40"/>
-              <circle cx="329" cy="185" r="1.7" fill="#fff"/>
-              <path d="M345 222q10 5 17-2" fill="none" stroke="#397957" stroke-width="3" stroke-linecap="round"/>
-              <circle cx="315" cy="210" r="6" fill="#f49d92" opacity=".7"/>
-              <g fill="#d9f29e"><circle cx="230" cy="213" r="8"/><circle cx="264" cy="231" r="7"/><circle cx="218" cy="239" r="5"/></g>
-            </g>
-            <g class="powa" aria-hidden="true">
-              <!-- Powa, a tiny forest light -->
-              <path d="M428 119q4 13 18 15-14 3-18 17-4-14-18-17 14-2 18-15" fill="#fff2a1" stroke="#e4bb52" stroke-width="2"/>
-              <circle cx="424" cy="133" r="2" fill="#526b56"/><circle cx="432" cy="133" r="2" fill="#526b56"/>
-              <path d="M424 139q4 4 8 0" fill="none" stroke="#526b56" stroke-width="1.7" stroke-linecap="round"/>
-              <circle cx="403" cy="158" r="5" fill="url(#glow)"/><circle cx="461" cy="181" r="7" fill="url(#glow)"/>
+              <circle class="forest-light" cx="345" cy="165" r="7" fill="url(#glow)"/>
+              <circle class="forest-light" cx="565" cy="32" r="8" fill="url(#glow)"/>
             </g>
             <path d="M0 292q60-24 119 0t118 0 118 0 118 0 127 0" fill="none" stroke="#d8ef9a" stroke-width="5" stroke-linecap="round"/>
             <g fill="#eaf6bf"><path d="M87 283q-13-22-27-13 10 19 27 13m0 0q15-21 27-12-9 18-27 12"/><path d="M510 278q-11-19-24-11 9 16 24 11m0 0q13-18 25-10-8 16-25 10"/></g>
           </svg>
+          <div class="scene-art">
+            <img class="forest-prop prop-acorn" src="./images/acorn.webp" alt="" width="297" height="356" decoding="async">
+            <img class="forest-prop prop-flower" src="./images/woodland-flower.webp" alt="" width="369" height="366" decoding="async">
+            <img class="forest-prop prop-blue-mushroom" src="./images/blue-mushroom.webp" alt="" width="348" height="334" decoding="async">
+            <img class="character-art rag" src="./images/rag.webp" alt="葉っぱの背びれと茶色のかばんを持った、緑の恐竜ラグ" width="759" height="894" decoding="async">
+            <img class="character-art powa" src="./images/powa.webp" alt="葉っぱのかんむりをかぶり、光るしっぽを引く森のせいポワ" width="617" height="997" decoding="async">
+          </div>
         </div>
         <div class="forest-caption">
-          <span class="character-name">🦕 ラグ</span>
+          <span class="character-name">ラグ</span>
           <span class="caption-divider" aria-hidden="true">＋</span>
-          <span class="character-name spirit-name">✨ ポワ</span>
+          <span class="character-name spirit-name">ポワ</span>
         </div>
         <p class="forest-hint" id="forestHint">こたえが あたると、森に ひかりが もどるよ。</p>
       </section>
@@ -102,18 +86,18 @@
         </div>
         <div class="progress-dots" id="progressDots" aria-hidden="true"></div>
         <div class="mode-switch" role="group" aria-label="もんだいの しゅるい">
-          <button class="mode-button selected" id="additionModeButton" type="button" aria-pressed="true">たしざん</button>
-          <button class="mode-button" id="subtractionModeButton" type="button" aria-pressed="false">ひきざん</button>
+          <button class="mode-button" id="additionModeButton" type="button" aria-pressed="false">たしざん</button>
+          <button class="mode-button selected" id="subtractionModeButton" type="button" aria-pressed="true">ひきざん</button>
         </div>
 
         <div id="questionArea">
           <p class="question-label" id="questionLabel">もんだい 1</p>
-          <p class="instruction" id="instruction">ひかりだまは あわせて いくつ？</p>
+          <p class="instruction" id="instruction">ひかりだまを とると、のこりは いくつ？</p>
           <button class="speak-button" id="speakButton" type="button" aria-label="もういちど きく">
-            <span aria-hidden="true">🔊</span> <span>もういちど きく</span>
+            <svg class="speak-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> <span>もういちど きく</span>
           </button>
           <p class="speech-status" id="speechStatus" role="status" aria-live="polite" aria-atomic="true"></p>
-          <div class="equation" id="equation" aria-label="たしざんの もんだい"></div>
+          <div class="equation" id="equation" aria-label="ひきざんの もんだい"></div>
           <p class="key-hint">こたえを タップしてね <span>（1・2・3キーも つかえるよ）</span></p>
           <div class="answers" id="answers" role="group" aria-label="こたえを えらぶ"></div>
           <p class="feedback" id="feedback" role="status" aria-live="polite" aria-atomic="true"></p>
@@ -121,15 +105,15 @@
         </div>
 
         <section id="finishPanel" class="finish-panel" aria-labelledby="finishTitle" hidden>
-          <div class="reward-icon" aria-hidden="true">🌟</div>
+          <div class="reward-icon" aria-hidden="true"><img src="./images/rag.webp" alt="" width="759" height="894" decoding="async"><img src="./images/powa.webp" alt="" width="617" height="997" decoding="async"></div>
           <h2 id="finishTitle">やったね！</h2>
           <p>5この ひかりだまが あつまった！<br>こだま森に あかるいひかりが もどったよ。</p>
-          <div class="reward-badge">🏅 こだま森の たんけんバッジ</div>
+          <div class="reward-badge"><img class="inline-art" src="./images/acorn.webp" alt="" width="297" height="356" decoding="async"> こだま森の たんけんバッジ</div>
           <button class="next-button replay-button" id="replayButton" type="button">もういちど あそぶ <span aria-hidden="true">↻</span></button>
         </section>
       </section>
     </section>
-    <p class="page-footer">ゆっくり かんがえて だいじょうぶ 🌱</p>
+    <p class="page-footer">ゆっくり かんがえて だいじょうぶ <img class="inline-art" src="./images/woodland-flower.webp" alt="" width="369" height="366" decoding="async"></p>
   </main>
   <script src="./game.js"></script>
 </body>
