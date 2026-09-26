@@ -41,6 +41,11 @@
       </div>
     </section>
 
+    <section class="reward-bar" aria-label="Stickers and costumes 貼紙和服裝">
+      <p class="reward-summary" id="rewardSummary">📒 0 / 12 stickers · 貼紙</p>
+      <button class="pill-button sticker-book-button" type="button" data-reward-action="open" aria-haspopup="dialog">📒 Sticker book · 貼紙本</button>
+    </section>
+
     <section class="arena-layout" aria-label="Sparring word and math game">
       <section class="arena-card" aria-label="The sparring arena 對打擂台">
         <div class="arena-heading"><span>THE SPARRING ARENA · 對打擂台</span><span class="heart-dots" aria-hidden="true">♥ ♥ ♥</span></div>
@@ -116,9 +121,32 @@
       </section>
     </section>
 
+    <dialog class="sticker-book" id="stickerBook" aria-labelledby="stickerBookTitle">
+      <div class="sticker-book-head">
+        <h2 id="stickerBookTitle">My Sticker Book · 我的貼紙本</h2>
+        <button class="pill-button" type="button" data-reward-action="close">✕ Close · 關閉</button>
+      </div>
+      <p class="sticker-book-intro" id="stickerBookIntro">Win a match to get your first sticker! · 贏一場就能拿到第一張貼紙！</p>
+      <ul class="sticker-grid" id="stickerGrid" aria-label="Stickers 貼紙"></ul>
+      <h3 class="costume-title">Dress-up for your champion · 小隊長換裝</h3>
+      <div class="costume-rows" id="costumeRows"></div>
+      <details class="grownup-zone">
+        <summary>For grown-ups · 家長專區</summary>
+        <p class="reward-save-note" id="rewardSaveNote">Saved on this device only: the number of wins and each champion’s costume. · 只存在這台裝置：贏的次數和服裝。</p>
+        <div class="reset-actions">
+          <button class="reset-button" type="button" data-reward-action="reset">Clear sticker book · 清空貼紙本</button>
+          <button class="reset-button confirm-reset" type="button" data-reward-action="confirm-reset" hidden>Yes, clear it · 確定清空</button>
+          <button class="reset-button" type="button" data-reward-action="keep" hidden>Keep stickers · 保留貼紙</button>
+        </div>
+        <p class="reset-status" id="resetStatus" role="status" aria-live="polite"></p>
+      </details>
+    </dialog>
+
     <footer>Everybody gets a cheer. Try again any time! · 每個人都很棒，想試幾次都可以！</footer>
   </main>
   <script src="./game.js"></script>
   <script src="./app.js"></script>
+  <script src="./rewards.js"></script>
+  <script src="./rewards-app.js"></script>
 </body>
 </html>

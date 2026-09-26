@@ -228,3 +228,74 @@ footer { padding: 12px 0 0; color: #7c7b8c; text-align: center; font-size: 11px;
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* Sticker book and costume rewards */
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+.reward-art { display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; user-select: none; -webkit-user-select: none; -webkit-user-drag: none; -webkit-touch-callout: none; }
+.reward-bar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 12px; margin-top: 12px; border: 3px solid #fff; border-radius: 20px; padding: 8px 10px 8px 16px; background: linear-gradient(145deg, #fff8e6, #f7efff); box-shadow: 0 4px 0 #7b748d1f; }
+.reward-summary { min-width: 0; margin: 0; color: #6f6283; font-size: 13px; font-weight: 900; line-height: 1.4; }
+.sticker-book-button { flex: none; border-color: #efe3ff; background: #fff; color: #5d5190; }
+.champion-card { position: relative; }
+.champion-card .costume-overlay { position: absolute; z-index: 1; top: -9px; left: 10px; width: 34px; height: 34px; filter: drop-shadow(0 2px 1px #7a6a5a33); }
+.fighter .costume-overlay { position: relative; z-index: 3; width: clamp(46px, 7vw, 64px); height: clamp(46px, 7vw, 64px); margin-bottom: clamp(-26px, -3vw, -18px); font-size: 38px; line-height: 1; filter: drop-shadow(0 3px 1px #58724633); }
+.do-spar .fighter-hero .costume-overlay { animation: power-lunge .6s ease-in-out; }
+.thinking .fighter-hero .costume-overlay { animation: think-wiggle .35s ease-in-out 2; }
+.reward-note { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 4px 12px; margin: 0 0 14px; border: 2px dashed #e7c77c; border-radius: 18px; padding: 10px 12px; background: #fffbea; text-align: left; animation: star-pop .45s ease both; }
+.reward-sticker { grid-row: span 3; width: 64px; height: 64px; display: grid; place-items: center; font-size: 44px; line-height: 1; }
+.reward-note .reward-text, .reward-note .reward-unlock { margin: 0; color: #5f5a72; font-size: 14px; font-weight: 900; line-height: 1.4; }
+.reward-text strong { color: #b27a22; }
+.reward-note .reward-unlock { color: #6a5aa6; font-size: 13px; }
+.reward-book-link { justify-self: start; min-height: 44px; border: 2px solid #eadcff; border-radius: 12px; padding: 6px 12px; background: #fff; color: #5d5190; font-size: 12px; font-weight: 950; cursor: pointer; touch-action: manipulation; }
+.sticker-book { width: min(560px, calc(100% - 24px)); max-height: calc(100% - 24px); overflow: auto; border: 3px solid #fff; border-radius: 24px; padding: 16px; background: linear-gradient(160deg, #fffdf6, #f8f0ff); color: var(--ink); box-shadow: 0 16px 40px #3a2f5a40; }
+.sticker-book::backdrop { background: #3a2f5a66; }
+.sticker-book-head .pill-button { flex: none; white-space: nowrap; }
+.sticker-book-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.sticker-book-head h2 { margin: 0; color: #5a4f8f; font-size: 19px; line-height: 1.2; }
+.sticker-book-intro { margin: 8px 0 10px; color: #6f6a80; font-size: 13px; font-weight: 850; line-height: 1.45; }
+.sticker-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
+.sticker-slot { position: relative; min-width: 0; min-height: 96px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border: 2px solid #f0e3cf; border-radius: 16px; padding: 6px 4px; background: #fff; text-align: center; }
+.sticker-slot.is-empty { border-style: dashed; background: #fbf7ef; }
+.sticker-picture { width: 54px; height: 54px; display: grid; place-items: center; font-size: 38px; line-height: 1; }
+.sticker-mystery { width: 44px; height: 44px; display: grid; place-items: center; border: 2px dashed #dccfb8; border-radius: 50%; color: #b5a78f; font-size: 16px; font-weight: 1000; }
+.sticker-name { display: grid; color: #55536c; font-size: 12px; font-weight: 1000; line-height: 1.2; }
+.sticker-name small { color: #8b8898; font-size: 10px; font-weight: 800; }
+.sticker-count { position: absolute; top: 4px; right: 5px; border-radius: 999px; padding: 1px 6px; background: #ffe7a8; color: #8a6118; font-size: 11px; font-weight: 1000; }
+.costume-title { margin: 14px 0 6px; color: #5a4f8f; font-size: 15px; }
+.costume-rows { display: grid; gap: 8px; }
+.costume-row { display: grid; gap: 4px; }
+.costume-row-name { color: #8b7d68; font-size: 11px; font-weight: 1000; letter-spacing: .06em; }
+.costume-options { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.costume-choice { min-width: 0; min-height: 74px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 2px solid #e8dfd0; border-radius: 14px; padding: 5px 3px; background: #fff; color: #5f5a72; cursor: pointer; touch-action: manipulation; }
+.costume-choice.is-worn { border-color: #9386ce; background: #eeeaff; box-shadow: 0 2px 0 #c9c0ef; }
+.costume-choice.is-locked { cursor: default; background: #f7f3ec; color: #9a93a3; }
+.costume-picture, .costume-none { width: 36px; height: 36px; display: grid; place-items: center; font-size: 26px; line-height: 1; }
+.costume-label { display: grid; font-size: 11px; font-weight: 950; line-height: 1.2; overflow-wrap: anywhere; }
+.costume-label small { font-size: 9px; font-weight: 800; }
+.grownup-zone { margin-top: 14px; border-top: 2px dashed #eadfcd; padding-top: 10px; color: #6f6a80; font-size: 12px; }
+.grownup-zone summary { min-height: 44px; display: flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 950; list-style: none; }
+.grownup-zone summary::-webkit-details-marker { display: none; }
+.grownup-zone summary::before { content: "▸"; transition: transform .15s; }
+.grownup-zone[open] summary::before { transform: rotate(90deg); }
+.reward-save-note { margin: 4px 0 8px; font-weight: 800; line-height: 1.45; }
+.reset-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.reset-button { min-height: 44px; border: 2px solid #e8dfd0; border-radius: 12px; padding: 6px 12px; background: #fff; color: #6d5c5c; font-size: 12px; font-weight: 950; cursor: pointer; }
+.confirm-reset { border-color: #edaf97; background: #fff2e8; }
+.reset-status { min-height: 16px; margin: 6px 0 0; font-weight: 850; }
+@media (max-width: 430px) {
+  .reward-bar { margin-top: 10px; padding: 8px 10px; }
+  .reward-summary { font-size: 11px; }
+  .sticker-book-button { width: 100%; }
+  .champion-card .costume-overlay { top: -8px; left: 4px; width: 28px; height: 28px; }
+  .fighter .costume-overlay { width: 44px; height: 44px; margin-bottom: -16px; }
+  .sticker-book { padding: 12px 10px; }
+  .sticker-book-head h2 { font-size: 16px; }
+  .sticker-grid { gap: 5px; }
+  .sticker-slot { min-height: 86px; }
+  .sticker-picture { width: 44px; height: 44px; }
+  .sticker-name { font-size: 11px; }
+  .costume-options { gap: 4px; }
+  .costume-choice { min-height: 70px; padding: 4px 2px; }
+  .costume-picture, .costume-none { width: 30px; height: 30px; }
+  .costume-label { font-size: 10px; }
+  .sticker-book-head .pill-button { padding: 6px 10px; }
+}
