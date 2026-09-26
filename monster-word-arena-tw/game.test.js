@@ -8,6 +8,7 @@ const test = require('node:test');
 const vm = require('node:vm');
 const { GOAL, TOPICS, LEVELS, WORD_TOPICS, REACTIONS, createGame, createSpeechPlayer } = require('./game.js');
 const { EFFECTS, EFFECT_LEVEL, MUSIC_LEVEL, createSoundBoard } = require('./sounds.js');
+const { POSES, ART, TIMING, comboText } = require('./arena.js');
 const prompts = require('./audio/prompts.json');
 const reactions = require('./audio/reactions.json');
 
@@ -23,25 +24,49 @@ function seededRandom(seed) {
   };
 }
 
-// index.html's <script src> list in document order, read with a real HTML parser.
-const PAGE_SCRIPTS = JSON.parse(execFileSync('python3', ['-B', '-c', `
+const PAGE = JSON.parse(execFileSync('python3', ['-B', '-c', `
 import json
 from html.parser import HTMLParser
 
-class Scripts(HTMLParser):
+VOID = {'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'}
+
+class Page(HTMLParser):
     def __init__(self):
         super().__init__()
         self.sources = []
+        self.roots = []
+        self.stack = []
 
     def handle_starttag(self, tag, attrs):
-        src = dict(attrs).get('src')
+        attrs = dict(attrs)
+        src = attrs.get('src')
         if tag == 'script' and src:
             self.sources.append(src)
+        node = {'tag': tag, 'attrs': attrs, 'text': '', 'children': []}
+        (self.stack[-1]['children'] if self.stack else self.roots).append(node)
+        if tag not in VOID:
+            self.stack.append(node)
 
-parser = Scripts()
+    def handle_startendtag(self, tag, attrs):
+        self.handle_starttag(tag, attrs)
+        if tag not in VOID:
+            self.stack.pop()
+
+    def handle_endtag(self, tag):
+        for index in range(len(self.stack) - 1, -1, -1):
+            if self.stack[index]['tag'] == tag:
+                del self.stack[index:]
+                break
+
+    def handle_data(self, data):
+        if self.stack:
+            self.stack[-1]['text'] += data
+
+parser = Page()
 parser.feed(open('index.html', encoding='utf-8').read())
-print(json.dumps(parser.sources))
+print(json.dumps({'scripts': parser.sources, 'roots': parser.roots}))
 `], { cwd: __dirname, encoding: 'utf8' }));
+const PAGE_SCRIPTS = PAGE.scripts;
 
 function answerCorrectly(game) {
   const state = game.getState();
@@ -61,16 +86,16 @@ class FakeElement {
     this.hidden = false;
     this.offsetWidth = 1;
     this.style = {};
-    const classes = new Set();
+    this.classes = new Set();
     this.classList = {
-      add: (...names) => names.forEach(name => classes.add(name)),
-      remove: (...names) => names.forEach(name => classes.delete(name)),
-      toggle: (name, force = !classes.has(name)) => {
-        if (force) classes.add(name);
-        else classes.delete(name);
+      add: (...names) => names.forEach(name => this.classes.add(name)),
+      remove: (...names) => names.forEach(name => this.classes.delete(name)),
+      toggle: (name, force = !this.classes.has(name)) => {
+        if (force) this.classes.add(name);
+        else this.classes.delete(name);
         return force;
       },
-      contains: name => classes.has(name),
+      contains: name => this.classes.has(name),
     };
   }
 
@@ -86,8 +111,16 @@ class FakeElement {
     for (const callback of this.listeners[type] || []) callback({ currentTarget: this, target: this });
   }
 
+  get className() {
+    return [...this.classes].join(' ');
+  }
+
+  set className(value) {
+    this.classes = new Set(String(value).split(/\s+/).filter(Boolean));
+  }
+
   get textContent() {
-    return this.children.length ? this.children.map(child => child.textContent).join('') : this.text;
+    return this.text + this.children.map(child => child.textContent).join('');
   }
 
   set textContent(value) {
@@ -117,7 +150,14 @@ class FakeElement {
   }
 
   querySelectorAll(selector) {
-    return selector === 'button' ? this.children.filter(child => child.tagName === 'BUTTON') : [];
+    const matches = [];
+    const visit = parent => parent.children.forEach(child => {
+      if (!child.tagName) return;
+      if (selector === child.tagName.toLowerCase() || selector.startsWith('.') && child.classList.contains(selector.slice(1))) matches.push(child);
+      visit(child);
+    });
+    visit(this);
+    return matches;
   }
 
   querySelector(selector) {
@@ -141,7 +181,35 @@ class FakeAudio {
   play() { return Promise.resolve(); }
 }
 
-function clickAnswer(app, game, correct) {
+// Runs the arena's timers on demand so a test can step through each beat of a power move.
+function createClock() {
+  let now = 0;
+  let nextId = 0;
+  const tasks = new Map();
+  return {
+    setTimeout(callback, delay = 0) {
+      nextId += 1;
+      tasks.set(nextId, { at: now + delay, callback });
+      return nextId;
+    },
+    clearTimeout(id) {
+      tasks.delete(id);
+    },
+    tick(ms) {
+      const end = now + ms;
+      for (;;) {
+        const [due] = [...tasks.entries()].filter(([, task]) => task.at <= end).sort((a, b) => a[1].at - b[1].at);
+        if (!due) break;
+        tasks.delete(due[0]);
+        now = due[1].at;
+        due[1].callback();
+      }
+      now = end;
+    },
+  };
+}
+
+function clickAnswer(app, game, correct = true) {
   const { answerId } = game.getState().question;
   app.answerOptions.children.find(button => (button.dataset.choice === answerId) === correct).click();
 }
@@ -233,48 +301,46 @@ function createTestBoard() {
   };
 }
 
-function createAppFixture(game) {
-  const ids = [
-    'answerOptions', 'questionEnglish', 'questionChinese', 'questionPicture', 'equation', 'feedback',
-    'nextButton', 'questionPanel', 'finishPanel', 'arenaStage', 'arenaMessage', 'scoreStars',
-    'scoreCount', 'speechStatus', 'muteButton', 'heroEmoji', 'heroName', 'buddyEmoji', 'buddyName',
-    'rivalPower', 'moveBubble', 'restartButton', 'playAgainButton', 'replayPromptButton', 'musicButton',
-    'speechControls', 'speechInvite',
-  ];
-  const elements = new Map(ids.map(id => [`#${id}`, new FakeElement(id === 'nextButton' ? 'button' : 'div')]));
-  elements.get('#scoreStars').children = Array.from({ length: 3 }, () => new FakeElement('span'));
-  elements.get('#rivalPower').children = Array.from({ length: 3 }, () => new FakeElement('span'));
-  const championCards = ['dino', 'monster'].map(champion => {
-    const card = new FakeElement('button');
-    card.dataset.champion = champion;
-    return card;
-  });
-  const topicTabs = TOPICS.map(topic => {
-    const tab = new FakeElement('button');
-    tab.dataset.topic = topic;
-    return tab;
-  });
-  const levelButtons = LEVELS.map(level => {
-    const button = new FakeElement('button');
-    button.dataset.level = level;
-    return button;
-  });
-  const speechLanguageButtons = ['en', 'zh', 'ja'].map(language => {
-    const button = new FakeElement('button');
-    button.dataset.language = language;
-    return button;
-  });
+function createPageDocument() {
+  const elements = new Map();
+  const allElements = [];
+  function build(node) {
+    const element = new FakeElement(node.tag);
+    element.text = node.text;
+    Object.entries(node.attrs).forEach(([name, value]) => {
+      if (name === 'class') element.className = value || '';
+      else if (name === 'hidden') element.hidden = true;
+      else if (name === 'disabled') element.disabled = true;
+      else if (name.startsWith('data-')) element.dataset[name.slice(5).replace(/-([a-z])/g, (_match, letter) => letter.toUpperCase())] = value || '';
+      else element.attributes[name] = value === null ? '' : String(value);
+    });
+    if (node.attrs.id) elements.set(`#${node.attrs.id}`, element);
+    allElements.push(element);
+    element.append(...node.children.map(build));
+    return element;
+  }
+
+  PAGE.roots.forEach(build);
   const document = {
-    querySelector: selector => elements.get(selector),
-    querySelectorAll: selector => ({
-      '.champion-card': championCards,
-      '.topic-tab': topicTabs,
-      '.level-option': levelButtons,
-      '.speech-language': speechLanguageButtons,
-    })[selector] || [],
+    documentElement: allElements.find(element => element.tagName === 'HTML'),
+    hidden: false,
+    querySelector: selector => selector.startsWith('#')
+      ? elements.get(selector) || null
+      : selector.startsWith('.') ? allElements.find(element => element.classList.contains(selector.slice(1))) || null : null,
+    querySelectorAll: selector => selector.startsWith('.')
+      ? allElements.filter(element => element.classList.contains(selector.slice(1))) : [],
     createElement: tagName => new FakeElement(tagName),
     createTextNode: text => ({ textContent: String(text) }),
   };
+  return { document, elements };
+}
+
+function createAppFixture(game, globals = {}) {
+  const { document, elements } = createPageDocument();
+  const championCards = document.querySelectorAll('.champion-card');
+  const topicTabs = document.querySelectorAll('.topic-tab');
+  const levelButtons = document.querySelectorAll('.level-option');
+  const speechLanguageButtons = document.querySelectorAll('.speech-language');
   const effects = [];
   const sound = { board: null, ctx: null, timers: createFakeTimers() };
   const window = { AudioContext: FakeAudioContext };
@@ -319,17 +385,36 @@ function createAppFixture(game) {
       return super.play();
     }
   }
+  const clock = createClock();
   // Runs the scripts in the order index.html lists them, as the browser does.
-  const page = vm.createContext({ window, document, Audio: RecordingAudio });
+  const page = vm.createContext({ window, document, Audio: RecordingAudio, setTimeout: clock.setTimeout, clearTimeout: clock.clearTimeout, ...globals });
   for (const src of PAGE_SCRIPTS) vm.runInContext(fs.readFileSync(path.join(__dirname, src), 'utf8'), page, { filename: src });
   return {
     elements, played, effects, sound, audioElements, audioState, championCards, speechLanguageButtons, topicTabs, levelButtons,
     answerOptions: elements.get('#answerOptions'), nextButton: elements.get('#nextButton'),
-    muteButton: elements.get('#muteButton'), musicButton: elements.get('#musicButton'),
+    muteButton: elements.get('#muteButton'), musicButton: elements.get('#musicButton'), clock, document,
     // Moves the fake audio clock past every effect's anti-pile-up gap.
     later(seconds = 2) { if (sound.ctx) sound.ctx.currentTime += seconds; },
   };
 }
+
+function poses(app) {
+  return `${app.elements.get('#heroArt').dataset.pose}/${app.elements.get('#buddyArt').dataset.pose}`;
+}
+
+test('the shipped page markup initializes the arena and game', () => {
+  const app = createAppFixture(createGame(steadyRandom));
+  assert.equal(poses(app), 'ready/ready');
+  assert.equal(app.elements.get('#comboCount').textContent, '0');
+  assert.equal(app.championCards.length, 2);
+  assert.equal(app.topicTabs.length, TOPICS.length);
+  assert.equal(app.levelButtons.length, LEVELS.length);
+  assert.equal(app.speechLanguageButtons.length, 3);
+  assert.equal(app.document.querySelectorAll('.fighter-body').length, 2);
+  assert.ok(app.document.querySelector('.stage-effects'));
+  assert.equal(app.elements.get('#scoreStars').children.length, GOAL);
+  assert.equal(app.elements.get('#rivalPower').children.length, GOAL);
+});
 
 test('addition questions stay within five and offer three distinct choices', () => {
   const game = createGame(steadyRandom);
@@ -415,7 +500,11 @@ test('every picture word has bundled original art sized for a phone page', () =>
   }
   assert.ok(totalBytes < 320 * 1024, 'all pictures together stay light for a phone');
   const committed = fs.readdirSync(path.join(__dirname, 'images')).sort();
-  assert.deepEqual(committed, pictureWords.map(({ word }) => word.image.slice('./images/'.length)).sort(), 'only used pictures are committed');
+  const expectedImages = [
+    ...pictureWords.map(({ word }) => word.image.slice('./images/'.length)),
+    ...ART.map(file => path.basename(file)),
+  ].sort();
+  assert.deepEqual(committed, expectedImages, 'all bundled pictures have a game consumer');
 });
 
 test('each correct answer knocks one pip off the sparring buddy with no penalty for misses', () => {
@@ -967,6 +1056,209 @@ test('the finish cheer stops when the language changes on the finish screen', ()
   app.speechLanguageButtons.find(button => button.dataset.language === 'zh').click();
   assert.equal(app.played.length, count);
   assert.ok(app.audioState.pauses > pauses);
+});
+
+function readWebp(file) {
+  const art = fs.readFileSync(path.join(__dirname, file));
+  assert.equal(art.toString('latin1', 0, 4), 'RIFF', `${file} is a RIFF file`);
+  assert.equal(art.toString('latin1', 8, 16), 'WEBPVP8X', `${file} is an extended WebP`);
+  assert.ok(art[20] & 0x10, `${file} has a transparent alpha channel`);
+  return { bytes: art.length, width: art.readUIntLE(24, 3) + 1, height: art.readUIntLE(27, 3) + 1 };
+}
+
+test('champion pose sheets and arena sprites are bundled original art sized for a phone page', () => {
+  const expected = {
+    './images/champion-rex.webp': [256 * POSES.length, 256, 64],
+    './images/champion-bobo.webp': [256 * POSES.length, 256, 64],
+    './images/arena-star.webp': [96, 96, 8],
+    './images/arena-swish.webp': [128, 128, 16],
+    './images/arena-bubbles.webp': [128, 128, 16],
+    './images/arena-trophy.webp': [192, 192, 16],
+  };
+  assert.deepEqual([...ART].sort(), Object.keys(expected).sort());
+  let totalBytes = 0;
+  for (const [file, [width, height, maxKb]] of Object.entries(expected)) {
+    const art = readWebp(file);
+    assert.equal(art.width, width, `${file} width`);
+    assert.equal(art.height, height, `${file} height`);
+    assert.ok(art.bytes < maxKb * 1024, `${file} stays under ${maxKb} KB`);
+    totalBytes += art.bytes;
+  }
+  assert.ok(totalBytes < 160 * 1024, 'all arena art together stays light for a phone');
+});
+
+test('a right answer plays the power move, then the buddy wobbles and giggles as stars fly', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  const stage = app.elements.get('#arenaStage');
+  const effects = app.elements.get('#stageEffects');
+  assert.equal(app.elements.get('#comboCount').textContent, '0');
+  assert.equal(poses(app), 'ready/ready');
+  assert.equal(app.elements.get('#moveBubble').dataset.move, 'swish');
+
+  clickAnswer(app, game);
+  assert.equal(poses(app), 'power/ready');
+  assert.ok(stage.classList.contains('do-spar'));
+  app.clock.tick(TIMING.land);
+  assert.equal(poses(app), 'power/giggle');
+  assert.equal(effects.children.length, 7);
+  assert.ok(effects.children.every(star => star.className === 'burst-star'));
+  app.clock.tick(TIMING.settle - TIMING.land);
+  assert.equal(poses(app), 'ready/ready');
+  assert.equal(stage.classList.contains('do-spar'), false);
+
+  app.nextButton.click();
+  assert.equal(effects.children.length, 0, 'the next question starts on a calm stage');
+});
+
+test('a miss is a pillow block with no penalty that quietly restarts the right-in-a-row combo', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  const combo = app.elements.get('#comboBadge');
+  const message = app.elements.get('#arenaMessage');
+
+  clickAnswer(app, game);
+  assert.equal(combo.classList.contains('is-shown'), false, 'one right answer is not a streak yet');
+  assert.doesNotMatch(message.textContent, /in a row/);
+  app.nextButton.click();
+  clickAnswer(app, game);
+  assert.ok(combo.classList.contains('is-shown'));
+  assert.equal(app.elements.get('#comboCount').textContent, '2');
+  assert.match(message.textContent, /2 in a row! 連續答對 2 題！$/);
+
+  app.nextButton.click();
+  clickAnswer(app, game, false);
+  assert.equal(poses(app), 'ready/block');
+  assert.ok(app.elements.get('#arenaStage').classList.contains('thinking'));
+  assert.equal(combo.classList.contains('is-shown'), false);
+  assert.match(message.textContent, /Pillow block/);
+  assert.equal(game.getState().stars, 2, 'a miss never takes a star away');
+  app.clock.tick(TIMING.blockSettle);
+  assert.equal(poses(app), 'ready/ready');
+
+  clickAnswer(app, game);
+  assert.doesNotMatch(message.textContent, /in a row/, 'the streak counts again from the next right answer');
+  assert.equal(comboText(1), '');
+  assert.equal(comboText(4), '4 in a row! 連續答對 4 題！');
+});
+
+test('the winning answer ends with the buddy bowing and a shared high-five under falling stars', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  const stage = app.elements.get('#arenaStage');
+  const effects = app.elements.get('#stageEffects');
+  for (let star = 1; star <= GOAL; star += 1) {
+    clickAnswer(app, game);
+    if (star < GOAL) app.nextButton.click();
+  }
+  assert.equal(game.getState().finished, true);
+  assert.match(app.elements.get('#arenaMessage').textContent, /bow and high-five! .* 3 in a row!/);
+  app.clock.tick(TIMING.bow);
+  assert.equal(poses(app), 'ready/bow');
+  assert.ok(stage.classList.contains('is-bowing'));
+  app.clock.tick(TIMING.highFive - TIMING.bow);
+  assert.equal(poses(app), 'high5/high5');
+  assert.ok(stage.classList.contains('is-victory'));
+  assert.equal(stage.classList.contains('is-bowing'), false);
+  assert.equal(effects.children.length, 13);
+  assert.ok(effects.children.slice(0, 12).every(star => star.className === 'shower-star'));
+  assert.equal(effects.children[12].className, 'high-five-pop');
+  app.clock.tick(10000);
+  assert.equal(poses(app), 'high5/high5', 'the champions keep their high-five until play again');
+
+  app.elements.get('#playAgainButton').click();
+  assert.equal(poses(app), 'ready/ready');
+  assert.equal(stage.classList.contains('is-victory'), false);
+  assert.equal(effects.children.length, 0);
+  assert.equal(app.elements.get('#comboBadge').classList.contains('is-shown'), false);
+  assert.equal(app.elements.get('#comboCount').textContent, '0');
+  clickAnswer(app, game);
+  assert.doesNotMatch(app.elements.get('#arenaMessage').textContent, /in a row/);
+  assert.equal(app.elements.get('#comboCount').textContent, '1');
+  app.nextButton.click();
+  clickAnswer(app, game);
+  assert.match(app.elements.get('#arenaMessage').textContent, /2 in a row!/);
+
+  app.elements.get('#restartButton').click();
+  assert.equal(app.elements.get('#comboBadge').classList.contains('is-shown'), false);
+  assert.equal(app.elements.get('#comboCount').textContent, '0');
+  clickAnswer(app, game);
+  assert.doesNotMatch(app.elements.get('#arenaMessage').textContent, /in a row/);
+  assert.equal(app.elements.get('#comboCount').textContent, '1');
+});
+
+test('choosing a champion swaps both fighters and the power move art', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  const heroArt = app.elements.get('#heroArt');
+  const buddyArt = app.elements.get('#buddyArt');
+  assert.deepEqual([heroArt.dataset.character, buddyArt.dataset.character], ['dino', 'monster']);
+
+  app.championCards.find(card => card.dataset.champion === 'monster').click();
+  assert.deepEqual([heroArt.dataset.character, buddyArt.dataset.character], ['monster', 'dino']);
+  assert.equal(app.elements.get('#moveBubble').dataset.move, 'bubbles');
+  assert.equal(app.elements.get('#moveBubble').textContent, '🫧', 'the emoji move stays as the fallback');
+  assert.equal(app.elements.get('#heroEmoji').textContent, '👾');
+  assert.equal(app.elements.get('#arenaMessage').textContent, 'Bobo is ready to spar!');
+  assert.ok(app.elements.get('#arenaStage').classList.contains('do-ready'));
+});
+
+test('reduced motion keeps every pose but skips the flying stars', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game, { matchMedia: query => ({ matches: query === '(prefers-reduced-motion: reduce)' }) });
+  for (let star = 1; star <= GOAL; star += 1) {
+    clickAnswer(app, game);
+    app.clock.tick(TIMING.land);
+    assert.equal(poses(app), 'power/giggle');
+    assert.equal(app.elements.get('#stageEffects').children.length, 0);
+    if (star < GOAL) app.nextButton.click();
+  }
+  app.clock.tick(TIMING.highFive);
+  assert.equal(poses(app), 'high5/high5');
+  assert.equal(app.elements.get('#stageEffects').children.length, 0);
+});
+
+function imageThatFires(outcome, requested) {
+  return class {
+    constructor() {
+      this.listeners = [];
+    }
+
+    addEventListener(type, callback) {
+      this.listeners.push([type, callback]);
+    }
+
+    set src(source) {
+      requested.push(source);
+      this.listeners.filter(([type]) => type === outcome).forEach(([, callback]) => callback());
+    }
+  };
+}
+
+test('champions and star effects fall back when the arena pictures cannot load', () => {
+  const missing = [];
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game, { Image: imageThatFires('error', missing) });
+  assert.deepEqual(missing, ART);
+  assert.ok(app.document.documentElement.classList.contains('no-champion-art'));
+
+  clickAnswer(app, game);
+  app.clock.tick(TIMING.land);
+  assert.ok(app.elements.get('#stageEffects').children.every(star => star.textContent === '★'));
+  app.nextButton.click();
+  clickAnswer(app, game);
+  app.nextButton.click();
+  clickAnswer(app, game);
+  app.clock.tick(TIMING.highFive);
+  const victoryStars = app.elements.get('#stageEffects').children;
+  assert.equal(victoryStars.filter(star => star.className === 'shower-star').length, 12);
+  assert.equal(victoryStars.filter(star => star.className === 'high-five-pop').length, 1);
+  assert.ok(victoryStars.every(star => star.textContent === '★'));
+
+  const found = [];
+  const loaded = createAppFixture(createGame(steadyRandom), { Image: imageThatFires('load', found) });
+  assert.deepEqual(found, ART);
+  assert.equal(loaded.document.documentElement.classList.contains('no-champion-art'), false);
 });
 
 test('sound effects are synthesized locally with no files, network, or speech element', () => {
