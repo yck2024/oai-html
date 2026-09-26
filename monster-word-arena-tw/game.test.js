@@ -561,10 +561,17 @@ test('the same question is never asked twice in a row', () => {
       for (const topic of TOPICS) {
         game.chooseTopic(topic);
         let previous = game.getState().question.key;
+        const moves = [
+          () => game.chooseTopic(topic),
+          () => game.chooseLevel(level),
+          () => {
+            answerCorrectly(game);
+            if (game.getState().finished) game.restart();
+            else game.nextQuestion();
+          },
+        ];
         for (let draw = 0; draw < 30; draw += 1) {
-          answerCorrectly(game);
-          if (game.getState().finished) game.restart();
-          else game.nextQuestion();
+          moves[draw % moves.length]();
           const { key } = game.getState().question;
           assert.notEqual(key, previous, `${level} ${topic} does not repeat ${key}`);
           previous = key;

@@ -196,7 +196,7 @@
 
     function chooseTopic(topic) {
       if (state.finished || !TOPICS.includes(topic)) return false;
-      state = { ...state, topic, solved: false, feedback: '', question: questionFor(topic, state.level, random) };
+      state = { ...state, topic, solved: false, feedback: '', question: questionFor(topic, state.level, random, state.question.key) };
       return true;
     }
 
