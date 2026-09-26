@@ -3,6 +3,8 @@
 
   const E = window.TaiwanEhon;
   const STORIES = window.TaiwanEhonStories;
+  const INITIAL_HASH = window.taiwanEhonInitialHash ?? location.hash;
+  window.taiwanEhonInitialHash = '';
   const SETTINGS_KEY = 'taiwan-ehon-settings';
   const AUTO_TURN_DELAY = 1500;
   const TURN_SETTLE = 450;
@@ -159,7 +161,8 @@
       card.addEventListener('click', () => {
         lastCard = card;
         openedFromShelf = true;
-        location.hash = story.id;
+        history.pushState({ storyId: story.id }, '', location.pathname + location.search);
+        openBook(story, 0);
       });
       item.append(card);
       bookList.append(item);
@@ -278,7 +281,6 @@
       void pageEl.offsetWidth; // restart the page-turn animation
       pageEl.classList.add(`turn-${direction}`);
     }
-    history.replaceState(null, '', `#${book.story.id}/${book.index + 1}`);
     updatePlayback();
   }
 
@@ -356,7 +358,6 @@
     if (openedFromShelf) {
       history.back();
     } else {
-      history.replaceState(null, '', location.pathname + location.search);
       closeBook();
     }
   }
@@ -373,8 +374,8 @@
     reader.classList.toggle('hide-zhuyin', !settings.zhuyin);
   }
 
-  function route() {
-    const [storyId, pageNumber] = decodeURIComponent(location.hash.slice(1)).split('/');
+  function route(hash) {
+    const [storyId, pageNumber] = decodeURIComponent(hash.slice(1)).split('/');
     const story = STORIES.find(item => item.id === storyId);
     if (!story) {
       if (book) closeBook();
@@ -484,10 +485,19 @@
 
   stage.addEventListener('pointercancel', () => { swipeStart = null; });
 
-  window.addEventListener('hashchange', route);
+  window.addEventListener('popstate', event => {
+    const story = STORIES.find(item => item.id === event.state?.storyId);
+    if (story) {
+      openedFromShelf = true;
+      openBook(story, 0);
+    } else if (book) {
+      closeBook();
+      openedFromShelf = false;
+    }
+  });
 
   renderShelf();
   applySettings();
   updatePlayback();
-  route();
+  route(INITIAL_HASH);
 })();

@@ -6,6 +6,26 @@ const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
 
+function storybookPageviewHarness(href, referrer) {
+  const dataLayer = [];
+  const replacements = [];
+  const location = new URL(href);
+  const document = { referrer };
+  const history = {
+    replaceState(_state, _title, url) {
+      replacements.push(url);
+      location.href = new URL(url, location.href).href;
+    },
+  };
+  const context = { dataLayer, document, history, location, URL };
+  context.window = context;
+  const html = fs.readFileSync(path.join(__dirname, '../taiwan-ehon/index.html'), 'utf8');
+  const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
+  for (const [, script] of scripts) vm.runInNewContext(script, context);
+  const config = dataLayer.map(args => Array.from(args)).find(args => args[0] === 'config');
+  return { config: config && config[2], initialHash: context.taiwanEhonInitialHash, location, replacements };
+}
+
 function analyticsHarness() {
   const events = [];
   const listeners = {};
@@ -47,6 +67,20 @@ function analyticsHarness() {
     },
   };
 }
+
+test('storybook direct-link fragments are scrubbed before page-view configuration', () => {
+  const page = storybookPageviewHarness(
+    'https://gallery.example/taiwan-ehon/?lang=ja#bai-zei-qi/7',
+    'https://gallery.example/#taiwan-ehon/shooting-the-sun/12',
+  );
+
+  assert.equal(page.initialHash, '#bai-zei-qi/7');
+  assert.equal(page.location.hash, '');
+  assert.deepEqual(page.replacements, ['/taiwan-ehon/?lang=ja']);
+  assert.equal(page.config.page_location, 'https://gallery.example/taiwan-ehon/?lang=ja');
+  assert.equal(page.config.page_referrer, 'https://gallery.example/');
+  assert.equal(page.config.page_title, 'Taiwan story picture books');
+});
 
 test('automatic click analytics skip ignored story content without changing accessible names', () => {
   const analytics = analyticsHarness();
