@@ -87,10 +87,11 @@
           <button class="topic-tab" type="button" data-topic="face" aria-pressed="false"><span aria-hidden="true">🙂</span><span>Face<small>五官</small></span></button>
           <button class="topic-tab" type="button" data-topic="family" aria-pressed="false"><span aria-hidden="true">🏠</span><span>Family<small>家人</small></span></button>
         </div>
-        <div class="speech-controls">
+        <div class="speech-controls needs-voice" id="speechControls">
+          <p class="speech-invite" id="speechInvite"><span aria-hidden="true">🔈</span> Choose a voice to turn on the questions and cheers. · 選擇語音即可開啟題目朗讀和加油聲。 · 音声を選ぶと、問題の読み上げと応援の声が始まります。</p>
           <div class="speech-languages" role="group" aria-label="Spoken language 語音語言 音声言語">
             <span class="speech-label">VOICE · 語音</span>
-            <button class="speech-language is-active" type="button" data-language="en" aria-pressed="true">English</button>
+            <button class="speech-language" type="button" data-language="en" aria-pressed="false">English</button>
             <button class="speech-language" type="button" data-language="zh" aria-pressed="false">繁體中文</button>
             <button class="speech-language" type="button" data-language="ja" aria-pressed="false">日本語</button>
           </div>
@@ -99,7 +100,7 @@
             <button class="speech-control" id="muteButton" type="button" aria-pressed="false">🔊 Mute</button>
           </div>
         </div>
-        <p class="speech-status" id="speechStatus" role="status" aria-live="polite" aria-atomic="true">Choose a voice to start question audio. · 選擇語音即可開始朗讀題目。 · 音声を選ぶと読み上げを開始します。</p>
+        <p class="speech-status" id="speechStatus" role="status" aria-live="polite" aria-atomic="true"></p>
 
         <div class="question-panel" id="questionPanel">
           <p class="question-en" id="questionEnglish">How many altogether?</p>

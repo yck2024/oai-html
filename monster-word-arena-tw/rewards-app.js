@@ -283,6 +283,6 @@
   document.querySelectorAll('.champion-card').forEach(card => card.addEventListener('click', render));
   window.addEventListener('storage', event => { if (event.key === STORAGE_KEY) render(); });
 
-  window.ArenaRewards = { recordWin, openBook };
+  window.ArenaRewards = { recordWin };
   render();
 })();
