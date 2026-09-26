@@ -8,6 +8,7 @@ const test = require('node:test');
 const vm = require('node:vm');
 const { GOAL, TOPICS, LEVELS, WORD_TOPICS, REACTIONS, createGame, createSpeechPlayer } = require('./game.js');
 const { EFFECTS, EFFECT_LEVEL, MUSIC_LEVEL, createSoundBoard } = require('./sounds.js');
+const { STICKERS, COSTUMES } = require('./rewards.js');
 const prompts = require('./audio/prompts.json');
 const reactions = require('./audio/reactions.json');
 
@@ -418,7 +419,11 @@ test('every picture word has bundled original art sized for a phone page', () =>
   }
   assert.ok(totalBytes < 320 * 1024, 'all pictures together stay light for a phone');
   const committed = fs.readdirSync(path.join(__dirname, 'images')).sort();
-  assert.deepEqual(committed, pictureWords.map(({ word }) => word.image.slice('./images/'.length)).sort(), 'only used pictures are committed');
+  const expectedImages = [
+    ...pictureWords.map(({ word }) => path.basename(word.image)),
+    ...[...STICKERS, ...COSTUMES].map(item => path.basename(item.image)),
+  ].sort();
+  assert.deepEqual(committed, expectedImages, 'only used word, sticker, and costume pictures are committed');
 });
 
 test('each correct answer knocks one pip off the sparring buddy with no penalty for misses', () => {
