@@ -434,19 +434,26 @@ function makeAnswers(answer) {
   return [...choices].sort(() => Math.random() - 0.5);
 }
 
+const TOKEN_ROW_GAP = 1.05;
+
+function tokenLayout(count) {
+  const cols = count > 4 ? Math.ceil(count / 2) : count;
+  return { cols, rows: Math.ceil(count / cols), span: Math.max(cols - 1, count - cols - 0.5) };
+}
+
 function dropTokens(question) {
   clearTargets();
   const groups = question.kind === 'add' ? [question.a, question.b] : [question.a];
   const groupCenters = groups.length === 2 ? [-2.1, 2.1] : [0];
   groups.forEach((count, groupIndex) => {
     const cx = groupCenters[groupIndex];
-    const cols = Math.min(4, count);
+    const { cols, rows, span } = tokenLayout(count);
     for (let i = 0; i < count; i++) {
-      const token = makeToken(selectedWorld, i + groupIndex * 4);
       const col = i % cols;
       const row = Math.floor(i / cols);
-      const x = cx + (col - (cols - 1) / 2) * 0.92;
-      const z = (row - (Math.ceil(count / cols) - 1) / 2) * 0.92 + 1.9;
+      const token = makeToken(selectedWorld, col + row * 2 + groupIndex * 4);
+      const x = cx + (col + row * 0.5 - span / 2) * 0.92;
+      const z = (row - (rows - 1) / 2) * TOKEN_ROW_GAP + 1.9;
       token.position.set(x, 0.02, z);
       token.rotation.y = (i * 1.7 + groupIndex) % (Math.PI * 2);
       token.scale.setScalar(1.05);
@@ -462,18 +469,16 @@ function dropTokens(question) {
       ring.rotation.x = -Math.PI / 2;
       ring.position.set(x, 0.01, 1.9);
       ring.castShadow = false;
-      ring.userData.targetBoundary = true;
       targetGroup.add(ring);
     });
   } else {
-    const columns = Math.min(4, groups[0]);
-    const rows = Math.ceil(groups[0] / columns);
+    const { rows, span } = tokenLayout(groups[0]);
+    const pad = rows > 1 ? 1.02 : 0.72;
     const ring = new THREE.Mesh(new THREE.TorusGeometry(1, 0.055, 8, 48), ringMat);
     ring.rotation.x = -Math.PI / 2;
-    ring.scale.set((columns - 1) * 0.46 + 0.72, (rows - 1) * 0.46 + 0.72, 1);
+    ring.scale.set(span * 0.46 + pad, (rows - 1) * TOKEN_ROW_GAP / 2 + pad, 1);
     ring.position.set(0, 0.01, 1.9);
     ring.castShadow = false;
-    ring.userData.targetBoundary = true;
     targetGroup.add(ring);
   }
 }
