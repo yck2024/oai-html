@@ -434,19 +434,29 @@ function makeAnswers(answer) {
   return [...choices].sort(() => Math.random() - 0.5);
 }
 
+function tokenLayout(count, staggered) {
+  if (!staggered) {
+    const cols = Math.min(4, count);
+    return { cols, rows: Math.ceil(count / cols), span: cols - 1, shift: 0, rowGap: 0.92 };
+  }
+  const cols = count > 4 ? Math.ceil(count / 2) : count;
+  return { cols, rows: Math.ceil(count / cols), span: Math.max(cols - 1, count - cols - 0.5), shift: 0.5, rowGap: 1.05 };
+}
+
 function dropTokens(question) {
   clearTargets();
   const groups = question.kind === 'add' ? [question.a, question.b] : [question.a];
   const groupCenters = groups.length === 2 ? [-2.1, 2.1] : [0];
+  const staggered = groups.length === 1;
   groups.forEach((count, groupIndex) => {
     const cx = groupCenters[groupIndex];
-    const cols = Math.min(4, count);
+    const { cols, rows, span, shift, rowGap } = tokenLayout(count, staggered);
     for (let i = 0; i < count; i++) {
-      const token = makeToken(selectedWorld, i + groupIndex * 4);
       const col = i % cols;
       const row = Math.floor(i / cols);
-      const x = cx + (col - (cols - 1) / 2) * 0.92;
-      const z = (row - (Math.ceil(count / cols) - 1) / 2) * 0.92 + 1.9;
+      const token = makeToken(selectedWorld, staggered ? col + row * 2 : i + groupIndex * 4);
+      const x = cx + (col + row * shift - span / 2) * 0.92;
+      const z = (row - (rows - 1) / 2) * rowGap + 1.9;
       token.position.set(x, 0.02, z);
       token.rotation.y = (i * 1.7 + groupIndex) % (Math.PI * 2);
       token.scale.setScalar(1.05);
@@ -455,8 +465,8 @@ function dropTokens(question) {
       targetGroup.add(token);
     }
   });
+  const ringMat = material(selectedWorld === 'space' ? 0xffc52f : selectedWorld === 'ocean' ? 0xffd36e : 0xffd24a, 0.62);
   if (groups.length === 2) {
-    const ringMat = material(selectedWorld === 'space' ? 0xffc52f : selectedWorld === 'ocean' ? 0xffd36e : 0xffd24a, 0.62);
     [-2.1, 2.1].forEach((x) => {
       const ring = new THREE.Mesh(new THREE.TorusGeometry(1.66, 0.045, 6, 40), ringMat);
       ring.rotation.x = -Math.PI / 2;
@@ -464,6 +474,15 @@ function dropTokens(question) {
       ring.castShadow = false;
       targetGroup.add(ring);
     });
+  } else {
+    const { rows, span, rowGap } = tokenLayout(groups[0], true);
+    const pad = rows > 1 ? 1.02 : 0.72;
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(1, 0.055, 8, 48), ringMat);
+    ring.rotation.x = -Math.PI / 2;
+    ring.scale.set(span * 0.46 + pad, (rows - 1) * rowGap / 2 + pad, 1);
+    ring.position.set(0, 0.01, 1.9);
+    ring.castShadow = false;
+    targetGroup.add(ring);
   }
 }
 
