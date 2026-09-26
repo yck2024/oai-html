@@ -55,7 +55,7 @@ Event parameters (`element_id`, `element_label`, `target_section`, `percent_scro
 
 Interactive pages can add semantic events with `data-analytics-event` / `data-analytics-label` or `window.oaiTrack(eventName, params)`.
 
-Do not send user-entered text, copied content, credentials, private identifiers, or other sensitive data to analytics. The Taiwan storybooks use only the gallery-wide analytics already present on every page; clicks are excluded, and page-view URLs, referrers, and titles omit story and page identifiers.
+Do not send user-entered text, copied content, credentials, private identifiers, or other sensitive data to analytics. Taiwan storybook selection and page turns stay in page state without URL or history changes; clicks are excluded, and gallery-wide page-view URLs, referrers, and titles omit story and page identifiers.
 
 ## Taiwan story references
 

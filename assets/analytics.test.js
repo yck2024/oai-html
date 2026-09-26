@@ -23,7 +23,7 @@ function storybookPageviewHarness(href, referrer) {
   const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
   for (const [, script] of scripts) vm.runInNewContext(script, context);
   const config = dataLayer.map(args => Array.from(args)).find(args => args[0] === 'config');
-  return { config: config && config[2], initialHash: context.taiwanEhonInitialHash, location, replacements };
+  return { config: config && config[2], location, replacements };
 }
 
 function analyticsHarness() {
@@ -68,15 +68,14 @@ function analyticsHarness() {
   };
 }
 
-test('storybook direct-link fragments are scrubbed before page-view configuration', () => {
+test('storybook page-view metadata excludes fragments without changing URL history', () => {
   const page = storybookPageviewHarness(
     'https://gallery.example/taiwan-ehon/?lang=ja#bai-zei-qi/7',
     'https://gallery.example/#taiwan-ehon/shooting-the-sun/12',
   );
 
-  assert.equal(page.initialHash, '#bai-zei-qi/7');
-  assert.equal(page.location.hash, '');
-  assert.deepEqual(page.replacements, ['/taiwan-ehon/?lang=ja']);
+  assert.equal(page.location.hash, '#bai-zei-qi/7');
+  assert.deepEqual(page.replacements, []);
   assert.equal(page.config.page_location, 'https://gallery.example/taiwan-ehon/?lang=ja');
   assert.equal(page.config.page_referrer, 'https://gallery.example/');
   assert.equal(page.config.page_title, 'Taiwan story picture books');

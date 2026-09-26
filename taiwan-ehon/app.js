@@ -3,8 +3,6 @@
 
   const E = window.TaiwanEhon;
   const STORIES = window.TaiwanEhonStories;
-  const INITIAL_HASH = window.taiwanEhonInitialHash ?? location.hash;
-  window.taiwanEhonInitialHash = '';
   const SETTINGS_KEY = 'taiwan-ehon-settings';
   const AUTO_TURN_DELAY = 1500;
   const TURN_SETTLE = 450;
@@ -43,7 +41,6 @@
   let turnTimer = null;
   let swipeStart = null;
   let swipedAt = 0;
-  let openedFromShelf = false;
   let lastCard = null;
 
   let audio = null;
@@ -160,8 +157,6 @@
       card.append(cover, info);
       card.addEventListener('click', () => {
         lastCard = card;
-        openedFromShelf = true;
-        history.pushState({ storyId: story.id }, '', location.pathname + location.search);
         openBook(story, 0);
       });
       item.append(card);
@@ -196,7 +191,8 @@
     reader.hidden = true;
     shelf.hidden = false;
     document.title = '台灣故事繪本｜たいわんの おはなし えほん';
-    if (lastCard) lastCard.focus({ preventScroll: true });
+    const focusTarget = lastCard || bookList.querySelector('.book-card');
+    focusTarget?.focus({ preventScroll: true });
   }
 
   function pageKind(page) {
@@ -259,7 +255,7 @@
     other.type = 'button';
     other.id = 'otherBooksButton';
     other.innerHTML = 'ほかの えほん ・ <span lang="zh-Hant-TW">看別的故事</span>';
-    other.addEventListener('click', leaveBook);
+    other.addEventListener('click', closeBook);
     actions.append(again, other);
     pageEl.append(actions);
   }
@@ -354,14 +350,6 @@
     goTo(book.index + (direction === 'next' ? 1 : -1), direction);
   }
 
-  function leaveBook() {
-    if (openedFromShelf) {
-      history.back();
-    } else {
-      closeBook();
-    }
-  }
-
   function setSettingsOpen(open) {
     settingsPanel.hidden = !open;
     settingsButton.setAttribute('aria-expanded', String(open));
@@ -372,18 +360,6 @@
     zhuyinToggle.checked = settings.zhuyin;
     autoTurnToggle.checked = settings.autoTurn;
     reader.classList.toggle('hide-zhuyin', !settings.zhuyin);
-  }
-
-  function route(hash) {
-    const [storyId, pageNumber] = decodeURIComponent(hash.slice(1)).split('/');
-    const story = STORIES.find(item => item.id === storyId);
-    if (!story) {
-      if (book) closeBook();
-      openedFromShelf = false;
-      return;
-    }
-    if (book && book.story.id === story.id) return;
-    openBook(story, (Number(pageNumber) || 1) - 1);
   }
 
   pageText.addEventListener('click', event => {
@@ -421,7 +397,7 @@
 
   prevButton.addEventListener('click', () => turn('prev'));
   nextButton.addEventListener('click', () => turn('next'));
-  closeButton.addEventListener('click', leaveBook);
+  closeButton.addEventListener('click', closeBook);
 
   settingsButton.addEventListener('click', () => setSettingsOpen(settingsPanel.hidden));
   document.addEventListener('click', event => {
@@ -485,19 +461,7 @@
 
   stage.addEventListener('pointercancel', () => { swipeStart = null; });
 
-  window.addEventListener('popstate', event => {
-    const story = STORIES.find(item => item.id === event.state?.storyId);
-    if (story) {
-      openedFromShelf = true;
-      openBook(story, 0);
-    } else if (book) {
-      closeBook();
-      openedFromShelf = false;
-    }
-  });
-
   renderShelf();
   applySettings();
   updatePlayback();
-  route(INITIAL_HASH);
 })();
