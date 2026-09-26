@@ -355,13 +355,14 @@ function loadPage({ storage = new MemoryStorage(), withApp = false, recordWin, n
       return storage;
     },
   });
-  const context = { window, document: page.document, Audio: FakeAudio, setInterval, clearInterval };
+  const context = { window, document: page.document, Audio: FakeAudio, setInterval, clearInterval, setTimeout, clearTimeout };
   const run = file => vm.runInNewContext(fs.readFileSync(path.join(__dirname, file), 'utf8'), context);
   let game = null;
   if (withApp) {
     game = gameApi.createGame(() => 0.3);
     window.FriendlyArena = { ...gameApi, createGame: () => game };
     run('sounds.js');
+    run('arena.js');
     run('app.js');
   }
   run('rewards.js');
@@ -377,6 +378,11 @@ function winMatch(page) {
     if (star < gameApi.GOAL) page.element('nextButton').click();
   }
 }
+
+test('the rewards global exposes only match recording', () => {
+  const page = loadPage();
+  assert.deepEqual(Object.keys(page.window.ArenaRewards), ['recordWin']);
+});
 
 test('winning a match in the game records exactly one reward for the chosen champion', () => {
   const wins = [];
