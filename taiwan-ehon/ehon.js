@@ -161,7 +161,7 @@
       }
     }
 
-    function playAt(current, index) {
+    function playAt(current, index, startPaused = false) {
       if (current !== token) return;
       if (index >= steps.length) {
         reset();
@@ -170,7 +170,7 @@
         return;
       }
       position = index;
-      state = 'playing';
+      state = startPaused ? 'paused' : 'playing';
       const step = steps[index];
       onStep(step);
       audio.onended = () => {
@@ -193,10 +193,10 @@
       };
       audio.onerror = () => fail(current);
       audio.src = clipPath(storyId, step.lang, step.lineId);
-      playAudio(current);
+      if (!startPaused) playAudio(current);
     }
 
-    function play(nextStoryId, nextSteps) {
+    function play(nextStoryId, nextSteps, { paused = false } = {}) {
       reset();
       if (!audio || !nextSteps.length) {
         onUnavailable();
@@ -204,7 +204,7 @@
       }
       storyId = nextStoryId;
       steps = nextSteps.map(step => ({ ...step }));
-      playAt(token, 0);
+      playAt(token, 0, paused);
       return true;
     }
 

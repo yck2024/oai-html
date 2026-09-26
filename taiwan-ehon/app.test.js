@@ -191,7 +191,7 @@ test('muted reader blocks page, replay, and sentence narration until toggled bac
   assert.deepEqual(audio.played, ['./audio/bai-zei-qi/zh/p01-1.mp3']);
 });
 
-test('changing listening mode while paused does not restart narration', () => {
+test('changing mode requeues paused narration without playing until resumed', () => {
   const reader = createReader();
   const play = reader.elements.get('#playButton');
   play.dispatch('click');
@@ -205,5 +205,6 @@ test('changing listening mode while paused does not restart narration', () => {
 
   play.dispatch('click');
   assert.equal(reader.audio.played.length, 2);
-  assert.equal(reader.audio.played[1], firstClip);
+  assert.equal(firstClip, './audio/bai-zei-qi/ja/p01-1.mp3');
+  assert.equal(reader.audio.played[1], './audio/bai-zei-qi/zh/p01-1.mp3');
 });
