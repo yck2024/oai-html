@@ -118,8 +118,15 @@ function createAppFixture(game) {
   const window = {
     FriendlyArena: { GOAL, createGame: () => game, createSpeechPlayer },
   };
-  vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'app.js'), 'utf8'), { window, document, Audio: FakeAudio });
-  return { elements, speechLanguageButtons, answerOptions: elements.get('#answerOptions'), nextButton: elements.get('#nextButton'), muteButton: elements.get('#muteButton') };
+  const played = [];
+  class RecordingAudio extends FakeAudio {
+    play() {
+      played.push(this.src);
+      return super.play();
+    }
+  }
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'app.js'), 'utf8'), { window, document, Audio: RecordingAudio });
+  return { elements, played, speechLanguageButtons, answerOptions: elements.get('#answerOptions'), nextButton: elements.get('#nextButton'), muteButton: elements.get('#muteButton') };
 }
 
 test('addition questions stay within five and offer three distinct choices', () => {
@@ -278,10 +285,12 @@ module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 prompts = json.loads(module.PROMPTS.read_text(encoding='utf-8'))
 clips = module.selected_clips(prompts, list(module.LANGUAGES), None, True)
+repeated = module.selected_clips(prompts, ['en', 'en', 'zh', 'zh'], ['family-sister', 'family-sister'], True)
 print(json.dumps({
     'model': module.MODEL,
     'languages': module.LANGUAGES,
     'clips': clips,
+    'repeated': repeated,
 }, ensure_ascii=False))
 `;
   const generated = JSON.parse(execFileSync('python3', ['-B', '-c', python], { cwd: __dirname, encoding: 'utf8' }));
@@ -292,6 +301,7 @@ print(json.dumps({
     { en: ['en-US', 'Aoede'], zh: ['zh-TW', 'Kore'], ja: ['ja-JP', 'ja-jp-tutor-1'] },
   );
   assert.equal(generated.clips.length, 45);
+  assert.deepEqual(generated.repeated, [['en', 'family-sister', 'Find your older sister!'], ['zh', 'family-sister', '誰是姐姐？']]);
   const audioText = new Map(generated.clips.map(([language, audioId, text]) => [`${language}/${audioId}`, text]));
   for (const [audioId, translations] of Object.entries(prompts)) {
     for (const language of ['en', 'zh', 'ja']) {
@@ -305,6 +315,20 @@ print(json.dumps({
   const sisterQuestion = game.getState().question;
   assert.equal(sisterQuestion.promptZh, '誰是姊姊？');
   assert.equal(sisterQuestion.options.find(option => option.id === 'sister').zh, '姊姊');
+});
+
+test('restart and play again stay silent until the child chooses a voice', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  app.elements.get('#restartButton').click();
+  app.elements.get('#playAgainButton').click();
+  assert.deepEqual(app.played, []);
+
+  app.speechLanguageButtons.find(button => button.dataset.language === 'zh').click();
+  assert.equal(app.played.length, 1);
+  app.elements.get('#restartButton').click();
+  assert.equal(app.played.length, 2);
+  assert.match(app.played[1], /^\.\/audio\/zh\//);
 });
 
 test('unmuting clears stale muted status even when playback is skipped on the finish screen', () => {

@@ -249,7 +249,6 @@
   });
 
   function restart() {
-    speechEnabled = true;
     const state = game.restart();
     arenaStage.classList.remove('thinking', 'do-spar');
     arenaMessage.textContent = 'Ready, team? Pick any challenge!';

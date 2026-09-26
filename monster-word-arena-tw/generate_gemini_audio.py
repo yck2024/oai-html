@@ -133,7 +133,7 @@ def selected_clips(prompts, languages, clip_ids, overwrite):
 
     return [
         (language, audio_id, PRONUNCIATION_OVERRIDES.get((language, audio_id), prompts[audio_id][language]))
-        for language in languages
+        for language in dict.fromkeys(languages)
         for audio_id in prompt_ids
         if overwrite or not (AUDIO_DIR / language / f"{audio_id}.mp3").is_file()
     ]
