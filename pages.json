@@ -63,6 +63,19 @@
         "繁體中文"
       ],
       "status": "live"
+    },
+    {
+      "slug": "taiwan-ehon",
+      "title": "台灣故事繪本 | たいわんの おはなし えほん",
+      "description": "Illustrated Japanese and Taiwan Mandarin retellings of Taiwanese folk stories, with optional 注音 and sentence-by-sentence narration.",
+      "icon": "📚",
+      "tags": [
+        "Stories",
+        "Kids",
+        "Japanese",
+        "繁體中文"
+      ],
+      "status": "live"
     }
   ]
 }
