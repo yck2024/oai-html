@@ -90,7 +90,7 @@
           <p class="question-label" id="questionLabel">もんだい 1</p>
           <p class="instruction">ひかりだまは あわせて いくつ？</p>
           <button class="speak-button" id="speakButton" type="button" aria-label="もんだいを きく">
-            <span aria-hidden="true">🔊</span> <span>もんだいを きく</span>
+            <svg class="speak-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> <span>もんだいを きく</span>
           </button>
           <p class="speech-status" id="speechStatus" role="status" aria-live="polite" aria-atomic="true"></p>
           <div class="equation" id="equation" aria-label="たしざんの もんだい"></div>
@@ -101,15 +101,15 @@
         </div>
 
         <section id="finishPanel" class="finish-panel" aria-labelledby="finishTitle" hidden>
-          <div class="reward-icon" aria-hidden="true">🌟</div>
+          <div class="reward-icon" aria-hidden="true"><img src="./images/rag.webp" alt="" width="759" height="894" decoding="async"><img src="./images/powa.webp" alt="" width="617" height="997" decoding="async"></div>
           <h2 id="finishTitle">やったね！</h2>
           <p>5この ひかりだまが あつまった！<br>こだま森に あかるいひかりが もどったよ。</p>
-          <div class="reward-badge">🏅 こだま森の たんけんバッジ</div>
+          <div class="reward-badge"><img class="inline-art" src="./images/acorn.webp" alt="" width="297" height="356" decoding="async"> こだま森の たんけんバッジ</div>
           <button class="next-button replay-button" id="replayButton" type="button">もういちど あそぶ <span aria-hidden="true">↻</span></button>
         </section>
       </section>
     </section>
-    <p class="page-footer">ゆっくり かんがえて だいじょうぶ 🌱</p>
+    <p class="page-footer">ゆっくり かんがえて だいじょうぶ <img class="inline-art" src="./images/woodland-flower.webp" alt="" width="369" height="366" decoding="async"></p>
   </main>
   <script src="./game.js"></script>
 </body>
