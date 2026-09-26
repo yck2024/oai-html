@@ -26,11 +26,12 @@
     h1{margin:12px 0 8px;font-size:clamp(36px,7vw,64px);line-height:1.08;letter-spacing:-.04em}
     h1 span{display:block;font-size:clamp(21px,4vw,32px);letter-spacing:0;margin-top:8px}
     header p{margin:12px auto 0;max-width:520px;font-size:16px;font-weight:800;line-height:1.7;color:#fffdf4}
-    .games{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;margin:auto 0 20px}
-    .game-card{position:relative;display:flex;min-height:335px;flex-direction:column;align-items:center;padding:25px 26px 23px;border:4px solid #fff;border-radius:32px;text-align:center;text-decoration:none;color:inherit;box-shadow:0 10px 0 #315d783d,0 24px 45px #264e6338;transition:transform .16s,box-shadow .16s}
+    .games{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:auto 0 20px}
+    .game-card{position:relative;display:flex;min-height:335px;flex-direction:column;align-items:center;padding:22px 18px 20px;border:4px solid #fff;border-radius:32px;text-align:center;text-decoration:none;color:inherit;box-shadow:0 10px 0 #315d783d,0 24px 45px #264e6338;transition:transform .16s,box-shadow .16s}
     .game-card:hover{transform:translateY(-6px) rotate(-.5deg);box-shadow:0 15px 0 #315d783d,0 28px 50px #264e6338}
     .poko{background:linear-gradient(155deg,#fff7d9,#ffe9a8)}
     .garden{background:linear-gradient(155deg,#e4fff0,#b3f0cf)}
+    .dino{background:linear-gradient(155deg,#f5f9d4,#cde8bc)}
     .game-number{border-radius:999px;padding:5px 11px;background:#ffffffb8;color:#527282;font-weight:1000;font-size:11px;letter-spacing:.12em}
     .game-icon{margin:8px 0 2px;font-size:64px;line-height:1.2;filter:drop-shadow(0 5px 1px #315d7828)}
     h2{margin:4px 0 8px;color:#285469;font-size:clamp(23px,3.5vw,31px);line-height:1.2}
@@ -40,20 +41,21 @@
     .poko .play{background:#ee8c35;box-shadow:0 5px 0 #c56c24}
     .play span{font-size:22px}
     footer{text-align:center;padding:4px 10px 12px;color:#fff;font-size:13px;font-weight:850;text-shadow:0 2px 5px #315d7880}
-    @media(max-width:700px){body{padding:14px}.hub{min-height:calc(100vh - 28px)}header{padding:22px 8px 17px}.games{grid-template-columns:1fr;gap:15px}.game-card{min-height:285px;padding:19px 20px 18px;border-radius:27px}.game-icon{font-size:54px}.tags{margin:12px 0 15px}}
+    @media(max-width:900px){.games{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.game-card:last-child{grid-column:1/-1;width:calc((100% - 18px)/2);justify-self:center}}
+    @media(max-width:700px){body{padding:14px}.hub{min-height:calc(100vh - 28px)}header{padding:22px 8px 17px}.games{grid-template-columns:1fr;gap:15px}.game-card,.game-card:last-child{grid-column:auto;width:100%;min-height:285px;padding:19px 20px 18px;border-radius:27px}.game-icon{font-size:54px}.tags{margin:12px 0 15px}}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
   </style>
 </head>
 <body>
   <main class="hub">
-    <a class="back" href="../" aria-label="ギャラリーにもどる">← OAI HTML ギャラリー</a>
+    <a class="back" href="../index.html" aria-label="ギャラリーにもどる">← OAI HTML ギャラリー</a>
     <header>
       <div class="eyebrow">ちいさな さんすう ぼうけん</div>
       <h1>Math Island<span>どのゲームで あそぶ？</span></h1>
-      <p>すきなゲームをえらんでね。どちらも日本語の音声つきだよ！</p>
+      <p>すきなゲームをえらんでね。あそびながら かずを たのしく れんしゅうしよう！</p>
     </header>
     <section class="games" aria-label="かずのゲームをえらぶ">
-      <a class="game-card poko" href="./poko/" data-analytics-event="game_launch" data-analytics-label="poko-island">
+      <a class="game-card poko" href="./poko/index.html" data-analytics-event="game_launch" data-analytics-label="poko-island">
         <span class="game-number">GAME 1</span>
         <span class="game-icon" aria-hidden="true">🦊🍎⭐</span>
         <h2>ポコと ほしの島</h2>
@@ -61,12 +63,20 @@
         <span class="tags">かずを かぞえる · 5までの たしざん</span>
         <span class="play">このゲームで あそぶ <span aria-hidden="true">➜</span></span>
       </a>
-      <a class="game-card garden" href="./number-garden/" data-analytics-event="game_launch" data-analytics-label="number-garden">
+      <a class="game-card garden" href="./number-garden/index.html" data-analytics-event="game_launch" data-analytics-label="number-garden">
         <span class="game-number">GAME 2</span>
         <span class="game-icon" aria-hidden="true">🌼🐚🪐</span>
         <h2>かずのにわ</h2>
         <p>にわ・うみ・うちゅうを ぼうけんして、かぞえたり たしざんしたり しよう！</p>
         <span class="tags">3つの せかい · かずを かぞえる · たしざん</span>
+        <span class="play">このゲームで あそぶ <span aria-hidden="true">➜</span></span>
+      </a>
+      <a class="game-card dino" href="./dino-spirit/index.html" data-analytics-event="game_launch" data-analytics-label="dino-spirit-forest">
+        <span class="game-number">GAME 3</span>
+        <span class="game-icon" aria-hidden="true">🦕✨🌿</span>
+        <h2>ラグと こだま森</h2>
+        <p>きょうりゅうのラグと 森のせいポワと いっしょに、ひかりだまを あつめよう！</p>
+        <span class="tags">たしざん · 5つの ひかりを あつめよう</span>
         <span class="play">このゲームで あそぶ <span aria-hidden="true">➜</span></span>
       </a>
     </section>

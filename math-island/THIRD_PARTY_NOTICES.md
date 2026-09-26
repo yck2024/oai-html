@@ -16,6 +16,6 @@ Copyright 2010–2023 Three.js Authors. Licensed under the MIT License.
 
 Source: https://github.com/mrdoob/three.js
 
-Japanese speech clips in both games were generated with Aivis Cloud using the Mao voice. Attribution: **AivisSpeech: まお**.
+Japanese speech clips in Poko and Number Garden were generated with Aivis Cloud using the Mao voice. Attribution: **AivisSpeech: まお**.
 
 Source: https://api.aivis-project.com/v1/demo/realtime-streaming
