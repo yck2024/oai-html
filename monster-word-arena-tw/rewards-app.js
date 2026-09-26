@@ -162,9 +162,11 @@
   }
 
   function renderBook(state) {
-    bookIntro.textContent = state.wins
-      ? `You won ${state.wins} ${state.wins === 1 ? 'match' : 'matches'}! Every win brings a sticker. · 你贏了 ${state.wins} 場！每贏一場就有一張貼紙。`
-      : 'Win a match to get your first sticker! · 贏一場就能拿到第一張貼紙！';
+    bookIntro.textContent = state.wins >= 9999
+      ? 'Your sticker book is full! · 貼紙簿滿了！ · シールちょうがいっぱい！'
+      : state.wins
+        ? `You won ${state.wins} ${state.wins === 1 ? 'match' : 'matches'}! Every win brings a sticker. · 你贏了 ${state.wins} 場！每贏一場就有一張貼紙。`
+        : 'Win a match to get your first sticker! · 贏一場就能拿到第一張貼紙！';
     stickerGrid.replaceChildren(...state.stickers.map(stickerSlot));
     costumeRows.replaceChildren(...Object.entries(CHAMPIONS).map(([champion, names]) => {
       const row = document.createElement('div');
@@ -211,7 +213,10 @@
 
   function closeBook() {
     if (typeof book.close === 'function') book.close();
-    else book.removeAttribute('open');
+    else {
+      book.removeAttribute('open');
+      returnFocus?.focus?.();
+    }
   }
 
   function rewardNote(result, champion) {

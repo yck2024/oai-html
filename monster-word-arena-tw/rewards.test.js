@@ -274,7 +274,7 @@ class FakeElement {
 }
 
 // Builds a page from the element IDs the scripts look up, so it tolerates new IDs added by other features.
-function createPage() {
+function createPage({ nativeDialog = true } = {}) {
   const root = new FakeElement('main');
   const document = { activeElement: null };
   const make = (tag, props = {}) => {
@@ -327,9 +327,12 @@ function createPage() {
     createElement: tag => make(tag),
     createTextNode: text => ({ textContent: String(text) }),
   });
-  element('stickerBook').showModal = function showModal() { this.open = true; };
-  element('stickerBook').close = function close() { this.open = false; this.dispatch('close'); };
-  element('stickerBook').getBoundingClientRect = () => ({ left: 100, top: 40, right: 660, bottom: 700 });
+  const stickerBook = element('stickerBook');
+  if (nativeDialog) {
+    stickerBook.showModal = function showModal() { this.open = true; };
+    stickerBook.close = function close() { this.open = false; this.dispatch('close'); };
+  }
+  stickerBook.getBoundingClientRect = () => ({ left: 100, top: 40, right: 660, bottom: 700 });
   return { document, element, action, championCards, heroFighter, finishPanel };
 }
 
@@ -339,8 +342,8 @@ class FakeAudio {
   play() { return Promise.resolve(); }
 }
 
-function loadPage({ storage = new MemoryStorage(), withApp = false, recordWin } = {}) {
-  const page = createPage();
+function loadPage({ storage = new MemoryStorage(), withApp = false, recordWin, nativeDialog = true } = {}) {
+  const page = createPage({ nativeDialog });
   const listeners = {};
   const window = {
     addEventListener(type, callback) { (listeners[type] ||= []).push(callback); },
@@ -436,7 +439,7 @@ test('wins at the storage cap do not leave a sticker reward note', () => {
   assert.equal(saved(storage).wins, 9999);
   assert.equal(page.finishPanel.querySelector('#rewardNote'), null);
   page.action('open').click();
-  assert.match(page.element('stickerBookIntro').textContent, /You won 9999 matches!/);
+  assert.equal(page.element('stickerBookIntro').textContent, 'Your sticker book is full! · 貼紙簿滿了！ · シールちょうがいっぱい！');
 });
 
 test('the sticker book shows collected stickers, lets the child change costumes, and has a two-step grown-up reset', () => {
@@ -445,6 +448,7 @@ test('the sticker book shows collected stickers, lets the child change costumes,
   page.action('open').click();
   assert.equal(page.element('stickerBook').open, true);
   assert.equal(page.document.activeElement, page.action('close'));
+  assert.match(page.element('stickerBookIntro').textContent, /Every win brings a sticker/);
   const slots = page.element('stickerGrid').children;
   assert.equal(slots.length, STICKERS.length);
   assert.match(slots[0].textContent, /星星Star/);
@@ -513,6 +517,26 @@ test('a storage refresh preserves costume focus and falls back when the choice l
   page.window.dispatch('storage', { key: STORAGE_KEY });
   assert.equal(choice().disabled, true, 'the reset made the focused choice unavailable');
   assert.equal(page.document.activeElement, page.action('close'), 'focus falls back to the dialog close button');
+});
+
+test('the fallback dialog returns focus to its opener on button and backdrop close', () => {
+  const page = loadPage({ nativeDialog: false });
+  const opener = page.action('open');
+  const book = page.element('stickerBook');
+
+  opener.focus();
+  opener.click();
+  assert.equal(book.getAttribute('open'), '');
+  assert.equal(page.document.activeElement, page.action('close'));
+  page.action('close').click();
+  assert.equal(book.getAttribute('open'), null);
+  assert.equal(page.document.activeElement, opener);
+
+  opener.focus();
+  opener.click();
+  book.dispatch('click', { clientX: 40, clientY: 300 });
+  assert.equal(book.getAttribute('open'), null);
+  assert.equal(page.document.activeElement, opener);
 });
 
 test('progress saved in another tab shows up in this tab without a reload', () => {
