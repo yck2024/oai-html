@@ -82,6 +82,19 @@
           <button class="topic-tab" type="button" data-topic="face" aria-pressed="false"><span aria-hidden="true">🙂</span><span>Face<small>五官</small></span></button>
           <button class="topic-tab" type="button" data-topic="family" aria-pressed="false"><span aria-hidden="true">🏠</span><span>Family<small>家人</small></span></button>
         </div>
+        <div class="speech-controls">
+          <div class="speech-languages" role="group" aria-label="Spoken language 語音語言 音声言語">
+            <span class="speech-label">VOICE · 語音</span>
+            <button class="speech-language is-active" type="button" data-language="en" aria-pressed="true">English</button>
+            <button class="speech-language" type="button" data-language="zh" aria-pressed="false">繁體中文</button>
+            <button class="speech-language" type="button" data-language="ja" aria-pressed="false">日本語</button>
+          </div>
+          <div class="speech-playback" role="group" aria-label="Speech controls 語音控制 音声操作">
+            <button class="speech-control" id="replayPromptButton" type="button">↻ Hear question</button>
+            <button class="speech-control" id="muteButton" type="button" aria-pressed="false">🔊 Mute</button>
+          </div>
+        </div>
+        <p class="speech-status" id="speechStatus" role="status" aria-live="polite" aria-atomic="true">Choose a voice to start question audio. · 選擇語音即可開始朗讀題目。 · 音声を選ぶと読み上げを開始します。</p>
 
         <div class="question-panel" id="questionPanel">
           <p class="question-en" id="questionEnglish">How many altogether?</p>

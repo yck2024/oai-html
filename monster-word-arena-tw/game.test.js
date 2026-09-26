@@ -1,8 +1,11 @@
 'use strict';
 
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 const test = require('node:test');
-const { GOAL, TOPICS, createGame } = require('./game.js');
+const { GOAL, TOPICS, createGame, createSpeechPlayer } = require('./game.js');
+const prompts = require('./audio/prompts.json');
 
 const steadyRandom = () => 0.3;
 
@@ -132,4 +135,88 @@ test('invalid topics and answers are ignored without changing progress', () => {
   assert.equal(game.chooseTopic('tracking'), false);
   assert.equal(game.answer('secret'), 'ignored');
   assert.equal(game.getState().stars, 0);
+});
+
+test('every math and vocabulary prompt has bundled English, Taiwan Mandarin, and Japanese audio', () => {
+  const expected = [
+    'math-1-1', 'math-1-2', 'math-2-2', 'math-2-1', 'math-3-1',
+    'colors-red', 'colors-yellow', 'colors-green',
+    'face-eyes', 'face-nose', 'face-ears',
+    'family-dad', 'family-mom', 'family-brother', 'family-sister',
+  ].sort();
+  assert.deepEqual(Object.keys(prompts).sort(), expected);
+
+  for (const [audioId, translations] of Object.entries(prompts)) {
+    assert.ok(translations.en, `${audioId} has English narration`);
+    assert.ok(translations.zh, `${audioId} has Taiwan Mandarin narration`);
+    assert.ok(translations.ja, `${audioId} has Japanese narration`);
+    assert.match(translations.zh, /[\u3400-\u9fff]/, `${audioId} uses Chinese characters`);
+    assert.match(translations.ja, /[\u3040-\u30ff\u3400-\u9fff]/, `${audioId} uses Japanese writing`);
+    for (const language of ['en', 'zh', 'ja']) {
+      const audioPath = path.join(__dirname, 'audio', language, `${audioId}.mp3`);
+      assert.ok(fs.existsSync(audioPath), `${audioPath} is bundled`);
+      assert.ok(fs.statSync(audioPath).size > 1024, `${audioPath} contains audio`);
+    }
+  }
+});
+
+test('game-generated prompt IDs exist for every selectable word and math target', () => {
+  const audioIds = new Set();
+  for (const seed of [0, 0.2, 0.4, 0.6, 0.8, 0.99]) {
+    const game = createGame(() => seed);
+    audioIds.add(game.getState().question.audioId);
+    for (const topic of ['colors', 'face', 'family']) {
+      game.chooseTopic(topic);
+      audioIds.add(game.getState().question.audioId);
+    }
+  }
+  for (const audioId of audioIds) {
+    assert.ok(prompts[audioId], `${audioId} has a narration manifest entry`);
+  }
+  assert.equal(audioIds.size, Object.keys(prompts).length, 'the game reaches every bundled prompt');
+});
+
+test('speech player replaces stale clips, ignores stale failures, and stops on mute', async () => {
+  const pending = [];
+  const audio = {
+    pauseCount: 0,
+    loadCount: 0,
+    pause() { this.pauseCount += 1; },
+    load() { this.loadCount += 1; },
+    play() {
+      return new Promise((_resolve, reject) => { pending.push(reject); });
+    },
+  };
+  let unavailable = 0;
+  const player = createSpeechPlayer(audio, () => { unavailable += 1; });
+
+  assert.equal(player.play('math-1-1', 'en'), true);
+  const firstClip = audio.src;
+  assert.equal(firstClip, './audio/en/math-1-1.mp3');
+  assert.equal(player.play('family-sister', 'zh'), true);
+  assert.equal(audio.src, './audio/zh/family-sister.mp3');
+  assert.equal(player.play('family-sister', 'ja'), true);
+  assert.equal(audio.src, './audio/ja/family-sister.mp3');
+  assert.equal(audio.pauseCount, 3);
+  pending[0](new Error('stale English clip failed'));
+  pending[1](new Error('stale Chinese clip failed'));
+  await Promise.resolve();
+  assert.equal(unavailable, 0, 'rapid language switches ignore stale clip failures');
+
+  player.stop();
+  pending[2](new Error('stopped clip failed'));
+  await Promise.resolve();
+  assert.equal(unavailable, 0, 'a muted or stopped clip cannot report a stale error');
+  assert.equal(audio.pauseCount, 4);
+  assert.equal(audio.currentTime, 0);
+  assert.equal(player.play('math-1-1', 'xx'), false);
+  assert.equal(unavailable, 1, 'unsupported language fails safely');
+});
+
+test('speech remains optional when the browser has no audio player', () => {
+  let unavailable = 0;
+  const player = createSpeechPlayer(null, () => { unavailable += 1; });
+  assert.equal(player.play('math-1-1', 'en'), false);
+  assert.equal(unavailable, 1);
+  assert.doesNotThrow(() => player.stop());
 });

@@ -17,6 +17,9 @@
   const scoreCount = document.querySelector('#scoreCount');
   const championCards = [...document.querySelectorAll('.champion-card')];
   const topicTabs = [...document.querySelectorAll('.topic-tab')];
+  const speechLanguageButtons = [...document.querySelectorAll('.speech-language')];
+  const speechStatus = document.querySelector('#speechStatus');
+  const muteButton = document.querySelector('#muteButton');
   const heroEmoji = document.querySelector('#heroEmoji');
   const heroName = document.querySelector('#heroName');
   const buddyEmoji = document.querySelector('#buddyEmoji');
@@ -29,6 +32,38 @@
     monster: { name: 'Bobo', nameZh: '波波', emoji: '👾', move: 'Bubble Blast', moveZh: '泡泡砲', moveEmoji: '🫧', buddy: 'Rex', buddyZh: '雷克斯', buddyEmoji: '🦖' },
   };
   const TOPIC_NAMES = { math: 'Math', colors: 'Colors', face: 'Face', family: 'Family' };
+  let speechLanguage = 'en';
+  let speechEnabled = false;
+  let speechMuted = false;
+  let questionAudio = null;
+  try {
+    if (typeof Audio !== 'undefined') {
+      questionAudio = new Audio();
+      questionAudio.preload = 'auto';
+    }
+  } catch (_error) {
+    questionAudio = null;
+  }
+  const speechPlayer = window.FriendlyArena.createSpeechPlayer(questionAudio, () => {
+    speechStatus.textContent = 'Audio is unavailable. You can still tap an answer. · 目前無法播放語音，仍可點選答案。 · 音声が再生できなくても、答えをタップできます。';
+  });
+
+  function playCurrentQuestion() {
+    const state = game.getState();
+    if (!speechEnabled || speechMuted || state.finished) return;
+    speechStatus.textContent = '';
+    speechPlayer.play(state.question.audioId, speechLanguage);
+  }
+
+  function renderSpeechControls() {
+    speechLanguageButtons.forEach(button => {
+      const selected = button.dataset.language === speechLanguage;
+      button.classList.toggle('is-active', selected);
+      button.setAttribute('aria-pressed', String(selected));
+    });
+    muteButton.textContent = speechMuted ? '🔇 Unmute' : '🔊 Mute';
+    muteButton.setAttribute('aria-pressed', String(speechMuted));
+  }
 
   function renderScore(state) {
     [...scoreStars.children].forEach((star, index) => {
@@ -93,7 +128,7 @@
     return button;
   }
 
-  function renderQuestion(state) {
+  function renderQuestion(state, { speak = true } = {}) {
     const question = state.question;
     questionEnglish.textContent = question.promptEn;
     questionChinese.textContent = question.promptZh;
@@ -115,6 +150,7 @@
       tab.disabled = state.finished;
     });
     renderScore(state);
+    if (speak) playCurrentQuestion();
   }
 
   function spar(state) {
@@ -144,6 +180,7 @@
       return;
     }
 
+    speechPlayer.stop();
     button.classList.add('right-answer');
     answerOptions.querySelectorAll('button').forEach(choice => { choice.disabled = true; });
     feedback.textContent = 'You got it! Power move! 答對了！出招成功！';
@@ -160,6 +197,34 @@
       nextButton.focus();
     }
   }
+
+  speechLanguageButtons.forEach(button => button.addEventListener('click', () => {
+    speechLanguage = button.dataset.language;
+    speechEnabled = true;
+    renderSpeechControls();
+    if (speechMuted) {
+      speechStatus.textContent = 'Sound is muted. · 語音已靜音。 · 音声はミュート中です。';
+      return;
+    }
+    playCurrentQuestion();
+  }));
+
+  document.querySelector('#replayPromptButton').addEventListener('click', () => {
+    speechEnabled = true;
+    playCurrentQuestion();
+  });
+
+  muteButton.addEventListener('click', () => {
+    speechMuted = !speechMuted;
+    renderSpeechControls();
+    if (speechMuted) {
+      speechPlayer.stop();
+      speechStatus.textContent = 'Sound is muted. · 語音已靜音。 · 音声はミュート中です。';
+      return;
+    }
+    speechEnabled = true;
+    playCurrentQuestion();
+  });
 
   championCards.forEach(card => card.addEventListener('click', () => {
     if (!game.chooseChampion(card.dataset.champion)) return;
@@ -183,6 +248,7 @@
   });
 
   function restart() {
+    speechEnabled = true;
     const state = game.restart();
     arenaStage.classList.remove('thinking', 'do-spar');
     arenaMessage.textContent = 'Ready, team? Pick any challenge!';
@@ -196,5 +262,6 @@
 
   const initialState = game.getState();
   renderChampion(initialState);
-  renderQuestion(initialState);
+  renderSpeechControls();
+  renderQuestion(initialState, { speak: false });
 })();
