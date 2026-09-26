@@ -127,8 +127,6 @@
       const card = element('button', 'book-card');
       card.type = 'button';
       card.dataset.story = story.id;
-      card.dataset.analyticsEvent = 'book_open';
-      card.dataset.analyticsLabel = story.id;
       card.style.setProperty('--book-accent', story.theme.accent);
       card.style.setProperty('--book-soft', story.theme.soft);
 
@@ -261,7 +259,6 @@
     other.addEventListener('click', leaveBook);
     actions.append(again, other);
     pageEl.append(actions);
-    window.oaiTrack?.('book_finish', { book_id: story.id });
   }
 
   function renderPage(direction) {

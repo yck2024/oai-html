@@ -124,6 +124,50 @@ test('pausing during language and sentence gaps suspends advancement until resum
   }
 });
 
+test('pause-aborted play promises preserve paused narration across initial and resumed playback', async () => {
+  const rejectors = [];
+  const unavailable = [];
+  const audio = {
+    pause() {},
+    play() { return new Promise((_resolve, reject) => rejectors.push(reject)); },
+  };
+  const narrator = E.createNarrator(audio, { onUnavailable: () => unavailable.push(true) });
+  const steps = [{ lineId: 'line-1', lang: 'ja' }];
+  const abort = () => Object.assign(new Error('playback interrupted'), { name: 'AbortError' });
+
+  narrator.play('story', steps);
+  narrator.pause();
+  rejectors[0](abort());
+  await Promise.resolve();
+  assert.equal(narrator.state, 'paused');
+  assert.deepEqual(unavailable, []);
+
+  narrator.resume();
+  assert.equal(rejectors.length, 2);
+  narrator.pause();
+  rejectors[1](abort());
+  await Promise.resolve();
+  assert.equal(narrator.state, 'paused');
+  assert.deepEqual(unavailable, []);
+});
+
+test('genuine playback failures remain unavailable after a pause', async () => {
+  let rejectPlay;
+  const unavailable = [];
+  const audio = {
+    pause() {},
+    play() { return new Promise((_resolve, reject) => { rejectPlay = reject; }); },
+  };
+  const narrator = E.createNarrator(audio, { onUnavailable: () => unavailable.push(true) });
+  narrator.play('story', [{ lineId: 'line-1', lang: 'ja' }]);
+  narrator.pause();
+  rejectPlay(Object.assign(new Error('decoder failed'), { name: 'NotSupportedError' }));
+  await Promise.resolve();
+
+  assert.equal(narrator.state, 'idle');
+  assert.deepEqual(unavailable, [true]);
+});
+
 test('narration highlights each queued language clip and advances one sentence at a time', () => {
   const played = [];
   const highlighted = [];

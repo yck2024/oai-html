@@ -124,6 +124,7 @@
     let storyId = '';
     let state = 'idle';
     let pendingAdvance = null;
+    let pauseVersion = 0;
 
     function reset() {
       token += 1;
@@ -148,6 +149,22 @@
       reset();
       onStep(null);
       onUnavailable();
+    }
+
+    function playAudio(current) {
+      const versionAtPlay = pauseVersion;
+      try {
+        const playback = audio.play();
+        if (playback && typeof playback.catch === 'function') {
+          playback.catch(error => {
+            if (current !== token) return;
+            if (error?.name === 'AbortError' && versionAtPlay !== pauseVersion) return;
+            fail(current);
+          });
+        }
+      } catch (_error) {
+        fail(current);
+      }
     }
 
     function playAt(current, index) {
@@ -182,12 +199,7 @@
       };
       audio.onerror = () => fail(current);
       audio.src = clipPath(storyId, step.lang, step.lineId);
-      try {
-        const playback = audio.play();
-        if (playback && typeof playback.catch === 'function') playback.catch(() => fail(current));
-      } catch (_error) {
-        fail(current);
-      }
+      playAudio(current);
     }
 
     function play(nextStoryId, nextSteps) {
@@ -204,6 +216,7 @@
 
     function pause() {
       if (state !== 'playing') return false;
+      pauseVersion += 1;
       audio.pause();
       state = 'paused';
       return true;
@@ -222,12 +235,7 @@
         return true;
       }
       state = 'playing';
-      try {
-        const playback = audio.play();
-        if (playback && typeof playback.catch === 'function') playback.catch(() => fail(current));
-      } catch (_error) {
-        fail(current);
-      }
+      playAudio(current);
       return true;
     }
 
