@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+
+# Private keys and certificates
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Common credential files
+credentials.json
+service-account*.json
