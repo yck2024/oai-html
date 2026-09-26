@@ -7,6 +7,7 @@ const { execFileSync } = require('node:child_process');
 const test = require('node:test');
 const vm = require('node:vm');
 const { GOAL, TOPICS, LEVELS, WORD_TOPICS, REACTIONS, createGame, createSpeechPlayer } = require('./game.js');
+const { EFFECTS, EFFECT_LEVEL, MUSIC_LEVEL, createSoundBoard } = require('./sounds.js');
 const prompts = require('./audio/prompts.json');
 const reactions = require('./audio/reactions.json');
 
@@ -21,6 +22,26 @@ function seededRandom(seed) {
     return value / 4294967296;
   };
 }
+
+// index.html's <script src> list in document order, read with a real HTML parser.
+const PAGE_SCRIPTS = JSON.parse(execFileSync('python3', ['-B', '-c', `
+import json
+from html.parser import HTMLParser
+
+class Scripts(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.sources = []
+
+    def handle_starttag(self, tag, attrs):
+        src = dict(attrs).get('src')
+        if tag == 'script' and src:
+            self.sources.append(src)
+
+parser = Scripts()
+parser.feed(open('index.html', encoding='utf-8').read())
+print(json.dumps(parser.sources))
+`], { cwd: __dirname, encoding: 'utf8' }));
 
 function answerCorrectly(game) {
   const state = game.getState();
@@ -125,12 +146,99 @@ function clickAnswer(app, game, correct) {
   app.answerOptions.children.find(button => (button.dataset.choice === answerId) === correct).click();
 }
 
+class FakeParam {
+  constructor(value = 0) {
+    this.value = value;
+    this.events = [];
+  }
+
+  setValueAtTime(value, time) { this.events.push(['set', value, time]); }
+  linearRampToValueAtTime(value, time) { this.events.push(['linear', value, time]); this.value = value; }
+  exponentialRampToValueAtTime(value, time) {
+    assert.ok(value > 0, 'an exponential ramp never targets zero');
+    this.events.push(['exponential', value, time]);
+  }
+  cancelScheduledValues() {}
+}
+
+// Records the Web Audio graph the sound board builds; the "speakers" are just a list of nodes.
+class FakeAudioContext {
+  constructor() {
+    this.currentTime = 0;
+    this.sampleRate = 8000;
+    this.state = 'suspended';
+    this.resumed = 0;
+    this.sources = [];
+    this.gains = [];
+    this.destination = { connections: [] };
+  }
+
+  node(extra = {}) {
+    return { connections: [], connect(target) { this.connections.push(target); }, ...extra };
+  }
+
+  createGain() {
+    const gain = this.node({ gain: new FakeParam(1) });
+    this.gains.push(gain);
+    return gain;
+  }
+  createBiquadFilter() { return this.node({ frequency: new FakeParam(350), Q: new FakeParam(1) }); }
+  createBuffer(_channels, length) {
+    const data = new Float32Array(length);
+    return { getChannelData: () => data };
+  }
+
+  createOscillator() {
+    const osc = this.node({ frequency: new FakeParam(440), start: time => { osc.startTime = time; }, stop: time => { osc.stopTime = time; } });
+    this.sources.push(osc);
+    return osc;
+  }
+
+  createBufferSource() {
+    const source = this.node({ start: time => { source.startTime = time; } });
+    this.sources.push(source);
+    return source;
+  }
+
+  resume() {
+    this.resumed += 1;
+    this.state = 'running';
+    return Promise.resolve();
+  }
+}
+
+function createFakeTimers() {
+  const timers = new Map();
+  let nextId = 1;
+  return {
+    timers,
+    setTimer(callback) { timers.set(nextId, callback); return nextId++; },
+    clearTimer(id) { timers.delete(id); },
+  };
+}
+
+function createTestBoard() {
+  let ctx = null;
+  const timers = createFakeTimers();
+  const board = createSoundBoard(() => { ctx = new FakeAudioContext(); return ctx; }, timers);
+  return {
+    board,
+    timers,
+    get ctx() { return ctx; },
+    // The first three gains the board creates are the master, effects, and music buses.
+    get buses() {
+      const [master, effects, music] = ctx.gains;
+      return { master: master.gain.value, effects: effects.gain.value, music: music.gain.value };
+    },
+  };
+}
+
 function createAppFixture(game) {
   const ids = [
     'answerOptions', 'questionEnglish', 'questionChinese', 'questionPicture', 'equation', 'feedback',
     'nextButton', 'questionPanel', 'finishPanel', 'arenaStage', 'arenaMessage', 'scoreStars',
     'scoreCount', 'speechStatus', 'muteButton', 'heroEmoji', 'heroName', 'buddyEmoji', 'buddyName',
-    'rivalPower', 'moveBubble', 'restartButton', 'playAgainButton', 'replayPromptButton',
+    'rivalPower', 'moveBubble', 'restartButton', 'playAgainButton', 'replayPromptButton', 'musicButton',
     'speechControls', 'speechInvite',
   ];
   const elements = new Map(ids.map(id => [`#${id}`, new FakeElement(id === 'nextButton' ? 'button' : 'div')]));
@@ -167,20 +275,60 @@ function createAppFixture(game) {
     createElement: tagName => new FakeElement(tagName),
     createTextNode: text => ({ textContent: String(text) }),
   };
-  const window = {
-    FriendlyArena: { GOAL, REACTIONS, createGame: () => game, createSpeechPlayer },
+  const effects = [];
+  const sound = { board: null, ctx: null, timers: createFakeTimers() };
+  const window = { AudioContext: FakeAudioContext };
+  // The page's own scripts publish these modules; the fixture swaps in the test game and records sounds.
+  const hooks = {
+    FriendlyArena: api => ({ ...api, createGame: () => game }),
+    FriendlyArenaSounds: api => ({
+      ...api,
+      createSoundBoard(makeContext) {
+        const board = api.createSoundBoard(() => { sound.ctx = makeContext(); return sound.ctx; }, sound.timers);
+        sound.board = board;
+        // Records only effects that actually sounded (not muted or throttled).
+        return { ...board, play: (name, options) => board.play(name, options) && effects.push(name) > 0 };
+      },
+    }),
   };
+  Object.entries(hooks).forEach(([name, hook]) => {
+    let published;
+    Object.defineProperty(window, name, { get: () => published, set: api => { published = hook(api); } });
+  });
   const played = [];
   const audioState = { pauses: 0 };
+  const audioElements = [];
   class RecordingAudio extends FakeAudio {
+    constructor() {
+      super();
+      this.listeners = {};
+      audioElements.push(this);
+    }
+
+    addEventListener(type, callback) {
+      (this.listeners[type] ||= []).push(callback);
+    }
+
+    dispatch(type) {
+      (this.listeners[type] || []).forEach(callback => callback());
+    }
+
     pause() { audioState.pauses += 1; }
     play() {
       played.push(this.src);
       return super.play();
     }
   }
-  vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'app.js'), 'utf8'), { window, document, Audio: RecordingAudio });
-  return { elements, played, audioState, championCards, speechLanguageButtons, topicTabs, levelButtons, answerOptions: elements.get('#answerOptions'), nextButton: elements.get('#nextButton'), muteButton: elements.get('#muteButton') };
+  // Runs the scripts in the order index.html lists them, as the browser does.
+  const page = vm.createContext({ window, document, Audio: RecordingAudio });
+  for (const src of PAGE_SCRIPTS) vm.runInContext(fs.readFileSync(path.join(__dirname, src), 'utf8'), page, { filename: src });
+  return {
+    elements, played, effects, sound, audioElements, audioState, championCards, speechLanguageButtons, topicTabs, levelButtons,
+    answerOptions: elements.get('#answerOptions'), nextButton: elements.get('#nextButton'),
+    muteButton: elements.get('#muteButton'), musicButton: elements.get('#musicButton'),
+    // Moves the fake audio clock past every effect's anti-pile-up gap.
+    later(seconds = 2) { if (sound.ctx) sound.ctx.currentTime += seconds; },
+  };
 }
 
 test('addition questions stay within five and offer three distinct choices', () => {
@@ -819,4 +967,195 @@ test('the finish cheer stops when the language changes on the finish screen', ()
   app.speechLanguageButtons.find(button => button.dataset.language === 'zh').click();
   assert.equal(app.played.length, count);
   assert.ok(app.audioState.pauses > pauses);
+});
+
+test('sound effects are synthesized locally with no files, network, or speech element', () => {
+  // A bare page with Web Audio only: no fetch, XMLHttpRequest, Audio element, or timers of its own.
+  const window = {};
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'sounds.js'), 'utf8'), { window });
+  let ctx = null;
+  const timers = createFakeTimers();
+  const board = window.FriendlyArenaSounds.createSoundBoard(() => { ctx = new FakeAudioContext(); return ctx; }, timers);
+  for (const name of EFFECTS) {
+    assert.equal(board.play(name), true, `${name} plays`);
+    ctx.currentTime += 2;
+  }
+  board.setMusic(true);
+  for (const loop of timers.timers.values()) loop();
+  assert.equal(board.getState().musicPlaying, true);
+  assert.ok(ctx.sources.length > EFFECTS.length);
+  assert.ok(ctx.sources.every(source => source.startTime !== undefined), 'every sound is an oscillator or generated noise');
+  assert.deepEqual(EFFECTS, ['tap', 'sparkle', 'whoosh', 'boing', 'giggle', 'cheer']);
+  assert.ok(EFFECT_LEVEL <= 0.4, 'effects stay well under the narration level');
+  assert.ok(MUSIC_LEVEL < EFFECT_LEVEL, 'background music is quieter than the effects');
+});
+
+test('the sound board waits for a sound, keeps music off by default, and stays silent without Web Audio', () => {
+  const test = createTestBoard();
+  assert.equal(test.ctx, null, 'no audio context exists before the first sound');
+  assert.equal(test.board.getState().musicOn, false);
+
+  assert.equal(test.board.play('tap'), true);
+  assert.ok(test.ctx.resumed >= 1, 'a child tap wakes a suspended audio context');
+  assert.deepEqual(test.buses, { master: 1, effects: EFFECT_LEVEL, music: 0 });
+  assert.equal(test.timers.timers.size, 0, 'no music loop runs until music is chosen');
+  for (const name of EFFECTS) {
+    test.ctx.currentTime += 2;
+    assert.equal(test.board.play(name), true, `${name} plays`);
+  }
+  const resumed = test.ctx.resumed;
+  test.ctx.state = 'interrupted';
+  test.ctx.currentTime += 2;
+  assert.equal(test.board.play('tap'), true);
+  assert.equal(test.ctx.resumed, resumed + 1, 'a tap wakes an audio context a phone call interrupted');
+  assert.equal(test.board.play('roar'), false, 'unknown effects are ignored');
+
+  for (const makeContext of [null, () => { throw new Error('no Web Audio'); }]) {
+    const silent = createSoundBoard(makeContext, createFakeTimers());
+    assert.equal(silent.play('cheer'), false);
+    assert.doesNotThrow(() => { silent.setMusic(true); silent.setMuted(true); silent.setSpeaking(true); silent.setHidden(true); });
+    assert.equal(silent.getState().available, false);
+  }
+});
+
+test('rapid tapping retriggers an effect instead of piling copies up', () => {
+  const test = createTestBoard();
+  assert.equal(test.board.play('boing'), true);
+  const afterOne = test.ctx.sources.length;
+  for (let i = 0; i < 10; i += 1) assert.equal(test.board.play('boing'), false, 'repeats inside the gap are dropped');
+  assert.equal(test.ctx.sources.length, afterOne);
+
+  test.ctx.currentTime += 0.31;
+  assert.equal(test.board.play('boing'), true);
+  assert.equal(test.board.getState().voices, 1, 'a retriggered boing replaces the one still ringing');
+
+  for (const name of ['tap', 'sparkle', 'whoosh', 'giggle', 'cheer']) assert.equal(test.board.play(name), true, `${name} is never crowded out`);
+  assert.equal(test.board.getState().voices, EFFECTS.length);
+  test.ctx.currentTime += 1.1;
+  for (const name of EFFECTS) assert.equal(test.board.play(name), true);
+  assert.equal(test.board.getState().voices, EFFECTS.length, 'each effect rings at most once at a time');
+  test.ctx.currentTime += 5;
+  test.board.play('tap');
+  assert.equal(test.board.getState().voices, 1, 'finished effects are released');
+});
+
+test('mute silences effects and music, and narration ducks both', () => {
+  const test = createTestBoard();
+  test.board.setMusic(true);
+  assert.equal(test.timers.timers.size, 1, 'choosing music starts the gentle loop');
+  assert.deepEqual(test.buses, { master: 1, effects: EFFECT_LEVEL, music: MUSIC_LEVEL });
+  const [loop] = test.timers.timers.values();
+  const before = test.ctx.sources.length;
+  test.ctx.currentTime += 1;
+  loop();
+  assert.ok(test.ctx.sources.length > before, 'the loop keeps scheduling notes ahead');
+
+  test.board.setSpeaking(true);
+  assert.ok(test.buses.effects < EFFECT_LEVEL && test.buses.music < MUSIC_LEVEL, 'speech gets the spotlight');
+  test.board.setSpeaking(false);
+  assert.deepEqual(test.buses, { master: 1, effects: EFFECT_LEVEL, music: MUSIC_LEVEL });
+
+  test.board.setMuted(true);
+  assert.equal(test.buses.master, 0);
+  assert.equal(test.timers.timers.size, 0, 'mute stops the music loop');
+  const silentCount = test.ctx.sources.length;
+  test.ctx.currentTime += 2;
+  assert.equal(test.board.play('cheer'), false);
+  assert.equal(test.ctx.sources.length, silentCount, 'a muted board makes no sound at all');
+  test.board.setMuted(false);
+  assert.equal(test.buses.master, 1);
+  assert.equal(test.timers.timers.size, 1, 'unmuting brings the chosen music back');
+
+  test.board.setHidden(true);
+  assert.equal(test.timers.timers.size, 0, 'a hidden page stops the music loop');
+  test.board.setHidden(false);
+  assert.equal(test.timers.timers.size, 1);
+  test.board.setMusic(false);
+  assert.equal(test.timers.timers.size, 0);
+  assert.equal(test.buses.music, 0);
+  test.board.setHidden(false);
+  assert.equal(test.timers.timers.size, 0, 'showing the page never starts music that is off');
+});
+
+test('quickly restarting music carries on the queued tune instead of layering a second one', () => {
+  const test = createTestBoard();
+  test.board.setMusic(true);
+  const restarts = [
+    () => { test.board.setMusic(false); test.board.setMusic(true); },
+    () => { test.board.setMuted(true); test.board.setMuted(false); },
+    () => { test.board.setHidden(true); test.board.setHidden(false); },
+  ];
+  for (const restart of restarts) {
+    test.ctx.currentTime += 0.2;
+    restart();
+  }
+  const musicBus = test.ctx.gains[2];
+  const notes = test.ctx.sources.filter(source => source.connections[0].connections.includes(musicBus));
+  const starts = [...new Set(notes.map(note => note.startTime))].sort((a, b) => a - b);
+  const beats = starts.slice(1).map((time, index) => time - starts[index]);
+  assert.ok(beats.length >= 3, 'each restart keeps the tune going');
+  assert.ok(beats.every(beat => Math.abs(beat - beats[0]) < 1e-9), 'every note lands on one steady beat');
+});
+
+test('the game plays gentle effects from the child\'s own taps without a voice choice', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  assert.equal(app.sound.ctx, null, 'nothing is audible before the child taps');
+
+  clickAnswer(app, game, false);
+  assert.deepEqual(app.effects, ['tap', 'boing'], 'a miss is a soft pillow boing');
+  app.later();
+  clickAnswer(app, game, true);
+  assert.deepEqual(app.effects.slice(2), ['tap', 'sparkle', 'whoosh', 'giggle'], 'a right answer sparkles, whooshes, and giggles');
+  assert.deepEqual(app.played, [], 'effects never play through the speech element or start narration');
+
+  for (let star = 2; star <= GOAL; star += 1) {
+    app.later();
+    app.nextButton.click();
+    app.later();
+    clickAnswer(app, game, true);
+  }
+  assert.equal(game.getState().finished, true);
+  assert.deepEqual(app.effects.slice(-3), ['sparkle', 'whoosh', 'cheer'], 'the win ends with a cheer');
+});
+
+test('music is off by default, has its own toggle, and the mute button silences everything', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  assert.equal(app.musicButton.getAttribute('aria-pressed'), 'false');
+
+  app.musicButton.click();
+  assert.equal(app.musicButton.getAttribute('aria-pressed'), 'true');
+  assert.equal(app.sound.board.getState().musicPlaying, true);
+  assert.deepEqual(app.played, [], 'music does not start narration');
+
+  app.muteButton.click();
+  assert.equal(app.sound.board.getState().musicPlaying, false, 'mute stops the music');
+  clickAnswer(app, game, true);
+  assert.deepEqual(app.effects, [], 'mute silences the effects');
+  app.musicButton.click();
+  app.musicButton.click();
+  assert.match(app.elements.get('#speechStatus').textContent, /Sound is muted/);
+  assert.equal(app.sound.board.getState().musicPlaying, false, 'music waits for unmute');
+
+  app.muteButton.click();
+  assert.equal(app.sound.board.getState().musicPlaying, true, 'unmute brings the chosen music back');
+  app.musicButton.click();
+  assert.equal(app.musicButton.getAttribute('aria-pressed'), 'false');
+  assert.equal(app.sound.board.getState().musicPlaying, false);
+});
+
+test('effects and music duck under narration without touching the speech clip', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  app.musicButton.click();
+  app.speechLanguageButtons.find(button => button.dataset.language === 'en').click();
+  const [speech] = app.audioElements;
+  speech.dispatch('playing');
+  assert.equal(app.sound.board.getState().speaking, true);
+  clickAnswer(app, game, false);
+  assert.deepEqual(app.effects, ['tap', 'boing']);
+  assert.match(speech.src, /\/en\/reaction-try-again-1\.mp3$/, 'a miss effect never replaces the try-again reaction clip');
+  speech.dispatch('ended');
+  assert.equal(app.sound.board.getState().speaking, false);
 });

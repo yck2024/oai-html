@@ -23,6 +23,7 @@
   const speechControls = document.querySelector('#speechControls');
   const speechInvite = document.querySelector('#speechInvite');
   const muteButton = document.querySelector('#muteButton');
+  const musicButton = document.querySelector('#musicButton');
   const heroEmoji = document.querySelector('#heroEmoji');
   const heroName = document.querySelector('#heroName');
   const buddyEmoji = document.querySelector('#buddyEmoji');
@@ -50,6 +51,13 @@
   } catch (_error) {
     questionAudio = null;
   }
+  // Effects and music use Web Audio, a separate channel from the speech element, so they never cut off a clip.
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  const sounds = window.FriendlyArenaSounds.createSoundBoard(AudioContextClass ? () => new AudioContextClass() : null);
+  ['playing', 'pause', 'ended', 'error', 'emptied'].forEach(type => questionAudio?.addEventListener?.(type, () => {
+    sounds.setSpeaking(type === 'playing');
+  }));
+  document.addEventListener?.('visibilitychange', () => sounds.setHidden(document.hidden));
   const speechPlayer = window.FriendlyArena.createSpeechPlayer(questionAudio, () => {
     speechStatus.textContent = 'Audio is unavailable. You can still tap an answer. · 目前無法播放語音，仍可點選答案。 · 音声が再生できなくても、答えをタップできます。';
   });
@@ -89,6 +97,9 @@
     });
     muteButton.textContent = speechMuted ? '🔇 Unmute' : '🔊 Mute';
     muteButton.setAttribute('aria-pressed', String(speechMuted));
+    const musicOn = sounds.getState().musicOn;
+    musicButton.classList.toggle('is-active', musicOn);
+    musicButton.setAttribute('aria-pressed', String(musicOn));
   }
 
   function renderScore(state) {
@@ -214,6 +225,9 @@
     arenaStage.classList.remove('do-spar', 'thinking');
     void arenaStage.offsetWidth;
     arenaStage.classList.add('do-spar');
+    sounds.play('whoosh', { delay: 0.05 });
+    if (state.finished) sounds.play('cheer', { delay: 0.5 });
+    else sounds.play('giggle', { delay: 0.25 });
     arenaMessage.textContent = state.finished
       ? `${champion.buddy} is out of power—bow and high-five! ${champion.buddyZh}沒電了，鞠躬擊掌！`
       : `${champion.name} used ${champion.move}! ${champion.buddy} wobbles and giggles! ${champion.nameZh}${champion.moveZh}！${champion.buddyZh}晃一晃，哈哈笑！`;
@@ -223,6 +237,7 @@
     const result = game.answer(optionId);
     const state = game.getState();
     if (result === 'ignored') return;
+    sounds.play('tap');
     answerOptions.querySelectorAll('button').forEach(choice => choice.classList.remove('wrong-answer', 'right-answer'));
 
     if (result === 'try-again') {
@@ -234,11 +249,13 @@
       arenaStage.classList.add('thinking');
       arenaMessage.textContent = 'Pillow block! Let’s think together! 枕頭擋住了！我們一起想一想！';
       playReaction('try-again');
+      sounds.play('boing', { delay: 0.04 });
       return;
     }
 
     playReaction(state.finished ? 'finish' : 'praise');
     button.classList.add('right-answer');
+    sounds.play('sparkle', { delay: 0.03 });
     answerOptions.querySelectorAll('button').forEach(choice => { choice.disabled = true; });
     feedback.textContent = 'You got it! Power move! 答對了！出招成功！';
     feedback.classList.remove('retry');
@@ -260,7 +277,7 @@
     speechEnabled = true;
     renderSpeechControls();
     if (speechMuted) {
-      speechStatus.textContent = 'Sound is muted. · 語音已靜音。 · 音声はミュート中です。';
+      speechStatus.textContent = 'Sound is muted. · 聲音已靜音。 · 音声はミュート中です。';
       return;
     }
     playCurrentQuestion();
@@ -275,9 +292,10 @@
   muteButton.addEventListener('click', () => {
     speechMuted = !speechMuted;
     renderSpeechControls();
+    sounds.setMuted(speechMuted);
     if (speechMuted) {
       speechPlayer.stop();
-      speechStatus.textContent = 'Sound is muted. · 語音已靜音。 · 音声はミュート中です。';
+      speechStatus.textContent = 'Sound is muted. · 聲音已靜音。 · 音声はミュート中です。';
       return;
     }
     speechEnabled = true;
@@ -286,16 +304,24 @@
     playCurrentQuestion();
   });
 
+  musicButton.addEventListener('click', () => {
+    sounds.setMusic(!sounds.getState().musicOn);
+    renderSpeechControls();
+    if (speechMuted) speechStatus.textContent = 'Sound is muted. · 聲音已靜音。 · 音声はミュート中です。';
+  });
+
   championCards.forEach(card => card.addEventListener('click', () => {
     if (!game.chooseChampion(card.dataset.champion)) return;
     if (reactionPlaying) speechPlayer.stop();
     reactionPlaying = false;
+    sounds.play('tap');
     renderChampion(game.getState());
     arenaMessage.textContent = `${CHAMPIONS[card.dataset.champion].name} is ready to spar! ${CHAMPIONS[card.dataset.champion].emoji}`;
   }));
 
   topicTabs.forEach(tab => tab.addEventListener('click', () => {
     if (!game.chooseTopic(tab.dataset.topic)) return;
+    sounds.play('tap');
     arenaStage.classList.remove('thinking', 'do-spar');
     arenaMessage.textContent = `${TOPIC_NAMES[tab.dataset.topic]} challenge—your turn!`;
     renderQuestion(game.getState());
@@ -310,6 +336,7 @@
 
   nextButton.addEventListener('click', () => {
     game.nextQuestion();
+    sounds.play('tap');
     arenaStage.classList.remove('thinking', 'do-spar');
     arenaMessage.textContent = 'Your turn, team!';
     renderQuestion(game.getState());
@@ -318,6 +345,7 @@
 
   function restart() {
     const state = game.restart();
+    sounds.play('tap');
     arenaStage.classList.remove('thinking', 'do-spar');
     arenaMessage.textContent = 'Ready, team? Pick any challenge!';
     renderChampion(state);
