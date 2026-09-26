@@ -62,9 +62,9 @@ h1 { margin: 4px 0 5px; color: #315b54; font-size: clamp(28px, 4vw, 43px); font-
 .prop-acorn { left: 4%; bottom: 4%; width: 9%; height: 32%; }
 .prop-flower { left: 54%; bottom: 3%; width: 11%; height: 32%; }
 .prop-blue-mushroom { right: 4%; bottom: 3%; width: 12%; height: 32%; }
-.character-art { bottom: 0; height: 94%; object-position: center bottom; }
+.character-art { bottom: 0; height: 88%; object-position: center bottom; }
 .character-art.rag { left: 3%; width: 54%; }
-.character-art.powa { right: 1%; height: 98%; width: 40%; }
+.character-art.powa { right: 1%; height: 84%; width: 40%; }
 .character-art, .forest-light { transform-box: fill-box; transform-origin: center bottom; }
 .forest-card.cheer .character-art.rag { animation: rag-hop .6s ease; }
 .forest-card.cheer .character-art.powa { animation: powa-twirl .8s ease; }
@@ -119,8 +119,8 @@ h1 { margin: 4px 0 5px; color: #315b54; font-size: clamp(28px, 4vw, 43px); font-
 .page-footer { margin: 14px 0 0; color: #779187; text-align: center; font-size: 12px; font-weight: 850; }
 
 @keyframes wobble { 0%, 100% { transform: translateX(0); } 35% { transform: translateX(-4px); } 70% { transform: translateX(4px); } }
-@keyframes rag-hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-18px); } 70% { transform: translateY(2px); } }
-@keyframes powa-twirl { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-12px) scale(1.25); } }
+@keyframes rag-hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-5%); } 70% { transform: translateY(2px); } }
+@keyframes powa-twirl { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-4%) scale(1.08); } }
 @keyframes celebrate { from { transform: scale(.4) rotate(-20deg); opacity: 0; } to { transform: scale(1) rotate(0); opacity: 1; } }
 @media (min-width: 900px) and (min-height: 850px) { .page-shell { padding-top: 26px; padding-bottom: 22px; } .intro { padding-top: 18px; padding-bottom: 23px; } .forest-card { padding: 24px; } }
 @media (max-width: 760px) {
