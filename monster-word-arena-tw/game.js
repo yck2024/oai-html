@@ -63,6 +63,12 @@
     animals: { words: ANIMALS, promptZh: word => `${word.zh}在哪裡？`, promptEn: word => `Where is the ${word.en}?` },
     fruit: { words: FRUIT, promptZh: word => `找出${word.zh}！`, promptEn: word => `Find the ${word.en}!` },
   };
+  // Spoken reaction clips (audio/reactions.json); variants take turns so repeats feel fresh.
+  const REACTIONS = {
+    praise: ['reaction-praise-1', 'reaction-praise-2'],
+    'try-again': ['reaction-try-again-1', 'reaction-try-again-2'],
+    finish: ['reaction-finish-1'],
+  };
   const ADDITION = [
     { left: 1, right: 1 },
     { left: 1, right: 2 },
@@ -281,7 +287,7 @@
     return { play, stop };
   }
 
-  const api = { GOAL, TOPICS, LEVELS, WORD_TOPICS, createGame, createSpeechPlayer };
+  const api = { GOAL, TOPICS, LEVELS, WORD_TOPICS, REACTIONS, createGame, createSpeechPlayer };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof window !== 'undefined') window.FriendlyArena = api;
 })();

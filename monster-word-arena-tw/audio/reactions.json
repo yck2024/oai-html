@@ -1,0 +1,27 @@
+{
+  "reaction-praise-1": {
+    "en": "Great job! Power move!",
+    "zh": "好棒！出招成功！",
+    "ja": "すごいね！だいせいかい！"
+  },
+  "reaction-praise-2": {
+    "en": "You got it! Hooray!",
+    "zh": "答對了！你真棒！",
+    "ja": "やったね！せいかい！"
+  },
+  "reaction-try-again-1": {
+    "en": "That's okay! Let's try again.",
+    "zh": "沒關係，再試一次！",
+    "ja": "だいじょうぶ！もういちど、やってみよう！"
+  },
+  "reaction-try-again-2": {
+    "en": "Nice try! Let's think together.",
+    "zh": "加油！我們一起想一想！",
+    "ja": "おしいね！いっしょにかんがえよう！"
+  },
+  "reaction-finish-1": {
+    "en": "Hooray! You're a sparring champion! High five!",
+    "zh": "耶！你是小冠軍！來擊掌！",
+    "ja": "やったー！きみはチャンピオン！ハイタッチ！"
+  }
+}
