@@ -19,5 +19,5 @@ Japanese AivisSpeech voice clips are packaged in the Poko, Number Garden, and Ra
 - index.html — game chooser and link back to the gallery
 - poko/ — original Poko game and its narration clips
 - number-garden/ — 3D Number Garden game, assets, and audio generator
-- dino-spirit/ — Rag and the Echo Forest, an original addition game and its question narration clips
+- dino-spirit/ — Rag and the Echo Forest, an original addition game with its question narration clips and original Rag, Powa, and forest-prop artwork
 - THIRD_PARTY_NOTICES.md — library and voice attribution
