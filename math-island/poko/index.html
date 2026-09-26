@@ -292,7 +292,7 @@ header{display:flex;justify-content:space-between;align-items:center;gap:12px;pa
  }
  function makeApple(){
   var g=new THREE.Group();
-  makeSphere(g,"#ed5260",0,0,0,.28,.3,.28);
+  var r=PokoCountContract.appleRadius;makeSphere(g,"#ed5260",0,0,0,r,.3,r);
   makeSphere(g,"#ff7580",-.1,.06,.09,.115,.13,.12);
   addMesh(g,new THREE.CylinderGeometry(.025,.035,.13,8),mat("#795239"),0,.3,0,1,1,1);
   var leaf=makeSphere(g,"#58b95f",.09,.34,.02,.12,.045,.065);leaf.rotation.z=-.35;
