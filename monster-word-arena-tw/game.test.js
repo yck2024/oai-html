@@ -895,7 +895,7 @@ test('game-generated prompt IDs exist for every selectable word and math target 
       game.chooseTopic(topic);
       for (let draw = 0; draw < 80; draw += 1) {
         audioIds.add(game.getState().question.audioId);
-        game.chooseLevel(level);
+        game.chooseTopic(topic);
       }
     }
   }
@@ -936,7 +936,7 @@ test('easy math keeps small sums; harder counts and adds to ten; super keeps onl
         assert.ok(question.display, 'super math always shows the equation numbers');
       }
       seen[level].add(question.display ? 'sum' : 'count');
-      game.chooseLevel(level);
+      game.chooseTopic('math');
     }
   }
   assert.deepEqual([...seen.easy], ['sum']);
@@ -974,7 +974,6 @@ test('the same question is never asked twice in a row at any level', () => {
         let previous = game.getState().question.key;
         const moves = [
           () => game.chooseTopic(topic),
-          () => game.chooseLevel(level),
           () => {
             answerCorrectly(game);
             if (game.getState().finished) game.restart();
@@ -992,18 +991,22 @@ test('the same question is never asked twice in a row at any level', () => {
   }
 });
 
-test('the level starts easy, keeps earned stars when switched, and survives a restart', () => {
+test('the level starts easy, and switching levels starts a fresh match at the new level', () => {
   const game = createGame(steadyRandom);
   assert.equal(game.getState().level, 'easy');
   answerCorrectly(game);
   assert.equal(game.chooseLevel('expert'), false);
+  assert.equal(game.chooseLevel('easy'), false, 're-selecting the active level is a no-op');
+  assert.equal(game.getState().stars, 1, 'the no-op keeps the in-progress match untouched');
   assert.equal(game.chooseLevel('harder'), true);
   const state = game.getState();
   assert.equal(state.level, 'harder');
-  assert.equal(state.stars, 1);
+  assert.equal(state.stars, 0, 'switching levels starts a fresh match');
   assert.equal(state.solved, false);
+  assert.equal(state.finished, false);
   assert.equal(state.question.options.length, 4);
   assert.equal(state.goal, GOAL_BY_LEVEL.harder);
+  assert.equal(state.rivalPower, GOAL_BY_LEVEL.harder);
   assert.equal(game.restart().level, 'harder');
   assert.equal(game.chooseLevel('super'), true);
   assert.equal(game.getState().goal, GOAL_BY_LEVEL.super);
@@ -1013,6 +1016,39 @@ test('the level starts easy, keeps earned stars when switched, and survives a re
   }
   assert.equal(game.getState().finished, true);
   assert.equal(game.chooseLevel('easy'), false, 'the finish screen keeps its level');
+});
+
+test('switching down to a lower-goal level while stars are ahead of it resets the match instead of auto-finishing', () => {
+  const game = createGame(steadyRandom);
+  game.chooseLevel('super');
+  for (let star = 1; star <= 4; star += 1) {
+    if (star > 1) game.nextQuestion();
+    answerCorrectly(game);
+  }
+  assert.equal(game.getState().stars, 4);
+  assert.equal(game.getState().finished, false);
+
+  assert.equal(game.chooseLevel('easy'), true);
+  const state = game.getState();
+  assert.equal(state.level, 'easy');
+  assert.equal(state.stars, 0);
+  assert.equal(state.goal, GOAL_BY_LEVEL.easy);
+  assert.equal(state.rivalPower, GOAL_BY_LEVEL.easy);
+  assert.equal(state.finished, false, 'the match does not auto-finish from stars earned at the old level');
+});
+
+test('switching up to a higher-goal level restarts the match at the new, larger goal', () => {
+  const game = createGame(steadyRandom);
+  answerCorrectly(game);
+  assert.equal(game.getState().stars, 1);
+
+  assert.equal(game.chooseLevel('super'), true);
+  const state = game.getState();
+  assert.equal(state.level, 'super');
+  assert.equal(state.stars, 0);
+  assert.equal(state.goal, GOAL_BY_LEVEL.super);
+  assert.equal(state.rivalPower, GOAL_BY_LEVEL.super);
+  assert.equal(state.finished, false);
 });
 
 test('the level buttons switch choices, goal markers, and the color prompt shows its swatch', () => {

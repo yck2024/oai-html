@@ -254,8 +254,8 @@
     }
 
     function chooseLevel(level) {
-      if (state.finished || !LEVELS.includes(level)) return false;
-      state = { ...state, level, solved: false, feedback: '', question: questionFor(state.topic, level, random, state.question.key) };
+      if (state.finished || level === state.level || !LEVELS.includes(level)) return false;
+      state = { ...state, level, stars: 0, solved: false, feedback: '', question: questionFor(state.topic, level, random, state.question.key) };
       return true;
     }
 
