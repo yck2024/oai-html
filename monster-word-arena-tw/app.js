@@ -36,7 +36,6 @@
   const topicTabsContainer = document.querySelector('#topicTabs');
   const levelChoiceContainer = document.querySelector('#levelChoice');
   const textLanguageButtons = [...document.querySelectorAll('.text-language')];
-  const speechLanguageButtons = [...document.querySelectorAll('.speech-language')];
   const speechStatus = document.querySelector('#speechStatus');
   const startRow = document.querySelector('#startRow');
   const startButton = document.querySelector('#startButton');
@@ -71,6 +70,8 @@
   const gateSubmitButton = document.querySelector('#gateSubmitButton');
   const settingsCloseButton = document.querySelector('#settingsCloseButton');
   const levelLockOptions = document.querySelector('#levelLockOptions');
+  const secondLanguageOptions = document.querySelector('#secondLanguageOptions');
+  const voiceLanguageOptions = document.querySelector('#voiceLanguageOptions');
   const settingsMuteButton = document.querySelector('#settingsMuteButton');
   const settingsRewardSummary = document.querySelector('#settingsRewardSummary');
 
@@ -98,14 +99,51 @@
     }
   }
 
-  const saved = loadSettings();
-  let speechLanguage = I18N.TEXT_LANGUAGES.includes(saved.speechLanguage) ? saved.speechLanguage : 'en';
-  let textLanguageManual = Boolean(saved.textLanguageManual);
-  let textLanguage = I18N.TEXT_LANGUAGES.includes(saved.textLanguage) ? saved.textLanguage : speechLanguage;
+  // v1 saved a separate voice language, a separate text language, and whether the text language
+  // had been set manually. v2 has one main language that sets both text and (by default) voice:
+  // an old saved text language becomes the new main language, and an old voice language that
+  // differed from it becomes a grown-up voice override; otherwise the voice follows the language.
+  function migrateSettings(raw) {
+    const validLanguage = language => I18N.TEXT_LANGUAGES.includes(language);
+    if (raw.v === 2) {
+      const textLanguage = validLanguage(raw.textLanguage) ? raw.textLanguage : 'en';
+      return {
+        textLanguage,
+        secondLanguage: validLanguage(raw.secondLanguage) ? raw.secondLanguage : null,
+        secondLanguageManual: Boolean(raw.secondLanguageManual),
+        voiceOverride: Boolean(raw.voiceOverride),
+        voiceLanguage: validLanguage(raw.voiceLanguage) ? raw.voiceLanguage : textLanguage,
+        speechMuted: Boolean(raw.speechMuted),
+        allowedLevels: raw.allowedLevels,
+      };
+    }
+    const textLanguage = validLanguage(raw.textLanguage)
+      ? raw.textLanguage
+      : validLanguage(raw.speechLanguage) ? raw.speechLanguage : 'en';
+    const priorVoice = validLanguage(raw.speechLanguage) ? raw.speechLanguage : textLanguage;
+    const voiceOverride = priorVoice !== textLanguage;
+    return {
+      textLanguage,
+      secondLanguage: I18N.DEFAULT_SECOND_LANGUAGE[textLanguage],
+      secondLanguageManual: false,
+      voiceOverride,
+      voiceLanguage: voiceOverride ? priorVoice : textLanguage,
+      speechMuted: Boolean(raw.speechMuted),
+      allowedLevels: raw.allowedLevels,
+    };
+  }
+
+  const saved = migrateSettings(loadSettings());
+  let textLanguage = saved.textLanguage;
+  let secondLanguage = saved.secondLanguage;
+  let secondLanguageManual = saved.secondLanguageManual;
+  let voiceOverride = saved.voiceOverride;
+  let voiceLanguage = voiceOverride ? saved.voiceLanguage : textLanguage;
   // Resolved before rewards-app.js loads, so it can pick up the saved text language on first render.
   window.FriendlyArenaCurrentTextLanguage = () => textLanguage;
+  window.FriendlyArenaCurrentSecondLanguage = () => secondLanguage;
   let speechEnabled = false;
-  let speechMuted = Boolean(saved.speechMuted);
+  let speechMuted = saved.speechMuted;
   let allowedLevels = PACING.sanitizeAllowedLevels(saved.allowedLevels);
   let reactionPlaying = false;
   const reactionTurns = {};
@@ -132,7 +170,32 @@
   });
 
   function persistSettings() {
-    saveSettings({ v: 1, speechLanguage, textLanguage, textLanguageManual, speechMuted, allowedLevels });
+    saveSettings({ v: 2, textLanguage, secondLanguage, secondLanguageManual, voiceOverride, voiceLanguage, speechMuted, allowedLevels });
+  }
+
+  // Builds the DOM for one label with an optional smaller second-language line under it, in the
+  // spirit of the game's original bilingual "Sticker book · 貼紙本" labels.
+  function bilingualNode(mainText, secondValue) {
+    if (!secondValue || secondValue === mainText) return document.createTextNode(mainText);
+    const wrap = document.createElement('span');
+    wrap.className = 'bilingual';
+    const main = document.createElement('span');
+    main.className = 'lang-main';
+    main.textContent = mainText;
+    const second = document.createElement('span');
+    second.className = 'lang-second';
+    second.textContent = secondValue;
+    wrap.append(main, second);
+    return wrap;
+  }
+
+  function setBilingual(el, mainText, secondValue) {
+    el.replaceChildren(bilingualNode(mainText, secondValue));
+  }
+
+  // A STRINGS entry's text in the current second language, or null when there is none chosen.
+  function secondOf(entry) {
+    return secondLanguage ? entry[secondLanguage] : null;
   }
 
   function soundIsOff() {
@@ -147,7 +210,7 @@
       return;
     }
     speechStatus.textContent = '';
-    speechPlayer.play(state.question.audioId, speechLanguage);
+    speechPlayer.play(state.question.audioId, voiceLanguage);
   }
 
   // Reactions share the question's audio element, so a new clip always cuts off the last one.
@@ -161,24 +224,21 @@
     reactionTurns[type] = turn + 1;
     reactionPlaying = true;
     speechStatus.textContent = '';
-    speechPlayer.play(variants[turn % variants.length], speechLanguage);
+    speechPlayer.play(variants[turn % variants.length], voiceLanguage);
   }
 
   function renderSpeechControls() {
     startRow.hidden = speechEnabled;
-    speechLanguageButtons.forEach(button => {
-      const selected = button.dataset.language === speechLanguage;
-      button.classList.toggle('is-active', selected);
-      button.setAttribute('aria-pressed', String(selected));
-    });
     textLanguageButtons.forEach(button => {
       const selected = button.dataset.textLanguage === textLanguage;
       button.classList.toggle('is-active', selected);
       button.setAttribute('aria-pressed', String(selected));
     });
-    muteButton.textContent = speechMuted ? I18N.STRINGS.unmuteButton[textLanguage] : I18N.STRINGS.muteButton[textLanguage];
+    const muteEntry = speechMuted ? I18N.STRINGS.unmuteButton : I18N.STRINGS.muteButton;
+    setBilingual(muteButton, muteEntry[textLanguage], secondOf(muteEntry));
     muteButton.setAttribute('aria-pressed', String(speechMuted));
-    settingsMuteButton.textContent = muteButton.textContent;
+    // The settings mirror stays single-language: it lives in the grown-up-only settings dialog.
+    settingsMuteButton.textContent = muteEntry[textLanguage];
     settingsMuteButton.setAttribute('aria-pressed', String(speechMuted));
     const musicOn = sounds.getState().musicOn;
     musicButton.classList.toggle('is-active', musicOn);
@@ -299,9 +359,9 @@
     const showGenericPrompt = isWordTopic && state.level === 'super' && !soundIsOff();
     const hideSentence = isWordTopic && state.level !== 'easy';
 
-    if (showGenericPrompt) questionPrompt.textContent = I18N.STRINGS.superGenericPrompt[textLanguage];
-    else if (hideSentence) questionPrompt.textContent = '';
-    else questionPrompt.textContent = question[`prompt${capitalize(textLanguage)}`];
+    if (showGenericPrompt) setBilingual(questionPrompt, I18N.STRINGS.superGenericPrompt[textLanguage], secondOf(I18N.STRINGS.superGenericPrompt));
+    else if (hideSentence) questionPrompt.replaceChildren();
+    else setBilingual(questionPrompt, question[`prompt${capitalize(textLanguage)}`], secondLanguage && question[`prompt${capitalize(secondLanguage)}`]);
     questionPrompt.hidden = !questionPrompt.textContent;
 
     questionWord.textContent = showWord && target ? target[textLanguage] : '';
@@ -392,7 +452,7 @@
       questionPanel.hidden = true;
       finishPanel.hidden = false;
       goodbyePanel.hidden = true;
-      document.querySelector('#finishBody').textContent = I18N.finishBody(state.goal, textLanguage);
+      setBilingual(document.querySelector('#finishBody'), I18N.finishBody(state.goal, textLanguage), secondLanguage && I18N.finishBody(state.goal, secondLanguage));
       window.ArenaRewards?.recordWin(state.champion);
       [...topicTabsContainer.children, ...levelChoiceContainer.querySelectorAll('.level-option')].forEach(button => { button.disabled = true; });
       if (nudge) {
@@ -448,11 +508,18 @@
 
   startButton.addEventListener('click', enableSpeech);
 
-  speechLanguageButtons.forEach(button => button.addEventListener('click', () => {
-    speechLanguage = button.dataset.language;
-    if (!textLanguageManual) textLanguage = speechLanguage;
+  // One language choice sets both the on-screen text and, unless a grown-up has set a different
+  // narration voice in settings, the spoken voice too — and is also the "turn on sound" gesture.
+  textLanguageButtons.forEach(button => button.addEventListener('click', () => {
+    textLanguage = button.dataset.textLanguage;
+    // Until a grown-up sets a second language directly, the language picker always follows this
+    // language's own default pairing; once set manually it sticks, only stepping aside if it
+    // would otherwise collide with the newly chosen main language.
+    if (!secondLanguageManual || secondLanguage === textLanguage) secondLanguage = I18N.DEFAULT_SECOND_LANGUAGE[textLanguage];
+    if (!voiceOverride) voiceLanguage = textLanguage;
     persistSettings();
     renderChrome();
+    renderChampion(game.getState());
     if (!speechEnabled) {
       enableSpeech();
       return;
@@ -464,15 +531,6 @@
       return;
     }
     playCurrentQuestion();
-  }));
-
-  textLanguageButtons.forEach(button => button.addEventListener('click', () => {
-    textLanguage = button.dataset.textLanguage;
-    textLanguageManual = true;
-    persistSettings();
-    renderChrome();
-    renderChampion(game.getState());
-    renderQuestion(game.getState(), { speak: false });
   }));
 
   document.querySelector('#replayPromptButton').addEventListener('click', () => {
@@ -631,6 +689,51 @@
     settingsRewardSummary.textContent = `${I18N.settingsWinsSummary(summary.wins, textLanguage)} · ${I18N.settingsStickerSummary(summary.collected, summary.total, textLanguage)}`;
   }
 
+  // Grown-up-only: which smaller second language (if any) shows under key text, and whether the
+  // narration voice should differ from the on-screen language. Rebuilt on every language change,
+  // since which languages count as "the other one" depends on the current main language.
+  function renderSecondLanguageOptions() {
+    const choices = [null, ...I18N.TEXT_LANGUAGES.filter(language => language !== textLanguage)];
+    secondLanguageOptions.replaceChildren(...choices.map(language => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'language-option';
+      button.dataset.secondLanguage = language || 'off';
+      button.textContent = language ? I18N.LANGUAGE_NAMES[language] : I18N.STRINGS.settingsSecondLanguageOff[textLanguage];
+      const selected = language === secondLanguage;
+      button.classList.toggle('is-active', selected);
+      button.setAttribute('aria-pressed', String(selected));
+      button.addEventListener('click', () => {
+        secondLanguage = language;
+        secondLanguageManual = true;
+        persistSettings();
+        renderChrome();
+      });
+      return button;
+    }));
+  }
+
+  function renderVoiceLanguageOptions() {
+    const choices = [null, ...I18N.TEXT_LANGUAGES];
+    voiceLanguageOptions.replaceChildren(...choices.map(language => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'language-option';
+      button.dataset.voiceOption = language || 'match';
+      button.textContent = language ? I18N.LANGUAGE_NAMES[language] : I18N.STRINGS.settingsVoiceMatchLabel[textLanguage];
+      const selected = language ? (voiceOverride && voiceLanguage === language) : !voiceOverride;
+      button.classList.toggle('is-active', selected);
+      button.setAttribute('aria-pressed', String(selected));
+      button.addEventListener('click', () => {
+        voiceOverride = Boolean(language);
+        voiceLanguage = language || textLanguage;
+        persistSettings();
+        renderChrome();
+      });
+      return button;
+    }));
+  }
+
   let gateChallenge = null;
   let settingsReturnFocus = null;
 
@@ -660,8 +763,14 @@
       settingsGate.hidden = true;
       settingsBody.hidden = false;
       renderLevelLockOptions();
+      renderSecondLanguageOptions();
+      renderVoiceLanguageOptions();
       renderSettingsSummary();
-      settingsCloseButton.focus();
+      // Deferred: moving focus here inside the same keydown that submitted with Enter would let
+      // that key's keyup land on this now-focused button and re-trigger it as a click, closing
+      // the dialog it just opened. Waiting a tick keeps the still-in-flight Enter press with the
+      // input instead.
+      setTimeout(() => settingsCloseButton.focus(), 0);
       return;
     }
     gateStatus.textContent = I18N.STRINGS.gateWrong[textLanguage];
@@ -676,7 +785,9 @@
   gateCancelButton.addEventListener('click', closeSettings);
   gateSubmitButton.addEventListener('click', submitGate);
   gateInput.addEventListener('keydown', event => {
-    if (event.key === 'Enter') submitGate();
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    submitGate();
   });
   settingsDialog.addEventListener('click', event => {
     const box = settingsDialog.getBoundingClientRect?.();
@@ -689,19 +800,19 @@
 
   function renderChrome() {
     document.documentElement.lang = textLanguage === 'zh' ? 'zh-Hant-TW' : textLanguage === 'ja' ? 'ja' : 'en';
-    window.ArenaRewards?.setLanguage?.(textLanguage);
+    window.ArenaRewards?.setLanguage?.(textLanguage, secondLanguage);
     const S = I18N.STRINGS;
     document.querySelector('#galleryLink').textContent = S.galleryLink[textLanguage];
     document.querySelector('#topLabel').textContent = S.topLabel[textLanguage];
-    document.querySelector('#restartButton').textContent = S.restartButton[textLanguage];
+    setBilingual(document.querySelector('#restartButton'), S.restartButton[textLanguage], secondOf(S.restartButton));
     document.querySelector('#eyebrow').textContent = S.eyebrow[textLanguage];
-    document.querySelector('#gameTitle').textContent = S.gameTitle[textLanguage];
+    setBilingual(document.querySelector('#gameTitle'), S.gameTitle[textLanguage], secondOf(S.gameTitle));
     document.querySelector('#introBody').textContent = S.introBody[textLanguage];
     document.querySelector('#championSection').setAttribute('aria-label', S.championSectionLabel[textLanguage]);
     document.querySelector('#championKicker').textContent = S.championKicker[textLanguage];
     document.querySelector('#championHeading').textContent = S.championHeading[textLanguage];
     document.querySelector('#championSoftNote').textContent = S.championSoftNote[textLanguage];
-    document.querySelector('#startButton').textContent = S.startButton[textLanguage];
+    setBilingual(document.querySelector('#startButton'), S.startButton[textLanguage], secondOf(S.startButton));
     document.querySelector('#startInvite').textContent = S.startInvite[textLanguage];
     document.querySelector('#textLabel').textContent = S.textLabel[textLanguage];
     document.querySelector('#arenaLayoutSection').setAttribute('aria-label', S.arenaLayoutLabel[textLanguage]);
@@ -714,19 +825,17 @@
     topicTabsContainer.setAttribute('aria-label', S.topicTabsLabel[textLanguage]);
     levelChoiceContainer.setAttribute('aria-label', S.levelGroupLabel[textLanguage]);
     document.querySelector('#levelLabel').textContent = S.levelLabel[textLanguage];
-    document.querySelector('.speech-languages').setAttribute('aria-label', S.voiceGroupLabel[textLanguage]);
-    document.querySelector('#voiceLabel').textContent = S.voiceLabel[textLanguage];
     document.querySelector('.speech-playback').setAttribute('aria-label', S.soundControlsLabel[textLanguage]);
-    document.querySelector('#replayPromptButton').textContent = S.replayButton[textLanguage];
-    document.querySelector('#musicButton').textContent = S.musicButton[textLanguage];
+    setBilingual(document.querySelector('#replayPromptButton'), S.replayButton[textLanguage], secondOf(S.replayButton));
+    setBilingual(document.querySelector('#musicButton'), S.musicButton[textLanguage], secondOf(S.musicButton));
     document.querySelector('#answerHint').textContent = S.answerHint[textLanguage];
-    document.querySelector('#finishTitle').textContent = S.finishHeading[textLanguage];
-    document.querySelector('#finishBody').textContent = I18N.finishBody(game.getState().goal, textLanguage);
-    document.querySelector('#playAgainButton').replaceChildren(document.createTextNode(`${S.playAgainButton[textLanguage]} `), (() => { const s = document.createElement('span'); s.setAttribute('aria-hidden', 'true'); s.textContent = '↻'; return s; })());
+    setBilingual(document.querySelector('#finishTitle'), S.finishHeading[textLanguage], secondOf(S.finishHeading));
+    setBilingual(document.querySelector('#finishBody'), I18N.finishBody(game.getState().goal, textLanguage), secondLanguage && I18N.finishBody(game.getState().goal, secondLanguage));
+    document.querySelector('#playAgainButton').replaceChildren(bilingualNode(`${S.playAgainButton[textLanguage]} `, secondOf(S.playAgainButton) && `${secondOf(S.playAgainButton)} `), (() => { const s = document.createElement('span'); s.setAttribute('aria-hidden', 'true'); s.textContent = '↻'; return s; })());
     document.querySelector('#footer').textContent = S.footer[textLanguage];
-    document.querySelector('#nextButton').replaceChildren(document.createTextNode(`${S.nextButton[textLanguage]} `), (() => { const s = document.createElement('span'); s.setAttribute('aria-hidden', 'true'); s.textContent = '➜'; return s; })());
+    document.querySelector('#nextButton').replaceChildren(bilingualNode(`${S.nextButton[textLanguage]} `, secondOf(S.nextButton) && `${secondOf(S.nextButton)} `), (() => { const s = document.createElement('span'); s.setAttribute('aria-hidden', 'true'); s.textContent = '➜'; return s; })());
 
-    document.querySelector('#settingsButton').textContent = S.settingsButton[textLanguage];
+    setBilingual(document.querySelector('#settingsButton'), S.settingsButton[textLanguage], secondOf(S.settingsButton));
     document.querySelector('#settingsButton').setAttribute('aria-label', S.settingsButtonLabel[textLanguage]);
     document.querySelector('#gateTitle').textContent = S.gateTitle[textLanguage];
     document.querySelector('#gateBody').textContent = S.gateBody[textLanguage];
@@ -735,37 +844,48 @@
     gateCancelButton.textContent = S.gateCancel[textLanguage];
     document.querySelector('#settingsDialogTitle').textContent = S.settingsTitle[textLanguage];
     settingsCloseButton.textContent = S.settingsClose[textLanguage];
+    document.querySelector('#settingsIntro').textContent = S.settingsIntro[textLanguage];
     document.querySelector('#settingsLevelLockTitle').textContent = S.settingsLevelLockTitle[textLanguage];
     document.querySelector('#settingsLevelLockHint').textContent = S.settingsLevelLockHint[textLanguage];
+    document.querySelector('#settingsSecondLanguageTitle').textContent = S.settingsSecondLanguageTitle[textLanguage];
+    document.querySelector('#settingsSecondLanguageHint').textContent = S.settingsSecondLanguageHint[textLanguage];
+    document.querySelector('#settingsVoiceTitle').textContent = S.settingsVoiceTitle[textLanguage];
+    document.querySelector('#settingsVoiceHint').textContent = S.settingsVoiceHint[textLanguage];
     document.querySelector('#settingsSoundTitle').textContent = S.settingsSoundTitle[textLanguage];
+    document.querySelector('#settingsSoundHint').textContent = S.settingsSoundHint[textLanguage];
     document.querySelector('#settingsRewardsTitle').textContent = S.settingsRewardsTitle[textLanguage];
+    document.querySelector('#settingsRewardsHint').textContent = S.settingsRewardsHint[textLanguage];
     document.querySelector('#settingsDeviceNote').textContent = S.settingsDeviceNote[textLanguage];
     document.querySelector('[data-reward-action="reset"]').textContent = S.settingsClearButton[textLanguage];
     document.querySelector('[data-reward-action="confirm-reset"]').textContent = S.settingsConfirmClear[textLanguage];
     document.querySelector('[data-reward-action="keep"]').textContent = S.settingsKeepStickers[textLanguage];
-    document.querySelector('#stickerBookButton').textContent = S.stickerBookButton[textLanguage];
-    document.querySelector('#stickerBookTitle').textContent = S.rewardBookTitle[textLanguage];
+    setBilingual(document.querySelector('#stickerBookButton'), S.stickerBookButton[textLanguage], secondOf(S.stickerBookButton));
+    setBilingual(document.querySelector('#stickerBookTitle'), S.rewardBookTitle[textLanguage], secondOf(S.rewardBookTitle));
     document.querySelector('#stickerBookCloseButton').textContent = S.rewardBookClose[textLanguage];
-    document.querySelector('#costumeTitle').textContent = S.costumeTitle[textLanguage];
-    document.querySelector('#breakPromptTitle').textContent = S.breakPromptTitle[textLanguage];
-    document.querySelector('#breakPromptBody').textContent = S.breakPromptBody[textLanguage];
-    oneMoreRoundButton.textContent = S.oneMoreRoundButton[textLanguage];
-    takeBreakButton.textContent = S.takeBreakButton[textLanguage];
-    document.querySelector('#goodbyeTitle').textContent = S.goodbyeTitle[textLanguage];
-    goodbyeBody.textContent = S.goodbyeBody[textLanguage];
-    backToPlayButton.replaceChildren(document.createTextNode(`${S.backToPlayButton[textLanguage]} `), (() => { const s = document.createElement('span'); s.setAttribute('aria-hidden', 'true'); s.textContent = '↻'; return s; })());
+    setBilingual(document.querySelector('#costumeTitle'), S.costumeTitle[textLanguage], secondOf(S.costumeTitle));
+    setBilingual(document.querySelector('#breakPromptTitle'), S.breakPromptTitle[textLanguage], secondOf(S.breakPromptTitle));
+    setBilingual(document.querySelector('#breakPromptBody'), S.breakPromptBody[textLanguage], secondOf(S.breakPromptBody));
+    setBilingual(oneMoreRoundButton, S.oneMoreRoundButton[textLanguage], secondOf(S.oneMoreRoundButton));
+    setBilingual(takeBreakButton, S.takeBreakButton[textLanguage], secondOf(S.takeBreakButton));
+    setBilingual(document.querySelector('#goodbyeTitle'), S.goodbyeTitle[textLanguage], secondOf(S.goodbyeTitle));
+    setBilingual(goodbyeBody, S.goodbyeBody[textLanguage], secondOf(S.goodbyeBody));
+    backToPlayButton.replaceChildren(bilingualNode(`${S.backToPlayButton[textLanguage]} `, secondOf(S.backToPlayButton) && `${secondOf(S.backToPlayButton)} `), (() => { const s = document.createElement('span'); s.setAttribute('aria-hidden', 'true'); s.textContent = '↻'; return s; })());
 
     [...topicTabsContainer.children].forEach(tab => {
-      tab.querySelector('[data-role="name"]').textContent = I18N.TOPIC_NAMES[tab.dataset.topic][textLanguage];
+      const names = I18N.TOPIC_NAMES[tab.dataset.topic];
+      setBilingual(tab.querySelector('[data-role="name"]'), names[textLanguage], secondOf(names));
     });
     [...levelChoiceContainer.querySelectorAll('.level-option')].forEach(button => {
-      button.querySelector('[data-role="name"]').textContent = I18N.LEVEL_NAMES[button.dataset.level][textLanguage];
+      const names = I18N.LEVEL_NAMES[button.dataset.level];
+      setBilingual(button.querySelector('[data-role="name"]'), names[textLanguage], secondOf(names));
     });
     ['dino', 'monster'].forEach(id => {
       const label = championName(id);
       if (label) label.textContent = I18N.CHAMPIONS[id].name[textLanguage];
     });
     renderLevelLockOptions();
+    renderSecondLanguageOptions();
+    renderVoiceLanguageOptions();
     if (!settingsBody.hidden) renderSettingsSummary();
     renderSpeechControls();
   }
