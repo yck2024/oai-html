@@ -8,6 +8,9 @@
   const TURN_SETTLE = 450;
   const HINT = '▶ を おすと よむよ。 ぶんを タップしても きけるよ。 · 按 ▶ 唸給你聽，也可以點句子喔。';
   const UNAVAILABLE = 'こえが でません。 ぶんは よめるよ。 · 目前無法播放聲音，還是可以看故事喔。';
+  const SHELF_MARKER = '/taiwan-ehon/';
+  const SHELF_PAGE_TITLE = 'Taiwan story picture books';
+  const SHELF_DOCUMENT_TITLE = '台灣故事繪本｜たいわんの おはなし えほん';
 
   const shelf = document.querySelector('#shelf');
   const bookList = document.querySelector('#bookList');
@@ -48,6 +51,36 @@
     if (typeof gtag === 'function') gtag('event', eventName, params);
   }
 
+  // Every book gets its own path under the shelf, e.g. /taiwan-ehon/hu-gu-po/. Page numbers,
+  // sentences, and settings never appear here — only the book selection does.
+  function shelfPath() {
+    const path = location.pathname;
+    const at = path.indexOf(SHELF_MARKER);
+    if (at === -1) return path.endsWith('/') ? path : `${path}/`;
+    return path.slice(0, at + SHELF_MARKER.length);
+  }
+
+  function bookPath(id) {
+    return `${shelfPath()}${id}/`;
+  }
+
+  function bookIdFromPath() {
+    const base = shelfPath();
+    const path = location.pathname;
+    if (!path.startsWith(base)) return null;
+    const rest = path.slice(base.length).replace(/^\/+|\/+$/g, '');
+    return rest ? rest.split('/')[0] : null;
+  }
+
+  function sendPageView(pagePath, title) {
+    track('page_view', { page_location: `${location.origin}${pagePath}`, page_title: title });
+  }
+
+  // Captured once, before any pushState runs: history.pushState() moves location.pathname,
+  // and unprefixed relative image/audio URLs would silently start resolving against that
+  // deeper path instead of this app's real folder. Every asset URL is built from this instead.
+  const ASSET_BASE = shelfPath();
+
   let audio = null;
   try {
     if (typeof Audio !== 'undefined') {
@@ -69,7 +102,7 @@
       speechStatus.textContent = UNAVAILABLE;
       updatePlayback();
     },
-  });
+  }, undefined, ASSET_BASE);
 
   function loadSettings() {
     const defaults = { mode: E.DEFAULT_MODE, zhuyin: true, autoTurn: false };
@@ -135,7 +168,7 @@
       card.style.setProperty('--book-soft', story.theme.soft);
 
       const cover = element('img', 'book-cover');
-      cover.src = story.pages[0].image;
+      cover.src = `${ASSET_BASE}${story.pages[0].image}`;
       cover.alt = '';
       cover.loading = 'lazy';
       cover.decoding = 'async';
@@ -169,7 +202,7 @@
     }
   }
 
-  function openBook(story, index) {
+  function openBook(story, index, { push = true, send = true } = {}) {
     book = E.createBook(story, index);
     completedThisOpening = false;
     listening = false;
@@ -185,11 +218,14 @@
     reader.hidden = false;
     speechStatus.textContent = HINT;
     renderPage(null);
+    const path = bookPath(story.id);
+    if (push && location.pathname !== path) history.pushState({ book: story.id }, '', path);
+    if (send) sendPageView(path, document.title);
     if (STORIES.includes(story)) track('book_open', { book_id: story.id });
     closeButton.focus({ preventScroll: true });
   }
 
-  function closeBook() {
+  function closeBook({ push = true, send = true } = {}) {
     clearTimeout(turnTimer);
     narrator.stop();
     listening = false;
@@ -197,9 +233,27 @@
     setSettingsOpen(false);
     reader.hidden = true;
     shelf.hidden = false;
-    document.title = '台灣故事繪本｜たいわんの おはなし えほん';
+    document.title = SHELF_DOCUMENT_TITLE;
+    const path = shelfPath();
+    if (push && location.pathname !== path) history.pushState(null, '', path);
+    if (send) sendPageView(path, SHELF_PAGE_TITLE);
     const focusTarget = lastCard || bookList.querySelector('.book-card');
     focusTarget?.focus({ preventScroll: true });
+  }
+
+  // Reflects the current URL into the shelf/reader UI: on first load (no push, no extra page
+  // view — the static <head> tag already sent that one), and again on every browser
+  // back/forward (popstate), when nothing else would otherwise update the view.
+  function route({ push = false, send = true } = {}) {
+    const id = bookIdFromPath();
+    const story = id ? STORIES.find(candidate => candidate.id === id) : null;
+    if (story) {
+      openBook(story, 0, { push, send });
+      return;
+    }
+    if (id) history.replaceState(null, '', shelfPath());
+    if (book) closeBook({ push, send });
+    else if (send) sendPageView(shelfPath(), SHELF_PAGE_TITLE);
   }
 
   function pageKind(page) {
@@ -271,7 +325,7 @@
     const page = book.page();
     const kind = pageKind(page);
     pageEl.dataset.kind = kind;
-    pageImage.src = page.image;
+    pageImage.src = `${ASSET_BASE}${page.image}`;
     pageImage.alt = `${page.alt.ja} ／ ${page.alt.zh}`;
     renderText();
     renderExtras(kind);
@@ -473,4 +527,6 @@
   renderShelf();
   applySettings();
   updatePlayback();
+  route({ push: false, send: false });
+  addEventListener('popstate', () => route({ push: false, send: true }));
 })();
