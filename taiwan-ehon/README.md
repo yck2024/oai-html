@@ -23,10 +23,12 @@ This storybook uses the existing GA4 tag (`G-QLFWNZWDSS`) for its page views and
 
 ## 虎姑婆 (hu-gu-po)
 
-A gentle, agency-forward retelling: two children notice a night visitor isn't quite who she claims
-to be, quietly signal each other, and call neighbors for help. Nobody is bitten, threatened, or
-punished — the story is about noticing, teamwork, and asking a trusted adult for help, not about
-frightening a child into obedience.
+A gentle, agency-forward new retelling: the parents are only next door and leave the children a
+two-knock signal on the shared wall. When a visitor claiming the mother sent her asks to come in,
+the children keep the door shut, knock the signal, and the parents come back with neighbors and
+lanterns; the visitor runs off with a striped tiger tail showing. Nobody is bitten, threatened, or
+punished — the story is about noticing, not opening the door, and letting family know, not about
+frightening a child into obedience. The wall-signal plot is written for this book.
 
 - **Origin note:** 虎姑婆 is a familiar Hoklo-language nursery/story tradition told across Taiwan
   (and the wider "tiger/wolf grandmother" tale family in East Asia more broadly), not a single
@@ -38,11 +40,15 @@ frightening a child into obedience.
 
 ## 青瞑龍蛇 (qing-mi-long-she)
 
-A Tainan/台江-area river legend, retold as a story about a river that changes course after heavy
-rain, and a community that learns to watch the water and prepare together — not a disaster scene
-or a punitive battle with a deity. "青瞑" is a Taiwanese (Hokkien) name for the dragon and snake in
-this local tradition; the story keeps it as their name without using it as a joke about blindness
-or disability.
+A Tainan river legend, retold around the modern puppet play's question: were the "blind" dragon
+and snake really to blame for the floods? People said a dragon lived in 急水溪 and a snake in
+曾文溪, and called them "青瞑" (Taiwanese for "cannot see") because they seemed to rush about blindly.
+In this new story a village child, Tong, is told to watch from high ground in heavy rain, raises
+the alarm, walks with everyone to a hill away from the river, and sees that the water moves first
+and the snake only follows — so the flood was nobody's fault. The rising river is shown from a safe
+distance as the warning; no one is hurt, and there is no scene of destruction or battle with a deity.
+The book never uses not seeing as the reason for causing harm. Tong and the evacuation are written
+for this book.
 
 - **Origin note:** this is a localized Tainan/台江 water-and-landscape legend, distinct from
   general dragon myths — the published adaptation this book draws on is itself a modern puppet-play
@@ -50,33 +56,45 @@ or disability.
 - National Museum of Taiwan History, "扛茨走溪流：臺江風土與自然", on how Tainan/台江 communities
   understood the shifting Tsengwen River (including the "青暝蛇" river-as-serpent image) and adapted
   by moving with it: <https://the.nmth.gov.tw/nmth/zh-tw/Special/SpecialDetail/997cbb8c-04de-41f8-90ca-de9ac8b92778>
-- Ministry of Culture puppet-script, 《青瞑的龍蛇無青瞑》, the modern adaptation this retelling draws
-  its gentler ending from: <https://file.moc.gov.tw/Download.ashx?n=MjAyNOWFkuerpeW4g%2Biii%2BaIsuWKh%2BacrOWJteS9nOW%2BtemBuC3kvZzlk4Hos4fmlpnooajjgJDlhKrpgbjjgIrpnZLnnpHnmoTpvo3om4fnhKHpnZLnnpHjgIvjgJEucGRm&u=LzAwMS9VcGxvYWRvLzQ5Mi9yZWxmaWxlLzE2MDcwLzI0NDI2Mi9mODg0ODFmMi1jYmI5LTQ1N2YtODA0OC05ODdlOTRlMTllZjUucGRm
+- National Center for Traditional Arts, on the dragon of 急水溪 and the snake of 曾文溪, why people
+  called them "青暝", and the play's question of whether they are truly blind:
+  <https://www.ncfta.gov.tw/cp.aspx?n=8862>
+- Ministry of Culture puppet-script, 《青瞑的龍蛇無青瞑》, the modern adaptation whose question this
+  retelling starts from: <https://file.moc.gov.tw/Download.ashx?n=MjAyNOWFkuerpeW4g%2Biii%2BaIsuWKh%2BacrOWJteS9nOW%2BtemBuC3kvZzlk4Hos4fmlpnooajjgJDlhKrpgbjjgIrpnZLnnpHnmoTpvo3om4fnhKHpnZLnnpHjgIvjgJEucGRm&u=LzAwMS9VcGxvYWRvLzQ5Mi9yZWxmaWxlLzE2MDcwLzI0NDI2Mi9mODg0ODFmMi1jYmI5LTQ1N2YtODA0OC05ODdlOTRlMTllZjUucGRm
   (the direct PDF fetch returned HTTP 404 for the researcher who cataloged this source; treat the
-  link as unverified until someone can open it directly, and rely on the NMTH source above for the
-  factual grounding used in this retelling)
+  link as unverified until someone can open it directly, and rely on the NMTH and NCFTA sources for
+  the factual grounding used in this retelling)
 
-## 阿拉巴耐的石頭 (a-la-ba-nai) — a Malan Amis stone-birth origin story
+## 阿拉巴耐的石頭 (a-la-ba-nai) — a Malan Amis remembrance at Arapanay
 
-A quiet, poetic account of Arapanay (阿拉巴耐), a coastal place in southern Taitung where Malan Amis
-(馬蘭阿美) elders say the first ancestors appeared beside the large stones, and which Hengchun Amis
-and Puyuma communities also trace part of their own history to. This is deliberately **not** framed
-as "the Amis creation story" — the Council of Indigenous Peoples' own materials distinguish northern
-Amis divine-descent traditions from southern Amis stone-birth traditions, and even among southern
-communities the tellings differ. This book presents one community's living, still-practiced telling,
-tied to a named place, and says plainly that other Amis villages tell different origin stories.
+A new story about Arapanay (阿拉巴耐), a coastal place in southern Taitung, seen through a fictional
+present-day Malan Amis (馬蘭阿美) boy and his grandmother. She tells him it is handed down as the
+place where the ancestors rested on their long journey north; the family watches a borrowed sailboat
+come in from the sea, the adults haul it ashore while the children cheer from a distance, and fish
+and shellfish from the sea are shared with the ancestors, as the 2026 news reports of the Malan Amis
+commemoration describe. The grandmother also tells, as her community's legend, that the first
+ancestors were born from a stone; the book does not claim any pictured rock is that stone. It is
+deliberately **not** framed as "the Amis creation story" — the Council of Indigenous Peoples'
+materials distinguish northern and southern Amis origin traditions, and the credit says plainly that
+other Amis villages tell different origin stories. The boy, his family, and their words are written
+for this book; a Malan Amis reader should still review the words and pictures.
 
 - **Origin note:** credited specifically to Malan Amis (with Hengchun Amis and Puyuma communities
   sharing a connection to the same place, Arapanay/阿拉巴耐, also known in Puyuma tradition as
   Panapanayan) — not presented as a pan-Amis or "the" Indigenous origin story.
 - Council of Indigenous Peoples, "阿美族", on the north/south divine-descent vs. stone-birth origin
   distinction: <https://www.cip.gov.tw/zh-tw/tribe/grid-list/DBADF0287998968BD0636733C6861689/info.html?cumid=8F19BF08AE220D65>
-- 臺灣原住民族事典 (Taiwan Indigenous Peoples' encyclopedia), on Malan/Hengchun Amis stone-birth
-  origin traditions tied to Arapanay and its relationship to the Puyuma Panapanayan tradition:
+- 臺灣原住民族事典 (Taiwan Indigenous Peoples' encyclopedia), on most southern Amis naming Arapanay
+  as their place of origin, and on the stone-birth traditions of the 卑南阿美 (Malan) and Hengchun
+  Amis:
   <https://aborgpedia.alcd.center/detail?cat=32&id=2387&race=0&search=&writer=>
-- 自由時報 (Liberty Times), on the Malan Amis community's own recent reenactment of their ancestors'
-  landing at the Arapanay site, the living practice this book's raft scenes are based on:
+- 自由時報 (Liberty Times), on the Malan Amis commemoration at Arapanay: a borrowed traditional Amis
+  sailboat brought in from the sea and hauled ashore together, and seafood shared with the ancestral
+  spirits — the scenes this book's boat pages are based on:
   <https://news.ltn.com.tw/news/life/breakingnews/5470073>
+- 聯合新聞網 (United Daily News), on the same commemoration and on Arapanay as a resting place of
+  Amis ancestors travelling north from Hengchun along the coast, over the mountains, or by sail:
+  <https://udn.com/news/story/7328/9562778>
 
 ## Production notes (all three stories)
 
