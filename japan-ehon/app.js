@@ -256,6 +256,7 @@
     if (token !== continuousToken || book !== requestedBook) return; // superseded by a later call, or the book changed while building
 
     if (!blob) {
+      continuousPlayer.stop();
       listening = false;
       speechStatus.textContent = UNAVAILABLE;
       updatePlayback();

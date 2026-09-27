@@ -26,7 +26,7 @@ function createMediaSession() {
   };
 }
 
-function createReader({ analytics = true, series = SERIES, storyList = stories, fetchGate = null } = {}) {
+function createReader({ analytics = true, series = SERIES, storyList = stories, fetchGate = null, failFetches = 0 } = {}) {
   const elements = new Map(READER_IDS.map(id => [`#${id}`, new FakeElement()]));
   const modeInputs = Object.keys(E.buildListenModes(series.languages)).map(value => {
     const input = new FakeElement('input');
@@ -84,6 +84,7 @@ function createReader({ analytics = true, series = SERIES, storyList = stories, 
   const nav = createLocationHistory(`/${series.folder}/`);
   const mediaSession = createMediaSession();
   const fetched = [];
+  let remainingFetchFailures = failFetches;
   // Every fetched "clip" is a distinct, tiny ArrayBuffer (its byte length encodes which URL it
   // was, so a test can tell segments apart after Blob assembly without a real MP3 on disk).
   const context = {
@@ -96,7 +97,11 @@ function createReader({ analytics = true, series = SERIES, storyList = stories, 
     MediaMetadata: class { constructor(options) { Object.assign(this, options); } },
     fetch: url => {
       fetched.push(url);
-      return (fetchGate || Promise.resolve()).then(() => ({ ok: true, arrayBuffer: () => Promise.resolve(new ArrayBuffer(4)) }));
+      return (fetchGate || Promise.resolve()).then(() => {
+        const ok = remainingFetchFailures === 0;
+        if (!ok) remainingFetchFailures--;
+        return { ok, status: ok ? 200 : 404, arrayBuffer: () => Promise.resolve(new ArrayBuffer(4)) };
+      });
     },
     setTimeout: () => 1,
     clearTimeout() {},
@@ -557,6 +562,25 @@ test('continuous mode: cancelling a pending build for sentence playback, mode ch
   mutedReader.releaseFetch();
   await flush();
   assert.equal(mutedReader.audio.played.length, 0);
+});
+
+test('continuous mode: failed assembly leaves Play able to retry the build', async () => {
+  const reader = createReader({ failFetches: 1 });
+  const { elements, fetched, audio } = reader;
+  reader.setContinuous(true);
+  elements.get('#playButton').dispatch('click');
+  await flush();
+
+  const failedFetchCount = fetched.length;
+  assert.equal(audio.played.length, 0);
+  assert.notEqual(elements.get('#speechStatus').textContent, '');
+
+  elements.get('#playButton').dispatch('click');
+  await flush();
+
+  assert.ok(fetched.length > failedFetchCount);
+  assert.equal(audio.played.length, 1);
+  assert.match(audio.played[0], /^blob:/);
 });
 
 test('continuous mode: rejected initial playback stays paused and retries the built Blob without refetching', async () => {

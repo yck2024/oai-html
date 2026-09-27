@@ -211,6 +211,15 @@
       audio.onended = null;
     }
 
+    function bindEnded(generation) {
+      audio.onended = () => {
+        if (generation !== playbackGeneration) return;
+        playbackGeneration++;
+        state = 'idle';
+        onEnded();
+      };
+    }
+
     // Marks a rebuild in progress (e.g. the listening mode changed while a book was playing) so
     // a stray play-button tap doesn't restart the fetch, without touching `audio` itself — the
     // previous Blob (if any) keeps playing until the new one is ready.
@@ -238,12 +247,7 @@
       timeline = nextTimeline;
       objectUrl = URL.createObjectURL(blob);
       audio.ontimeupdate = () => onTimeUpdate(Math.round(audio.currentTime * 1000));
-      audio.onended = () => {
-        if (generation !== playbackGeneration) return;
-        playbackGeneration++;
-        state = 'idle';
-        onEnded();
-      };
+      bindEnded(generation);
       audio.src = objectUrl;
       try { audio.currentTime = Math.max(startAtMs, 0) / 1000; } catch (_error) { /* not yet loaded */ }
       if (paused) { state = 'paused'; return true; }
@@ -271,6 +275,7 @@
       if (state !== 'paused') return false;
       state = 'playing';
       const generation = ++playbackGeneration;
+      bindEnded(generation);
       const playback = audio.play();
       if (playback && typeof playback.catch === 'function') {
         playback.catch(() => {

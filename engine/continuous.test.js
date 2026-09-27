@@ -147,6 +147,21 @@ test('createContinuousPlayer: play/pause/resume/stop track state the same shape 
   });
 });
 
+test('createContinuousPlayer: playback remains able to end after pause and resume', async () => {
+  const timeline = C.buildContinuousTimeline(E, STORY, MODES, 'ja-zh', 'ja-zh', TIMING);
+  const audio = { currentTime: 0, play: () => Promise.resolve(), pause() {} };
+  let endedCount = 0;
+  const player = C.createContinuousPlayer(audio, { onEnded: () => { endedCount += 1; } });
+
+  await player.play(new Blob(['x']), timeline);
+  player.pause();
+  player.resume();
+  audio.onended();
+
+  assert.equal(player.state, 'idle');
+  assert.equal(endedCount, 1);
+});
+
 test('createContinuousPlayer: an ended playback reports idle and fires onEnded once', () => {
   const timeline = C.buildContinuousTimeline(E, STORY, MODES, 'ja-zh', 'ja-zh', TIMING);
   const audio = { currentTime: 0, play: () => Promise.resolve(), pause() {} };
