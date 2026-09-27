@@ -96,10 +96,14 @@ def load_stories():
 
 
 def spoken_text(line, language):
-    """The words sent to the narrator: furigana readings for Japanese, overrides if any."""
+    """The words sent to the narrator: language-specific text, with optional pronunciation overrides."""
     if language == "ja":
         return line.get("jaTts") or re.sub(r"[ 　]+", "", RUBY.sub(r"\2", line["ja"]))
-    return line.get("zhTts") or line["zh"]
+    if language == "zh":
+        return line.get("zhTts") or line["zh"]
+    if language == "en":
+        return line.get("enTts") or line.get("en")
+    raise ValueError(f"Unsupported language: {language}")
 
 
 def style_for(line, language):
@@ -115,7 +119,8 @@ def all_clips(stories):
         for page in story["pages"]:
             for line in page["lines"]:
                 for language in LANGUAGES:
-                    yield story["id"], line, language
+                    if language == "ja" or language == "zh" or line.get(language):
+                        yield story["id"], line, language
 
 
 def clip_path(story_id, language, line_id):
@@ -197,6 +202,11 @@ def transcribe(api_key, path, language, project, clip_id):
             "hiragana (katakana only for foreign-sounding names). Do not correct or add anything. "
             "Reply with the transcript only."
         )
+    elif language == "en":
+        instruction = (
+            "Transcribe this English speech exactly as heard. Do not translate, correct, or add "
+            "anything. Reply with the transcript only."
+        )
     else:
         instruction = (
             "Transcribe this Mandarin speech. Line 1: the words in Traditional Chinese characters. "
@@ -232,6 +242,8 @@ def comparable(text, language):
         # punctuation are ignored.
         text = "".join(chr(ord(char) - 0x60) if "ァ" <= char <= "ヶ" else char for char in text)
         return re.sub(r"[^ぁ-ゖ]", "", text)
+    if language == "en":
+        return re.sub(r"[^\w]", "", text.casefold(), flags=re.UNICODE)
     text = re.sub(r"[^㐀-鿿]", "", text)
     return text.translate(HAN_VARIANTS)
 
@@ -342,7 +354,8 @@ def check(stories, args):
             first_line = heard.splitlines()[0] if heard else ""
             match = comparable(first_line, language) == expected_reading(line, language)
             report.append({"clip": f"{story_id}/{language}/{line['id']}", "match": match,
-                           "expected": line["ja"] if language == "ja" else line["zh"], "heard": heard})
+                           "expected": line["ja"] if language == "ja" else line["zh"] if language == "zh" else spoken_text(line, "en"),
+                           "heard": heard})
     report.sort(key=lambda item: item["clip"])
     for item in report:
         mark = "ok  " if item["match"] else "DIFF"
