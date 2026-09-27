@@ -216,6 +216,51 @@ test('concurrent cached Range requests return immediately and share one refresh 
   assert.deepEqual([...new Uint8Array(await refreshed.arrayBuffer())], [5, 6, 7]);
 });
 
+test('the production fetch handler keeps cached Range refreshes alive and returns cached bytes immediately', async () => {
+  const caches = fakeCaches();
+  const url = `${BASE}audio/hu-gu-po/ja/p01-1.mp3`;
+  const cache = await caches.open(sw.MEDIA_CACHE_NAME);
+  await cache.put(url, new Response(new Uint8Array([1, 2, 3, 4]), { headers: { 'Content-Type': 'audio/mpeg' } }));
+
+  const previousCaches = globalThis.caches;
+  const previousFetch = globalThis.fetch;
+  let releaseFetch;
+  const fetchGate = new Promise(resolve => { releaseFetch = resolve; });
+  globalThis.caches = caches;
+  globalThis.fetch = async () => {
+    await fetchGate;
+    return new Response(new Uint8Array([5, 6, 7]), { headers: { 'Content-Type': 'audio/mpeg' } });
+  };
+  try {
+    const handlers = new Map();
+    sw.attach({
+      registration: { scope: BASE },
+      addEventListener: (type, handler) => handlers.set(type, handler),
+    });
+    const waitUntilPromises = [];
+    let responsePromise;
+    handlers.get('fetch')({
+      request: new Request(url, { headers: { Range: 'bytes=1-2' } }),
+      waitUntil: promise => waitUntilPromises.push(promise),
+      respondWith: promise => { responsePromise = promise; },
+    });
+
+    const response = await responsePromise;
+    assert.equal(response.status, 206);
+    assert.deepEqual([...new Uint8Array(await response.arrayBuffer())], [2, 3]);
+    assert.equal(waitUntilPromises.length, 1, 'the fetch event owns the background refresh lifetime');
+
+    releaseFetch();
+    await Promise.all(waitUntilPromises);
+    const refreshed = await cache.match(url);
+    assert.deepEqual([...new Uint8Array(await refreshed.arrayBuffer())], [5, 6, 7]);
+  } finally {
+    releaseFetch();
+    globalThis.caches = previousCaches;
+    globalThis.fetch = previousFetch;
+  }
+});
+
 test('parseRange rejects absent, malformed, and out-of-bounds ranges so callers fall back to the full file', () => {
   assert.equal(sw.parseRange(undefined, 1000), null);
   assert.equal(sw.parseRange('not-a-range', 1000), null);

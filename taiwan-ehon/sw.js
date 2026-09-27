@@ -177,7 +177,11 @@
       const url = event.request.url;
       if (!url.startsWith(scope) && requestKind(url) !== 'analytics') return;
       if (event.request.method !== 'GET') return;
-      event.respondWith(respond(event.request, { caches, fetch }).catch(() => fetch(event.request)));
+      event.respondWith(respond(event.request, {
+        caches,
+        fetch,
+        onBackground: refresh => event.waitUntil(refresh),
+      }).catch(() => fetch(event.request)));
     });
 
     // Lets the page ask the waiting worker to activate immediately after showing an
