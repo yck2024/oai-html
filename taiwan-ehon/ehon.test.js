@@ -11,7 +11,9 @@ const HAN = /\p{Script=Han}/u;
 const storyById = id => stories.find(story => story.id === id);
 
 test('each data-driven book has a cover, ten illustrated story pages, and an ending', () => {
-  assert.deepEqual(stories.map(story => story.id), ['bai-zei-qi', 'shooting-the-sun']);
+  assert.deepEqual(stories.map(story => story.id), [
+    'bai-zei-qi', 'shooting-the-sun', 'shao-white-deer', 'xinpu-shi-ye', 'dajia-mazu-pilgrimage',
+  ]);
   for (const story of stories) {
     assert.equal(story.pages.length, 12, `${story.id} page count`);
     assert.equal(story.pages[0].id, 'cover');
