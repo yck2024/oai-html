@@ -52,6 +52,10 @@ Interactive pages can add semantic events with `data-analytics-event` / `data-an
 
 Do not send user-entered text, copied content, credentials, private identifiers, or other sensitive data to analytics. In the storybook, story selection and page turns stay in page state without URL or history changes; clicks and copies are excluded, and its page-view URL, referrer, and title omit the selected story and page identifiers. Listening mode, 注音 visibility, and auto-turn preference are remembered only in this browser; no identity, answers, or reading history are stored.
 
+## Narration API usage
+
+The Gemini narration generators record each call's reported token usage and estimated cost in a local JSONL ledger at `~/.local/share/api-usage/gemini.jsonl` (override with `GEMINI_USAGE_LEDGER`). The ledger is kept outside this repository. View totals overall and by project, model, and day with `python3 tools/gemini_usage.py report`. Costs are estimates based on `tools/gemini-prices.json`; check Google's [Gemini API pricing](https://ai.google.dev/gemini-api/docs/pricing) and update that table's prices and `checked_date` when rates change. Models or token modalities without a known price are recorded without a cost.
+
 ## Taiwan story references
 
 The bilingual retellings in [Taiwan Story Picture Books](taiwan-ehon/) are based on Taiwanese cultural sources, while simplifying events for young readers:

@@ -15,10 +15,14 @@ import subprocess
 import tempfile
 import time
 from pathlib import Path
+import sys
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT.parent / "tools"))
+from gemini_usage import append_usage
+
 PROMPTS = ROOT / "audio" / "prompts.json"
 REACTIONS = ROOT / "audio" / "reactions.json"
 AUDIO_DIR = ROOT / "audio"
@@ -68,7 +72,7 @@ PRONUNCIATION_OVERRIDES = {
 }
 
 
-def request_wav(api_key, text, language_config):
+def request_wav(api_key, text, language_config, language, clip_id):
     payload = {
         "model": MODEL,
         "input": [{
@@ -101,6 +105,10 @@ def request_wav(api_key, text, language_config):
     except (URLError, TimeoutError, json.JSONDecodeError) as error:
         raise RuntimeError(f"Gemini TTS request failed ({type(error).__name__})") from None
 
+    modalities = [content.get("type", "unknown") for step in result.get("steps", [])
+                  for content in step.get("content", []) if content.get("type") in {"audio", "text"}]
+    append_usage("monster-word-arena-tw", f"{language}/{clip_id}", MODEL,
+                 result.get("usage", {}), output_modalities=modalities or ["audio"])
     for step in result.get("steps", []):
         for content in step.get("content", []):
             if content.get("type") == "audio" and content.get("data"):
@@ -185,7 +193,7 @@ def main():
     for index, (language, audio_id, text) in enumerate(clips, start=1):
         output_dir = AUDIO_DIR / language
         output_dir.mkdir(parents=True, exist_ok=True)
-        wav = request_wav(api_key, text, LANGUAGES[language])
+        wav = request_wav(api_key, text, LANGUAGES[language], language, audio_id)
         encode_mp3(wav, output_dir / f"{audio_id}.mp3")
         print(f"Generated {index}/{len(clips)}: {language}/{audio_id}.mp3")
         if index < len(clips):
