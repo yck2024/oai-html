@@ -1,6 +1,7 @@
 'use strict';
 
 const assert = require('node:assert/strict');
+const { execFileSync } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
@@ -9,6 +10,11 @@ const stories = require('./stories.js');
 
 const ROOT = __dirname;
 const BASE = 'https://example.test/oai-html/taiwan-ehon/';
+
+function parseHeadElements(html) {
+  const parser = `import json, sys\nfrom html.parser import HTMLParser\nclass HeadElements(HTMLParser):\n def __init__(self):\n  super().__init__(); self.elements = []\n def handle_starttag(self, tag, attrs):\n  if tag in ('link', 'meta', 'script'): self.elements.append({'tag': tag, **dict(attrs)})\np = HeadElements(); p.feed(sys.stdin.read()); print(json.dumps(p.elements))`;
+  return JSON.parse(execFileSync('python3', ['-c', parser], { input: html, encoding: 'utf8' }));
+}
 
 test('manifest.webmanifest is valid, bilingual, and scoped under the storybook path', () => {
   const raw = fs.readFileSync(path.join(ROOT, 'manifest.webmanifest'), 'utf8');
@@ -31,16 +37,17 @@ test('manifest.webmanifest is valid, bilingual, and scoped under the storybook p
   }
 });
 
-test('the shelf and every generated book page link the manifest and an apple-touch-icon', () => {
+test('the shelf and every generated book page expose parsed PWA document metadata', () => {
   const pages = [
     ['shelf', fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')],
     ...stories.map(story => [story.id, fs.readFileSync(path.join(ROOT, story.id, 'index.html'), 'utf8')]),
   ];
   for (const [id, html] of pages) {
-    assert.match(html, /<link rel="manifest" href="\.\/manifest\.webmanifest">/, `${id}: links the web manifest`);
-    assert.match(html, /<link rel="apple-touch-icon" href="\.\/icons\/apple-touch-icon\.png">/, `${id}: links an apple-touch-icon`);
-    assert.match(html, /<meta name="apple-mobile-web-app-capable" content="yes">/, `${id}: sets the iOS home-screen meta tag`);
-    assert.match(html, /<script src="\.\/offline\.js"><\/script>/, `${id}: loads the offline/PWA controller script`);
+    const elements = parseHeadElements(html);
+    assert.ok(elements.some(item => item.tag === 'link' && item.rel?.trim().split(/\s+/).includes('manifest') && item.href === './manifest.webmanifest'), `${id}: links the web manifest`);
+    assert.ok(elements.some(item => item.tag === 'link' && item.rel?.trim().split(/\s+/).includes('apple-touch-icon') && item.href === './icons/apple-touch-icon.png'), `${id}: links an apple-touch-icon`);
+    assert.ok(elements.some(item => item.tag === 'meta' && item.name === 'apple-mobile-web-app-capable' && item.content === 'yes'), `${id}: sets the iOS home-screen meta tag`);
+    assert.ok(elements.some(item => item.tag === 'script' && item.src === './offline.js'), `${id}: loads the script that registers the service worker`);
   }
 });
 

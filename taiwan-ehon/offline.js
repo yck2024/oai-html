@@ -272,11 +272,11 @@
       setShelfBadge(story, status.complete);
       if (controls) {
         controls.downloadButton.hidden = status.complete;
-        controls.removeButton.hidden = !status.complete;
+        controls.removeButton.hidden = status.cached === 0;
       }
       if (reader.dataset.book === story.id && bookDownloadButton && bookRemoveButton) {
         bookDownloadButton.hidden = status.complete;
-        bookRemoveButton.hidden = !status.complete;
+        bookRemoveButton.hidden = status.cached === 0;
         if (status.complete) bookOfflineStatus.textContent = 'ダウンロード ずみ ・ 已下載完成';
       }
       return status;
@@ -284,7 +284,7 @@
 
     async function refreshAll() {
       const statuses = await Promise.all(STORIES.map(async story => applyStatus(story, await storyFileStatus(story))));
-      removeAllButton.hidden = !statuses.some(status => status.complete);
+      removeAllButton.hidden = !statuses.some(status => status.cached > 0);
       updateStorageNote(offlineStorageNote);
     }
 
@@ -310,16 +310,14 @@
           ? 'いちぶ ダウンロードできませんでした。もういちど ためしてね ・ 部分下載失敗，請再試一次'
           : 'ダウンロード ずみ ・ 已下載完成';
       }
-      await applyStatus(story, await storyFileStatus(story));
-      updateStorageNote(offlineStorageNote);
+      await refreshAll();
     }
 
     async function runRemove(story) {
       await removeStory(story);
-      await applyStatus(story, await storyFileStatus(story));
+      await refreshAll();
       const forCurrentBook = reader.dataset.book === story.id;
       if (forCurrentBook && bookOfflineStatus) bookOfflineStatus.textContent = '';
-      updateStorageNote(offlineStorageNote);
     }
 
     downloadAllButton.addEventListener('click', async () => {
@@ -330,20 +328,25 @@
       }, 0);
       let doneSoFar = 0;
       let bytesSoFar = 0;
+      let failed = 0;
       showProgress(offlineAllProgress, { done: 0, total: totalFiles, bytes: 0 });
       for (const story of STORIES) {
         let lastBytes = 0;
-        await downloadStory(story, ({ done, bytes }) => {
+        const result = await downloadStory(story, ({ done, bytes }) => {
           bytesSoFar += bytes - lastBytes;
           lastBytes = bytes;
           showProgress(offlineAllProgress, { done: doneSoFar + done, total: totalFiles, bytes: bytesSoFar });
         });
+        failed += result.failed;
         const assets = E.bookAssetUrls(story, ASSET_BASE);
         doneSoFar += assets.images.length + assets.audio.length;
         await applyStatus(story, await storyFileStatus(story));
       }
       downloadAllButton.disabled = false;
       await refreshAll();
+      offlineAllProgress.textContent += failed
+        ? ` ・ ${failed} こ ダウンロードできませんでした ・ ${failed} 個項目下載失敗`
+        : ' ・ すべて ダウンロードしました ・ 全部下載完成';
     });
 
     removeAllButton.addEventListener('click', async () => {
