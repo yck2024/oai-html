@@ -491,7 +491,7 @@
       const zh = element('p', '', 'zh-Hant-TW');
       if (kind === 'cover') {
         ja.append(japanese(story.origin.ja), ' ・ ', japanese(story.tagline.ja));
-        zh.textContent = `${story.origin.zh} ・ ${story.tagline.zh}`;
+        zh.textContent = `${story.origin.zh} · ${story.tagline.zh}`;
       } else {
         ja.append(japanese(story.credit.ja));
         zh.textContent = story.credit.zh;

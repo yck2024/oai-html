@@ -376,6 +376,7 @@ test('Taiwan cover and end notes retain their original unwrapped bilingual DOM s
   elements.get('#prevButton').dispatch('click');
   const coverNotes = elements.get('#page').querySelector('.page-note').children;
   assert.deepEqual(coverNotes.map(node => node.lang), ['ja', 'zh-Hant-TW']);
+  assert.equal(coverNotes[1].textContent, '台灣民間故事 · 一個很會說謊的人的故事');
   assert.equal(coverNotes.some(node => node.children.some(child => child instanceof FakeElement && child.tagName === 'SPAN')), false);
 
   elements.get('#nextButton').dispatch('click');
