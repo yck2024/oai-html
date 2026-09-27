@@ -88,6 +88,22 @@ SPEAKERS = {
         "persona": "a warm, gentle young mother",
         "voices": {"ja": "ja-jp-storyteller-2", "zh": "Leda"},
     },
+    "jie": {
+        "persona": "a clever, brave, caring elder sister, about 8 years old",
+        "voices": {"ja": "ja-jp-assistant-3", "zh": "Aoede"},
+    },
+    "di": {
+        "persona": "a curious, brave younger brother, about 5 years old",
+        "voices": {"ja": "ja-jp-assistant-7", "zh": "Fenrir"},
+    },
+    "guest": {
+        "persona": "a mysterious nighttime visitor with an odd, sweet-but-strange raspy voice, never threatening or violent",
+        "voices": {"ja": "ja-jp-storyteller-11", "zh": "Charon"},
+    },
+    "tong": {
+        "persona": "a curious, gentle village child, about 6 years old",
+        "voices": {"ja": "ja-jp-assistant-9", "zh": "Autonoe"},
+    },
 }
 
 
