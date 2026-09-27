@@ -54,18 +54,24 @@ test('the shelf and every generated book page expose parsed PWA document metadat
 
 test('the shell precache list covers every static app file and every book page, built from stories.js', () => {
   const shellUrls = E.shellAssetUrls(stories, BASE);
-  for (const file of ['', 'index.html', 'ehon.css', 'ehon.js', 'stories.js', 'series.config.js', 'app.js', 'offline.js', 'manifest.webmanifest']) {
+  for (const file of [
+    '', 'index.html', 'ehon.css', 'ehon.js', 'continuous.js', 'stories.js', 'series.config.js', 'app.js',
+    'offline.js', 'manifest.webmanifest', 'audio-timing.js',
+  ]) {
     assert.ok(shellUrls.includes(`${BASE}${file}`), `shell precache includes ${file || '(shelf root)'}`);
   }
   for (const icon of ['icon-192.png', 'icon-512.png', 'icon-512-maskable.png', 'apple-touch-icon.png']) {
     assert.ok(shellUrls.includes(`${BASE}icons/${icon}`), `shell precache includes icons/${icon}`);
+  }
+  for (const silence of ['language.mp3', 'sentence.mp3', 'page.mp3']) {
+    assert.ok(shellUrls.includes(`${BASE}silence/${silence}`), `shell precache includes silence/${silence}`);
   }
   for (const story of stories) {
     assert.ok(shellUrls.includes(`${BASE}${story.id}/`), `shell precache includes the ${story.id} book page`);
   }
   // Nothing hand-added beyond one page per story plus the fixed files: adding a book to
   // stories.js is the only thing that grows this list.
-  assert.equal(shellUrls.length, 13 + stories.length);
+  assert.equal(shellUrls.length, 18 + stories.length);
 });
 
 test('the offline asset list for every book is complete against its own pages and narration in stories.js', () => {

@@ -6,9 +6,11 @@ const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
 const E = require('./ehon.js');
+const C = require('./continuous.js');
 const TAIWAN_DIR = path.join(__dirname, '..', 'taiwan-ehon');
 const stories = require(path.join(TAIWAN_DIR, 'stories.js'));
 const SERIES = require(path.join(TAIWAN_DIR, 'series.config.js'));
+const TIMING = require(path.join(TAIWAN_DIR, 'audio-timing.js'));
 const { FakeElement, READER_IDS, createLocationHistory } = require('./test-dom.js');
 
 // A minimal MediaSession/MediaMetadata double: stores whatever app.js sets so tests can
@@ -24,7 +26,7 @@ function createMediaSession() {
   };
 }
 
-function createReader({ analytics = true, series = SERIES, storyList = stories } = {}) {
+function createReader({ analytics = true, series = SERIES, storyList = stories, fetchGate = null, failFetches = 0 } = {}) {
   const elements = new Map(READER_IDS.map(id => [`#${id}`, new FakeElement()]));
   const modeInputs = Object.keys(E.buildListenModes(series.languages)).map(value => {
     const input = new FakeElement('input');
@@ -57,10 +59,22 @@ function createReader({ analytics = true, series = SERIES, storyList = stories }
   class FakeAudio {
     constructor() {
       this.played = [];
+      this.currentTime = 0;
+      this.rejectNextPlay = false;
+      this.nextPlayResult = null;
       FakeAudio.instances.push(this);
     }
     play() {
       this.played.push(this.src);
+      if (this.nextPlayResult) {
+        const result = this.nextPlayResult;
+        this.nextPlayResult = null;
+        return result;
+      }
+      if (this.rejectNextPlay) {
+        this.rejectNextPlay = false;
+        return Promise.reject(new Error('autoplay rejected'));
+      }
       return Promise.resolve();
     }
     pause() {}
@@ -70,15 +84,25 @@ function createReader({ analytics = true, series = SERIES, storyList = stories }
   const nav = createLocationHistory(`/${series.folder}/`);
   const mediaSession = createMediaSession();
   const fetched = [];
+  let remainingFetchFailures = failFetches;
+  // Every fetched "clip" is a distinct, tiny ArrayBuffer (its byte length encodes which URL it
+  // was, so a test can tell segments apart after Blob assembly without a real MP3 on disk).
   const context = {
-    window: { Ehon: E, EhonStories: storyList, EhonSeriesConfig: series },
+    window: { Ehon: E, EhonContinuous: C, EhonAudioTiming: TIMING, EhonStories: storyList, EhonSeriesConfig: series },
     document,
     Event: class { constructor(type) { this.type = type; } },
     localStorage,
     Audio: FakeAudio,
     navigator: { mediaSession },
     MediaMetadata: class { constructor(options) { Object.assign(this, options); } },
-    fetch: url => { fetched.push(url); return Promise.resolve(); },
+    fetch: url => {
+      fetched.push(url);
+      return (fetchGate || Promise.resolve()).then(() => {
+        const ok = remainingFetchFailures === 0;
+        if (!ok) remainingFetchFailures--;
+        return { ok, status: ok ? 200 : 404, arrayBuffer: () => Promise.resolve(new ArrayBuffer(4)) };
+      });
+    },
     setTimeout: () => 1,
     clearTimeout() {},
     location: nav.location,
@@ -104,6 +128,12 @@ function createReader({ analytics = true, series = SERIES, storyList = stories }
       modeInputs.find(input => input.value === mode).dispatch('change');
     },
     setHidden(hidden) { document.visibilityState = hidden ? 'hidden' : 'visible'; },
+    releaseFetch() { fetchGate?.resolve(); },
+    setContinuous(on) {
+      const toggle = elements.get('#continuousToggle');
+      toggle.checked = on;
+      toggle.dispatch('change');
+    },
   };
 }
 
@@ -476,4 +506,246 @@ test('starting to read a page warms the cache for its remaining clips and the ne
     assert.ok(fetched.includes(`/taiwan-ehon/audio/${story.id}/ja/${line.id}.mp3`));
   }
   assert.ok(fetched.includes(`/taiwan-ehon/audio/${story.id}/ja/${nextLine.id}.mp3`));
+});
+
+// Screen-off ("continuous") listening — engine/continuous.js's own pure logic (timeline math,
+// ID3/VBR-header stripping, Blob assembly order, a real-ffprobe playability check) is covered by
+// continuous.test.js; these tests instead cover how app.js *wires* that module into the reader:
+// the setting itself, building/playing the whole-book Blob, page tracking from `timeupdate`, and
+// next/previous turning into a seek instead of a rebuild.
+
+const MODES = E.buildListenModes(SERIES.languages);
+
+function flush() {
+  return new Promise(resolve => setImmediate(resolve));
+}
+
+test('continuous_toggle sends fixed on/off values, and toggling the setting alone does not start playback', () => {
+  const reader = createReader();
+  reader.events.length = 0;
+  reader.setContinuous(true);
+  reader.setContinuous(true); // repeat: no real change, must not track again
+  reader.setContinuous(false);
+  assert.deepEqual(recordedEvents(reader), [
+    ['event', 'continuous_toggle', { continuous: 'on', series_id: 'taiwan' }],
+    ['event', 'continuous_toggle', { continuous: 'off', series_id: 'taiwan' }],
+  ]);
+  assert.equal(reader.audio.played.length, 0, 'the toggle by itself never presses play');
+});
+
+test('continuous mode: cancelling a pending build for sentence playback, mode change, or mute prevents it from taking over audio', async () => {
+  async function startBlockedBuild() {
+    let resolve;
+    const fetchGate = new Promise(done => { resolve = done; });
+    const reader = createReader({ fetchGate: Object.assign(fetchGate, { resolve }) });
+    reader.setContinuous(true);
+    reader.elements.get('#playButton').dispatch('click');
+    return reader;
+  }
+
+  const sentenceReader = await startBlockedBuild();
+  const sentence = sentenceReader.elements.get('#pageText').querySelector('.line');
+  sentenceReader.elements.get('#pageText').dispatch('click', { target: sentence });
+  sentenceReader.releaseFetch();
+  await flush();
+  assert.ok(sentenceReader.audio.played.some(url => url.includes('/audio/')));
+  assert.ok(sentenceReader.audio.played.every(url => !url.startsWith('blob:')));
+
+  const modeReader = await startBlockedBuild();
+  modeReader.setContinuous(false);
+  modeReader.releaseFetch();
+  await flush();
+  assert.ok(modeReader.audio.played.every(url => !url.startsWith('blob:')));
+
+  const mutedReader = await startBlockedBuild();
+  mutedReader.elements.get('#muteButton').dispatch('click');
+  mutedReader.releaseFetch();
+  await flush();
+  assert.equal(mutedReader.audio.played.length, 0);
+});
+
+test('continuous mode: failed assembly leaves Play able to retry the build', async () => {
+  const reader = createReader({ failFetches: 1 });
+  const { elements, fetched, audio } = reader;
+  reader.setContinuous(true);
+  elements.get('#playButton').dispatch('click');
+  await flush();
+
+  const failedFetchCount = fetched.length;
+  assert.equal(audio.played.length, 0);
+  assert.notEqual(elements.get('#speechStatus').textContent, '');
+
+  elements.get('#playButton').dispatch('click');
+  await flush();
+
+  assert.ok(fetched.length > failedFetchCount);
+  assert.equal(audio.played.length, 1);
+  assert.match(audio.played[0], /^blob:/);
+});
+
+test('continuous mode: rejected initial playback stays paused and retries the built Blob without refetching', async () => {
+  const reader = createReader();
+  const { elements, fetched, audio, mediaSession } = reader;
+  reader.setContinuous(true);
+  audio.rejectNextPlay = true;
+  elements.get('#playButton').dispatch('click');
+  await flush();
+
+  assert.equal(mediaSession.playbackState, 'paused');
+  assert.equal(elements.get('#playIcon').textContent, '▶');
+  assert.equal(elements.get('#speechStatus').textContent, '▶ を おして はじめてね ・ 按 ▶ 開始播放');
+  const fetchCount = fetched.length;
+  const builtBlob = audio.played[0];
+  assert.match(builtBlob, /^blob:/);
+
+  elements.get('#playButton').dispatch('click');
+  await flush();
+
+  assert.equal(audio.played.length, 2);
+  assert.equal(audio.played[1], builtBlob, 'retry resumes the already-loaded Blob');
+  assert.equal(fetched.length, fetchCount, 'retry does not rebuild or refetch');
+  assert.equal(mediaSession.playbackState, 'playing');
+  assert.equal(elements.get('#speechStatus').textContent, '');
+});
+
+test('continuous mode: a delayed play rejection cannot reclaim state after sentence playback takes over', async () => {
+  const reader = createReader();
+  const { elements, audio, mediaSession } = reader;
+  let rejectPlayback;
+  audio.nextPlayResult = new Promise((_resolve, reject) => { rejectPlayback = reject; });
+  reader.setContinuous(true);
+  elements.get('#playButton').dispatch('click');
+  await flush();
+
+  const sentence = elements.get('#pageText').querySelector('.line');
+  elements.get('#pageText').dispatch('click', { target: sentence });
+  assert.equal(mediaSession.playbackState, 'playing');
+  rejectPlayback(new Error('playback rejected after handoff'));
+  await flush();
+
+  assert.equal(mediaSession.playbackState, 'playing');
+  assert.equal(elements.get('#playIcon').textContent, '⏸');
+  elements.get('#playButton').dispatch('click');
+  assert.equal(mediaSession.playbackState, 'paused');
+  assert.equal(elements.get('#playIcon').textContent, '▶');
+});
+
+test('continuous mode: pressing play builds one Blob for the whole book and starts playing it from the current page', async () => {
+  const reader = createReader();
+  const { elements, fetched } = reader;
+  const story = stories[0];
+  const timeline = C.buildContinuousTimeline(E, story, MODES, SERIES.defaultMode, 'ja-zh', TIMING);
+
+  reader.setContinuous(true);
+  elements.get('#playButton').dispatch('click');
+  await flush();
+
+  assert.equal(reader.audio.played.length, 1);
+  assert.match(reader.audio.played[0], /^blob:/, 'plays the assembled Blob through an object URL, not a per-clip path');
+  const clipCount = timeline.segments.filter(segment => segment.kind === 'clip').length;
+  assert.equal(fetched.filter(url => url.includes('/audio/')).length, clipCount);
+  assert.ok(fetched.some(url => url.endsWith('/silence/page.mp3')));
+  assert.equal(reader.mediaSession.playbackState, 'playing');
+  assert.equal(elements.get('#playIcon').textContent, '⏸');
+  // Book opens on its cover then auto-advances once in test setup (see createReader), landing
+  // on page index 1; continuous playback should pick up from there, not rewind to page 0.
+  assert.equal(reader.audio.currentTime, timeline.pages[1].startMs / 1000);
+});
+
+test('continuous mode: next/previous page seeks the shared Blob instead of rebuilding or refetching anything', async () => {
+  const reader = createReader();
+  const { elements, fetched } = reader;
+  const story = stories[0];
+  const timeline = C.buildContinuousTimeline(E, story, MODES, SERIES.defaultMode, 'ja-zh', TIMING);
+
+  reader.setContinuous(true);
+  elements.get('#playButton').dispatch('click');
+  await flush();
+  const fetchCountAfterFirstBuild = fetched.length;
+
+  elements.get('#nextButton').dispatch('click');
+  await flush();
+  assert.equal(fetched.length, fetchCountAfterFirstBuild, 'turning the page while continuous is live must not fetch anything new');
+  assert.equal(elements.get('#pageCounter').textContent, `3 / ${story.pages.length}`);
+  assert.equal(reader.audio.currentTime, timeline.pages[2].startMs / 1000);
+  assert.equal(reader.mediaSession.playbackState, 'playing', 'seeking must not interrupt playback');
+
+  elements.get('#prevButton').dispatch('click');
+  assert.equal(elements.get('#pageCounter').textContent, `2 / ${story.pages.length}`);
+  assert.equal(reader.audio.currentTime, timeline.pages[1].startMs / 1000);
+
+  // Media Session's hardware previous/next controls turn the page the same way.
+  reader.mediaSession.actionHandlers.nexttrack();
+  assert.equal(elements.get('#pageCounter').textContent, `3 / ${story.pages.length}`);
+  reader.mediaSession.actionHandlers.previoustrack();
+  assert.equal(elements.get('#pageCounter').textContent, `2 / ${story.pages.length}`);
+  assert.equal(fetched.length, fetchCountAfterFirstBuild, 'still no new fetches after four more turns');
+});
+
+test('continuous mode: the visible page follows `timeupdate` only while visible, then catches up immediately on becoming visible again', async () => {
+  const reader = createReader();
+  const { elements, document } = reader;
+  const story = stories[0];
+  const timeline = C.buildContinuousTimeline(E, story, MODES, SERIES.defaultMode, 'ja-zh', TIMING);
+  const lastPageIndex = story.pages.length - 1;
+
+  reader.setContinuous(true);
+  elements.get('#playButton').dispatch('click');
+  await flush();
+
+  reader.audio.currentTime = timeline.pages[lastPageIndex].startMs / 1000;
+  reader.audio.ontimeupdate();
+  assert.equal(elements.get('#pageCounter').textContent, `${story.pages.length} / ${story.pages.length}`);
+
+  // Now simulate the screen turning off (hidden) and the reader turning several pages "blind":
+  // no DOM work should happen while hidden, matching how a suspended/backgrounded tab behaves.
+  reader.setHidden(true);
+  reader.audio.currentTime = timeline.pages[1].startMs / 1000;
+  reader.audio.ontimeupdate();
+  assert.equal(elements.get('#pageCounter').textContent, `${story.pages.length} / ${story.pages.length}`, 'no UI work while hidden');
+
+  // Turning the screen back on must catch the displayed page up immediately, without waiting
+  // for another `timeupdate` tick.
+  reader.setHidden(false);
+  document.dispatchEvent({ type: 'visibilitychange' });
+  assert.equal(elements.get('#pageCounter').textContent, `2 / ${story.pages.length}`);
+});
+
+test('continuous mode: changing the listening mode mid-playback rebuilds the Blob at the same page, still playing', async () => {
+  const reader = createReader();
+  const { elements } = reader;
+
+  reader.setContinuous(true);
+  elements.get('#playButton').dispatch('click');
+  await flush();
+  const firstBlobUrl = reader.audio.played[0];
+  const pageBefore = elements.get('#pageCounter').textContent;
+
+  reader.selectMode('zh-ja');
+  await flush();
+
+  assert.equal(reader.audio.played.length, 2);
+  assert.notEqual(reader.audio.played[1], firstBlobUrl, 'a fresh Blob is built for the new mode');
+  assert.equal(elements.get('#pageCounter').textContent, pageBefore, 'stays on the same page across the rebuild');
+  assert.equal(reader.mediaSession.playbackState, 'playing');
+});
+
+test('continuous mode: muting pauses playback in place without losing position; the default sentence-by-sentence mode is unaffected by any of this', async () => {
+  const reader = createReader();
+  const { elements } = reader;
+
+  reader.setContinuous(true);
+  elements.get('#playButton').dispatch('click');
+  await flush();
+  reader.audio.currentTime = 12.34;
+
+  elements.get('#muteButton').dispatch('click');
+  assert.equal(reader.audio.currentTime, 12.34, 'muting must not rewind continuous playback');
+  assert.equal(elements.get('#playIcon').textContent, '▶');
+
+  // Sentence-by-sentence playback (settings.continuous off, the default) is a completely
+  // separate code path and must still behave exactly as before this feature existed.
+  const plainReader = createReader();
+  plainReader.elements.get('#playButton').dispatch('click');
+  assert.equal(plainReader.audio.played[0], '/taiwan-ehon/audio/bai-zei-qi/ja/p01-1.mp3');
 });

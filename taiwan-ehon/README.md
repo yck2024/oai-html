@@ -11,24 +11,25 @@ covers the second batch of three stories, prepared alongside a parallel batch (�
 
 ## Analytics and reading privacy
 
-This storybook uses the existing GA4 tag (`G-QLFWNZWDSS`) for its page views and five small events, with only the listed parameters:
+This storybook uses the existing GA4 tag (`G-QLFWNZWDSS`) for its page views and six small events, with only the listed parameters:
 
 - `book_open` (`book_id`: a fixed story id), when a book is opened from the bookshelf
 - `book_complete` (`book_id`: a fixed story id), once per opening upon reaching its ending page
 - `listen_mode_change` (`listen_mode`: `ja-zh`, `zh-ja`, `ja`, or `zh`), when listening order changes
 - `zhuyin_toggle` (`zhuyin`: `on` or `off`), when 注音 visibility changes
 - `auto_turn_toggle` (`auto_turn`: `on` or `off`), when auto-turn changes
+- `continuous_toggle` (`continuous`: `on` or `off`), when continuous listening changes
 
-Every one of those five events also carries `series_id: "taiwan"` (added when this storybook moved
+Every one of those six events also carries `series_id: "taiwan"` (added when this storybook moved
 onto the shared multi-series engine — see "The shared engine" below). `book_id` itself is
 unchanged: it stays the bare story id it always was (`bai-zei-qi`, not `taiwan:bai-zei-qi`), so
 historical reports are not affected. `page_view` is unchanged and does not carry `series_id` —
 its `page_location` already identifies the series by URL.
 
-`book_id`, `listen_mode`, `zhuyin`, `auto_turn`, and `series_id` only appear in GA reports after
-registration as event-scoped custom dimensions in GA Admin → Custom definitions. That
-registration must be done by a GA administrator; this repository cannot do it — `series_id` is a
-new dimension and needs its own registration, the same as the first four already did. No story
+`book_id`, `listen_mode`, `zhuyin`, `auto_turn`, `continuous`, and `series_id` only appear in GA
+reports after registration as event-scoped custom dimensions in GA Admin → Custom definitions. That
+registration must be done by a GA administrator; this repository cannot do it — each event
+parameter needs its own registration as an event-scoped custom dimension. No story
 text, page-by-page or sentence-level events, timing, durations, or user identifiers beyond GA
 defaults are sent. Shared click and copy tracking stays off via `data-analytics-ignore`. Each
 book has its own path (`/taiwan-ehon/<book-id>/`) and its own GA4 page view — `page_location` is
@@ -39,29 +40,14 @@ selection appears there. App navigation writes only shelf and book paths, never 
 or query state. Referrer stays trimmed to its origin. Settings are saved locally on the device
 for reading, but nothing new is stored in the browser for analytics; no reading history is saved.
 
-## The shared engine, and why this page's URL and behavior did not change
+## The shared engine
 
-`app.js`, `ehon.js`, `offline.js`, `sw.js`, `generate-book-pages.js`, `test-dom.js`, and their
-tests are no longer written here — they are unmodified copies of `../engine/`, synced by
-`node engine/build.js` (CI runs `node engine/build.js --check` and fails if a copy has drifted
-from the engine source). `series.config.js` and `theme.css` are this folder's own: they are the
-only two files that make this page behave and look like taiwan-ehon rather than any other
-series, and every value in `series.config.js` is exactly what the pre-refactor `app.js`
-hard-coded (its `SHELF_MARKER`, `HINT`, `UNAVAILABLE`, page titles, etc.), so nothing about this
-page's rendering or behavior changed. `ehon.css` is `theme.css`'s color tokens followed by
-`engine/ehon.css`'s shared layout rules, concatenated by the same build step into one file — the
-served `ehon.css` is byte-identical to what this page shipped before the refactor.
-
-This refactor added exactly one visible-to-source-diff line to this folder's `index.html` and
-every generated `<book>/index.html`: `<script src="./series.config.js"></script>`, needed so the
-shared `app.js`/`offline.js`/`sw.js` can read this series' own identity in the browser. It adds no
-element to the rendered page, is not part of the accessibility tree, and was verified (via a
-`chrome-devtools`-captured DOM snapshot taken before and after the refactor) to produce an
-otherwise pixel-for-pixel identical shelf and reader. This series also keeps every new
-engine feature — a third (`en`) language, more than two listening-mode combinations, and the
-"show only the narrated language" toggle — turned off (see `japan-ehon/README.md` for the
-series that turns them on); `series.config.js`'s `languages: ["ja", "zh"]` and
-`narratedOnlyToggle: false` are what turns them off here.
+The shared reader runtime and its tests are maintained in `../engine/` and synced into this
+series by `node engine/build.js`; CI checks those generated copies for drift. This folder keeps
+its own `series.config.js`, `theme.css`, and `audio-timing.js`. Its Japanese/Mandarin language
+configuration and disabled narrated-only option are specific to this series; continuous listening
+is available through the shared engine. See [the engine guide](../engine/README.md) for runtime
+ownership and generated-file details.
 
 **This page's URL, and every one of its eight book URLs, will never move** without a separately
 approved migration — they are shared publicly and installed as offline PWAs on real devices.
@@ -71,7 +57,9 @@ The storybook is also installable as an offline-capable app (a web manifest and 
 
 ## Listening with the screen off
 
-With 自動翻頁 (auto-turn) on, narration is designed to continue sentence by sentence and page by page — in whichever listening mode is selected — when the app is backgrounded or the screen is off. A hidden tab skips the usual pauses between clips and pages because its timers can be suspended; playback chains through one audio element, and the page shown catches up with what's playing when the screen comes back on. The Media Session API also exposes the book's title and cover, plus play, pause, and next/previous page controls. Automated tests cover this background flow, but it has not been verified on a live Android device; browser and OS behavior may vary. iOS Safari's background/lock-screen behavior was not verified either.
+With 自動翻頁 (auto-turn) on, narration is designed to continue sentence by sentence and page by page — in whichever listening mode is selected — when the app is backgrounded or the screen is off. A hidden tab skips the usual pauses between clips and pages because its timers can be suspended; playback chains through one audio element, and the page shown catches up with what's playing when the screen comes back on. The Media Session API also exposes the book's title and cover, plus play, pause, and next/previous page controls.
+
+That per-clip chaining still depends on the browser keeping the page's own JavaScript timers and `ended` event running while the screen is off, which Android Chrome does not reliably do. 「がめんを けしても よみつづける ・ 關掉螢幕也繼續唸」 is a second, engine-wide option (shared by every series — see `../engine/README.md`) built specifically for that case: turning it on joins the whole book's clips for the selected listening mode, plus short silence clips for the pauses between them, into one continuous audio file in memory before playback starts, so there is only ever one already-started `<audio>` element for Android to keep alive — no per-clip re-arming required. Every clip's exact duration is precomputed at build time (`../engine/generate-audio-timing.js`, via ffprobe, into this folder's own `audio-timing.js`), so the page and highlighted sentence can be recovered from the audio's own playback position alone, even after the screen was off long enough that no UI update ran; next/previous page (on-screen or from the lock screen) seeks within that same file instead of restarting anything. No second copy of any clip is stored — the joined file is assembled from the same per-clip URLs the offline download and sentence-by-sentence modes already use, and is discarded once played. This mode was built for Android Chrome first, per the request that prompted it. Automated tests cover the timing math and simulate hidden/visible transitions, but a real screen-locked Android device was not available to verify against. iOS Safari's background/lock-screen behavior — for either listening mode — was not verified.
 
 ## 虎姑婆 (hu-gu-po)
 
