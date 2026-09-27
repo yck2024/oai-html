@@ -9,6 +9,18 @@ The two launch stories, 白賊七 and 射日英雄, are documented where they we
 covers the second batch of three stories, prepared alongside a parallel batch (邵族白鹿傳說,
 新埔顯伯公, 大甲媽祖遶境進香) recommended by the same research review.
 
+## Analytics and reading privacy
+
+This storybook uses the existing GA4 tag (`G-QLFWNZWDSS`) for its page view and five small events, with only the listed parameters:
+
+- `book_open` (`book_id`: a fixed story id), when a book is opened from the bookshelf
+- `book_complete` (`book_id`: a fixed story id), once per opening upon reaching its ending page
+- `listen_mode_change` (`listen_mode`: `ja-zh`, `zh-ja`, `ja`, or `zh`), when listening order changes
+- `zhuyin_toggle` (`zhuyin`: `on` or `off`), when 注音 visibility changes
+- `auto_turn_toggle` (`auto_turn`: `on` or `off`), when auto-turn changes
+
+`book_id`, `listen_mode`, `zhuyin`, and `auto_turn` only appear in GA reports after registration as event-scoped custom dimensions in GA Admin → Custom definitions. That registration must be done by a GA administrator; this repository cannot do it. No story text, page-by-page or sentence-level events, timing, durations, or user identifiers beyond GA defaults are sent. Shared click and copy tracking stays off via `data-analytics-ignore`. Book selection and page turns never change the URL, hash, or history. The page-view URL is trimmed to the path, referrer to its origin, and title fixed, even while the visible reader title changes. Settings are saved locally for reading, but nothing new is stored in the browser for analytics; no reading history is saved.
+
 ## 虎姑婆 (hu-gu-po)
 
 A gentle, agency-forward retelling: two children notice a night visitor isn't quite who she claims
