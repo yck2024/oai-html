@@ -356,6 +356,7 @@ function loadPage({ storage = new MemoryStorage(), withApp = false, recordWin, n
   const window = {
     addEventListener(type, callback) { (listeners[type] ||= []).push(callback); },
     dispatch(type, event) { (listeners[type] || []).forEach(callback => callback(event)); },
+    dispatchEvent(event) { this.dispatch(event.type, event); },
   };
   Object.defineProperty(window, 'localStorage', {
     get() {
@@ -363,7 +364,10 @@ function loadPage({ storage = new MemoryStorage(), withApp = false, recordWin, n
       return storage;
     },
   });
-  const context = { window, document: page.document, Audio: FakeAudio, setInterval, clearInterval, setTimeout, clearTimeout };
+  class FakeEvent {
+    constructor(type) { this.type = type; }
+  }
+  const context = { window, document: page.document, Event: FakeEvent, Audio: FakeAudio, setInterval, clearInterval, setTimeout, clearTimeout };
   const run = file => vm.runInNewContext(fs.readFileSync(path.join(__dirname, file), 'utf8'), context);
   let game = null;
   run('i18n.js');

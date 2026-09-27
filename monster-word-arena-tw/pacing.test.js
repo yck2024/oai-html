@@ -67,4 +67,3 @@ test('the break pacer re-rolls a fresh 2-or-3 threshold after each nudge', () =>
   assert.equal(pacer.recordWin(), true);
   assert.equal(pacer.threshold, 3, 'still re-rolls to 3 with this random source');
 });
-
