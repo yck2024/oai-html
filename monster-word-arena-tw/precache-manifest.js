@@ -357,5 +357,6 @@
     "audio/zh/weather-sunny.mp3",
     "audio/zh/weather-thunder.mp3",
     "audio/zh/weather-windy.mp3"
-  ]
+  ],
+  "MEDIA_VERSION": "fe1d6351b202"
 }));

@@ -52,7 +52,7 @@ test('the hub and every game page expose parsed PWA document metadata', () => {
     assert.ok(elements.some(item => item.tag === 'link' && item.rel?.trim().split(/\s+/).includes('manifest') && item.href === `${rel}manifest.webmanifest`), `${id}: links the web manifest`);
     assert.ok(elements.some(item => item.tag === 'link' && item.rel?.trim().split(/\s+/).includes('apple-touch-icon') && item.href === `${rel}icons/apple-touch-icon.png`), `${id}: links an apple-touch-icon`);
     assert.ok(elements.some(item => item.tag === 'meta' && item.name === 'apple-mobile-web-app-capable' && item.content === 'yes'), `${id}: sets the iOS home-screen meta tag`);
-    assert.ok(html.includes(`src="${rel}offline.js"`), `${id}: loads the script that registers the service worker`);
+    assert.ok(elements.some(item => item.tag === 'script' && item.src === `${rel}offline.js`), `${id}: loads the script that registers the service worker`);
   }
 });
 
@@ -60,6 +60,7 @@ test('the precache manifest is generated from each game\'s images/ and audio/ fo
   const fresh = buildManifest();
   assert.deepEqual(MANIFEST.IMAGES, fresh.IMAGES, 'precache-manifest.js images match a fresh scan — run node generate-precache-manifest.js if this fails');
   assert.deepEqual(MANIFEST.AUDIO, fresh.AUDIO, 'precache-manifest.js audio matches a fresh scan — run node generate-precache-manifest.js if this fails');
+  assert.equal(MANIFEST.MEDIA_VERSION, fresh.MEDIA_VERSION, 'precache-manifest.js media version matches current asset contents — run node generate-precache-manifest.js if this fails');
 });
 
 test('the shell precache list covers every static app file across all three games', () => {

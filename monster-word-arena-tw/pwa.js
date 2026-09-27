@@ -33,7 +33,6 @@
 
   const CACHE_VERSION = 'v1';
   const SHELL_CACHE_NAME = `monster-word-arena-shell-${CACHE_VERSION}`;
-  const MEDIA_CACHE_NAME = 'monster-word-arena-media';
 
   function isAnalyticsUrl(url) {
     return /^https:\/\/(www\.googletagmanager\.com|www\.google-analytics\.com|[a-z0-9-]+\.google-analytics\.com)\//.test(url)
@@ -53,7 +52,6 @@
     mediaAssetUrls,
     CACHE_VERSION,
     SHELL_CACHE_NAME,
-    MEDIA_CACHE_NAME,
     isAnalyticsUrl,
     isMediaUrl,
   };

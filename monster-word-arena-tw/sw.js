@@ -11,7 +11,7 @@
 //    network-only, never cached, never intercepted with a fallback.
 //  - shell (HTML/CSS/JS/manifest/icons): stale-while-revalidate, in a cache that is versioned
 //    so `activate` can drop stale files from a previous deploy.
-//  - media (images/audio): cache-first, from an unversioned cache fully populated at install.
+//  - media (images/audio): cache-first, from a content-versioned cache populated at install.
 //    Audio responses answer Range requests (206) from the cached full clip so iOS Safari can
 //    seek/play offline.
 //
@@ -30,7 +30,7 @@
   }
 })(typeof self !== 'undefined' ? self : this, (PWA, MANIFEST) => {
   const SHELL_CACHE_NAME = PWA.SHELL_CACHE_NAME;
-  const MEDIA_CACHE_NAME = PWA.MEDIA_CACHE_NAME;
+  const MEDIA_CACHE_NAME = `monster-word-arena-media-${MANIFEST.MEDIA_VERSION}`;
 
   function shellUrls(base) {
     return PWA.shellAssetUrls(base);
@@ -151,7 +151,8 @@
         const names = await caches.keys();
         await Promise.all(
           names
-            .filter(name => name.startsWith('monster-word-arena-shell-') && name !== SHELL_CACHE_NAME)
+            .filter(name => (name.startsWith('monster-word-arena-shell-') && name !== SHELL_CACHE_NAME)
+              || (name.startsWith('monster-word-arena-media') && name !== MEDIA_CACHE_NAME))
             .map(name => caches.delete(name)),
         );
         await self.clients.claim();

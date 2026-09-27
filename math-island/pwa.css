@@ -1,6 +1,10 @@
 /* Toasts (update available / install hint), shared by the Math Island hub and all three game
    pages so the PWA install/update UI looks and behaves the same everywhere in the app. */
 
+.pwa-toast[hidden] {
+  display: none;
+}
+
 .pwa-toast {
   position: fixed;
   z-index: 20;

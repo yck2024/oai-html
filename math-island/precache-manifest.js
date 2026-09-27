@@ -75,5 +75,6 @@
     "poko/audio/poko-count.mp3",
     "poko/audio/poko-finish.mp3",
     "poko/audio/poko-try-again.mp3"
-  ]
+  ],
+  "MEDIA_VERSION": "557aa52c594b"
 }));

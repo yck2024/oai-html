@@ -4,6 +4,7 @@
 // service worker's offline media list can never drift from what actually ships in the app.
 // Run with: node monster-word-arena-tw/generate-precache-manifest.js
 
+const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -23,10 +24,14 @@ function listFiles(dir, extension) {
 }
 
 function buildManifest() {
-  return {
-    IMAGES: listFiles('images', '.webp'),
-    AUDIO: listFiles('audio', '.mp3'),
-  };
+  const images = listFiles('images', '.webp');
+  const audio = listFiles('audio', '.mp3');
+  const mediaVersion = crypto.createHash('sha256');
+  for (const file of [...images, ...audio]) {
+    mediaVersion.update(file);
+    mediaVersion.update(fs.readFileSync(path.join(ROOT, file)));
+  }
+  return { IMAGES: images, AUDIO: audio, MEDIA_VERSION: mediaVersion.digest('hex').slice(0, 12) };
 }
 
 function render(manifest) {

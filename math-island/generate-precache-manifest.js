@@ -4,6 +4,7 @@
 // service worker's offline media list can never drift from what actually ships in the app.
 // Run with: node math-island/generate-precache-manifest.js
 
+const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -34,7 +35,14 @@ function buildManifest() {
     images.push(...listFiles(`${game}/images`, '.webp'));
     audio.push(...listFiles(`${game}/audio`, '.mp3'));
   }
-  return { IMAGES: images.sort(), AUDIO: audio.sort() };
+  const sortedImages = images.sort();
+  const sortedAudio = audio.sort();
+  const mediaVersion = crypto.createHash('sha256');
+  for (const file of [...sortedImages, ...sortedAudio]) {
+    mediaVersion.update(file);
+    mediaVersion.update(fs.readFileSync(path.join(ROOT, file)));
+  }
+  return { IMAGES: sortedImages, AUDIO: sortedAudio, MEDIA_VERSION: mediaVersion.digest('hex').slice(0, 12) };
 }
 
 function render(manifest) {
