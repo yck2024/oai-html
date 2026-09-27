@@ -29,6 +29,7 @@ function createRoutingReader({ initialPath }) {
     querySelector: selector => elements.get(selector) || null,
     querySelectorAll: selector => (selector === 'input[name="listenMode"]' ? modeInputs : []),
     createElement: tagName => new FakeElement(tagName),
+    createTextNode: text => text,
     createDocumentFragment: () => new FakeElement('#fragment'),
     addEventListener() {},
   };
