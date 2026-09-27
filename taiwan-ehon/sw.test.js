@@ -15,7 +15,7 @@ function fakeCaches() {
     if (!named.has(name)) named.set(name, new Map());
     const store = named.get(name);
     return {
-      match: async url => store.get(url),
+      match: async url => store.get(url)?.clone(),
       put: async (url, response) => { store.set(url, response.clone ? response.clone() : response); },
       delete: async url => store.delete(url),
       addAll: async urls => { for (const url of urls) store.set(url, new Response(`stub:${url}`)); },
@@ -179,6 +179,41 @@ test('a cached audio clip answers a Range request with a correct 206 partial res
   const body = new Uint8Array(await response.arrayBuffer());
   assert.equal(body.length, 500);
   assert.deepEqual([...body.slice(0, 3)], [...bytes.slice(500, 503)]);
+});
+
+test('concurrent cached Range requests return immediately and share one refresh that updates the cache', async () => {
+  const caches = fakeCaches();
+  const url = `${BASE}audio/hu-gu-po/ja/p01-1.mp3`;
+  const cache = await caches.open(sw.MEDIA_CACHE_NAME);
+  await cache.put(url, new Response(new Uint8Array([1, 2, 3, 4]), { headers: { 'Content-Type': 'audio/mpeg' } }));
+
+  let releaseFetch;
+  const fetchGate = new Promise(resolve => { releaseFetch = resolve; });
+  let fetchCount = 0;
+  const refreshes = [];
+  const fetchImpl = async () => {
+    fetchCount += 1;
+    await fetchGate;
+    return new Response(new Uint8Array([5, 6, 7]), { headers: { 'Content-Type': 'audio/mpeg' } });
+  };
+  const onBackground = refresh => refreshes.push(refresh);
+  const requestA = new Request(url, { headers: { Range: 'bytes=0-1' } });
+  const requestB = new Request(url, { headers: { Range: 'bytes=2-3' } });
+
+  const [responseA, responseB] = await Promise.all([
+    sw.respond(requestA, { caches, fetch: fetchImpl, onBackground }),
+    sw.respond(requestB, { caches, fetch: fetchImpl, onBackground }),
+  ]);
+  assert.deepEqual([...new Uint8Array(await responseA.arrayBuffer())], [1, 2]);
+  assert.deepEqual([...new Uint8Array(await responseB.arrayBuffer())], [3, 4]);
+  assert.equal(fetchCount, 1, 'concurrent Range requests share a single full-file fetch');
+  assert.equal(refreshes.length, 2);
+  assert.strictEqual(refreshes[0], refreshes[1], 'each event keeps the shared refresh alive');
+
+  releaseFetch();
+  await Promise.all(refreshes);
+  const refreshed = await cache.match(url);
+  assert.deepEqual([...new Uint8Array(await refreshed.arrayBuffer())], [5, 6, 7]);
 });
 
 test('parseRange rejects absent, malformed, and out-of-bounds ranges so callers fall back to the full file', () => {

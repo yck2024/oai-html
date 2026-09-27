@@ -29,6 +29,7 @@
 })(typeof self !== 'undefined' ? self : this, (E, STORIES) => {
   const SHELL_CACHE_NAME = E.SHELL_CACHE_NAME;
   const MEDIA_CACHE_NAME = E.MEDIA_CACHE_NAME;
+  const mediaRefreshes = new Map();
 
   function shellUrls(base) {
     return E.shellAssetUrls(STORIES, base);
@@ -87,7 +88,7 @@
     });
   }
 
-  async function handleMedia(request, caches, fetch) {
+  async function handleMedia(request, caches, fetch, onBackground = () => {}) {
     const cache = await caches.open(MEDIA_CACHE_NAME);
     const cached = await cache.match(request.url);
     const rangeHeader = request.headers.get('Range');
@@ -95,9 +96,16 @@
     // A cached full response can answer iOS audio Range requests without a network round-trip.
     // Refresh its full copy in the background when online; never put a partial 206 in CacheStorage.
     if (cached && rangeHeader) {
-      Promise.resolve(fetch(request.url)).then(response => {
-        if (response && response.ok) return cache.put(request.url, response.clone());
-      }).catch(() => {});
+      let refresh = mediaRefreshes.get(request.url);
+      if (!refresh) {
+        refresh = Promise.resolve().then(() => fetch(request.url)).then(response => {
+          if (response && response.ok) return cache.put(request.url, response.clone());
+        }).catch(() => {}).finally(() => {
+          if (mediaRefreshes.get(request.url) === refresh) mediaRefreshes.delete(request.url);
+        });
+        mediaRefreshes.set(request.url, refresh);
+      }
+      onBackground(refresh);
       return buildRangeResponse(cached, rangeHeader);
     }
 
@@ -136,10 +144,10 @@
     throw new Error(`taiwan-ehon: shell asset unavailable offline: ${request.url}`);
   }
 
-  async function respond(request, { caches, fetch }) {
+  async function respond(request, { caches, fetch, onBackground = () => {} }) {
     const kind = requestKind(request.url);
     if (kind === 'analytics') return fetch(request);
-    if (kind === 'media') return handleMedia(request, caches, fetch);
+    if (kind === 'media') return handleMedia(request, caches, fetch, onBackground);
     return handleShell(request, caches, fetch);
   }
 
