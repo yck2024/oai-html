@@ -18,3 +18,6 @@ jobs:
 
       - name: Validate page manifest and published page directories
         run: python .github/scripts/validate_pages.py
+
+      - name: Test taiwan-ehon storybook
+        run: node --test taiwan-ehon/*.test.js
