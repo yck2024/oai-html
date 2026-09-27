@@ -230,6 +230,10 @@
   // into one in-memory Blob, and plays it from the current page onward. No second copy of any
   // clip is stored anywhere — the Blob is built fresh from the same clip URLs the offline
   // download and sentence-by-sentence modes already use, and is discarded once played.
+  function cancelContinuousBuild() {
+    continuousToken++;
+  }
+
   async function playContinuous({ paused = false } = {}) {
     const token = ++continuousToken;
     const requestedBook = book;
@@ -736,6 +740,7 @@
       playContinuous({ paused });
       return;
     }
+    cancelContinuousBuild();
     continuousPlayer.stop();
     listening = !paused;
     queueKind = 'page';
@@ -749,6 +754,7 @@
   function readLine(lineId, lang) {
     if (!book || muted) return;
     clearTimeout(turnTimer);
+    cancelContinuousBuild();
     continuousPlayer.stop(); // a one-off sentence tap always uses the narrator, continuous or not
     listening = false;
     queueKind = 'line';
@@ -853,7 +859,10 @@
       // narrator.stop() would pause/rewind the shared <audio> element even when narrator
       // itself is idle, which would rewind a live continuous Blob back to its start — see the
       // same guard in goTo() above.
-      if (activeAudioPlayer() === continuousPlayer) continuousPlayer.pause();
+      if (activeAudioPlayer() === continuousPlayer && continuousPlayer.state === 'loading') {
+        cancelContinuousBuild();
+        continuousPlayer.stop();
+      } else if (activeAudioPlayer() === continuousPlayer) continuousPlayer.pause();
       else narrator.stop();
       listening = false;
     }

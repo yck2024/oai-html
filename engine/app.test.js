@@ -26,7 +26,7 @@ function createMediaSession() {
   };
 }
 
-function createReader({ analytics = true, series = SERIES, storyList = stories } = {}) {
+function createReader({ analytics = true, series = SERIES, storyList = stories, fetchGate = null } = {}) {
   const elements = new Map(READER_IDS.map(id => [`#${id}`, new FakeElement()]));
   const modeInputs = Object.keys(E.buildListenModes(series.languages)).map(value => {
     const input = new FakeElement('input');
@@ -85,7 +85,7 @@ function createReader({ analytics = true, series = SERIES, storyList = stories }
     MediaMetadata: class { constructor(options) { Object.assign(this, options); } },
     fetch: url => {
       fetched.push(url);
-      return Promise.resolve({ ok: true, arrayBuffer: () => Promise.resolve(new ArrayBuffer(4)) });
+      return (fetchGate || Promise.resolve()).then(() => ({ ok: true, arrayBuffer: () => Promise.resolve(new ArrayBuffer(4)) }));
     },
     setTimeout: () => 1,
     clearTimeout() {},
@@ -112,6 +112,7 @@ function createReader({ analytics = true, series = SERIES, storyList = stories }
       modeInputs.find(input => input.value === mode).dispatch('change');
     },
     setHidden(hidden) { document.visibilityState = hidden ? 'hidden' : 'visible'; },
+    releaseFetch() { fetchGate?.resolve(); },
     setContinuous(on) {
       const toggle = elements.get('#continuousToggle');
       toggle.checked = on;
@@ -514,6 +515,37 @@ test('continuous_toggle sends fixed on/off values, and toggling the setting alon
     ['event', 'continuous_toggle', { continuous: 'off', series_id: 'taiwan' }],
   ]);
   assert.equal(reader.audio.played.length, 0, 'the toggle by itself never presses play');
+});
+
+test('continuous mode: cancelling a pending build for sentence playback, mode change, or mute prevents it from taking over audio', async () => {
+  async function startBlockedBuild() {
+    let resolve;
+    const fetchGate = new Promise(done => { resolve = done; });
+    const reader = createReader({ fetchGate: Object.assign(fetchGate, { resolve }) });
+    reader.setContinuous(true);
+    reader.elements.get('#playButton').dispatch('click');
+    return reader;
+  }
+
+  const sentenceReader = await startBlockedBuild();
+  const sentence = sentenceReader.elements.get('#pageText').querySelector('.line');
+  sentenceReader.elements.get('#pageText').dispatch('click', { target: sentence });
+  sentenceReader.releaseFetch();
+  await flush();
+  assert.ok(sentenceReader.audio.played.some(url => url.includes('/audio/')));
+  assert.ok(sentenceReader.audio.played.every(url => !url.startsWith('blob:')));
+
+  const modeReader = await startBlockedBuild();
+  modeReader.setContinuous(false);
+  modeReader.releaseFetch();
+  await flush();
+  assert.ok(modeReader.audio.played.every(url => !url.startsWith('blob:')));
+
+  const mutedReader = await startBlockedBuild();
+  mutedReader.elements.get('#muteButton').dispatch('click');
+  mutedReader.releaseFetch();
+  await flush();
+  assert.equal(mutedReader.audio.played.length, 0);
 });
 
 test('continuous mode: pressing play builds one Blob for the whole book and starts playing it from the current page', async () => {
