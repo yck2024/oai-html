@@ -18,8 +18,14 @@
   const SHOWER_STARS = 12;
   const ACTION_CLASSES = ['do-ready', 'do-spar', 'thinking', 'is-bowing', 'is-victory'];
 
-  function comboText(streak) {
-    return streak >= 2 ? `${streak} in a row! 連續答對 ${streak} 題！` : '';
+  const COMBO_TEXT = {
+    en: streak => `${streak} in a row!`,
+    zh: streak => `連續答對 ${streak} 題！`,
+    ja: streak => `${streak}かい　れんぞく　せいかい！`,
+  };
+
+  function comboText(streak, lang = 'en') {
+    return streak >= 2 ? (COMBO_TEXT[lang] || COMBO_TEXT.en)(streak) : '';
   }
 
   function createArenaStage(doc) {

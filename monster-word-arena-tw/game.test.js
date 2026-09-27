@@ -6,15 +6,16 @@ const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 const test = require('node:test');
 const vm = require('node:vm');
-const { GOAL, TOPICS, LEVELS, WORD_TOPICS, REACTIONS, createGame, createSpeechPlayer } = require('./game.js');
+const { GOAL_BY_LEVEL, CHOICE_COUNT, TOPICS, LEVELS, WORD_TOPICS, REACTIONS, createGame, createSpeechPlayer } = require('./game.js');
 const { EFFECTS, EFFECT_LEVEL, MUSIC_LEVEL, createSoundBoard } = require('./sounds.js');
 const { POSES, ART, TIMING, comboText } = require('./arena.js');
 const { STICKERS, COSTUMES } = require('./rewards.js');
+const I18N = require('./i18n.js');
 const prompts = require('./audio/prompts.json');
 const reactions = require('./audio/reactions.json');
 
 const steadyRandom = () => 0.3;
-const WORD_TOPIC_IDS = ['colors', 'face', 'family', 'animals', 'fruit'];
+const WORD_TOPIC_IDS = ['colors', 'face', 'family', 'animals', 'fruit', 'vegetables', 'flowers', 'vehicles', 'weather'];
 
 // Small deterministic generator so long play sessions are repeatable in tests.
 function seededRandom(seed) {
@@ -196,6 +197,17 @@ class FakeElement {
   }
 
   querySelector(selector) {
+    if (selector.startsWith('[data-') && selector.endsWith(']')) {
+      const [, attr, value] = selector.match(/^\[([\w-]+)="([^"]*)"\]$/) || [];
+      const target = [];
+      const visit = parent => parent.children.forEach(child => {
+        if (!child.tagName) return;
+        if (child.dataset && child.dataset[attrToCamel(attr)] === value) target.push(child);
+        visit(child);
+      });
+      visit(this);
+      return target[0] || null;
+    }
     return this.querySelectorAll(selector)[0] || null;
   }
 
@@ -208,6 +220,10 @@ class FakeElement {
   }
 
   focus() {}
+}
+
+function attrToCamel(attr) {
+  return attr.replace(/^data-/, '').replace(/-([a-z])/g, (_match, letter) => letter.toUpperCase());
 }
 
 class FakeAudio {
@@ -336,6 +352,24 @@ function createTestBoard() {
   };
 }
 
+class FakeLocalStorage {
+  constructor() {
+    this.store = new Map();
+  }
+
+  getItem(key) {
+    return this.store.has(key) ? this.store.get(key) : null;
+  }
+
+  setItem(key, value) {
+    this.store.set(key, String(value));
+  }
+
+  removeItem(key) {
+    this.store.delete(key);
+  }
+}
+
 function createPageDocument() {
   const elements = new Map();
   const allElements = [];
@@ -355,27 +389,40 @@ function createPageDocument() {
     return element;
   }
 
-  PAGE.roots.forEach(build);
+  const roots = PAGE.roots.map(build);
+  // Live tree search (not a fixed snapshot), so elements app.js creates and appends after
+  // load — the topic tabs and level buttons — are found too.
+  function liveElements() {
+    const found = [];
+    const visit = node => {
+      if (!node.tagName) return;
+      found.push(node);
+      node.children.forEach(visit);
+    };
+    roots.forEach(visit);
+    return found;
+  }
+
   const document = {
     documentElement: allElements.find(element => element.tagName === 'HTML'),
     hidden: false,
-    querySelector: selector => allElements.find(element => matchesSelector(element, selector)) || null,
-    querySelectorAll: selector => allElements.filter(element => matchesSelector(element, selector)),
+    querySelector: selector => liveElements().find(element => matchesSelector(element, selector)) || null,
+    querySelectorAll: selector => liveElements().filter(element => matchesSelector(element, selector)),
     createElement: tagName => new FakeElement(tagName),
     createTextNode: text => ({ textContent: String(text) }),
   };
-  return { document, elements };
+  return { document, elements, allElements };
 }
 
 function createAppFixture(game, globals = {}) {
   const { document, elements } = createPageDocument();
   const championCards = document.querySelectorAll('.champion-card');
-  const topicTabs = document.querySelectorAll('.topic-tab');
-  const levelButtons = document.querySelectorAll('.level-option');
   const speechLanguageButtons = document.querySelectorAll('.speech-language');
+  const textLanguageButtons = document.querySelectorAll('.text-language');
   const effects = [];
   const sound = { board: null, ctx: null, timers: createFakeTimers() };
   const window = { AudioContext: FakeAudioContext, addEventListener() {} };
+  if (globals.localStorage) window.localStorage = globals.localStorage;
   // The page's own scripts publish these modules; the fixture swaps in the test game and records sounds.
   const hooks = {
     FriendlyArena: api => ({ ...api, createGame: () => game }),
@@ -421,10 +468,13 @@ function createAppFixture(game, globals = {}) {
   // Runs the scripts in the order index.html lists them, as the browser does.
   const page = vm.createContext({ window, document, Audio: RecordingAudio, setTimeout: clock.setTimeout, clearTimeout: clock.clearTimeout, ...globals });
   for (const src of PAGE_SCRIPTS) vm.runInContext(fs.readFileSync(path.join(__dirname, src), 'utf8'), page, { filename: src });
+  const topicTabs = document.querySelectorAll('.topic-tab');
+  const levelButtons = document.querySelectorAll('.level-option');
   return {
-    elements, played, effects, sound, audioElements, audioState, championCards, speechLanguageButtons, topicTabs, levelButtons,
+    elements, played, effects, sound, audioElements, audioState, championCards, speechLanguageButtons, textLanguageButtons, topicTabs, levelButtons,
     answerOptions: elements.get('#answerOptions'), nextButton: elements.get('#nextButton'),
-    muteButton: elements.get('#muteButton'), musicButton: elements.get('#musicButton'), clock, document,
+    muteButton: elements.get('#muteButton'), musicButton: elements.get('#musicButton'),
+    startButton: elements.get('#startButton'), startRow: elements.get('#startRow'), clock, document,
     // Moves the fake audio clock past every effect's anti-pile-up gap.
     later(seconds = 2) { if (sound.ctx) sound.ctx.currentTime += seconds; },
   };
@@ -442,13 +492,14 @@ test('the shipped page markup initializes the arena and game', () => {
   assert.equal(app.topicTabs.length, TOPICS.length);
   assert.equal(app.levelButtons.length, LEVELS.length);
   assert.equal(app.speechLanguageButtons.length, 3);
+  assert.equal(app.textLanguageButtons.length, 3);
   assert.equal(app.document.querySelectorAll('.fighter-body').length, 2);
   for (const action of ['open', 'close', 'reset', 'confirm-reset', 'keep']) {
     assert.ok(app.document.querySelector(`[data-reward-action="${action}"]`), `${action} reward action is in the shipped page`);
   }
   assert.ok(app.document.querySelector('.stage-effects'));
-  assert.equal(app.elements.get('#scoreStars').children.length, GOAL);
-  assert.equal(app.elements.get('#rivalPower').children.length, GOAL);
+  assert.equal(app.elements.get('#scoreStars').children.length, GOAL_BY_LEVEL.easy);
+  assert.equal(app.elements.get('#rivalPower').children.length, GOAL_BY_LEVEL.easy);
 });
 
 test('addition questions stay within five and offer three distinct choices', () => {
@@ -466,18 +517,27 @@ test('addition questions stay within five and offer three distinct choices', () 
   }
 });
 
-test('word challenges use bilingual Taiwan Traditional Chinese vocabulary', () => {
+test('word challenges use bilingual Taiwan Traditional Chinese and hiragana Japanese vocabulary', () => {
   const expected = {
     colors: ['紅色', '黃色', '綠色', '藍色', '橘色', '紫色', '粉紅色', '咖啡色'],
     face: ['眼睛', '鼻子', '耳朵', '嘴巴', '牙齒', '頭髮', '手', '腳'],
     family: ['爸爸', '媽媽', '哥哥', '姊姊', '爺爺', '奶奶', '寶寶'],
     animals: ['小狗', '小貓', '兔子', '小鳥', '小魚', '大象', '小豬', '猴子'],
     fruit: ['蘋果', '香蕉', '葡萄', '草莓', '西瓜', '鳳梨', '芒果', '櫻桃'],
+    vegetables: ['紅蘿蔔', '番茄', '玉米', '馬鈴薯', '高麗菜', '青花菜', '茄子', '南瓜'],
+    flowers: ['向日葵', '鬱金香', '櫻花', '牽牛花', '玫瑰', '雛菊'],
+    vehicles: ['汽車', '公車', '火車', '飛機', '腳踏車', '消防車'],
+    weather: ['晴天', '雨天', '陰天', '下雪', '颳風', '彩虹', '打雷'],
   };
   assert.deepEqual(TOPICS, ['math', ...WORD_TOPIC_IDS]);
   assert.deepEqual(Object.keys(WORD_TOPICS), WORD_TOPIC_IDS);
   for (const topic of WORD_TOPIC_IDS) {
     assert.deepEqual(WORD_TOPICS[topic].words.map(word => word.zh), expected[topic], `${topic} uses the expected Traditional Chinese`);
+    for (const word of WORD_TOPICS[topic].words) {
+      assert.ok(word.ja, `${topic}-${word.id} has a Japanese label`);
+      assert.doesNotMatch(word.ja, /[ァ-ヺ]/, `${topic}-${word.id} Japanese label has no katakana`);
+      assert.doesNotMatch(word.ja, /[一-鿿]/, `${topic}-${word.id} Japanese label has no kanji`);
+    }
   }
 
   const game = createGame(seededRandom(7));
@@ -490,13 +550,14 @@ test('word challenges use bilingual Taiwan Traditional Chinese vocabulary', () =
       assert.ok(target);
       assert.ok(question.promptEn.toLowerCase().includes(target.en.toLowerCase()));
       assert.ok(question.promptZh.includes(target.zh));
-      assert.ok(question.options.every(option => option.en));
+      assert.ok(question.promptJa.includes(target.ja));
+      assert.ok(question.options.every(option => option.en && option.ja));
       game.chooseTopic(topic);
     }
   }
 });
 
-test('every word prompt shows the picture of its matching answer for pre-readers', () => {
+test('every word prompt shows the picture of its matching answer for pre-readers at the easy level', () => {
   for (const seed of [0, 0.4, 0.99]) {
     const game = createGame(() => seed);
     for (const topic of WORD_TOPIC_IDS) {
@@ -518,7 +579,7 @@ test('every word prompt shows the picture of its matching answer for pre-readers
 
 test('every picture word has bundled original art sized for a phone page', () => {
   const pictureWords = WORD_TOPIC_IDS.filter(topic => topic !== 'colors').flatMap(topic => WORD_TOPICS[topic].words.map(word => ({ topic, word })));
-  assert.equal(pictureWords.length, 31);
+  assert.equal(pictureWords.length, 58);
   assert.equal(new Set(pictureWords.map(({ word }) => word.image)).size, pictureWords.length, 'every word has its own picture');
   let totalBytes = 0;
   for (const { topic, word } of pictureWords) {
@@ -533,7 +594,7 @@ test('every picture word has bundled original art sized for a phone page', () =>
     assert.ok(art.length < 16 * 1024, `${word.image} stays small`);
     totalBytes += art.length;
   }
-  assert.ok(totalBytes < 320 * 1024, 'all pictures together stay light for a phone');
+  assert.ok(totalBytes < 700 * 1024, 'all pictures together stay light for a phone');
   const committed = fs.readdirSync(path.join(__dirname, 'images')).sort();
   const expectedImages = [
     ...pictureWords.map(({ word }) => path.basename(word.image)),
@@ -545,17 +606,18 @@ test('every picture word has bundled original art sized for a phone page', () =>
 
 test('each correct answer knocks one pip off the sparring buddy with no penalty for misses', () => {
   const game = createGame(steadyRandom);
-  assert.equal(game.getState().rivalPower, GOAL);
+  const goal = GOAL_BY_LEVEL.easy;
+  assert.equal(game.getState().rivalPower, goal);
   const { question } = game.getState();
   const wrong = question.options.find(option => option.id !== question.answerId);
   game.answer(wrong.id);
-  assert.equal(game.getState().rivalPower, GOAL);
-  for (let hit = 1; hit <= GOAL; hit += 1) {
+  assert.equal(game.getState().rivalPower, goal);
+  for (let hit = 1; hit <= goal; hit += 1) {
     if (hit > 1) game.nextQuestion();
     answerCorrectly(game);
-    assert.equal(game.getState().rivalPower, GOAL - hit);
+    assert.equal(game.getState().rivalPower, goal - hit);
   }
-  assert.equal(game.restart().rivalPower, GOAL);
+  assert.equal(game.restart().rivalPower, goal);
 });
 
 test('a wrong answer is retryable and never awards a star', () => {
@@ -582,15 +644,16 @@ test('switching learning content keeps earned stars and resets the active attemp
   assert.equal(state.question.topic, 'colors');
 });
 
-test('a solved question cannot award twice; three stars finish the friendly match', () => {
+test('a solved question cannot award twice; three stars finish the friendly match at easy', () => {
   const game = createGame(steadyRandom);
-  for (let star = 1; star <= GOAL; star += 1) {
+  const goal = GOAL_BY_LEVEL.easy;
+  for (let star = 1; star <= goal; star += 1) {
     if (star > 1) assert.equal(game.nextQuestion(), true);
     const result = answerCorrectly(game);
-    assert.equal(result, star === GOAL ? 'finished' : 'correct');
+    assert.equal(result, star === goal ? 'finished' : 'correct');
     assert.equal(game.answer(game.getState().question.answerId), 'ignored');
   }
-  assert.equal(game.getState().stars, GOAL);
+  assert.equal(game.getState().stars, goal);
   assert.equal(game.getState().finished, true);
   assert.equal(game.nextQuestion(), false);
   assert.equal(game.chooseTopic('family'), false);
@@ -629,8 +692,8 @@ test('every math and vocabulary prompt has bundled English, Taiwan Mandarin, and
     assert.ok(translations.en, `${audioId} has English narration`);
     assert.ok(translations.zh, `${audioId} has Taiwan Mandarin narration`);
     assert.ok(translations.ja, `${audioId} has Japanese narration`);
-    assert.match(translations.zh, /[\u3400-\u9fff]/, `${audioId} uses Chinese characters`);
-    assert.match(translations.ja, /[\u3040-\u30ff\u3400-\u9fff]/, `${audioId} uses Japanese writing`);
+    assert.match(translations.zh, /[㐀-鿿]/, `${audioId} uses Chinese characters`);
+    assert.match(translations.ja, /[぀-ヿ㐀-鿿]/, `${audioId} uses Japanese writing`);
     for (const language of ['en', 'zh', 'ja']) {
       const audioPath = path.join(__dirname, 'audio', language, `${audioId}.mp3`);
       assert.ok(fs.existsSync(audioPath), `${audioPath} is bundled`);
@@ -653,8 +716,8 @@ test('every spoken reaction has bundled English, Taiwan Mandarin, and Japanese a
       assert.ok(fs.statSync(audioPath).size > 1024, `${audioPath} contains audio`);
     }
   }
-  assert.match(reactions['reaction-try-again-1'].zh, /[\u3400-\u9fff]/);
-  assert.match(reactions['reaction-finish-1'].ja, /[\u3040-\u30ff]/);
+  assert.match(reactions['reaction-try-again-1'].zh, /[㐀-鿿]/);
+  assert.match(reactions['reaction-finish-1'].ja, /[぀-ヿ]/);
 });
 
 test('Gemini generator config covers all languages and routes only the listed misread clips through voiced spellings', () => {
@@ -710,21 +773,61 @@ print(json.dumps({
   assert.equal(sisterQuestion.options.find(option => option.id === 'sister').zh, '姊姊');
 });
 
-test('restart and play again stay silent until the child chooses a voice', () => {
+test('English is the default voice and text; the child stays silent until Start, a language, replay, or unmute', () => {
   const game = createGame(steadyRandom);
   const app = createAppFixture(game);
+  const pressed = () => app.speechLanguageButtons.filter(button => button.getAttribute('aria-pressed') === 'true').map(button => button.dataset.language);
+  assert.deepEqual(pressed(), ['en'], 'English shows as the default voice from the start');
+  assert.equal(app.startRow.hidden, false, 'the Start button is offered before any sound plays');
+
   app.elements.get('#restartButton').click();
   app.elements.get('#playAgainButton').click();
-  assert.deepEqual(app.played, []);
+  assert.deepEqual(app.played, [], 'no narration plays before an explicit sound gesture');
 
-  app.speechLanguageButtons.find(button => button.dataset.language === 'zh').click();
-  assert.equal(app.played.length, 1);
+  app.startButton.click();
+  assert.equal(app.played.length, 1, 'tapping Start turns on sound and speaks the first question');
+  assert.match(app.played[0], /^\.\/audio\/en\//);
+  assert.equal(app.startRow.hidden, true, 'Start is no longer needed once sound is on');
   app.elements.get('#restartButton').click();
-  assert.equal(app.played.length, 2);
-  assert.match(app.played[1], /^\.\/audio\/zh\//);
+  assert.equal(app.played.length, 2, 'sound stays on across a restart');
 });
 
-test('face and family art renders with bilingual labels and falls back to emoji if a picture fails', () => {
+test('a remembered voice and text language from an earlier visit win over the English default', () => {
+  const storage = new FakeLocalStorage();
+  storage.setItem('monsterWordArena.settings.v1', JSON.stringify({ v: 1, speechLanguage: 'ja', textLanguage: 'zh', textLanguageManual: true }));
+  const app = createAppFixture(createGame(steadyRandom), { localStorage: storage });
+  const pressedVoice = () => app.speechLanguageButtons.filter(button => button.getAttribute('aria-pressed') === 'true').map(button => button.dataset.language);
+  const pressedText = () => app.textLanguageButtons.filter(button => button.getAttribute('aria-pressed') === 'true').map(button => button.dataset.textLanguage);
+  assert.deepEqual(pressedVoice(), ['ja']);
+  assert.deepEqual(pressedText(), ['zh']);
+  app.startButton.click();
+  assert.match(app.played[0], /^\.\/audio\/ja\//);
+});
+
+test('choosing a language persists it to storage, and text follows the voice until set separately', () => {
+  const storage = new FakeLocalStorage();
+  const app = createAppFixture(createGame(steadyRandom), { localStorage: storage });
+  app.speechLanguageButtons.find(button => button.dataset.language === 'zh').click();
+  let saved = JSON.parse(storage.getItem('monsterWordArena.settings.v1'));
+  assert.deepEqual(saved, { v: 1, speechLanguage: 'zh', textLanguage: 'zh', textLanguageManual: false });
+
+  app.textLanguageButtons.find(button => button.dataset.textLanguage === 'ja').click();
+  saved = JSON.parse(storage.getItem('monsterWordArena.settings.v1'));
+  assert.deepEqual(saved, { v: 1, speechLanguage: 'zh', textLanguage: 'ja', textLanguageManual: true });
+
+  app.speechLanguageButtons.find(button => button.dataset.language === 'en').click();
+  saved = JSON.parse(storage.getItem('monsterWordArena.settings.v1'));
+  assert.deepEqual(saved, { v: 1, speechLanguage: 'en', textLanguage: 'ja', textLanguageManual: true }, 'text no longer follows voice once chosen separately');
+});
+
+test('settings persistence degrades safely when storage is unavailable', () => {
+  assert.doesNotThrow(() => {
+    const app = createAppFixture(createGame(steadyRandom));
+    app.speechLanguageButtons.find(button => button.dataset.language === 'ja').click();
+  });
+});
+
+test('face and family art renders with a single chosen-language label and falls back to emoji if a picture fails', () => {
   const game = createGame(steadyRandom);
   const app = createAppFixture(game);
   const questionPicture = app.elements.get('#questionPicture');
@@ -735,16 +838,16 @@ test('face and family art renders with bilingual labels and falls back to emoji 
   const [art] = questionPicture.children;
   assert.equal(art.tagName, 'IMG');
   assert.equal(art.src, question.pictureImage);
-  assert.equal(art.alt, `${answer.zh} ${answer.en}`, 'the question picture carries its answer\'s bilingual label');
+  assert.equal(art.alt, answer.en, 'the question picture carries its answer\'s chosen-language label');
   assert.equal(art.draggable, false, 'pressing the picture never starts an image drag');
   for (const button of app.answerOptions.children) {
     const option = question.options.find(choice => choice.id === button.dataset.choice);
     const [icon, label] = button.children;
     assert.equal(icon.getAttribute('aria-hidden'), 'true');
     assert.equal(icon.children[0].src, option.image);
-    assert.equal(icon.children[0].alt, `${option.zh} ${option.en}`);
+    assert.equal(icon.children[0].alt, option.en);
     assert.equal(icon.children[0].draggable, false, 'pressing the answer picture never starts an image drag');
-    assert.equal(label.textContent, `${option.zh}${option.en}`, 'the button keeps its Chinese and English text label');
+    assert.equal(label.textContent, option.en, 'the button shows the chosen-language word');
   }
 
   art.dispatch('error');
@@ -767,23 +870,23 @@ test('unmuting clears stale muted status even when playback is skipped on the fi
   const game = createGame(steadyRandom);
   const app = createAppFixture(game);
   const speechStatus = app.elements.get('#speechStatus');
-  app.speechLanguageButtons.find(button => button.dataset.language === 'en').click();
+  app.startButton.click();
 
-  for (let star = 1; star <= GOAL; star += 1) {
+  for (let star = 1; star <= GOAL_BY_LEVEL.easy; star += 1) {
     const answerId = game.getState().question.answerId;
     app.answerOptions.children.find(button => button.dataset.choice === answerId).click();
-    if (star < GOAL) app.nextButton.click();
+    if (star < GOAL_BY_LEVEL.easy) app.nextButton.click();
   }
   assert.equal(game.getState().finished, true);
 
   app.muteButton.click();
-  assert.match(speechStatus.textContent, /Sound is muted/);
+  assert.match(speechStatus.textContent, /muted|靜音|ミュート/i);
   app.muteButton.click();
   assert.equal(speechStatus.textContent, '');
   assert.equal(app.muteButton.getAttribute('aria-pressed'), 'false');
 });
 
-test('game-generated prompt IDs exist for every selectable word and math target at both levels', () => {
+test('game-generated prompt IDs exist for every selectable word and math target at every level', () => {
   const audioIds = new Set();
   const game = createGame(seededRandom(11));
   for (const level of LEVELS) {
@@ -802,22 +905,22 @@ test('game-generated prompt IDs exist for every selectable word and math target 
   assert.equal(audioIds.size, Object.keys(prompts).length, 'the game reaches every bundled prompt');
 });
 
-test('easy math keeps small sums with three choices; harder math counts and adds to ten with four', () => {
+test('easy math keeps small sums; harder counts and adds to ten; super keeps only sums to ten with the numbers shown', () => {
   const game = createGame(seededRandom(3));
-  const seen = { easy: new Set(), harder: new Set() };
+  const seen = { easy: new Set(), harder: new Set(), super: new Set() };
   for (const level of LEVELS) {
     game.chooseLevel(level);
     for (let draw = 0; draw < 60; draw += 1) {
       const question = game.getState().question;
       const values = question.options.map(option => Number(option.id));
-      assert.equal(question.options.length, level === 'easy' ? 3 : 4);
+      assert.equal(question.options.length, CHOICE_COUNT[level]);
       assert.equal(new Set(values).size, values.length, 'choices are distinct');
       assert.ok(question.options.some(option => option.id === question.answerId));
       const answer = Number(question.answerId);
       if (question.display) {
         const [left, right] = question.display.split(' = ?')[0].split(' + ').map(Number);
         assert.equal(answer, left + right);
-        assert.equal([...question.picture].filter(char => char === '🥚').length, answer);
+        if (level !== 'super') assert.equal([...question.picture].filter(char => char === '🥚').length, answer);
       } else {
         assert.equal(level, 'harder', 'only the harder level asks counting questions');
         assert.equal(question.audioId, 'math-count', 'the counting clip never says the answer');
@@ -826,7 +929,11 @@ test('easy math keeps small sums with three choices; harder math counts and adds
       if (level === 'easy') assert.ok(answer <= 5);
       else {
         assert.ok(answer >= 5 && answer <= 10);
-        assert.ok(values.every(value => value >= 1 && value <= 10), 'harder choices stay between one and ten');
+        assert.ok(values.every(value => value >= 1 && value <= 10), `${level} choices stay between one and ten`);
+      }
+      if (level === 'super') {
+        assert.equal(question.picture, '', 'super math hides the egg picture');
+        assert.ok(question.display, 'super math always shows the equation numbers');
       }
       seen[level].add(question.display ? 'sum' : 'count');
       game.chooseLevel(level);
@@ -834,9 +941,10 @@ test('easy math keeps small sums with three choices; harder math counts and adds
   }
   assert.deepEqual([...seen.easy], ['sum']);
   assert.deepEqual([...seen.harder].sort(), ['count', 'sum']);
+  assert.deepEqual([...seen.super], ['sum']);
 });
 
-test('word questions offer three choices on easy and four on harder, all from the bigger pool', () => {
+test('word questions offer three choices on easy, four on harder and super, all from the bigger pool', () => {
   const game = createGame(seededRandom(5));
   for (const level of LEVELS) {
     game.chooseLevel(level);
@@ -845,7 +953,7 @@ test('word questions offer three choices on easy and four on harder, all from th
       const targets = new Set();
       for (let draw = 0; draw < 60; draw += 1) {
         const question = game.getState().question;
-        assert.equal(question.options.length, level === 'easy' ? 3 : 4);
+        assert.equal(question.options.length, CHOICE_COUNT[level]);
         assert.equal(new Set(question.options.map(option => option.id)).size, question.options.length);
         assert.ok(question.options.some(option => option.id === question.answerId));
         targets.add(question.answerId);
@@ -856,7 +964,7 @@ test('word questions offer three choices on easy and four on harder, all from th
   }
 });
 
-test('the same question is never asked twice in a row', () => {
+test('the same question is never asked twice in a row at any level', () => {
   for (const random of [steadyRandom, () => 0, () => 0.99, seededRandom(9)]) {
     const game = createGame(random);
     for (const level of LEVELS) {
@@ -895,8 +1003,11 @@ test('the level starts easy, keeps earned stars when switched, and survives a re
   assert.equal(state.stars, 1);
   assert.equal(state.solved, false);
   assert.equal(state.question.options.length, 4);
+  assert.equal(state.goal, GOAL_BY_LEVEL.harder);
   assert.equal(game.restart().level, 'harder');
-  for (let star = 1; star <= GOAL; star += 1) {
+  assert.equal(game.chooseLevel('super'), true);
+  assert.equal(game.getState().goal, GOAL_BY_LEVEL.super);
+  for (let star = 1; star <= GOAL_BY_LEVEL.super; star += 1) {
     if (star > 1) game.nextQuestion();
     answerCorrectly(game);
   }
@@ -904,13 +1015,15 @@ test('the level starts easy, keeps earned stars when switched, and survives a re
   assert.equal(game.chooseLevel('easy'), false, 'the finish screen keeps its level');
 });
 
-test('the level buttons switch choices and the color prompt shows its swatch', () => {
+test('the level buttons switch choices, goal markers, and the color prompt shows its swatch', () => {
   const game = createGame(steadyRandom);
   const app = createAppFixture(game);
-  const [easyButton, harderButton] = app.levelButtons;
+  app.startButton.click();
+  const [easyButton, harderButton, superButton] = app.levelButtons;
   assert.equal(easyButton.getAttribute('aria-pressed'), 'true');
   assert.equal(app.answerOptions.children.length, 3);
   assert.equal(app.answerOptions.classList.contains('four-choices'), false);
+  assert.equal(app.elements.get('#scoreStars').children.length, GOAL_BY_LEVEL.easy);
 
   harderButton.click();
   assert.equal(game.getState().level, 'harder');
@@ -918,23 +1031,125 @@ test('the level buttons switch choices and the color prompt shows its swatch', (
   assert.equal(easyButton.getAttribute('aria-pressed'), 'false');
   assert.equal(app.answerOptions.children.length, 4);
   assert.equal(app.answerOptions.classList.contains('four-choices'), true);
-  assert.equal(app.elements.get('#questionPicture').classList.contains('dense-picture'), true);
+  assert.equal(app.elements.get('#scoreStars').children.length, GOAL_BY_LEVEL.harder);
+  assert.equal(app.elements.get('#rivalPower').children.length, GOAL_BY_LEVEL.harder);
 
+  superButton.click();
+  assert.equal(game.getState().level, 'super');
+  assert.equal(app.elements.get('#scoreStars').children.length, GOAL_BY_LEVEL.super);
+  assert.ok(app.elements.get('#scoreStars').classList.contains('compact'));
+
+  easyButton.click();
   app.topicTabs.find(tab => tab.dataset.topic === 'colors').click();
   const { question } = game.getState();
   const [swatch] = app.elements.get('#questionPicture').children;
   assert.equal(swatch.style.backgroundColor, question.pictureSwatch);
   assert.equal(app.elements.get('#questionPicture').classList.contains('dense-picture'), false);
 
-  for (let star = 1; star <= GOAL; star += 1) {
+  for (let star = 1; star <= GOAL_BY_LEVEL.easy; star += 1) {
     const answerId = game.getState().question.answerId;
     app.answerOptions.children.find(button => button.dataset.choice === answerId).click();
-    if (star < GOAL) app.nextButton.click();
+    if (star < GOAL_BY_LEVEL.easy) app.nextButton.click();
   }
   assert.ok(app.levelButtons.every(button => button.disabled), 'the level cannot change on the finish screen');
   app.elements.get('#playAgainButton').click();
   assert.ok(app.levelButtons.every(button => !button.disabled));
-  assert.equal(game.getState().level, 'harder');
+  assert.equal(game.getState().level, 'easy');
+});
+
+test('harder hides the picture and shows the written word instead, in the chosen text language', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  app.startButton.click();
+  app.levelButtons.find(button => button.dataset.level === 'harder').click();
+  app.topicTabs.find(tab => tab.dataset.topic === 'fruit').click();
+
+  const question = game.getState().question;
+  const target = question.options.find(option => option.id === question.answerId);
+  assert.equal(app.elements.get('#questionPicture').hidden, true, 'no picture at harder');
+  assert.equal(app.elements.get('#questionWord').hidden, false);
+  assert.equal(app.elements.get('#questionWord').textContent, target.en);
+  assert.equal(app.elements.get('#questionPrompt').hidden, true, 'no revealing sentence at harder');
+
+  app.textLanguageButtons.find(button => button.dataset.textLanguage === 'zh').click();
+  assert.equal(app.elements.get('#questionWord').textContent, target.zh);
+});
+
+test('super is listening-only: no picture and no written word while sound plays, with a written-word fallback when sound is off', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  app.startButton.click();
+  app.levelButtons.find(button => button.dataset.level === 'super').click();
+  app.topicTabs.find(tab => tab.dataset.topic === 'animals').click();
+
+  const question = game.getState().question;
+  const target = question.options.find(option => option.id === question.answerId);
+  assert.equal(app.elements.get('#questionPicture').hidden, true);
+  assert.equal(app.elements.get('#questionWord').hidden, true, 'the written word stays hidden while sound is on');
+  assert.equal(app.elements.get('#questionPrompt').hidden, false);
+  assert.doesNotMatch(app.elements.get('#questionPrompt').textContent, new RegExp(target.en, 'i'));
+
+  app.muteButton.click();
+  assert.equal(app.elements.get('#questionWord').hidden, false, 'muting falls back to the written word so it stays playable');
+  assert.equal(app.elements.get('#questionWord').textContent, target.en);
+  app.muteButton.click();
+  assert.equal(app.elements.get('#questionWord').hidden, true, 'unmuting hides the written word again');
+});
+
+test('super math has no egg picture but always shows the equation', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  app.startButton.click();
+  app.levelButtons.find(button => button.dataset.level === 'super').click();
+  assert.equal(app.elements.get('#questionPicture').hidden, true);
+  assert.equal(app.elements.get('#equation').hidden, false);
+  assert.equal(app.elements.get('#questionWord').hidden, true, 'math has no written-word card');
+});
+
+test('the page reveals progressively: champion, then topic and level plus Start, then the arena', () => {
+  const app = createAppFixture(createGame(steadyRandom));
+  const pageShell = app.document.querySelector('.page-shell');
+  assert.equal(pageShell.dataset.stage, 'champion');
+
+  app.championCards[1].click();
+  assert.equal(pageShell.dataset.stage, 'choose', 'choosing a champion reveals the topic and level pickers');
+
+  app.championCards[0].click();
+  assert.equal(pageShell.dataset.stage, 'choose', 'switching champion again does not re-collapse the reveal');
+
+  app.startButton.click();
+  assert.equal(pageShell.dataset.stage, 'play', 'Start reveals the arena and the question');
+});
+
+test('the game title and ready message are localized from the very first render, before any click', () => {
+  const storage = new FakeLocalStorage();
+  storage.setItem('monsterWordArena.settings.v1', JSON.stringify({ v: 1, speechLanguage: 'zh', textLanguage: 'zh', textLanguageManual: true }));
+  const app = createAppFixture(createGame(steadyRandom), { localStorage: storage });
+  assert.equal(app.elements.get('#gameTitle').textContent, I18N.STRINGS.gameTitle.zh);
+  assert.equal(app.elements.get('#arenaMessage').textContent, I18N.STRINGS.readyMessage.zh);
+});
+
+test('the on-screen text language switches every child-facing string and is independent of the spoken voice', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  app.topicTabs.find(tab => tab.dataset.topic === 'fruit').click();
+  app.textLanguageButtons.find(button => button.dataset.textLanguage === 'zh').click();
+  assert.equal(app.elements.get('#championHeading').textContent, I18N.STRINGS.championHeading.zh);
+  assert.equal(app.elements.get('#answerHint').textContent, I18N.STRINGS.answerHint.zh);
+  assert.match(app.elements.get('#questionPrompt').textContent, /[㐀-鿿]/);
+  const question = game.getState().question;
+  const target = question.options.find(option => option.id === question.answerId);
+  assert.equal(app.answerOptions.children.find(button => button.dataset.choice === target.id).children[1].textContent, target.zh);
+
+  app.textLanguageButtons.find(button => button.dataset.textLanguage === 'ja').click();
+  assert.equal(app.elements.get('#championHeading').textContent, I18N.STRINGS.championHeading.ja);
+  assert.doesNotMatch(app.elements.get('#championHeading').textContent, /[ァ-ヺ]/, 'Japanese chrome text has no katakana');
+  assert.doesNotMatch(app.elements.get('#championHeading').textContent, /[一-鿿]/, 'Japanese chrome text has no kanji');
+
+  // The spoken voice is unaffected by the text-language choice.
+  app.speechLanguageButtons.find(button => button.dataset.language === 'en').click();
+  assert.match(app.played[app.played.length - 1], /^\.\/audio\/en\//);
+  assert.equal(app.elements.get('#championHeading').textContent, I18N.STRINGS.championHeading.ja, 'text language stays put when only the voice changes');
 });
 
 test('speech player replaces stale clips, ignores stale failures, and stops on mute', async () => {
@@ -982,52 +1197,23 @@ test('speech remains optional when the browser has no audio player', () => {
   assert.doesNotThrow(() => player.stop());
 });
 
-test('the voice picker shows no voice selected and keeps the invitation visible until audio is turned on', () => {
+test('reactions stay silent before Start, then follow the chosen voice', () => {
   const game = createGame(steadyRandom);
   const app = createAppFixture(game);
-  const invite = app.elements.get('#speechInvite');
-  const controls = app.elements.get('#speechControls');
-  const pressed = () => app.speechLanguageButtons.filter(button => button.getAttribute('aria-pressed') === 'true').map(button => button.dataset.language);
-  assert.deepEqual(pressed(), []);
-  assert.equal(invite.hidden, false);
-  assert.equal(controls.classList.contains('needs-voice'), true);
-
-  app.muteButton.click();
-  assert.deepEqual(pressed(), [], 'muting does not pick a voice');
-  assert.equal(invite.hidden, false);
-  app.muteButton.click();
-  assert.deepEqual(pressed(), ['en'], 'unmuting turns on the English voice it plays');
-  assert.equal(invite.hidden, true);
-  assert.equal(controls.classList.contains('needs-voice'), false);
-
-  const replayApp = createAppFixture(createGame(steadyRandom));
-  replayApp.elements.get('#replayPromptButton').click();
-  assert.deepEqual(replayApp.speechLanguageButtons.filter(button => button.getAttribute('aria-pressed') === 'true').map(button => button.dataset.language), ['en']);
-  assert.equal(replayApp.elements.get('#speechInvite').hidden, true);
-
-  const pickApp = createAppFixture(createGame(steadyRandom));
-  pickApp.speechLanguageButtons.find(button => button.dataset.language === 'ja').click();
-  assert.deepEqual(pickApp.speechLanguageButtons.filter(button => button.getAttribute('aria-pressed') === 'true').map(button => button.dataset.language), ['ja']);
-});
-
-test('reactions stay silent while the voice invitation shows, then follow the chosen language', () => {
-  const game = createGame(steadyRandom);
-  const app = createAppFixture(game);
-  const invite = app.elements.get('#speechInvite');
   clickAnswer(app, game, false);
   clickAnswer(app, game, true);
-  assert.deepEqual(app.played, [], 'no reaction before a voice, replay, or unmute');
-  assert.equal(invite.hidden, false, 'the invitation stays up while cheers are silent');
+  assert.deepEqual(app.played, [], 'no reaction before Start, a language, replay, or unmute');
+  assert.equal(app.startRow.hidden, false);
 
   app.nextButton.click();
   app.speechLanguageButtons.find(button => button.dataset.language === 'zh').click();
-  assert.equal(invite.hidden, true, 'choosing a voice turns on the questions and cheers together');
+  assert.equal(app.startRow.hidden, true, 'a language choice turns on the questions and cheers together');
   clickAnswer(app, game, false);
   clickAnswer(app, game, false);
   clickAnswer(app, game, true);
   app.nextButton.click();
   clickAnswer(app, game, true);
-  assert.equal(game.getState().finished, true);
+  assert.equal(game.getState().finished, true, 'the silent correct answer before any language choice already counted a star');
   const questionId = () => /\/(math-\d-\d)\.mp3$/;
   assert.deepEqual(app.played.map(src => src.replace(questionId(), '/<question>.mp3')), [
     './audio/zh/<question>.mp3',
@@ -1082,9 +1268,9 @@ test('the finish cheer stops when the language changes on the finish screen', ()
   const game = createGame(steadyRandom);
   const app = createAppFixture(game);
   app.speechLanguageButtons.find(button => button.dataset.language === 'en').click();
-  for (let star = 1; star <= GOAL; star += 1) {
+  for (let star = 1; star <= GOAL_BY_LEVEL.easy; star += 1) {
     clickAnswer(app, game, true);
-    if (star < GOAL) app.nextButton.click();
+    if (star < GOAL_BY_LEVEL.easy) app.nextButton.click();
   }
   assert.match(app.played[app.played.length - 1], /en\/reaction-finish-1/);
   const count = app.played.length;
@@ -1160,7 +1346,7 @@ test('a miss is a pillow block with no penalty that quietly restarts the right-i
   clickAnswer(app, game);
   assert.ok(combo.classList.contains('is-shown'));
   assert.equal(app.elements.get('#comboCount').textContent, '2');
-  assert.match(message.textContent, /2 in a row! 連續答對 2 題！$/);
+  assert.match(message.textContent, /2 in a row!$/);
 
   app.nextButton.click();
   clickAnswer(app, game, false);
@@ -1174,8 +1360,9 @@ test('a miss is a pillow block with no penalty that quietly restarts the right-i
 
   clickAnswer(app, game);
   assert.doesNotMatch(message.textContent, /in a row/, 'the streak counts again from the next right answer');
-  assert.equal(comboText(1), '');
-  assert.equal(comboText(4), '4 in a row! 連續答對 4 題！');
+  assert.equal(comboText(1, 'en'), '');
+  assert.equal(comboText(4, 'en'), '4 in a row!');
+  assert.equal(comboText(4, 'zh'), '連續答對 4 題！');
 });
 
 test('the winning answer ends with the buddy bowing and a shared high-five under falling stars', () => {
@@ -1183,12 +1370,13 @@ test('the winning answer ends with the buddy bowing and a shared high-five under
   const app = createAppFixture(game);
   const stage = app.elements.get('#arenaStage');
   const effects = app.elements.get('#stageEffects');
-  for (let star = 1; star <= GOAL; star += 1) {
+  const goal = GOAL_BY_LEVEL.easy;
+  for (let star = 1; star <= goal; star += 1) {
     clickAnswer(app, game);
-    if (star < GOAL) app.nextButton.click();
+    if (star < goal) app.nextButton.click();
   }
   assert.equal(game.getState().finished, true);
-  assert.match(app.elements.get('#arenaMessage').textContent, /bow and high-five! .* 3 in a row!/);
+  assert.match(app.elements.get('#arenaMessage').textContent, /bow and high-five!/);
   app.clock.tick(TIMING.bow);
   assert.equal(poses(app), 'ready/bow');
   assert.ok(stage.classList.contains('is-bowing'));
@@ -1235,19 +1423,19 @@ test('choosing a champion swaps both fighters and the power move art', () => {
   assert.equal(app.elements.get('#moveBubble').dataset.move, 'bubbles');
   assert.equal(app.elements.get('#moveBubble').textContent, '🫧', 'the emoji move stays as the fallback');
   assert.equal(app.elements.get('#heroEmoji').textContent, '👾');
-  assert.equal(app.elements.get('#arenaMessage').textContent, 'Bobo is ready to spar!');
+  assert.match(app.elements.get('#arenaMessage').textContent, /Bobo/);
   assert.ok(app.elements.get('#arenaStage').classList.contains('do-ready'));
 });
 
 test('reduced motion keeps every pose but skips the flying stars', () => {
   const game = createGame(steadyRandom);
   const app = createAppFixture(game, { matchMedia: query => ({ matches: query === '(prefers-reduced-motion: reduce)' }) });
-  for (let star = 1; star <= GOAL; star += 1) {
+  for (let star = 1; star <= GOAL_BY_LEVEL.easy; star += 1) {
     clickAnswer(app, game);
     app.clock.tick(TIMING.land);
     assert.equal(poses(app), 'power/giggle');
     assert.equal(app.elements.get('#stageEffects').children.length, 0);
-    if (star < GOAL) app.nextButton.click();
+    if (star < GOAL_BY_LEVEL.easy) app.nextButton.click();
   }
   app.clock.tick(TIMING.highFive);
   assert.equal(poses(app), 'high5/high5');
@@ -1437,7 +1625,7 @@ test('the game plays gentle effects from the child\'s own taps without a voice c
   assert.deepEqual(app.effects.slice(2), ['tap', 'sparkle', 'whoosh', 'giggle'], 'a right answer sparkles, whooshes, and giggles');
   assert.deepEqual(app.played, [], 'effects never play through the speech element or start narration');
 
-  for (let star = 2; star <= GOAL; star += 1) {
+  for (let star = 2; star <= GOAL_BY_LEVEL.easy; star += 1) {
     app.later();
     app.nextButton.click();
     app.later();
@@ -1463,7 +1651,7 @@ test('music is off by default, has its own toggle, and the mute button silences 
   assert.deepEqual(app.effects, [], 'mute silences the effects');
   app.musicButton.click();
   app.musicButton.click();
-  assert.match(app.elements.get('#speechStatus').textContent, /Sound is muted/);
+  assert.match(app.elements.get('#speechStatus').textContent, /muted|靜音|ミュート/i);
   assert.equal(app.sound.board.getState().musicPlaying, false, 'music waits for unmute');
 
   app.muteButton.click();
