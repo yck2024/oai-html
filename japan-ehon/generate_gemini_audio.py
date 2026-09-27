@@ -83,6 +83,42 @@ SPEAKERS = {
         "persona": "the warm storyteller of a picture book, reading to a young child",
         "voices": {"ja": "ja-jp-tutor-1", "zh": "Kore", "en": "Kore"},
     },
+    "grandpa": {
+        "persona": "a kind, gentle old man from a Japanese village, warm and soft-spoken",
+        "voices": {"ja": "ja-jp-storyteller-5", "zh": "Iapetus", "en": "Iapetus"},
+    },
+    "grandma": {
+        "persona": "a kind, gentle old woman from a Japanese village, warm and loving",
+        "voices": {"ja": "ja-jp-storyteller-8", "zh": "Gacrux", "en": "Gacrux"},
+    },
+    "neighbor": {
+        "persona": "a fussy, comically greedy old neighbor, silly rather than scary",
+        "voices": {"ja": "ja-jp-storyteller-4", "zh": "Algenib", "en": "Algenib"},
+    },
+    "shiro": {
+        "persona": "a happy, bouncy little white dog calling out eagerly",
+        "voices": {"ja": "ja-jp-assistant-9", "zh": "Autonoe", "en": "Autonoe"},
+    },
+    "mouse": {
+        "persona": "a tiny, cheerful, polite little mouse singing and chattering",
+        "voices": {"ja": "ja-jp-assistant-3", "zh": "Leda", "en": "Leda"},
+    },
+    "issun": {
+        "persona": "a brave, bright, thumb-sized little boy with a clear ringing voice",
+        "voices": {"ja": "ja-jp-assistant-7", "zh": "Fenrir", "en": "Fenrir"},
+    },
+    "princess": {
+        "persona": "a kind, bright girl of about twelve, a nobleman's daughter",
+        "voices": {"ja": "ja-jp-assistant-9", "zh": "Aoede", "en": "Aoede"},
+    },
+    "oni": {
+        "persona": "a big, blustery, clumsy ogre, loud but silly and never frightening",
+        "voices": {"ja": "ja-jp-storyteller-4", "zh": "Algenib", "en": "Algenib"},
+    },
+    "daughter": {
+        "persona": "a gentle, polite young woman with a calm, soft voice",
+        "voices": {"ja": "ja-jp-storyteller-2", "zh": "Leda", "en": "Leda"},
+    },
 }
 
 
