@@ -276,6 +276,7 @@ class FakeElement {
 // Builds a page from the element IDs the scripts look up, so it tolerates new IDs added by other features.
 function createPage({ nativeDialog = true } = {}) {
   const root = new FakeElement('main');
+  root.className = 'page-shell';
   const document = { activeElement: null };
   const make = (tag, props = {}) => {
     const element = new FakeElement(tag);
@@ -283,6 +284,7 @@ function createPage({ nativeDialog = true } = {}) {
     Object.assign(element, props);
     return element;
   };
+  document.documentElement = make('html');
   const actions = new Map();
   const action = name => {
     if (!actions.has(name)) {
@@ -321,8 +323,14 @@ function createPage({ nativeDialog = true } = {}) {
     '.speech-language': ['en', 'zh', 'ja'].map(language => Object.assign(make('button', { className: 'speech-language' }), { dataset: { language } })),
   };
   Object.values(groups).flat().forEach(node => root.append(node));
+  root.append(make('div', { className: 'speech-languages' }));
+  root.append(make('div', { className: 'speech-playback' }));
   Object.assign(document, {
-    querySelector: selector => (selector.startsWith('#') && !selector.includes(' ') ? element(selector.slice(1)) : root.querySelector(selector)),
+    querySelector: selector => {
+      if (selector.startsWith('#') && !selector.includes(' ')) return element(selector.slice(1));
+      if (root.matches(selector)) return root;
+      return root.querySelector(selector);
+    },
     querySelectorAll: selector => groups[selector] || root.querySelectorAll(selector),
     createElement: tag => make(tag),
     createTextNode: text => ({ textContent: String(text) }),
@@ -361,6 +369,7 @@ function loadPage({ storage = new MemoryStorage(), withApp = false, recordWin, n
   if (withApp) {
     game = gameApi.createGame(() => 0.3);
     window.FriendlyArena = { ...gameApi, createGame: () => game };
+    run('i18n.js');
     run('sounds.js');
     run('arena.js');
     run('app.js');
@@ -372,10 +381,10 @@ function loadPage({ storage = new MemoryStorage(), withApp = false, recordWin, n
 }
 
 function winMatch(page) {
-  for (let star = 1; star <= gameApi.GOAL; star += 1) {
+  for (let star = 1; star <= gameApi.GOAL_BY_LEVEL.easy; star += 1) {
     const answerId = page.game.getState().question.answerId;
     page.element('answerOptions').children.find(button => button.dataset.choice === answerId).click();
-    if (star < gameApi.GOAL) page.element('nextButton').click();
+    if (star < gameApi.GOAL_BY_LEVEL.easy) page.element('nextButton').click();
   }
 }
 

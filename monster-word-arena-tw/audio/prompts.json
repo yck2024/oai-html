@@ -273,5 +273,140 @@
     "en": "Find the cherries!",
     "zh": "找出櫻桃！",
     "ja": "さくらんぼをみつけてね！"
+  },
+  "vegetables-carrot": {
+    "en": "Find the carrot!",
+    "zh": "找出紅蘿蔔！",
+    "ja": "にんじんをみつけてね！"
+  },
+  "vegetables-tomato": {
+    "en": "Find the tomato!",
+    "zh": "找出番茄！",
+    "ja": "とまとをみつけてね！"
+  },
+  "vegetables-corn": {
+    "en": "Find the corn!",
+    "zh": "找出玉米！",
+    "ja": "とうもろこしをみつけてね！"
+  },
+  "vegetables-potato": {
+    "en": "Find the potato!",
+    "zh": "找出馬鈴薯！",
+    "ja": "じゃがいもをみつけてね！"
+  },
+  "vegetables-cabbage": {
+    "en": "Find the cabbage!",
+    "zh": "找出高麗菜！",
+    "ja": "キャベツをみつけてね！"
+  },
+  "vegetables-broccoli": {
+    "en": "Find the broccoli!",
+    "zh": "找出青花菜！",
+    "ja": "ブロッコリーをみつけてね！"
+  },
+  "vegetables-eggplant": {
+    "en": "Find the eggplant!",
+    "zh": "找出茄子！",
+    "ja": "なすをみつけてね！"
+  },
+  "vegetables-pumpkin": {
+    "en": "Find the pumpkin!",
+    "zh": "找出南瓜！",
+    "ja": "かぼちゃをみつけてね！"
+  },
+  "flowers-sunflower": {
+    "en": "Find the sunflower!",
+    "zh": "找出向日葵！",
+    "ja": "ひまわりをみつけてね！"
+  },
+  "flowers-tulip": {
+    "en": "Find the tulip!",
+    "zh": "找出鬱金香！",
+    "ja": "チューリップをみつけてね！"
+  },
+  "flowers-cherryblossom": {
+    "en": "Find the cherry blossom!",
+    "zh": "找出櫻花！",
+    "ja": "さくらをみつけてね！"
+  },
+  "flowers-morningglory": {
+    "en": "Find the morning glory!",
+    "zh": "找出牽牛花！",
+    "ja": "あさがおをみつけてね！"
+  },
+  "flowers-rose": {
+    "en": "Find the rose!",
+    "zh": "找出玫瑰！",
+    "ja": "ばらをみつけてね！"
+  },
+  "flowers-daisy": {
+    "en": "Find the daisy!",
+    "zh": "找出雛菊！",
+    "ja": "ひなぎくをみつけてね！"
+  },
+  "vehicles-car": {
+    "en": "Where is the car?",
+    "zh": "汽車在哪裡？",
+    "ja": "くるまはどこかな？"
+  },
+  "vehicles-bus": {
+    "en": "Where is the bus?",
+    "zh": "公車在哪裡？",
+    "ja": "バスはどこかな？"
+  },
+  "vehicles-train": {
+    "en": "Where is the train?",
+    "zh": "火車在哪裡？",
+    "ja": "でんしゃはどこかな？"
+  },
+  "vehicles-airplane": {
+    "en": "Where is the airplane?",
+    "zh": "飛機在哪裡？",
+    "ja": "ひこうきはどこかな？"
+  },
+  "vehicles-bicycle": {
+    "en": "Where is the bicycle?",
+    "zh": "腳踏車在哪裡？",
+    "ja": "じてんしゃはどこかな？"
+  },
+  "vehicles-firetruck": {
+    "en": "Where is the fire truck?",
+    "zh": "消防車在哪裡？",
+    "ja": "しょうぼうしゃはどこかな？"
+  },
+  "weather-sunny": {
+    "en": "Find the sunny day!",
+    "zh": "找出晴天！",
+    "ja": "はれをみつけてね！"
+  },
+  "weather-rainy": {
+    "en": "Find the rainy day!",
+    "zh": "找出雨天！",
+    "ja": "あめをみつけてね！"
+  },
+  "weather-cloudy": {
+    "en": "Find the cloudy day!",
+    "zh": "找出陰天！",
+    "ja": "くもりをみつけてね！"
+  },
+  "weather-snowy": {
+    "en": "Find the snowy day!",
+    "zh": "找出下雪！",
+    "ja": "ゆきをみつけてね！"
+  },
+  "weather-windy": {
+    "en": "Find the windy day!",
+    "zh": "找出颳風！",
+    "ja": "かぜをみつけてね！"
+  },
+  "weather-rainbow": {
+    "en": "Find the rainbow!",
+    "zh": "找出彩虹！",
+    "ja": "にじをみつけてね！"
+  },
+  "weather-thunder": {
+    "en": "Find the thunder!",
+    "zh": "找出打雷！",
+    "ja": "かみなりをみつけてね！"
   }
 }

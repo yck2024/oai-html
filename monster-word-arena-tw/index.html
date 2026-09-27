@@ -1,41 +1,48 @@
 <!doctype html>
-<html lang="zh-Hant-TW">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#fff1d6">
-  <meta name="description" content="A pretend-sparring dinosaur and monster game with easy or harder counting and addition and Taiwan Traditional Chinese-English word play for little learners.">
+  <meta name="description" content="A pretend-sparring dinosaur and monster game with easy, harder, and super listening levels, ten learning topics, and English, Taiwan Traditional Chinese, or Japanese narration and on-screen text for little learners.">
   <title>Dino &amp; Monster Word Arena｜恐龍怪獸友誼擂台</title>
   <link rel="stylesheet" href="./game.css">
 </head>
 <body>
-  <main class="page-shell">
+  <main class="page-shell" data-stage="champion">
     <header class="topbar">
-      <a class="pill-link" href="../index.html">← Gallery</a>
-      <span class="top-label">PLAY · LEARN · CHEER</span>
+      <a class="pill-link" id="galleryLink" href="../index.html">← Gallery</a>
+      <span class="top-label" id="topLabel">PLAY · LEARN · CHEER</span>
       <button class="pill-button" id="restartButton" type="button">↻ Start over</button>
     </header>
 
+    <div class="text-language-row" role="group" aria-label="On-screen text language">
+      <span class="speech-label" id="textLabel">TEXT</span>
+      <button class="text-language" type="button" data-text-language="en" aria-pressed="false">English</button>
+      <button class="text-language" type="button" data-text-language="zh" aria-pressed="false">繁體中文</button>
+      <button class="text-language" type="button" data-text-language="ja" aria-pressed="false">にほんご</button>
+    </div>
+
     <section class="intro" aria-labelledby="gameTitle">
-      <p class="eyebrow">A pretend sparring face-off · 假裝對打，不會受傷</p>
-      <h1 id="gameTitle">Dino &amp; Monster<br class="small-break"> Word Arena</h1>
-      <p>Pick a champion, solve a little challenge, and launch a silly power move!<br class="desktop-break">選一位小隊長，答對就出招！</p>
+      <p class="eyebrow" id="eyebrow">A pretend sparring face-off · no ouchies</p>
+      <h1 id="gameTitle">Dino &amp; Monster Word Arena</h1>
+      <p id="introBody">Pick a champion, solve a little challenge, and launch a silly power move!</p>
     </section>
 
-    <section class="champion-picker" aria-label="Choose your champion 選一位小隊長">
+    <section class="champion-picker" id="championSection" aria-label="Choose your champion">
       <div class="picker-heading">
-        <div><span class="section-kicker">YOUR TEAM · 你的小隊</span><h2>Who will spar for you?</h2></div>
-        <span class="soft-note">Pretend moves, no ouchies 🧡</span>
+        <div><span class="section-kicker" id="championKicker">YOUR TEAM</span><h2 id="championHeading">Who will spar for you?</h2></div>
+        <span class="soft-note" id="championSoftNote">Pretend moves, no ouchies 🧡</span>
       </div>
       <div class="champion-options">
         <button class="champion-card is-selected" type="button" data-champion="dino" aria-pressed="true">
           <span class="champion-emoji champion-art" data-character="dino" data-pose="ready" aria-hidden="true"><span class="art-fallback">🦖</span></span>
-          <span class="champion-copy"><strong>Rex the Dino</strong><small>雷克斯恐龍</small></span>
+          <span class="champion-copy"><strong data-champion-name="dino">Rex the Dino</strong></span>
           <span class="pick-mark" aria-hidden="true">✓</span>
         </button>
         <button class="champion-card" type="button" data-champion="monster" aria-pressed="false">
           <span class="champion-emoji champion-art" data-character="monster" data-pose="ready" aria-hidden="true"><span class="art-fallback">👾</span></span>
-          <span class="champion-copy"><strong>Bobo the Monster</strong><small>波波怪獸</small></span>
+          <span class="champion-copy"><strong data-champion-name="monster">Bobo the Monster</strong></span>
           <span class="pick-mark" aria-hidden="true">✓</span>
         </button>
       </div>
@@ -46,90 +53,87 @@
       <button class="pill-button sticker-book-button" type="button" data-reward-action="open" aria-haspopup="dialog">📒 Sticker book · 貼紙本</button>
     </section>
 
-    <section class="arena-layout" aria-label="Sparring word and math game">
-      <section class="arena-card" aria-label="The sparring arena 對打擂台">
-        <div class="arena-heading"><span>THE SPARRING ARENA · 對打擂台</span><span class="heart-dots" aria-hidden="true">♥ ♥ ♥</span></div>
+    <section class="arena-layout" aria-label="Sparring word and math game" id="arenaLayoutSection">
+      <section class="arena-card" aria-label="The sparring arena">
+        <div class="arena-heading"><span id="arenaHeading">THE SPARRING ARENA</span><span class="heart-dots" aria-hidden="true">♥ ♥ ♥</span></div>
         <div class="arena-stage" id="arenaStage">
           <div class="stage-bunting" aria-hidden="true"></div>
           <div class="stage-rainbow" aria-hidden="true"></div>
           <div class="cloud cloud-one" aria-hidden="true">✦</div>
           <div class="cloud cloud-two" aria-hidden="true">✦</div>
           <div class="stage-mat" aria-hidden="true"></div>
-          <span class="combo-badge" id="comboBadge" aria-hidden="true"><span class="combo-star">★</span><span class="combo-copy"><strong>×<span id="comboCount">2</span></strong><small>in a row · 連續</small></span></span>
+          <span class="combo-badge" id="comboBadge" aria-hidden="true"><span class="combo-star">★</span><span class="combo-copy"><strong>×<span id="comboCount">2</span></strong></span></span>
           <div class="fighter fighter-hero" id="heroFighter">
             <span class="fighter-body" aria-hidden="true"><span class="fighter-art champion-art" id="heroArt" data-character="dino" data-pose="ready"><span class="fighter-face art-fallback" id="heroEmoji">🦖</span></span></span>
             <span class="fighter-name" id="heroName">Rex</span>
-            <span class="fighter-side">YOUR CHAMPION</span>
+            <span class="fighter-side" id="heroSide">YOUR CHAMPION</span>
           </div>
           <span class="versus" aria-hidden="true">VS</span>
           <div class="fighter fighter-buddy" id="buddyFighter">
             <span class="fighter-body" aria-hidden="true"><span class="fighter-art champion-art" id="buddyArt" data-character="monster" data-pose="ready"><span class="fighter-face art-fallback" id="buddyEmoji">👾</span></span></span>
             <span class="fighter-name" id="buddyName">Bobo</span>
-            <span class="power-meter" id="rivalPower" aria-hidden="true"><span>⚡</span><span>⚡</span><span>⚡</span></span>
-            <span class="fighter-side">SPARRING BUDDY</span>
+            <span class="power-meter" id="rivalPower" aria-hidden="true"></span>
+            <span class="fighter-side" id="buddySide">SPARRING BUDDY</span>
           </div>
           <span class="move-bubble" id="moveBubble" data-move="swish" aria-hidden="true">🌀</span>
           <div class="stage-effects" id="stageEffects" aria-hidden="true"></div>
         </div>
         <p class="arena-message" id="arenaMessage" role="status" aria-live="polite">Ready, team? Pick any challenge!</p>
         <div class="score-row" aria-label="Power move stars">
-          <span class="score-label">TEAM STARS</span>
-          <div class="score-stars" id="scoreStars" aria-hidden="true"><span>☆</span><span>☆</span><span>☆</span></div>
+          <span class="score-label" id="teamStarsLabel">TEAM STARS</span>
+          <div class="score-stars" id="scoreStars" aria-hidden="true"></div>
           <span class="score-count" id="scoreCount">0 / 3</span>
         </div>
       </section>
 
       <section class="challenge-card" aria-label="Choose and answer a challenge">
         <div class="challenge-title">
-          <div><span class="section-kicker">YOUR NEXT MOVE · 換你出招</span><h2>Pick a challenge!</h2></div>
+          <div><span class="section-kicker" id="challengeKicker">YOUR NEXT MOVE</span><h2 id="challengeHeading">Pick a challenge!</h2></div>
           <span class="thinking-icon" aria-hidden="true">🧠</span>
         </div>
-        <div class="topic-tabs" role="group" aria-label="Learning challenges 學習挑戰">
-          <button class="topic-tab is-active" type="button" data-topic="math" aria-pressed="true"><span aria-hidden="true">➕</span><span>Math<small>數學</small></span></button>
-          <button class="topic-tab" type="button" data-topic="colors" aria-pressed="false"><span aria-hidden="true">🎨</span><span>Colors<small>顏色</small></span></button>
-          <button class="topic-tab" type="button" data-topic="face" aria-pressed="false"><span aria-hidden="true">🙂</span><span>Body<small>身體</small></span></button>
-          <button class="topic-tab" type="button" data-topic="family" aria-pressed="false"><span aria-hidden="true">🏠</span><span>Family<small>家人</small></span></button>
-          <button class="topic-tab" type="button" data-topic="animals" aria-pressed="false"><span aria-hidden="true">🐾</span><span>Animals<small>動物</small></span></button>
-          <button class="topic-tab" type="button" data-topic="fruit" aria-pressed="false"><span aria-hidden="true">🍎</span><span>Fruit<small>水果</small></span></button>
+        <div class="topic-tabs" id="topicTabs" role="group" aria-label="Learning challenges"></div>
+        <div class="level-choice" id="levelChoice" role="group" aria-label="Level">
+          <span class="speech-label" id="levelLabel">LEVEL</span>
         </div>
-        <div class="level-choice" role="group" aria-label="Level 難度">
-          <span class="speech-label">LEVEL · 難度</span>
-          <button class="level-option is-active" type="button" data-level="easy" aria-pressed="true"><span aria-hidden="true">🌱</span> Easy 簡單</button>
-          <button class="level-option" type="button" data-level="harder" aria-pressed="false"><span aria-hidden="true">🌟</span> Harder 進階</button>
-        </div>
-        <div class="speech-controls needs-voice" id="speechControls">
-          <p class="speech-invite" id="speechInvite"><span aria-hidden="true">🔈</span> Choose a voice to turn on the questions and cheers. · 選擇語音即可開啟題目朗讀和加油聲。 · 音声を選ぶと、問題の読み上げと応援の声が始まります。</p>
-          <div class="speech-languages" role="group" aria-label="Spoken language 語音語言 音声言語">
-            <span class="speech-label">VOICE · 語音</span>
-            <button class="speech-language" type="button" data-language="en" aria-pressed="false">English</button>
-            <button class="speech-language" type="button" data-language="zh" aria-pressed="false">繁體中文</button>
-            <button class="speech-language" type="button" data-language="ja" aria-pressed="false">日本語</button>
-          </div>
-          <div class="speech-playback" role="group" aria-label="Sound controls 聲音控制 音声操作">
-            <button class="speech-control" id="replayPromptButton" type="button">↻ Hear question</button>
-            <button class="speech-control" id="muteButton" type="button" aria-pressed="false">🔊 Mute</button>
-            <button class="speech-control music-toggle" id="musicButton" type="button" aria-pressed="false">🎵 Music · 音樂</button>
-          </div>
-        </div>
-        <p class="speech-status" id="speechStatus" role="status" aria-live="polite" aria-atomic="true"></p>
-
-        <div class="question-panel" id="questionPanel">
-          <p class="question-en" id="questionEnglish">How many altogether?</p>
-          <p class="question-zh" id="questionChinese">加起來有多少？</p>
-          <p class="question-picture" id="questionPicture" aria-hidden="true">🥚 + 🥚</p>
-          <p class="equation" id="equation">1 + 1 = ?</p>
-          <p class="answer-hint">Tap your answer · 點一個答案</p>
-          <div class="answer-options" id="answerOptions" role="group" aria-label="Choose an answer 選一個答案"></div>
-          <p class="feedback" id="feedback" role="status" aria-live="polite" aria-atomic="true">No rush—thinking is a superpower!</p>
-          <button class="next-button" id="nextButton" type="button" hidden>Next power move · 下一招 <span aria-hidden="true">➜</span></button>
+        <div class="start-row" id="startRow">
+          <button class="start-button" id="startButton" type="button">▶ Start!</button>
+          <p class="start-invite" id="startInvite">Tap Start to turn on sound and hear the first question!</p>
         </div>
 
-        <section class="finish-panel" id="finishPanel" aria-labelledby="finishTitle" hidden>
-          <span class="party-art" aria-hidden="true"><span class="champion-art" data-character="dino" data-pose="high5"><span class="art-fallback">🦖</span></span><span class="party-trophy"><span class="art-fallback">🏆</span></span><span class="champion-art is-mirrored" data-character="monster" data-pose="high5"><span class="art-fallback">👾</span></span></span>
-          <h2 id="finishTitle">You’re a Sparring Champion!</h2>
-          <p>Three power moves! Your buddy is out of power, takes a bow, and gives you a high-five.<br>三招成功！對手沒電了，鞠躬擊掌！</p>
-          <button class="next-button replay-button" id="playAgainButton" type="button">Play again · 再玩一次 <span aria-hidden="true">↻</span></button>
-        </section>
+        <div id="playArea">
+          <div class="speech-controls" id="speechControls">
+            <div class="speech-languages" role="group" aria-label="Spoken language">
+              <span class="speech-label" id="voiceLabel">VOICE</span>
+              <button class="speech-language" type="button" data-language="en" aria-pressed="false">English</button>
+              <button class="speech-language" type="button" data-language="zh" aria-pressed="false">繁體中文</button>
+              <button class="speech-language" type="button" data-language="ja" aria-pressed="false">日本語</button>
+            </div>
+            <div class="speech-playback" role="group" aria-label="Sound controls">
+              <button class="speech-control" id="replayPromptButton" type="button">↻ Hear question</button>
+              <button class="speech-control" id="muteButton" type="button" aria-pressed="false">🔊 Mute</button>
+              <button class="speech-control music-toggle" id="musicButton" type="button" aria-pressed="false">🎵 Music</button>
+            </div>
+          </div>
+          <p class="speech-status" id="speechStatus" role="status" aria-live="polite" aria-atomic="true"></p>
+
+          <div class="question-panel" id="questionPanel">
+            <p class="question-prompt" id="questionPrompt">How many altogether?</p>
+            <p class="question-word" id="questionWord" hidden></p>
+            <p class="question-picture" id="questionPicture" aria-hidden="true">🥚 + 🥚</p>
+            <p class="equation" id="equation">1 + 1 = ?</p>
+            <p class="answer-hint" id="answerHint">Tap your answer</p>
+            <div class="answer-options" id="answerOptions" role="group" aria-label="Choose an answer"></div>
+            <p class="feedback" id="feedback" role="status" aria-live="polite" aria-atomic="true">No rush—thinking is a superpower!</p>
+            <button class="next-button" id="nextButton" type="button" hidden>Next power move <span aria-hidden="true">➜</span></button>
+          </div>
+
+          <section class="finish-panel" id="finishPanel" aria-labelledby="finishTitle" hidden>
+            <span class="party-art" aria-hidden="true"><span class="champion-art" data-character="dino" data-pose="high5"><span class="art-fallback">🦖</span></span><span class="party-trophy"><span class="art-fallback">🏆</span></span><span class="champion-art is-mirrored" data-character="monster" data-pose="high5"><span class="art-fallback">👾</span></span></span>
+            <h2 id="finishTitle">You’re a Sparring Champion!</h2>
+            <p id="finishBody">Three power moves! Your buddy is out of power, takes a bow, and gives you a high-five.</p>
+            <button class="next-button replay-button" id="playAgainButton" type="button">Play again <span aria-hidden="true">↻</span></button>
+          </section>
+        </div>
       </section>
     </section>
 
@@ -154,9 +158,10 @@
       </details>
     </dialog>
 
-    <footer>Everybody gets a cheer. Try again any time! · 每個人都很棒，想試幾次都可以！</footer>
+    <footer id="footer">Everybody gets a cheer. Try again any time!</footer>
   </main>
   <script src="./game.js"></script>
+  <script src="./i18n.js"></script>
   <script src="./sounds.js"></script>
   <script src="./arena.js"></script>
   <script src="./app.js"></script>
