@@ -694,7 +694,7 @@ rt { font-weight: 500; }
   .page-art {
     grid-row: 1 / span 3;
     align-self: center;
-    width: 100%;
+    width: min(100%, 60dvh);
     border-radius: 20px 4px 4px 20px;
   }
 
