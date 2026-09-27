@@ -346,6 +346,7 @@
     if (state.finished) {
       questionPanel.hidden = true;
       finishPanel.hidden = false;
+      document.querySelector('#finishBody').textContent = I18N.finishBody(state.goal, textLanguage);
       window.ArenaRewards?.recordWin(state.champion);
       [...topicTabsContainer.children, ...levelChoiceContainer.querySelectorAll('.level-option')].forEach(button => { button.disabled = true; });
       document.querySelector('#playAgainButton').focus();
@@ -522,7 +523,7 @@
     document.querySelector('#musicButton').textContent = S.musicButton[textLanguage];
     document.querySelector('#answerHint').textContent = S.answerHint[textLanguage];
     document.querySelector('#finishTitle').textContent = S.finishHeading[textLanguage];
-    document.querySelector('#finishBody').textContent = S.finishBody[textLanguage];
+    document.querySelector('#finishBody').textContent = I18N.finishBody(game.getState().goal, textLanguage);
     document.querySelector('#playAgainButton').replaceChildren(document.createTextNode(`${S.playAgainButton[textLanguage]} `), (() => { const s = document.createElement('span'); s.setAttribute('aria-hidden', 'true'); s.textContent = '↻'; return s; })());
     document.querySelector('#footer').textContent = S.footer[textLanguage];
     document.querySelector('#nextButton').replaceChildren(document.createTextNode(`${S.nextButton[textLanguage]} `), (() => { const s = document.createElement('span'); s.setAttribute('aria-hidden', 'true'); s.textContent = '➜'; return s; })());

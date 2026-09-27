@@ -1057,6 +1057,21 @@ test('the level buttons switch choices, goal markers, and the color prompt shows
   assert.equal(game.getState().level, 'easy');
 });
 
+test('the finish message names the actual number of power moves for the chosen level, not just three', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  app.startButton.click();
+  app.levelButtons.find(button => button.dataset.level === 'harder').click();
+  const goal = GOAL_BY_LEVEL.harder;
+  for (let star = 1; star <= goal; star += 1) {
+    const answerId = game.getState().question.answerId;
+    app.answerOptions.children.find(button => button.dataset.choice === answerId).click();
+    if (star < goal) app.nextButton.click();
+  }
+  assert.equal(app.elements.get('#finishBody').textContent, I18N.finishBody(goal, 'en'));
+  assert.match(app.elements.get('#finishBody').textContent, new RegExp(`^${goal} power moves`));
+});
+
 test('harder hides the picture and shows the written word instead, in the chosen text language', () => {
   const game = createGame(steadyRandom);
   const app = createAppFixture(game);
@@ -1147,6 +1162,7 @@ test('every Japanese UI string is written entirely in hiragana, with no katakana
   }
   for (const topic of TOPICS) checkJa(`topicChosenMessage(${topic})`, I18N.topicChosenMessage(topic, 'ja'));
   for (const level of LEVELS) checkJa(`levelChosenMessage(${level})`, I18N.levelChosenMessage(level, 'ja'));
+  for (const goal of Object.values(GOAL_BY_LEVEL)) checkJa(`finishBody(${goal})`, I18N.finishBody(goal, 'ja'));
   for (const topic of WORD_TOPIC_IDS) {
     for (const word of WORD_TOPICS[topic].words) checkJa(`${topic}-${word.id}.ja`, word.ja);
   }

@@ -97,11 +97,6 @@
     feedbackCorrect: { en: 'You got it! Power move!', zh: '答對了！出招成功！', ja: 'せいかい！とくぎ　はつどう！' },
     nextButton: { en: 'Next power move ➜', zh: '下一招 ➜', ja: 'つぎの　とくぎ ➜' },
     finishHeading: { en: 'You’re a Sparring Champion!', zh: '你是小冠軍！', ja: 'きみは　ちゃんぴおんだ！' },
-    finishBody: {
-      en: 'Three power moves! Your buddy is out of power, takes a bow, and gives you a high-five.',
-      zh: '成功出招！對手沒電了，鞠躬擊掌！',
-      ja: 'とくぎ　せいこう！あいては　でんちぎれ、おじぎして　はいたっち！',
-    },
     playAgainButton: { en: 'Play again ↻', zh: '再玩一次 ↻', ja: 'もういちど　あそぶ ↻' },
     footer: { en: 'Everybody gets a cheer. Try again any time!', zh: '每個人都很棒，想試幾次都可以！', ja: 'みんな　がんばったね！なんかいでも　ちょうせんできるよ！' },
     superGenericPrompt: {
@@ -136,6 +131,14 @@
     }[levelId][lang];
   }
 
+  function finishBody(goal, lang) {
+    return {
+      en: `${goal} power move${goal === 1 ? '' : 's'}! Your buddy is out of power, takes a bow, and gives you a high-five.`,
+      zh: '成功出招！對手沒電了，鞠躬擊掌！',
+      ja: 'とくぎ　せいこう！あいては　でんちぎれ、おじぎして　はいたっち！',
+    }[lang];
+  }
+
   function sparMessage(championId, buddyFinished, comboText, lang) {
     const champion = CHAMPIONS[championId];
     const name = champion.shortName[lang];
@@ -147,7 +150,7 @@
     return comboText ? `${base} ${comboText}` : base;
   }
 
-  const api = { TEXT_LANGUAGES, TOPIC_NAMES, LEVEL_NAMES, CHAMPIONS, STRINGS, championReady, topicChosenMessage, levelChosenMessage, sparMessage };
+  const api = { TEXT_LANGUAGES, TOPIC_NAMES, LEVEL_NAMES, CHAMPIONS, STRINGS, championReady, topicChosenMessage, levelChosenMessage, finishBody, sparMessage };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof window !== 'undefined') window.FriendlyArenaI18n = api;
 })();
