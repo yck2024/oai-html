@@ -486,21 +486,30 @@
     const story = book.story;
     if (kind === 'story') return;
     const note = element('div', 'page-note');
-    const selected = kind === 'cover'
-      ? metadataLanguagesFor(story.origin, story.tagline)
-      : metadataLanguages(story.credit);
-    if (kind === 'cover') {
-      for (const lang of selected) {
-        const line = element('p', '', langAttr(lang));
-        appendMetadataLanguage(line, story.origin, lang);
-        line.append(' ・ ');
-        appendMetadataLanguage(line, story.tagline, lang);
-        note.append(line);
+    if (!selectableMetadata) {
+      const ja = element('p', '', 'ja');
+      const zh = element('p', '', 'zh-Hant-TW');
+      if (kind === 'cover') {
+        ja.append(japanese(story.origin.ja), ' ・ ', japanese(story.tagline.ja));
+        zh.textContent = `${story.origin.zh} ・ ${story.tagline.zh}`;
+      } else {
+        ja.append(japanese(story.credit.ja));
+        zh.textContent = story.credit.zh;
       }
+      note.append(ja, zh);
     } else {
+      const selected = kind === 'cover'
+        ? metadataLanguagesFor(story.origin, story.tagline)
+        : metadataLanguages(story.credit);
       for (const lang of selected) {
         const line = element('p', '', langAttr(lang));
-        appendMetadataLanguage(line, story.credit, lang);
+        if (kind === 'cover') {
+          appendMetadataLanguage(line, story.origin, lang);
+          line.append(' ・ ');
+          appendMetadataLanguage(line, story.tagline, lang);
+        } else {
+          appendMetadataLanguage(line, story.credit, lang);
+        }
         note.append(line);
       }
     }

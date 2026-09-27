@@ -370,6 +370,21 @@ test('Taiwan shelf and reader retain their original bilingual DOM structure', ()
   assert.equal(reader.elements.get('#readerTitle').children[1].className, 'zh');
 });
 
+test('Taiwan cover and end notes retain their original unwrapped bilingual DOM structure', () => {
+  const reader = createReader();
+  const { elements } = reader;
+  elements.get('#prevButton').dispatch('click');
+  const coverNotes = elements.get('#page').querySelector('.page-note').children;
+  assert.deepEqual(coverNotes.map(node => node.lang), ['ja', 'zh-Hant-TW']);
+  assert.equal(coverNotes.some(node => node.children.some(child => child instanceof FakeElement && child.tagName === 'SPAN')), false);
+
+  elements.get('#nextButton').dispatch('click');
+  for (let i = 0; i < stories[0].pages.length - 2; i++) elements.get('#nextButton').dispatch('click');
+  const endNotes = elements.get('#page').querySelector('.page-note').children;
+  assert.deepEqual(endNotes.map(node => node.lang), ['ja', 'zh-Hant-TW']);
+  assert.equal(endNotes.some(node => node.children.some(child => child instanceof FakeElement && child.tagName === 'SPAN')), false);
+});
+
 test('Japan story metadata follows selected languages across shelf, reader, notes, alt text, and media controls', () => {
   const japan = {
     ...SERIES,
