@@ -1,0 +1,15 @@
+{
+  "source_url": "https://ai.google.dev/gemini-api/docs/pricing",
+  "checked_date": "2026-09-27",
+  "currency": "USD",
+  "models": {
+    "gemini-3.8-flash-tts": {
+      "input_per_million": {"text": 0.5},
+      "output_per_million": {"audio": 9.0}
+    },
+    "gemini-3.8-flash": {
+      "input_per_million": {"text": 0.75, "audio": 0.75},
+      "output_per_million": {"text": 3.75}
+    }
+  }
+}
