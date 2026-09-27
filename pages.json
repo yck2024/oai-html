@@ -79,19 +79,6 @@
         "繁體中文"
       ],
       "status": "live"
-    },
-    {
-      "slug": "japan-ehon",
-      "title": "日本民間故事繪本 | にほんの むかしばなし えほん",
-      "description": "Illustrated Japanese and Taiwan Mandarin retellings of Japanese folktales, sharing the same reading engine as 台灣故事繪本. Stories are being added; the shelf and offline install already work.",
-      "icon": "🌊",
-      "tags": [
-        "Stories",
-        "Kids",
-        "Japanese",
-        "繁體中文"
-      ],
-      "status": "live"
     }
   ]
 }

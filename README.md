@@ -10,7 +10,7 @@ The gallery is manifest-driven. Published page metadata lives in `pages.json`, a
 
 ## Current pages
 
-See the [live gallery](https://yck2024.github.io/oai-html/) for the current page list; its cards are rendered from [`pages.json`](pages.json). Per-page detail docs: [Dino & Monster Word Arena](monster-word-arena-tw/README.md), [Taiwan Story Picture Books](taiwan-ehon/README.md), [Japan Story Picture Books](japan-ehon/README.md). Taiwan and Japan Story Picture Books share one reading engine — see [`engine/README.md`](engine/README.md).
+See the [live gallery](https://yck2024.github.io/oai-html/) for the current page list; its cards are rendered from [`pages.json`](pages.json). Per-page detail docs: [Dino & Monster Word Arena](monster-word-arena-tw/README.md) and [Taiwan Story Picture Books](taiwan-ehon/README.md). The unlisted Japan storybook shelf shares the reading engine — see [`engine/README.md`](engine/README.md).
 
 ## Publishing architecture
 
