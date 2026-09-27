@@ -61,10 +61,16 @@ function createReader({ analytics = true, series = SERIES, storyList = stories, 
       this.played = [];
       this.currentTime = 0;
       this.rejectNextPlay = false;
+      this.nextPlayResult = null;
       FakeAudio.instances.push(this);
     }
     play() {
       this.played.push(this.src);
+      if (this.nextPlayResult) {
+        const result = this.nextPlayResult;
+        this.nextPlayResult = null;
+        return result;
+      }
       if (this.rejectNextPlay) {
         this.rejectNextPlay = false;
         return Promise.reject(new Error('autoplay rejected'));
@@ -576,6 +582,28 @@ test('continuous mode: rejected initial playback stays paused and retries the bu
   assert.equal(fetched.length, fetchCount, 'retry does not rebuild or refetch');
   assert.equal(mediaSession.playbackState, 'playing');
   assert.equal(elements.get('#speechStatus').textContent, '');
+});
+
+test('continuous mode: a delayed play rejection cannot reclaim state after sentence playback takes over', async () => {
+  const reader = createReader();
+  const { elements, audio, mediaSession } = reader;
+  let rejectPlayback;
+  audio.nextPlayResult = new Promise((_resolve, reject) => { rejectPlayback = reject; });
+  reader.setContinuous(true);
+  elements.get('#playButton').dispatch('click');
+  await flush();
+
+  const sentence = elements.get('#pageText').querySelector('.line');
+  elements.get('#pageText').dispatch('click', { target: sentence });
+  assert.equal(mediaSession.playbackState, 'playing');
+  rejectPlayback(new Error('playback rejected after handoff'));
+  await flush();
+
+  assert.equal(mediaSession.playbackState, 'playing');
+  assert.equal(elements.get('#playIcon').textContent, '⏸');
+  elements.get('#playButton').dispatch('click');
+  assert.equal(mediaSession.playbackState, 'paused');
+  assert.equal(elements.get('#playIcon').textContent, '▶');
 });
 
 test('continuous mode: pressing play builds one Blob for the whole book and starts playing it from the current page', async () => {

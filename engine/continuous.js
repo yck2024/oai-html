@@ -197,6 +197,7 @@
   function createContinuousPlayer(audio, handlers = {}) {
     const { onTimeUpdate = () => {}, onEnded = () => {} } = handlers;
     let state = 'idle'; // 'idle' | 'loading' | 'playing' | 'paused'
+    let playbackGeneration = 0;
     let objectUrl = null;
     let timeline = null;
 
@@ -214,6 +215,7 @@
     // a stray play-button tap doesn't restart the fetch, without touching `audio` itself — the
     // previous Blob (if any) keeps playing until the new one is ready.
     function loading() {
+      playbackGeneration++;
       detach();
       releaseUrl();
       timeline = null;
@@ -221,6 +223,7 @@
     }
 
     function stop() {
+      playbackGeneration++;
       detach();
       releaseUrl();
       timeline = null;
@@ -230,11 +233,17 @@
     }
 
     async function play(blob, nextTimeline, { startAtMs = 0, paused = false } = {}) {
+      const generation = ++playbackGeneration;
       releaseUrl();
       timeline = nextTimeline;
       objectUrl = URL.createObjectURL(blob);
       audio.ontimeupdate = () => onTimeUpdate(Math.round(audio.currentTime * 1000));
-      audio.onended = () => { state = 'idle'; onEnded(); };
+      audio.onended = () => {
+        if (generation !== playbackGeneration) return;
+        playbackGeneration++;
+        state = 'idle';
+        onEnded();
+      };
       audio.src = objectUrl;
       try { audio.currentTime = Math.max(startAtMs, 0) / 1000; } catch (_error) { /* not yet loaded */ }
       if (paused) { state = 'paused'; return true; }
@@ -243,6 +252,7 @@
         const playback = audio.play();
         if (playback && typeof playback.then === 'function') await playback;
       } catch (_error) {
+        if (generation !== playbackGeneration) return true;
         state = 'paused';
         return false;
       }
@@ -251,6 +261,7 @@
 
     function pause() {
       if (state !== 'playing') return false;
+      playbackGeneration++;
       audio.pause();
       state = 'paused';
       return true;
@@ -259,8 +270,13 @@
     function resume() {
       if (state !== 'paused') return false;
       state = 'playing';
+      const generation = ++playbackGeneration;
       const playback = audio.play();
-      if (playback && typeof playback.catch === 'function') playback.catch(() => { state = 'idle'; });
+      if (playback && typeof playback.catch === 'function') {
+        playback.catch(() => {
+          if (generation === playbackGeneration) state = 'idle';
+        });
+      }
       return true;
     }
 
