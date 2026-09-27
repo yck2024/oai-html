@@ -10,7 +10,7 @@ Math Island is a small collection of Japanese, browser-only math games for young
 
 All three games are static HTML, CSS, JavaScript, and bundled assets. They do not need a server, account, or API key to play. Number Garden stores progress in the browser's local storage. Poko and Rag and the Echo Forest do not upload or save game data.
 
-Math Island is also installable as an offline-capable app (a web manifest and service worker at `math-island/`): every picture and narration clip across all three games is cached automatically on first visit, so the whole hub stays fully playable offline afterward with no separate download step; GA4 requests are never cached and are skipped entirely while offline.
+Math Island is also installable as an offline-capable app (a web manifest and service worker at `math-island/`): every game page, picture, and narration clip across all three games is cached automatically on first visit, so the whole hub stays fully playable offline afterward with no separate download step. Both `index.html` links and folder URLs (for example, `poko/`, `number-garden/`, and `dino-spirit/`) work offline after their page has been cached. GA4 requests are never cached and are skipped entirely while offline.
 
 Open index.html locally to start. Browser storage can behave differently for file pages; for a shareable link and reliable local progress, the games are published under the OAI HTML GitHub Pages gallery. Each visitor's progress remains in that visitor's own browser.
 
