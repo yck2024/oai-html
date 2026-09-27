@@ -486,6 +486,7 @@ footer { padding: 12px 0 0; color: #7c7b8c; text-align: center; font-size: 11px;
 @media (prefers-reduced-motion: reduce) {
   .page-shell[data-stage="champion"][data-pointer="champion"] .champion-card { border-color: #efa079; box-shadow: 0 0 0 4px #efa07944, 0 3px 0 #e8dece; }
   .page-shell[data-stage="champion"][data-pointer="champion"] .champion-card .champion-emoji { animation: none; }
+  .point-hint { animation: none; }
 }
 
 /* The soft "one more round or a break?" pacing nudge, and the calm goodbye screen it can lead to. */
