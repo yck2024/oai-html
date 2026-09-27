@@ -23,6 +23,10 @@ This storybook uses the existing GA4 tag (`G-QLFWNZWDSS`) for its page views and
 
 The storybook is also installable as an offline-capable app (a web manifest and service worker at `taiwan-ehon/`). The service worker caches the app shell and book pages; "Read offline"/"download offline" stores the chosen book's pictures and narration in the browser's on-device Cache Storage. "Remove offline copy" removes that book's pictures and narration, while the app shell remains cached. Download and reading choices stay on that device and browser profile and are not sent anywhere. GA4 requests are never cached and are skipped entirely while offline.
 
+## Listening with the screen off
+
+With 自動翻頁 (auto-turn) on, narration is designed to continue sentence by sentence and page by page — in whichever listening mode is selected — when the app is backgrounded or the screen is off. A hidden tab skips the usual pauses between clips and pages because its timers can be suspended; playback chains through one audio element, and the page shown catches up with what's playing when the screen comes back on. The Media Session API also exposes the book's title and cover, plus play, pause, and next/previous page controls. Automated tests cover this background flow, but it has not been verified on a live Android device; browser and OS behavior may vary. iOS Safari's background/lock-screen behavior was not verified either.
+
 ## 虎姑婆 (hu-gu-po)
 
 A gentle, agency-forward new retelling: the parents are only next door and leave the children a
