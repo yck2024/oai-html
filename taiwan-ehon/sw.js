@@ -92,10 +92,16 @@
     const cached = await cache.match(request.url);
     if (cached) return buildRangeResponse(cached, request.headers.get('Range'));
     const response = await fetch(request.url);
-    if (response && response.ok) cache.put(request.url, response.clone());
-    if (response && response.ok && request.headers.get('Range')) {
-      return buildRangeResponse(await cache.match(request.url), request.headers.get('Range'));
+    const rangeHeader = request.headers.get('Range');
+    if (response && response.ok && rangeHeader) {
+      try {
+        await cache.put(request.url, response.clone());
+      } catch (_error) {
+        return response;
+      }
+      return buildRangeResponse(await cache.match(request.url), rangeHeader);
     }
+    if (response && response.ok) cache.put(request.url, response.clone());
     return response;
   }
 

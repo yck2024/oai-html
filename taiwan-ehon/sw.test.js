@@ -98,6 +98,60 @@ test('respond() caches a media file on first use and serves it from cache afterw
   assert.equal((await second.arrayBuffer()).byteLength, 4);
 });
 
+test('a first Range request waits for caching and returns the fetched response if caching fails', async () => {
+  const url = `${BASE}audio/hu-gu-po/ja/p01-1.mp3`;
+  const bytes = new Uint8Array([1, 2, 3, 4]);
+  let releaseWrite;
+  let writeStarted;
+  const started = new Promise(resolve => { writeStarted = resolve; });
+  const writeGate = new Promise(resolve => { releaseWrite = resolve; });
+  let matchCalls = 0;
+  let writeCompleted = false;
+  const caches = {
+    open: async () => ({
+      match: async () => {
+        matchCalls += 1;
+        if (matchCalls > 1 && !writeCompleted) throw new Error('cache read raced the write');
+        return caches.stored?.clone();
+      },
+      put: async (_url, response) => {
+        writeStarted();
+        await writeGate;
+        caches.stored = response;
+        writeCompleted = true;
+      },
+    }),
+    stored: null,
+  };
+  const request = new Request(url, { headers: { Range: 'bytes=1-2' } });
+  const fetched = new Response(bytes, { headers: { 'Content-Type': 'audio/mpeg' } });
+  const pending = sw.respond(request, { caches, fetch: async () => fetched.clone() });
+  await started;
+  assert.equal(matchCalls, 1, 'only the initial cache lookup occurs while the write is pending');
+  releaseWrite();
+  const partial = await pending;
+  assert.equal(partial.status, 206);
+  assert.equal(await partial.text(), '\u0002\u0003');
+
+  let failingMatchCalls = 0;
+  const failingCaches = {
+    open: async () => ({
+      match: async () => {
+        failingMatchCalls += 1;
+        if (failingMatchCalls > 1) throw new Error('must not read after a failed write');
+        return undefined;
+      },
+      put: async () => { throw new Error('quota exceeded'); },
+    }),
+  };
+  const full = await sw.respond(request, {
+    caches: failingCaches,
+    fetch: async () => new Response(bytes, { headers: { 'Content-Type': 'audio/mpeg' } }),
+  });
+  assert.equal(full.status, 200);
+  assert.equal(await full.text(), '\u0001\u0002\u0003\u0004');
+});
+
 test('a cached audio clip answers a Range request with a correct 206 partial response', async () => {
   const caches = fakeCaches();
   const bytes = new Uint8Array(2000).map((_, i) => i % 256);
