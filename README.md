@@ -50,17 +50,7 @@ Event parameters (`element_id`, `element_label`, `target_section`, `percent_scro
 
 Interactive pages can add semantic events with `data-analytics-event` / `data-analytics-label` or `window.oaiTrack(eventName, params)`.
 
-The storybook sends these five additional GA4 events via its existing `gtag` setup, with only the listed parameters:
-
-- `book_open` (`book_id`: one of the fixed story ids), when a bookshelf book opens
-- `book_complete` (`book_id`: one of the fixed story ids), upon reaching its ending, at most once per opening
-- `listen_mode_change` (`listen_mode`: `ja-zh`, `zh-ja`, `ja`, or `zh`), when the listening order changes
-- `zhuyin_toggle` (`zhuyin`: `on` or `off`), when 注音 visibility changes
-- `auto_turn_toggle` (`auto_turn`: `on` or `off`), when auto-turn changes
-
-`book_id`, `listen_mode`, `zhuyin`, and `auto_turn` only appear in GA reports after registration as event-scoped custom dimensions in GA Admin → Custom definitions; this registration must be done by a GA administrator and cannot be done from this repository.
-
-Do not send user-entered text, copied content, credentials, private identifiers, or other sensitive data to analytics. In the storybook, story selection and page turns stay in page state without URL or history changes; shared clicks and copies remain excluded. Its page-view URL is trimmed to the path, its referrer to the origin, and its page-view title is fixed, omitting selected story and page identifiers. No page-by-page or sentence-level events, timing, durations, story text, or extra user identifiers are sent; no new browser storage is used for analytics. Listening mode, 注音 visibility, and auto-turn preference are remembered only in this browser; no identity, answers, or reading history are stored.
+Do not send user-entered text, copied content, credentials, private identifiers, or other sensitive data to analytics. Taiwan Ehon's event catalog and storybook-specific analytics/privacy behavior are documented in [its README](taiwan-ehon/README.md#analytics-and-reading-privacy).
 
 ## Narration API usage
 
