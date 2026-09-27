@@ -14,6 +14,14 @@
   </script>
   <script defer src="https://yck2024.github.io/oai-html/assets/analytics.js"></script>
   <title>ラグと こだま森のひかり｜Math Island</title>
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="icon" href="../icons/icon-192.png">
+  <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Math Island">
+  <link rel="stylesheet" href="../pwa.css">
   <link rel="stylesheet" href="./game.css">
 </head>
 <body>
@@ -115,6 +123,18 @@
     </section>
     <p class="page-footer">ゆっくり かんがえて だいじょうぶ <img class="inline-art" src="./images/woodland-flower.webp" alt="" width="369" height="366" decoding="async"></p>
   </main>
+
+  <div class="pwa-toast" id="updateToast" role="status" hidden>
+    <p>あたらしいバージョンが あります</p>
+    <button type="button" class="pwa-toast-action" id="updateReloadButton">こうしんする</button>
+  </div>
+  <div class="pwa-toast" id="installToast" role="status" hidden>
+    <p id="installToastText"></p>
+    <button type="button" class="pwa-toast-action" id="installButton" hidden>ホーム画面に ついか</button>
+    <button type="button" class="pwa-toast-dismiss" id="installDismissButton" aria-label="とじる"><span aria-hidden="true">✕</span></button>
+  </div>
+
   <script src="./game.js"></script>
+  <script src="../offline.js"></script>
 </body>
 </html>

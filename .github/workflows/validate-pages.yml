@@ -20,4 +20,7 @@ jobs:
         run: python .github/scripts/validate_pages.py
 
       - name: Test taiwan-ehon storybook
-        run: node --test taiwan-ehon/*.test.js
+        run: |
+          node --test taiwan-ehon/*.test.js
+          node --test monster-word-arena-tw/*.test.js
+          node --test math-island/*.test.js math-island/poko/*.test.js math-island/dino-spirit/*.test.js
