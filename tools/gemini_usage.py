@@ -26,6 +26,9 @@ def token_counts(usage, api="interactions", output_modalities=None):
     if api == "interactions":
         for entry in usage.get("input_tokens_by_modality", []):
             inputs[str(entry["modality"]).lower()] += int(entry["tokens"])
+        input_total = int(usage.get("total_input_tokens", 0))
+        if input_total and not inputs:
+            inputs["text"] = input_total
         output_total = int(usage.get("total_output_tokens", 0))
         thought_total = int(usage.get("total_thought_tokens", 0))
         if output_total:

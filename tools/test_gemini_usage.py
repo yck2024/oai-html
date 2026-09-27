@@ -69,6 +69,18 @@ class GeminiUsageTests(unittest.TestCase):
         self.assertEqual(summary["day"]["2026-09-27"]["calls"], 2)
         self.assertIn("estimates", summary["note"])
 
+    def test_interactions_usage_without_input_breakdown(self):
+        with_output = usage.token_counts({
+            "total_input_tokens": 100,
+            "total_output_tokens": 500,
+        }, output_modalities=["audio"])
+        self.assertEqual(with_output, {
+            "input": {"text": 100}, "output": {"audio": 500}
+        })
+
+        input_only = usage.token_counts({"total_input_tokens": 100})
+        self.assertEqual(input_only, {"input": {"text": 100}, "output": {}})
+
     def test_generate_content_usage_modalities(self):
         result = usage.token_counts({
             "promptTokenCount": 5,
