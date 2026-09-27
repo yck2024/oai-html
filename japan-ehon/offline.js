@@ -58,6 +58,14 @@
 
   function renderOfflineTitle(target, story) {
     target.replaceChildren();
+    if (SERIES.languages.length === 2 && !SERIES.narratedOnlyToggle) {
+      target.append(E.plainJapanese(story.title.ja));
+      const zh = element('span', 'zh');
+      zh.lang = 'zh-Hant-TW';
+      zh.textContent = story.title.zh;
+      target.append(zh);
+      return;
+    }
     const languages = E.metadataLanguages(SERIES.languages, displayLanguages(), story.title);
     for (const [index, lang] of languages.entries()) {
       const title = element('span', `${lang === 'zh' ? 'zh ' : ''}${index ? 'metadata-secondary' : ''}`.trim());

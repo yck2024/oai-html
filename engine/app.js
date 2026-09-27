@@ -14,6 +14,7 @@
   const SHELF_MARKER = SERIES.shelfMarker;
   const SHELF_PAGE_TITLE = SERIES.shelfPageTitle;
   const SHELF_DOCUMENT_TITLE = SERIES.shelfDocumentTitle;
+  const selectableMetadata = SERIES.languages.length > 2;
 
   const shelf = document.querySelector('#shelf');
   const bookList = document.querySelector('#bookList');
@@ -300,14 +301,31 @@
   function renderBookInfo(story) {
     const info = element('span', 'book-info');
     const origin = element('span', 'book-origin');
-    appendMetadata(origin, story.origin, { separator: ' · ' });
-    const title = element('span', 'book-title');
-    appendMetadata(title, story.title, { classFor: lang => `book-title-${lang}` });
     const tagline = element('span', 'book-tagline');
-    appendMetadata(tagline, story.tagline, { separator: () => document.createElement('br') });
+    let titles;
+    if (!selectableMetadata) {
+      origin.append(japanese(story.origin.ja), ' · ');
+      const originZh = element('span', '', 'zh-Hant-TW');
+      originZh.textContent = story.origin.zh;
+      origin.append(originZh);
+      const titleJa = element('span', 'book-title-ja', 'ja');
+      titleJa.append(japanese(story.title.ja));
+      const titleZh = element('span', 'book-title-zh', 'zh-Hant-TW');
+      titleZh.append(chinese(story.title.zh, story.title.zhuyin));
+      titles = [titleJa, titleZh];
+      const taglineZh = element('span', '', 'zh-Hant-TW');
+      taglineZh.textContent = story.tagline.zh;
+      tagline.append(japanese(story.tagline.ja), document.createElement('br'), taglineZh);
+    } else {
+      appendMetadata(origin, story.origin, { separator: ' · ' });
+      const title = element('span', 'book-title');
+      appendMetadata(title, story.title, { classFor: lang => `book-title-${lang}` });
+      titles = [title];
+      appendMetadata(tagline, story.tagline, { separator: () => document.createElement('br') });
+    }
     const open = element('span', 'book-open');
     open.textContent = `よむ ・ 開始閱讀（${story.pages.length}ページ）`;
-    info.append(origin, title, tagline, open);
+    info.append(origin, ...titles, tagline, open);
     return info;
   }
 
@@ -359,11 +377,18 @@
 
   function updateBookMetadata(story) {
     readerTitle.replaceChildren();
-    appendMetadata(readerTitle, story.title, {
-      classFor: (lang, index) => `${lang === 'zh' ? 'zh ' : ''}${index ? 'metadata-secondary' : ''}`.trim(),
-      plainJa: true,
-      withZhuyin: false,
-    });
+    if (!selectableMetadata) {
+      readerTitle.append(E.plainJapanese(story.title.ja));
+      const zh = element('span', 'zh', 'zh-Hant-TW');
+      zh.textContent = story.title.zh;
+      readerTitle.append(zh);
+    } else {
+      appendMetadata(readerTitle, story.title, {
+        classFor: (lang, index) => `${lang === 'zh' ? 'zh ' : ''}${index ? 'metadata-secondary' : ''}`.trim(),
+        plainJa: true,
+        withZhuyin: false,
+      });
+    }
     document.title = bookTitle(story);
     updateMediaMetadata(story);
   }

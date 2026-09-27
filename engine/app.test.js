@@ -354,6 +354,22 @@ test('Media Session exposes the book\'s title and cover art, and its controls mi
   assert.equal(mediaSession.playbackState, 'none');
 });
 
+test('Taiwan shelf and reader retain their original bilingual DOM structure', () => {
+  const reader = createReader();
+  const card = reader.elements.get('#bookList').querySelector('.book-card');
+  const info = card.querySelector('.book-info');
+  const [origin, titleJa, titleZh, tagline] = info.children;
+
+  assert.deepEqual([origin.className, titleJa.className, titleZh.className, tagline.className], [
+    'book-origin', 'book-title-ja', 'book-title-zh', 'book-tagline',
+  ]);
+  assert.equal(origin.children.some(node => node instanceof FakeElement && node.lang === 'ja'), false);
+  assert.equal(tagline.children.some(node => node instanceof FakeElement && node.lang === 'ja'), false);
+  assert.equal(info.querySelector('.book-title'), null);
+  assert.equal(reader.elements.get('#readerTitle').children[0], E.plainJapanese(stories[0].title.ja));
+  assert.equal(reader.elements.get('#readerTitle').children[1].className, 'zh');
+});
+
 test('Japan story metadata follows selected languages across shelf, reader, notes, alt text, and media controls', () => {
   const japan = {
     ...SERIES,
