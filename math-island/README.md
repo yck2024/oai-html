@@ -10,6 +10,8 @@ Math Island is a small collection of Japanese, browser-only math games for young
 
 All three games are static HTML, CSS, JavaScript, and bundled assets. They do not need a server, account, or API key to play. Number Garden stores progress in the browser's local storage. Poko and Rag and the Echo Forest do not upload or save game data.
 
+Math Island is also installable as an offline-capable app (a web manifest and service worker at `math-island/`): every picture and narration clip across all three games is cached automatically on first visit, so the whole hub stays fully playable offline afterward with no separate download step; GA4 requests are never cached and are skipped entirely while offline.
+
 Open index.html locally to start. Browser storage can behave differently for file pages; for a shareable link and reliable local progress, the games are published under the OAI HTML GitHub Pages gallery. Each visitor's progress remains in that visitor's own browser.
 
 Japanese AivisSpeech voice clips are packaged in the Poko, Number Garden, and Rag and the Echo Forest audio folders, so no text or API key is sent to Aivis during play. Credit: **AivisSpeech: まお**. The optional generator in number-garden/generate_aivis_audio.py can recreate Number Garden's clips after you provide a private Aivis API key; it previews the character count, respects a 1,000-character cap, and asks before making requests. Keep API keys out of this public repository.

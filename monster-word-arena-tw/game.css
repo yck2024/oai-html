@@ -537,3 +537,48 @@ footer { padding: 12px 0 0; color: #7c7b8c; text-align: center; font-size: 11px;
   .page-shell[data-stage="play"] .champion-picker,
   .page-shell[data-stage="play"] .reward-bar { display: none; }
 }
+
+/* ---------- Toasts (update available / install hint) ---------- */
+
+.toast {
+  position: fixed;
+  z-index: 20;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  max-width: min(92vw, 32rem);
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: var(--ink);
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(57, 58, 83, 0.28);
+}
+
+.toast p { margin: 0; flex: 1 1 auto; font-size: 0.86rem; line-height: 1.5; min-width: 0; }
+
+.toast-action {
+  flex: 0 0 auto;
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--coral);
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.toast-dismiss {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  cursor: pointer;
+}

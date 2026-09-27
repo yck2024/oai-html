@@ -1,0 +1,48 @@
+/* Toasts (update available / install hint), shared by the Math Island hub and all three game
+   pages so the PWA install/update UI looks and behaves the same everywhere in the app. */
+
+.pwa-toast {
+  position: fixed;
+  z-index: 20;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  max-width: min(92vw, 32rem);
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: #24405b;
+  color: #fff;
+  font-family: "Hiragino Maru Gothic ProN", "Yu Gothic", "Meiryo", system-ui, sans-serif;
+  box-shadow: 0 10px 24px rgba(36, 64, 91, 0.32);
+}
+
+.pwa-toast p { margin: 0; flex: 1 1 auto; font-size: 0.86rem; line-height: 1.5; min-width: 0; }
+
+.pwa-toast-action {
+  flex: 0 0 auto;
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 0;
+  background: #47a96e;
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.pwa-toast-dismiss {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}

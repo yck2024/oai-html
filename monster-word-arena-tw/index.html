@@ -6,6 +6,13 @@
   <meta name="theme-color" content="#fff1d6">
   <meta name="description" content="A pretend-sparring dinosaur and monster game with easy, harder, and super listening levels, ten learning topics, and English, Taiwan Traditional Chinese, or Japanese narration and on-screen text for little learners.">
   <title>Dino &amp; Monster Word Arena｜恐龍怪獸友誼擂台</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Word Arena">
   <link rel="stylesheet" href="./game.css">
 </head>
 <body>
@@ -221,6 +228,17 @@
 
     <footer id="footer">Everybody gets a cheer. Try again any time!</footer>
   </main>
+
+  <div class="toast" id="updateToast" role="status" hidden>
+    <p>A new version is ready · 有新版本可更新 · 新しいバージョンがあります</p>
+    <button type="button" class="toast-action" id="updateReloadButton">Update · 更新 · こうしん</button>
+  </div>
+  <div class="toast" id="installToast" role="status" hidden>
+    <p id="installToastText"></p>
+    <button type="button" class="toast-action" id="installButton" hidden>Add to Home Screen · 加入主畫面</button>
+    <button type="button" class="toast-dismiss" id="installDismissButton" aria-label="Close · 關閉 · 閉じる"><span aria-hidden="true">✕</span></button>
+  </div>
+
   <script src="./game.js"></script>
   <script src="./pacing.js"></script>
   <script src="./i18n.js"></script>
@@ -229,5 +247,6 @@
   <script src="./app.js"></script>
   <script src="./rewards.js"></script>
   <script src="./rewards-app.js"></script>
+  <script src="./offline.js"></script>
 </body>
 </html>
