@@ -232,6 +232,7 @@
   // download and sentence-by-sentence modes already use, and is discarded once played.
   async function playContinuous({ paused = false } = {}) {
     const token = ++continuousToken;
+    const requestedBook = book;
     clearTimeout(turnTimer);
     narrator.stop();
     continuousPlayer.loading();
@@ -240,15 +241,14 @@
     speechStatus.textContent = PREPARING_CONTINUOUS;
     updatePlayback();
 
-    const timeline = C.buildContinuousTimeline(E, book.story, LISTEN_MODES, DEFAULT_MODE, settings.mode, TIMING);
-    const startPageIndex = book.index;
+    const timeline = C.buildContinuousTimeline(E, requestedBook.story, LISTEN_MODES, DEFAULT_MODE, settings.mode, TIMING);
     let blob = null;
     try {
-      blob = await C.assembleContinuousBlob(timeline, C.createByteLoader(fetch, ASSET_BASE, book.story.id));
+      blob = await C.assembleContinuousBlob(timeline, C.createByteLoader(fetch, ASSET_BASE, requestedBook.story.id));
     } catch (_error) {
       blob = null;
     }
-    if (token !== continuousToken || !book) return; // superseded by a later call, or the book closed while building
+    if (token !== continuousToken || book !== requestedBook) return; // superseded by a later call, or the book changed while building
 
     if (!blob) {
       listening = false;
@@ -257,7 +257,7 @@
       return;
     }
     speechStatus.textContent = '';
-    const startAtMs = timeline.pages[startPageIndex]?.startMs ?? 0;
+    const startAtMs = timeline.pages[book.index]?.startMs ?? 0;
     await continuousPlayer.play(blob, timeline, { startAtMs, paused });
     if (token !== continuousToken) return;
     updatePlayback();
@@ -480,6 +480,7 @@
   }
 
   function openBook(story, index, { push = true, send = true } = {}) {
+    continuousToken++;
     book = E.createBook(story, index);
     completedThisOpening = false;
     listening = false;
@@ -500,6 +501,7 @@
   }
 
   function closeBook({ push = true, send = true } = {}) {
+    continuousToken++;
     clearTimeout(turnTimer);
     narrator.stop();
     continuousPlayer.stop();
@@ -645,8 +647,12 @@
     node.scrollIntoView?.({ block: 'nearest' });
   }
 
+  function activeAudioPlayer() {
+    return continuousPlayer.state !== 'idle' ? continuousPlayer : narrator;
+  }
+
   function updatePlayback() {
-    const activeState = settings.continuous ? continuousPlayer.state : narrator.state;
+    const activeState = activeAudioPlayer().state;
     const playing = activeState === 'playing';
     playIcon.textContent = playing ? '⏸' : '▶';
     playButton.setAttribute('aria-label', playing ? 'とめる 暫停' : 'よむ 唸給我聽');
@@ -679,24 +685,17 @@
     if (typeof navigator === 'undefined' || !navigator.mediaSession) return;
     const actionHandlers = {
       play: () => {
-        if (settings.continuous) {
-          if (continuousPlayer.state === 'paused' && !muted) {
-            listening = true;
-            continuousPlayer.resume();
-          } else if (continuousPlayer.state === 'idle') {
-            readPage();
-          }
-        } else if (narrator.state === 'paused' && !muted) {
-          listening = queueKind === 'page';
-          narrator.resume();
-        } else if (narrator.state === 'idle') {
+        const player = activeAudioPlayer();
+        if (player.state === 'paused' && !muted) {
+          listening = player === continuousPlayer || queueKind === 'page';
+          player.resume();
+        } else if (player.state === 'idle') {
           readPage();
         }
         updatePlayback();
       },
       pause: () => {
-        if (settings.continuous) continuousPlayer.pause();
-        else narrator.pause();
+        activeAudioPlayer().pause();
         listening = false;
         clearTimeout(turnTimer);
         updatePlayback();
@@ -826,32 +825,22 @@
   });
 
   playButton.addEventListener('click', () => {
-    if (settings.continuous) {
-      const state = continuousPlayer.state;
-      if (state === 'loading') return; // already building; a second tap would only restart it
-      if (state === 'playing') {
-        continuousPlayer.pause();
-        listening = false;
-        clearTimeout(turnTimer);
-      } else if (state === 'paused' && !muted) {
-        listening = true;
-        continuousPlayer.resume();
-      } else {
-        readPage();
-      }
+    const player = activeAudioPlayer();
+    if (player === continuousPlayer && player.state === 'loading') return;
+    if (player.state === 'playing') {
+      player.pause();
+      listening = false;
+      clearTimeout(turnTimer);
       updatePlayback();
       return;
     }
-    if (narrator.state === 'playing') {
-      narrator.pause();
-      listening = false;
-      clearTimeout(turnTimer);
-    } else if (narrator.state === 'paused' && !muted) {
-      listening = queueKind === 'page';
-      narrator.resume();
-    } else {
-      readPage();
+    if (player.state === 'paused' && !muted) {
+      listening = player === continuousPlayer || queueKind === 'page';
+      player.resume();
+      updatePlayback();
+      return;
     }
+    readPage();
     updatePlayback();
   });
 
@@ -864,7 +853,7 @@
       // narrator.stop() would pause/rewind the shared <audio> element even when narrator
       // itself is idle, which would rewind a live continuous Blob back to its start — see the
       // same guard in goTo() above.
-      if (settings.continuous) continuousPlayer.pause();
+      if (activeAudioPlayer() === continuousPlayer) continuousPlayer.pause();
       else narrator.stop();
       listening = false;
     }
@@ -884,8 +873,8 @@
   for (const input of modeInputs) {
     input.addEventListener('change', () => {
       if (!input.checked || !E.isMode(LISTEN_MODES, input.value) || input.value === settings.mode) return;
-      const playbackState = settings.continuous ? continuousPlayer.state : narrator.state;
-      const pageQueueActive = settings.continuous ? playbackState !== 'idle' : (queueKind === 'page' && playbackState !== 'idle');
+      const playbackState = activeAudioPlayer().state;
+      const pageQueueActive = queueKind === 'page' && playbackState !== 'idle';
       settings.mode = input.value;
       saveSettings();
       track('listen_mode_change', { listen_mode: settings.mode });
@@ -917,8 +906,7 @@
 
   continuousToggle.addEventListener('change', () => {
     if (settings.continuous === continuousToggle.checked) return;
-    const wasContinuous = settings.continuous;
-    const previousState = wasContinuous ? continuousPlayer.state : narrator.state;
+    const previousState = activeAudioPlayer().state;
     settings.continuous = continuousToggle.checked;
     saveSettings();
     track('continuous_toggle', { continuous: settings.continuous ? 'on' : 'off' });

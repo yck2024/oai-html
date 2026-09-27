@@ -211,7 +211,7 @@ test('createByteLoader: fetches each clip once and memoizes each silence kind in
   const fetched = [];
   const fetchFn = url => {
     fetched.push(url);
-    return Promise.resolve({ arrayBuffer: () => Promise.resolve(new ArrayBuffer(4)) });
+    return Promise.resolve({ ok: true, arrayBuffer: () => Promise.resolve(new ArrayBuffer(4)) });
   };
   const loadBytes = C.createByteLoader(fetchFn, '/taiwan-ehon/', STORY.id);
   for (const segment of timeline.segments) await loadBytes(segment); // sequential, like assembleContinuousBlob
@@ -226,6 +226,22 @@ test('createByteLoader: fetches each clip once and memoizes each silence kind in
     '/taiwan-ehon/audio/fixture-book/zh/p01-2.mp3',
     '/taiwan-ehon/audio/fixture-book/ja/p02-1.mp3',
   ]);
+});
+
+test('createByteLoader: rejects non-OK silence and narration responses before reading their bodies', async () => {
+  const readResponse = async segment => {
+    let bodyRead = false;
+    const loadBytes = C.createByteLoader(() => Promise.resolve({
+      ok: false,
+      status: 404,
+      arrayBuffer: () => { bodyRead = true; return Promise.resolve(new ArrayBuffer(4)); },
+    }), '/', STORY.id);
+    await assert.rejects(loadBytes(segment), /Audio request failed: 404/);
+    assert.equal(bodyRead, false);
+  };
+
+  await readResponse({ kind: 'silence', which: 'page' });
+  await readResponse({ kind: 'clip', lang: 'ja', lineId: 'p01-1' });
 });
 
 function hasFfprobe() {

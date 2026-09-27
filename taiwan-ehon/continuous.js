@@ -171,14 +171,18 @@
   // every gap in the book.
   function createByteLoader(fetchFn, base, storyId) {
     const silenceBytes = new Map();
+    function readResponse(response) {
+      if (!response.ok) throw new Error(`Audio request failed: ${response.status}`);
+      return response.arrayBuffer();
+    }
     return function loadBytes(segment) {
       if (segment.kind === 'silence') {
         if (!silenceBytes.has(segment.which)) {
-          silenceBytes.set(segment.which, fetchFn(silencePath(segment.which, base)).then(response => response.arrayBuffer()));
+          silenceBytes.set(segment.which, fetchFn(silencePath(segment.which, base)).then(readResponse));
         }
         return silenceBytes.get(segment.which);
       }
-      return fetchFn(clipUrl(base, storyId, segment.lang, segment.lineId)).then(response => response.arrayBuffer());
+      return fetchFn(clipUrl(base, storyId, segment.lang, segment.lineId)).then(readResponse);
     };
   }
 
