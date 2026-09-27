@@ -293,7 +293,7 @@
           "id": "p07-1",
           "speaker": "narrator",
           "style": "pleased and relieved",
-          "ja": "まちで ぬのを みせると、たかい ねだんで うれました。",
+          "ja": "おじいさんが まちへ ぬのを もって いくと、たかい ねだんで うれました。",
           "zh": "老爺爺把布拿到鎮上，賣了好價錢。",
           "zhuyin": "ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄅㄚˇ ㄅㄨˋ ㄋㄚˊ ㄉㄠˋ ㄓㄣˋ ㄕㄤˋ ㄇㄞˋ ˙ㄌㄜ ㄏㄠˇ ㄐㄧㄚˋ ㄑㄧㄢˊ",
           "en": "The old man took the cloth to town, and it sold for a very high price."
