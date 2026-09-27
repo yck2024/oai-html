@@ -154,16 +154,18 @@
   async function downloadStory(story, onProgress) {
     try { await navigator.storage?.persist?.(); } catch (_error) { /* not offered on this browser */ }
     const assets = E.bookAssetUrls(story, ASSET_BASE);
+    const files = [...assets.images, ...assets.audio];
+    let failed = 0;
     try {
       const shell = await caches.open(E.SHELL_CACHE_NAME);
       await shell.add(assets.page);
-    } catch (_error) { /* the book page is already precached in the normal case; ignore */ }
+    } catch (_error) {
+      failed += 1;
+    }
 
     const cache = await mediaCache();
-    const files = [...assets.images, ...assets.audio];
     let done = 0;
     let bytes = 0;
-    let failed = 0;
     onProgress({ done, total: files.length, bytes });
     for (const url of files) {
       if (!(await cache.match(url))) {
@@ -299,13 +301,21 @@
       if (controls) { controls.downloadButton.disabled = true; }
       const forCurrentBook = reader.dataset.book === story.id;
       if (forCurrentBook && bookDownloadButton) bookDownloadButton.disabled = true;
-      const { failed } = await downloadStory(story, progressState => {
-        showProgress(controls?.progress, progressState);
-        if (forCurrentBook) showProgress(bookOfflineProgress, progressState);
-      });
-      if (controls) controls.downloadButton.disabled = false;
-      if (forCurrentBook && bookDownloadButton) {
-        bookDownloadButton.disabled = false;
+      let failed = 0;
+      try {
+        ({ failed } = await downloadStory(story, progressState => {
+          showProgress(controls?.progress, progressState);
+          if (forCurrentBook) showProgress(bookOfflineProgress, progressState);
+        }));
+      } catch (_error) {
+        const assets = E.bookAssetUrls(story, ASSET_BASE);
+        failed = assets.images.length + assets.audio.length;
+      } finally {
+        if (controls) controls.downloadButton.disabled = false;
+        if (forCurrentBook && bookDownloadButton) bookDownloadButton.disabled = false;
+      }
+      if (failed && controls?.progress) controls.progress.textContent += ` ・ ${failed} こ しっぱい ・ ${failed} 個失敗`;
+      if (forCurrentBook && bookOfflineStatus) {
         bookOfflineStatus.textContent = failed
           ? 'いちぶ ダウンロードできませんでした。もういちど ためしてね ・ 部分下載失敗，請再試一次'
           : 'ダウンロード ずみ ・ 已下載完成';
@@ -330,19 +340,27 @@
       let bytesSoFar = 0;
       let failed = 0;
       showProgress(offlineAllProgress, { done: 0, total: totalFiles, bytes: 0 });
-      for (const story of STORIES) {
-        let lastBytes = 0;
-        const result = await downloadStory(story, ({ done, bytes }) => {
-          bytesSoFar += bytes - lastBytes;
-          lastBytes = bytes;
-          showProgress(offlineAllProgress, { done: doneSoFar + done, total: totalFiles, bytes: bytesSoFar });
-        });
-        failed += result.failed;
-        const assets = E.bookAssetUrls(story, ASSET_BASE);
-        doneSoFar += assets.images.length + assets.audio.length;
-        await applyStatus(story, await storyFileStatus(story));
+      try {
+        for (const story of STORIES) {
+          const assets = E.bookAssetUrls(story, ASSET_BASE);
+          const storyTotal = assets.images.length + assets.audio.length;
+          let lastBytes = 0;
+          try {
+            const result = await downloadStory(story, ({ done, bytes }) => {
+              bytesSoFar += bytes - lastBytes;
+              lastBytes = bytes;
+              showProgress(offlineAllProgress, { done: doneSoFar + done, total: totalFiles, bytes: bytesSoFar });
+            });
+            failed += result.failed;
+          } catch (_error) {
+            failed += storyTotal;
+          }
+          doneSoFar += storyTotal;
+          await applyStatus(story, await storyFileStatus(story));
+        }
+      } finally {
+        downloadAllButton.disabled = false;
       }
-      downloadAllButton.disabled = false;
       await refreshAll();
       offlineAllProgress.textContent += failed
         ? ` ・ ${failed} こ ダウンロードできませんでした ・ ${failed} 個項目下載失敗`
