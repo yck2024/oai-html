@@ -261,6 +261,7 @@
     if (state.finished) {
       questionPanel.hidden = true;
       finishPanel.hidden = false;
+      window.ArenaRewards?.recordWin(state.champion);
       [...topicTabs, ...levelButtons].forEach(button => { button.disabled = true; });
       document.querySelector('#playAgainButton').focus();
     } else {

@@ -10,7 +10,7 @@ The gallery is manifest-driven. Published page metadata lives in `pages.json`, a
 
 ## Current pages
 
-See the [live gallery](https://yck2024.github.io/oai-html/) for the current page list; its cards are rendered from [`pages.json`](pages.json).
+See the [live gallery](https://yck2024.github.io/oai-html/) for the current page list; its cards are rendered from [`pages.json`](pages.json). Per-page detail docs: [Dino & Monster Word Arena](monster-word-arena-tw/README.md), [Taiwan Story Picture Books](#taiwan-story-references).
 
 ## Publishing architecture
 
