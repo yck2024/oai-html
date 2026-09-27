@@ -24,6 +24,7 @@
   const autoTurnToggle = document.querySelector('#autoTurnToggle');
   const stage = document.querySelector('#stage');
   const pageEl = document.querySelector('#page');
+  const pageArt = document.querySelector('#pageArt');
   const pageImage = document.querySelector('#pageImage');
   const pageText = document.querySelector('#pageText');
   const speechStatus = document.querySelector('#speechStatus');
@@ -214,6 +215,7 @@
     zh.textContent = story.title.zh;
     readerTitle.append(zh);
     document.title = `${story.title.zh}｜${E.plainJapanese(story.title.ja)} · 台灣故事繪本`;
+    reader.dataset.book = story.id;
     shelf.hidden = true;
     reader.hidden = false;
     speechStatus.textContent = HINT;
@@ -233,6 +235,7 @@
     setSettingsOpen(false);
     reader.hidden = true;
     shelf.hidden = false;
+    delete reader.dataset.book;
     document.title = SHELF_DOCUMENT_TITLE;
     const path = shelfPath();
     if (push && location.pathname !== path) history.pushState(null, '', path);
@@ -325,6 +328,7 @@
     const page = book.page();
     const kind = pageKind(page);
     pageEl.dataset.kind = kind;
+    pageArt.classList.remove('offline-missing');
     pageImage.src = `${ASSET_BASE}${page.image}`;
     pageImage.alt = `${page.alt.ja} ／ ${page.alt.zh}`;
     renderText();
@@ -419,6 +423,11 @@
     autoTurnToggle.checked = settings.autoTurn;
     reader.classList.toggle('hide-zhuyin', !settings.zhuyin);
   }
+
+  // A picture not yet downloaded for offline reading fails to load rather than showing a
+  // browser broken-image icon; a plain, friendly notice takes its place until it's back online.
+  pageImage.addEventListener('error', () => pageArt.classList.add('offline-missing'));
+  pageImage.addEventListener('load', () => pageArt.classList.remove('offline-missing'));
 
   pageText.addEventListener('click', event => {
     const line = event.target.closest('.line');

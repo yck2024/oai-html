@@ -202,3 +202,32 @@ test('changing mode requeues paused narration without playing until resumed', ()
   assert.equal(firstClip, '/taiwan-ehon/audio/bai-zei-qi/ja/p01-1.mp3');
   assert.equal(reader.audio.played[1], '/taiwan-ehon/audio/bai-zei-qi/zh/p01-1.mp3');
 });
+
+test('the reader element tracks the open book id for offline.js, clearing it back at the shelf', () => {
+  const reader = createReader();
+  const { elements } = reader;
+  assert.equal(elements.get('#reader').dataset.book, stories[0].id);
+  reader.openStory(1);
+  assert.equal(elements.get('#reader').dataset.book, stories[1].id);
+  elements.get('#closeBook').dispatch('click');
+  assert.equal(elements.get('#reader').dataset.book, undefined);
+});
+
+test('a picture that fails to load shows a friendly offline notice, cleared once a picture loads again', () => {
+  const reader = createReader();
+  const { elements } = reader;
+  const pageArt = elements.get('#pageArt');
+  const pageImage = elements.get('#pageImage');
+  assert.equal(pageArt.classList.contains('offline-missing'), false);
+
+  pageImage.dispatch('error');
+  assert.equal(pageArt.classList.contains('offline-missing'), true);
+
+  elements.get('#nextButton').dispatch('click');
+  assert.equal(pageArt.classList.contains('offline-missing'), false, 'turning the page resets the notice before the next picture loads');
+
+  pageImage.dispatch('error');
+  assert.equal(pageArt.classList.contains('offline-missing'), true);
+  pageImage.dispatch('load');
+  assert.equal(pageArt.classList.contains('offline-missing'), false);
+});

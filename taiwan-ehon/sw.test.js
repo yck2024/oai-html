@@ -1,0 +1,142 @@
+'use strict';
+
+const assert = require('node:assert/strict');
+const test = require('node:test');
+const sw = require('./sw.js');
+const stories = require('./stories.js');
+
+const BASE = 'https://example.test/oai-html/taiwan-ehon/';
+
+// A minimal in-memory stand-in for CacheStorage/Cache, just enough for sw.js's own logic
+// (open/match/put by URL string) — not a browser, so no real ServiceWorkerGlobalScope needed.
+function fakeCaches() {
+  const named = new Map(); // cache name -> Map(url -> Response)
+  function cacheFor(name) {
+    if (!named.has(name)) named.set(name, new Map());
+    const store = named.get(name);
+    return {
+      match: async url => store.get(url),
+      put: async (url, response) => { store.set(url, response.clone ? response.clone() : response); },
+      delete: async url => store.delete(url),
+      addAll: async urls => { for (const url of urls) store.set(url, new Response(`stub:${url}`)); },
+    };
+  }
+  return {
+    open: async name => cacheFor(name),
+    keys: async () => [...named.keys()],
+    delete: async name => named.delete(name),
+    get _store() {
+      const all = new Map();
+      for (const store of named.values()) for (const [key, value] of store) all.set(key, value);
+      return all;
+    },
+  };
+}
+
+test('requestKind routes analytics straight to the network, media to the cache-first path, and everything else as shell', () => {
+  assert.equal(sw.requestKind('https://www.googletagmanager.com/gtag/js?id=G-QLFWNZWDSS'), 'analytics');
+  assert.equal(sw.requestKind(`${BASE}images/hu-gu-po/cover.webp`), 'media');
+  assert.equal(sw.requestKind(`${BASE}audio/hu-gu-po/ja/p01-1.mp3`), 'media');
+  assert.equal(sw.requestKind(`${BASE}index.html`), 'shell');
+  assert.equal(sw.requestKind(`${BASE}hu-gu-po/`), 'shell');
+});
+
+test('shellUrls lists one entry per story plus the fixed app-shell files, from stories.js', () => {
+  const urls = sw.shellUrls(BASE);
+  assert.equal(urls.filter(url => url.endsWith('/') && url !== BASE).length, stories.length);
+  for (const story of stories) assert.ok(urls.includes(`${BASE}${story.id}/`));
+});
+
+test('respond() never routes an analytics request through the cache', async () => {
+  const caches = fakeCaches();
+  let fetchedUrl = null;
+  const fetchImpl = async request => {
+    fetchedUrl = typeof request === 'string' ? request : request.url;
+    return new Response('ok', { status: 200 });
+  };
+  const request = new Request('https://www.googletagmanager.com/gtag/js?id=x');
+  const response = await sw.respond(request, { caches, fetch: fetchImpl });
+  assert.equal(response.status, 200);
+  assert.equal(fetchedUrl, request.url);
+  assert.equal(caches._store.size, 0, 'nothing was cached for an analytics request');
+});
+
+test('respond() serves a cached shell asset immediately (stale-while-revalidate) without waiting on the network', async () => {
+  const caches = fakeCaches();
+  const cache = await caches.open(sw.SHELL_CACHE_NAME);
+  await cache.put(`${BASE}index.html`, new Response('<html>cached shell</html>'));
+  let fetchCalled = false;
+  const fetchImpl = async () => { fetchCalled = true; return new Response('<html>network</html>'); };
+  const request = new Request(`${BASE}index.html`);
+  const response = await sw.respond(request, { caches, fetch: fetchImpl });
+  assert.equal(await response.text(), '<html>cached shell</html>');
+  // stale-while-revalidate still triggers a background fetch, but respond() itself must not
+  // await it before returning the cached copy.
+  await Promise.resolve();
+  assert.equal(fetchCalled, true);
+});
+
+test('respond() falls back to the network for a shell asset with no cached copy yet', async () => {
+  const caches = fakeCaches();
+  const fetchImpl = async () => new Response('<html>fresh</html>', { status: 200 });
+  const request = new Request(`${BASE}hu-gu-po/`);
+  const response = await sw.respond(request, { caches, fetch: fetchImpl });
+  assert.equal(await response.text(), '<html>fresh</html>');
+});
+
+test('respond() caches a media file on first use and serves it from cache afterward', async () => {
+  const caches = fakeCaches();
+  let fetchCount = 0;
+  const fetchImpl = async () => { fetchCount += 1; return new Response(new Uint8Array([1, 2, 3, 4]), { headers: { 'Content-Type': 'image/webp' } }); };
+  const url = `${BASE}images/hu-gu-po/cover.webp`;
+  const first = await sw.respond(new Request(url), { caches, fetch: fetchImpl });
+  assert.equal(fetchCount, 1);
+  assert.equal((await first.arrayBuffer()).byteLength, 4);
+
+  const second = await sw.respond(new Request(url), { caches, fetch: fetchImpl });
+  assert.equal(fetchCount, 1, 'the second request is served from the media cache, no new fetch');
+  assert.equal((await second.arrayBuffer()).byteLength, 4);
+});
+
+test('a cached audio clip answers a Range request with a correct 206 partial response', async () => {
+  const caches = fakeCaches();
+  const bytes = new Uint8Array(2000).map((_, i) => i % 256);
+  const cache = await caches.open(sw.MEDIA_CACHE_NAME);
+  const url = `${BASE}audio/hu-gu-po/ja/p01-1.mp3`;
+  await cache.put(url, new Response(bytes, { headers: { 'Content-Type': 'audio/mpeg' } }));
+
+  const request = new Request(url, { headers: { Range: 'bytes=500-999' } });
+  const fetchImpl = async () => { throw new Error('must not hit the network for a cached clip'); };
+  const response = await sw.respond(request, { caches, fetch: fetchImpl });
+
+  assert.equal(response.status, 206);
+  assert.equal(response.headers.get('Content-Range'), 'bytes 500-999/2000');
+  assert.equal(response.headers.get('Accept-Ranges'), 'bytes');
+  assert.equal(response.headers.get('Content-Length'), '500');
+  const body = new Uint8Array(await response.arrayBuffer());
+  assert.equal(body.length, 500);
+  assert.deepEqual([...body.slice(0, 3)], [...bytes.slice(500, 503)]);
+});
+
+test('parseRange rejects absent, malformed, and out-of-bounds ranges so callers fall back to the full file', () => {
+  assert.equal(sw.parseRange(undefined, 1000), null);
+  assert.equal(sw.parseRange('not-a-range', 1000), null);
+  assert.equal(sw.parseRange('bytes=2000-3000', 1000), null);
+  assert.deepEqual(sw.parseRange('bytes=0-99', 1000), { start: 0, end: 99 });
+  assert.deepEqual(sw.parseRange('bytes=950-', 1000), { start: 950, end: 999 });
+  assert.deepEqual(sw.parseRange('bytes=-50', 1000), { start: 950, end: 999 });
+});
+
+test('activate cleans up old versioned shell caches but never touches the unversioned media cache', async () => {
+  const caches = fakeCaches();
+  await caches.open('taiwan-ehon-shell-v0');
+  await caches.open(sw.SHELL_CACHE_NAME);
+  await caches.open(sw.MEDIA_CACHE_NAME);
+  const names = await caches.keys();
+  const stale = names.filter(name => name.startsWith('taiwan-ehon-shell-') && name !== sw.SHELL_CACHE_NAME);
+  for (const name of stale) await caches.delete(name);
+  const remaining = await caches.keys();
+  assert.ok(remaining.includes(sw.SHELL_CACHE_NAME));
+  assert.ok(remaining.includes(sw.MEDIA_CACHE_NAME));
+  assert.ok(!remaining.includes('taiwan-ehon-shell-v0'));
+});
