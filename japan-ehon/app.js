@@ -47,6 +47,13 @@
     return node;
   }
 
+  function applyBookTheme(node, theme, accentProperty = '--book-accent', softProperty = '--book-soft') {
+    for (const [key, property] of [['accent', accentProperty], ['soft', softProperty]]) {
+      if (theme?.[key]) node.style.setProperty(property, theme[key]);
+      else node.style.removeProperty(property);
+    }
+  }
+
   // A series with only its two historical languages already has hand-written, naturally
   // phrased radio options in its own index.html (Taiwan's markup, unchanged by this engine).
   // A series configured with more languages leaves #modeOptions empty in its index.html, and
@@ -247,8 +254,7 @@
       const card = element('button', 'book-card');
       card.type = 'button';
       card.dataset.story = story.id;
-      card.style.setProperty('--book-accent', story.theme.accent);
-      card.style.setProperty('--book-soft', story.theme.soft);
+      applyBookTheme(card, story.theme);
 
       const cover = element('img', 'book-cover');
       cover.src = `${ASSET_BASE}${story.pages[0].image}`;
@@ -300,8 +306,7 @@
     completedThisOpening = false;
     listening = false;
     narrator.stop();
-    reader.style.setProperty('--accent', story.theme.accent);
-    reader.style.setProperty('--accent-soft', story.theme.soft);
+    applyBookTheme(reader, story.theme, '--accent', '--accent-soft');
     readerTitle.replaceChildren(E.plainJapanese(story.title.ja));
     const zh = element('span', 'zh', 'zh-Hant-TW');
     zh.textContent = story.title.zh;
@@ -520,7 +525,9 @@
     const firstLine = nextPage.lines[0];
     if (!firstLine) return;
     const firstLang = E.languagesFor(LISTEN_MODES, DEFAULT_MODE, settings.mode)[0];
-    warmClip(E.clipPath(book.story.id, firstLang, firstLine.id, ASSET_BASE));
+    if (firstLine[firstLang] !== undefined) {
+      warmClip(E.clipPath(book.story.id, firstLang, firstLine.id, ASSET_BASE));
+    }
   }
 
   function readPage({ paused = false } = {}) {

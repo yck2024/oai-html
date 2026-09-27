@@ -64,7 +64,9 @@
   // language comes right before the same sentence in the second.
   function pageQueue(page, modes, defaultMode, mode) {
     const order = languagesFor(modes, defaultMode, mode);
-    return page.lines.flatMap(line => order.map(lang => ({ lineId: line.id, lang })));
+    return page.lines.flatMap(line => order
+      .filter(lang => line[lang] !== undefined)
+      .map(lang => ({ lineId: line.id, lang })));
   }
 
   function clipPath(storyId, lang, lineId, base = './') {
@@ -95,7 +97,9 @@
     const audio = [];
     for (const item of story.pages) {
       for (const line of item.lines) {
-        for (const lang of languages) audio.push(clipPath(story.id, lang, line.id, base));
+        for (const lang of languages) {
+          if (line[lang] !== undefined) audio.push(clipPath(story.id, lang, line.id, base));
+        }
       }
     }
     return { page, images, audio, all: [page, ...images, ...audio] };
