@@ -55,6 +55,19 @@ body::before {
   body::before { display: none; }
 }
 
+/* Wide screens: this series' three-language pages can be taller than the viewport. Keep the
+   picture at the top of its page and in view while the words scroll, instead of centering it
+   against the tall text column (which pushes it below the fold). Where the text fits, the
+   picture's row is the picture's own height, so nothing moves. The extra `.page` raises
+   specificity over engine/ehon.css, which is appended after this file. */
+@media (min-width: 900px) and (min-aspect-ratio: 5/4) {
+  .page .page-art {
+    align-self: start;
+    position: sticky;
+    top: 0;
+  }
+}
+
 * { box-sizing: border-box; }
 
 html, body { margin: 0; }
