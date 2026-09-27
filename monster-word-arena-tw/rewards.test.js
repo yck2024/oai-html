@@ -525,7 +525,7 @@ test('a storage refresh preserves costume focus and falls back when the choice l
   assert.equal(page.document.activeElement, page.action('close'), 'focus falls back to the dialog close button');
 });
 
-test('the fallback dialog returns focus to its opener on button and backdrop close', () => {
+test('the non-modal fallback allows outside interaction and closes via its button', () => {
   const page = loadPage({ nativeDialog: false });
   const opener = page.action('open');
   const book = page.element('stickerBook');
@@ -534,13 +534,12 @@ test('the fallback dialog returns focus to its opener on button and backdrop clo
   opener.click();
   assert.equal(book.getAttribute('open'), '');
   assert.equal(page.document.activeElement, page.action('close'));
-  page.action('close').click();
-  assert.equal(book.getAttribute('open'), null);
-  assert.equal(page.document.activeElement, opener);
 
-  opener.focus();
-  opener.click();
-  book.dispatch('click', { clientX: 40, clientY: 300 });
+  page.action('reset').click();
+  assert.equal(book.getAttribute('open'), '', 'an outside page control does not dispatch a click to the book');
+  assert.equal(page.action('confirm-reset').hidden, false, 'the page remains interactive without a modal dialog');
+
+  page.action('close').click();
   assert.equal(book.getAttribute('open'), null);
   assert.equal(page.document.activeElement, opener);
 });
