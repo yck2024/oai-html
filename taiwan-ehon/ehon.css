@@ -596,6 +596,11 @@ rt { font-weight: 500; }
     grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
     grid-template-rows: auto;
     align-content: center;
+    /* A cover page's title+tagline+origin can be taller than the viewport; plain
+       center then clips the top half where a scroll container can't reach (scrollTop
+       can't go negative). safe center keeps normal centering but falls back to
+       start-alignment instead of clipping when content overflows. */
+    align-content: safe center;
     column-gap: 0;
     width: min(1240px, calc(100% - 48px));
     margin: 0 auto;
