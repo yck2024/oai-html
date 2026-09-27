@@ -6,9 +6,11 @@ const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
 const E = require('./ehon.js');
+const C = require('./continuous.js');
 const TAIWAN_DIR = path.join(__dirname, '..', 'taiwan-ehon');
 const stories = require(path.join(TAIWAN_DIR, 'stories.js'));
 const SERIES = require(path.join(TAIWAN_DIR, 'series.config.js'));
+const TIMING = require(path.join(TAIWAN_DIR, 'audio-timing.js'));
 const { FakeElement, READER_IDS, createLocationHistory } = require('./test-dom.js');
 
 const ORIGIN = 'https://yck2024.github.io';
@@ -39,7 +41,7 @@ function createRoutingReader({ initialPath }) {
   const events = [];
   const nav = createLocationHistory(initialPath, ORIGIN);
   const context = {
-    window: { Ehon: E, EhonStories: stories, EhonSeriesConfig: SERIES },
+    window: { Ehon: E, EhonContinuous: C, EhonAudioTiming: TIMING, EhonStories: stories, EhonSeriesConfig: SERIES },
     document,
     localStorage,
     Audio: FakeAudio,

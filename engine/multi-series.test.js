@@ -8,6 +8,7 @@
 // engine source, and its own config must be internally consistent.
 
 const assert = require('node:assert/strict');
+const { execFileSync } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
@@ -15,6 +16,15 @@ const test = require('node:test');
 const ROOT = path.join(__dirname, '..');
 const SERIES_FOLDERS = require('./registry.js');
 const { sync } = require('./build.js');
+
+function hasFfprobe() {
+  try {
+    execFileSync('ffprobe', ['-version'], { stdio: 'ignore' });
+    return true;
+  } catch (_error) {
+    return false;
+  }
+}
 
 test('every registered series folder is in sync with engine/ (no hand-edited copy has drifted)', () => {
   const drifted = sync({ write: false });
@@ -66,6 +76,19 @@ for (const folder of SERIES_FOLDERS) {
       const onDisk = fs.readFileSync(path.join(seriesDir, id, 'index.html'), 'utf8');
       assert.equal(onDisk, html, `${folder}/${id}/index.html is stale — run: node ${folder}/generate-book-pages.js`);
     }
+  });
+
+  // Re-probes every real clip and silence file with the real ffprobe binary, so this is the one
+  // check that actually confirms continuous.js's screen-off timing manifest still matches what
+  // is on disk — not just that the generator's own logic is correct (generate-audio-timing.test.js
+  // covers that with a fake probe/exists). Skips gracefully wherever ffprobe isn't installed.
+  test(`${folder}: audio-timing.js is up to date with its own audio clips and silence files`, { skip: !hasFfprobe() && 'ffprobe not found on PATH' }, () => {
+    const seriesDir = path.join(ROOT, folder);
+    const { generate } = require(path.join(seriesDir, 'generate-audio-timing.js'));
+    const regenerated = generate({ write: false });
+    delete require.cache[require.resolve(path.join(seriesDir, 'audio-timing.js'))];
+    const onDisk = require(path.join(seriesDir, 'audio-timing.js'));
+    assert.deepEqual(onDisk, regenerated, `${folder}/audio-timing.js is stale — run: node ${folder}/generate-audio-timing.js`);
   });
 }
 

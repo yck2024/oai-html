@@ -2,6 +2,8 @@
   'use strict';
 
   const E = window.Ehon;
+  const C = window.EhonContinuous;
+  const TIMING = window.EhonAudioTiming;
   const STORIES = window.EhonStories;
   const SERIES = window.EhonSeriesConfig;
   const LISTEN_MODES = E.buildListenModes(SERIES.languages);
@@ -11,6 +13,8 @@
   const TURN_SETTLE = 450;
   const HINT = SERIES.hint;
   const UNAVAILABLE = SERIES.unavailable;
+  const PREPARING_CONTINUOUS = 'よみつづける おとを つくっています… ・ 連續播放準備中…';
+  const TAP_TO_START = '▶ を おして はじめてね ・ 按 ▶ 開始播放';
   const SHELF_MARKER = SERIES.shelfMarker;
   const SHELF_PAGE_TITLE = SERIES.shelfPageTitle;
   const SHELF_DOCUMENT_TITLE = SERIES.shelfDocumentTitle;
@@ -26,6 +30,7 @@
   const modeOptionsContainer = document.querySelector('#modeOptions');
   const zhuyinToggle = document.querySelector('#zhuyinToggle');
   const autoTurnToggle = document.querySelector('#autoTurnToggle');
+  const continuousToggle = document.querySelector('#continuousToggle');
   const stage = document.querySelector('#stage');
   const pageEl = document.querySelector('#page');
   const pageArt = document.querySelector('#pageArt');
@@ -103,6 +108,7 @@
   let listening = false; // a read-along is on: page turns keep reading
   let muted = false;
   let queueKind = null; // 'page' or 'line'
+  let continuousToken = 0; // bumped on every playContinuous() call so a stale build is ignored
   let turnTimer = null;
   let swipeStart = null;
   let swipedAt = 0;
@@ -182,8 +188,90 @@
     },
   }, backgroundAwareWait, ASSET_BASE);
 
+  // Screen-off listening (settings.continuous): one continuous Blob for the whole book instead
+  // of narrator's clip-by-clip chaining, so Android Chrome keeps a single already-playing
+  // <audio> element going with the screen off. Shares the same `audio` element as narrator —
+  // exactly one of the two ever owns it at a time (see readPage/readLine/goTo below).
+  const continuousPlayer = C.createContinuousPlayer(audio, {
+    onTimeUpdate: timeMs => {
+      if (isHidden()) return; // resynced in one step by the visibilitychange handler below
+      syncFromContinuousTime(timeMs);
+    },
+    onEnded: () => {
+      listening = false;
+      updatePlayback();
+    },
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible' || continuousPlayer.state === 'idle') return;
+    syncFromContinuousTime(Math.round(audio.currentTime * 1000));
+  });
+
+  // Moves the visible page (and highlighted line) to match wherever continuous playback has
+  // gotten to. Only actually re-renders when the page changed, so this is cheap to call on
+  // every `timeupdate` tick.
+  function syncFromContinuousTime(timeMs) {
+    const timeline = continuousPlayer.timeline;
+    if (!timeline || !book) return;
+    const pageIndex = C.mapTimeToPage(timeline.pages, timeMs);
+    if (pageIndex !== book.index) {
+      book.goTo(pageIndex);
+      renderPage(null);
+      if (book.page().id === 'end' && !completedThisOpening) {
+        completedThisOpening = true;
+        if (STORIES.includes(book.story)) track('book_complete', { book_id: book.story.id });
+      }
+    }
+    highlight(C.mapTimeToLine(timeline.lines, timeMs));
+  }
+
+  // Gathers the current book's clips for the chosen listening mode, in reading order, joins
+  // them (with the pre-generated silence clips standing in for narrator's between-clip pauses)
+  // into one in-memory Blob, and plays it from the current page onward. No second copy of any
+  // clip is stored anywhere — the Blob is built fresh from the same clip URLs the offline
+  // download and sentence-by-sentence modes already use, and is discarded once played.
+  function cancelContinuousBuild() {
+    continuousToken++;
+  }
+
+  async function playContinuous({ paused = false } = {}) {
+    const token = ++continuousToken;
+    const requestedBook = book;
+    clearTimeout(turnTimer);
+    narrator.stop();
+    continuousPlayer.loading();
+    listening = !paused;
+    queueKind = 'page';
+    speechStatus.textContent = PREPARING_CONTINUOUS;
+    updatePlayback();
+
+    const timeline = C.buildContinuousTimeline(E, requestedBook.story, LISTEN_MODES, DEFAULT_MODE, settings.mode, TIMING);
+    let blob = null;
+    try {
+      blob = await C.assembleContinuousBlob(timeline, C.createByteLoader(fetch, ASSET_BASE, requestedBook.story.id));
+    } catch (_error) {
+      blob = null;
+    }
+    if (token !== continuousToken || book !== requestedBook) return; // superseded by a later call, or the book changed while building
+
+    if (!blob) {
+      continuousPlayer.stop();
+      listening = false;
+      speechStatus.textContent = UNAVAILABLE;
+      updatePlayback();
+      return;
+    }
+    speechStatus.textContent = '';
+    const startAtMs = timeline.pages[book.index]?.startMs ?? 0;
+    const started = await continuousPlayer.play(blob, timeline, { startAtMs, paused });
+    if (token !== continuousToken) return;
+    if (!started) speechStatus.textContent = TAP_TO_START;
+    updatePlayback();
+  }
+
   function loadSettings() {
-    const defaults = { mode: DEFAULT_MODE, zhuyin: true, autoTurn: false, narratedOnly: false };
+    const defaults = { mode: DEFAULT_MODE, zhuyin: true, autoTurn: false, narratedOnly: false, continuous: false };
     try {
       const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
       return {
@@ -191,6 +279,7 @@
         zhuyin: typeof saved.zhuyin === 'boolean' ? saved.zhuyin : defaults.zhuyin,
         autoTurn: typeof saved.autoTurn === 'boolean' ? saved.autoTurn : defaults.autoTurn,
         narratedOnly: typeof saved.narratedOnly === 'boolean' ? saved.narratedOnly : defaults.narratedOnly,
+        continuous: typeof saved.continuous === 'boolean' ? saved.continuous : defaults.continuous,
       };
     } catch (_error) {
       return defaults;
@@ -398,10 +487,12 @@
   }
 
   function openBook(story, index, { push = true, send = true } = {}) {
+    continuousToken++;
     book = E.createBook(story, index);
     completedThisOpening = false;
     listening = false;
     narrator.stop();
+    continuousPlayer.stop();
     applyBookTheme(reader, story.theme, '--accent', '--accent-soft');
     updateBookMetadata(story);
     reader.dataset.book = story.id;
@@ -417,8 +508,10 @@
   }
 
   function closeBook({ push = true, send = true } = {}) {
+    continuousToken++;
     clearTimeout(turnTimer);
     narrator.stop();
+    continuousPlayer.stop();
     listening = false;
     book = null;
     clearMediaSession();
@@ -561,15 +654,20 @@
     node.scrollIntoView?.({ block: 'nearest' });
   }
 
+  function activeAudioPlayer() {
+    return continuousPlayer.state !== 'idle' ? continuousPlayer : narrator;
+  }
+
   function updatePlayback() {
-    const playing = narrator.state === 'playing';
+    const activeState = activeAudioPlayer().state;
+    const playing = activeState === 'playing';
     playIcon.textContent = playing ? '⏸' : '▶';
     playButton.setAttribute('aria-label', playing ? 'とめる 暫停' : 'よむ 唸給我聽');
     muteIcon.textContent = muted ? '🔇' : '🔊';
     muteButton.setAttribute('aria-pressed', String(muted));
     muteButton.setAttribute('aria-label', muted ? 'おとを だす 開啟聲音' : 'おとを けす 靜音');
     if (typeof navigator !== 'undefined' && navigator.mediaSession) {
-      navigator.mediaSession.playbackState = playing ? 'playing' : narrator.state === 'paused' ? 'paused' : 'none';
+      navigator.mediaSession.playbackState = playing ? 'playing' : activeState === 'paused' ? 'paused' : 'none';
     }
   }
 
@@ -594,16 +692,18 @@
     if (typeof navigator === 'undefined' || !navigator.mediaSession) return;
     const actionHandlers = {
       play: () => {
-        if (narrator.state === 'paused' && !muted) {
-          listening = queueKind === 'page';
-          narrator.resume();
-        } else if (narrator.state === 'idle') {
+        const player = activeAudioPlayer();
+        if (player.state === 'paused' && !muted) {
+          listening = player === continuousPlayer || queueKind === 'page';
+          if (player === continuousPlayer) speechStatus.textContent = '';
+          player.resume();
+        } else if (player.state === 'idle') {
           readPage();
         }
         updatePlayback();
       },
       pause: () => {
-        narrator.pause();
+        activeAudioPlayer().pause();
         listening = false;
         clearTimeout(turnTimer);
         updatePlayback();
@@ -640,6 +740,12 @@
   function readPage({ paused = false } = {}) {
     if (!book || muted) return;
     clearTimeout(turnTimer);
+    if (settings.continuous) {
+      playContinuous({ paused });
+      return;
+    }
+    cancelContinuousBuild();
+    continuousPlayer.stop();
     listening = !paused;
     queueKind = 'page';
     speechStatus.textContent = '';
@@ -652,6 +758,8 @@
   function readLine(lineId, lang) {
     if (!book || muted) return;
     clearTimeout(turnTimer);
+    cancelContinuousBuild();
+    continuousPlayer.stop(); // a one-off sentence tap always uses the narrator, continuous or not
     listening = false;
     queueKind = 'line';
     speechStatus.textContent = '';
@@ -682,13 +790,18 @@
   function goTo(index, direction) {
     clearTimeout(turnTimer);
     if (!book.goTo(index)) return;
-    narrator.stop();
+    // While continuous playback is live, its Blob already covers the whole book: turning the
+    // page seeks within it instead of stopping/restarting anything (narrator.stop() would pause
+    // and rewind the very same shared <audio> element continuous playback is using).
+    const continuousLive = settings.continuous && continuousPlayer.state !== 'idle';
+    if (continuousLive) continuousPlayer.seekToPage(index);
+    else narrator.stop();
     renderPage(direction);
     if (book.page().id === 'end' && !completedThisOpening) {
       completedThisOpening = true;
       if (STORIES.includes(book.story)) track('book_complete', { book_id: book.story.id });
     }
-    if (listening && !muted) scheduleGap(TURN_SETTLE, readPage);
+    if (!settings.continuous && listening && !muted) scheduleGap(TURN_SETTLE, readPage);
   }
 
   function turn(direction) {
@@ -705,6 +818,7 @@
     for (const input of modeInputs) input.checked = input.value === settings.mode;
     zhuyinToggle.checked = settings.zhuyin;
     autoTurnToggle.checked = settings.autoTurn;
+    continuousToggle.checked = settings.continuous;
     reader.classList.toggle('hide-zhuyin', !settings.zhuyin);
     if (narratedOnlyToggle) narratedOnlyToggle.checked = settings.narratedOnly;
   }
@@ -721,16 +835,23 @@
   });
 
   playButton.addEventListener('click', () => {
-    if (narrator.state === 'playing') {
-      narrator.pause();
+    const player = activeAudioPlayer();
+    if (player === continuousPlayer && player.state === 'loading') return;
+    if (player.state === 'playing') {
+      player.pause();
       listening = false;
       clearTimeout(turnTimer);
-    } else if (narrator.state === 'paused' && !muted) {
-      listening = queueKind === 'page';
-      narrator.resume();
-    } else {
-      readPage();
+      updatePlayback();
+      return;
     }
+    if (player.state === 'paused' && !muted) {
+      listening = player === continuousPlayer || queueKind === 'page';
+      if (player === continuousPlayer) speechStatus.textContent = '';
+      player.resume();
+      updatePlayback();
+      return;
+    }
+    readPage();
     updatePlayback();
   });
 
@@ -740,7 +861,14 @@
     muted = !muted;
     if (muted) {
       clearTimeout(turnTimer);
-      narrator.stop();
+      // narrator.stop() would pause/rewind the shared <audio> element even when narrator
+      // itself is idle, which would rewind a live continuous Blob back to its start — see the
+      // same guard in goTo() above.
+      if (activeAudioPlayer() === continuousPlayer && continuousPlayer.state === 'loading') {
+        cancelContinuousBuild();
+        continuousPlayer.stop();
+      } else if (activeAudioPlayer() === continuousPlayer) continuousPlayer.pause();
+      else narrator.stop();
       listening = false;
     }
     updatePlayback();
@@ -759,7 +887,7 @@
   for (const input of modeInputs) {
     input.addEventListener('change', () => {
       if (!input.checked || !E.isMode(LISTEN_MODES, input.value) || input.value === settings.mode) return;
-      const playbackState = narrator.state;
+      const playbackState = activeAudioPlayer().state;
       const pageQueueActive = queueKind === 'page' && playbackState !== 'idle';
       settings.mode = input.value;
       saveSettings();
@@ -788,6 +916,15 @@
     saveSettings();
     track('auto_turn_toggle', { auto_turn: settings.autoTurn ? 'on' : 'off' });
     if (!settings.autoTurn) clearTimeout(turnTimer);
+  });
+
+  continuousToggle.addEventListener('change', () => {
+    if (settings.continuous === continuousToggle.checked) return;
+    const previousState = activeAudioPlayer().state;
+    settings.continuous = continuousToggle.checked;
+    saveSettings();
+    track('continuous_toggle', { continuous: settings.continuous ? 'on' : 'off' });
+    if (book && previousState !== 'idle') readPage({ paused: previousState === 'paused' });
   });
 
   if (narratedOnlyToggle) {

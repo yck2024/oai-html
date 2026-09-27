@@ -90,9 +90,10 @@
   // visited, even before its pictures/narration are downloaded). Built from `stories`, never
   // hand-written, so a new book is covered as soon as it is added to stories.js.
   const SHELL_FILES = [
-    '', 'index.html', 'ehon.css', 'ehon.js', 'stories.js', 'series.config.js', 'app.js', 'offline.js',
-    'manifest.webmanifest',
+    '', 'index.html', 'ehon.css', 'ehon.js', 'continuous.js', 'stories.js', 'series.config.js', 'app.js', 'offline.js',
+    'manifest.webmanifest', 'audio-timing.js',
     'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-512-maskable.png', 'icons/apple-touch-icon.png',
+    'silence/language.mp3', 'silence/sentence.mp3', 'silence/page.mp3',
   ];
 
   function shellAssetUrls(stories, base = './') {

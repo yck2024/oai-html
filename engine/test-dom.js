@@ -105,7 +105,7 @@ class FakeElement {
 // Every element id app.js queries at startup; both harnesses need the full set or app.js throws.
 const READER_IDS = [
   'shelf', 'bookList', 'reader', 'readerTitle', 'closeBook', 'settingsButton', 'settingsPanel',
-  'zhuyinToggle', 'autoTurnToggle', 'stage', 'page', 'pageArt', 'pageImage', 'pageText', 'speechStatus',
+  'zhuyinToggle', 'autoTurnToggle', 'continuousToggle', 'stage', 'page', 'pageArt', 'pageImage', 'pageText', 'speechStatus',
   'prevButton', 'nextButton', 'playButton', 'playIcon', 'replayButton', 'muteButton', 'muteIcon', 'pageCounter',
 ];
 
