@@ -262,7 +262,7 @@
     const titleEntry = result.firstTime ? I18N.STRINGS.rewardNewStickerTitle : I18N.STRINGS.rewardAnotherStickerTitle;
     const title = document.createElement('strong');
     setBilingual(title, titleEntry[currentLanguage], secondLabel(titleEntry));
-    text.append(title, document.createTextNode(` ${label(result.sticker)}`));
+    text.append(title, bilingualNode(` ${label(result.sticker)}`, secondLabel(result.sticker)));
     note.append(picture(result.sticker, 'reward-sticker'), text);
     if (result.unlocked) {
       const unlock = document.createElement('p');

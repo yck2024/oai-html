@@ -768,7 +768,8 @@
       settingsGate.hidden = true;
       settingsBody.hidden = false;
       if (fromKeyboard) {
-        const focusCloseAfterKeyup = () => {
+        const focusCloseAfterKeyup = event => {
+          if (event.key !== 'Enter') return;
           document.removeEventListener('keyup', focusCloseAfterKeyup, true);
           settingsCloseButton.focus();
         };

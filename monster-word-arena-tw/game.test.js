@@ -1253,6 +1253,8 @@ test('the finish message names the actual number of power moves for the chosen l
   app.document.querySelector('[data-second-language="ja"]').click();
   const rewardNote = app.elements.get('#finishPanel').children.find(child => child.classList.contains('reward-note'));
   assert.ok(rewardNote.textContent.includes(rewardTitle.ja), 'an existing finish reward note immediately uses the new second language');
+  const sticker = STICKERS.find(item => rewardNoteBefore.textContent.includes(item.en));
+  assert.ok(rewardNote.querySelector('.reward-text').textContent.includes(sticker.ja), 'the sticker name is bilingual too');
 });
 
 test('harder hides the picture and shows the written word instead, in the chosen text language', () => {
@@ -1523,9 +1525,11 @@ test('pressing Enter on a correct grown-up answer waits for keyup before focusin
   assert.equal(settingsGate.hidden, true);
   assert.equal(settingsBody.hidden, false, 'a correct answer shows the settings instead of the dialog closing');
   assert.equal(focusCalls, 0, 'focus does not move while Enter remains held');
+  app.document.dispatchEvent({ type: 'keyup', key: 'x' });
+  assert.equal(focusCalls, 0, 'a different key release does not move focus');
   app.document.dispatchEvent({ type: 'keyup', key: 'Enter' });
   assert.equal(focusCalls, 1, 'focus lands on Close after Enter is released');
-  app.document.dispatchEvent({ type: 'keyup', key: 'x' });
+  app.document.dispatchEvent({ type: 'keyup', key: 'Enter' });
   assert.equal(focusCalls, 1, 'the release listener removes itself after firing');
 });
 
