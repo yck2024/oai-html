@@ -211,6 +211,11 @@ def transcribe(api_key, path, language):
         raise RuntimeError("Gemini transcription response had no text") from None
 
 
+# Script/variant folding so a spoken character equivalent to the displayed one (e.g. a
+# simplified stand-in used to steer TTS pronunciation) isn't flagged as a misreading.
+HAN_VARIANTS = str.maketrans({"贼": "賊", "揹": "背"})
+
+
 def comparable(text, language):
     text = unicodedata.normalize("NFKC", text)
     if language == "ja":
@@ -218,13 +223,14 @@ def comparable(text, language):
         # punctuation are ignored.
         text = "".join(chr(ord(char) - 0x60) if "ァ" <= char <= "ヶ" else char for char in text)
         return re.sub(r"[^ぁ-ゖ]", "", text)
-    return re.sub(r"[^㐀-鿿]", "", text)
+    text = re.sub(r"[^㐀-鿿]", "", text)
+    return text.translate(HAN_VARIANTS)
 
 
 def expected_reading(line, language):
     if language == "ja":
         return comparable(RUBY.sub(r"\2", line["ja"]), language)
-    return comparable(line["zh"], language)
+    return comparable(spoken_text(line, language), language)
 
 
 def selected(stories, args):

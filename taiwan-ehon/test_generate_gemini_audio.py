@@ -14,6 +14,14 @@ SCRIPT_DIR = Path(__file__).parent
 
 
 class GeneratorSelectionTests(unittest.TestCase):
+    def load_generator(self):
+        spec = importlib.util.spec_from_file_location(
+            "ehon_audio_generator", SCRIPT_DIR / "generate_gemini_audio.py"
+        )
+        generator = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(generator)
+        return generator
+
     def run_cli(self, *arguments):
         environment = os.environ.copy()
         environment.pop("GEMINI_JOHN_API_KEY", None)
@@ -50,11 +58,7 @@ class GeneratorSelectionTests(unittest.TestCase):
                 self.assertIn("unrecognized arguments", result.stderr)
 
     def test_check_reports_missing_selected_paths_for_story_and_clip_filters(self):
-        spec = importlib.util.spec_from_file_location(
-            "ehon_audio_generator", SCRIPT_DIR / "generate_gemini_audio.py"
-        )
-        generator = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(generator)
+        generator = self.load_generator()
         stories = generator.load_stories()
         selections = [
             SimpleNamespace(story=["bai-zei-qi"], clip=None, language=["ja"], confirm=True),
@@ -74,6 +78,23 @@ class GeneratorSelectionTests(unittest.TestCase):
                 self.assertIn("MISSING bai-zei-qi/ja/p01-1.mp3", output.getvalue())
                 self.assertNotIn("0/0 transcripts match", output.getvalue())
                 get_api_key.assert_not_called()
+
+    def test_expected_reading_folds_spoken_variant_characters_for_zh(self):
+        generator = self.load_generator()
+        cases = [
+            ({"zh": "白賊七很聰明", "zhTts": "白贼七很聰明"}, "白賊七很聰明"),
+            ({"zh": "他背著小孩", "zhTts": "他揹著小孩"}, "他背著小孩"),
+        ]
+        for line, transcript in cases:
+            with self.subTest(zh=line["zh"]):
+                heard = generator.comparable(transcript, "zh")
+                self.assertEqual(heard, generator.expected_reading(line, "zh"))
+
+    def test_expected_reading_still_flags_a_real_misreading_for_zh(self):
+        generator = self.load_generator()
+        line = {"zh": "白賊七很聰明", "zhTts": "白贼七很聰明"}
+        heard = generator.comparable("白賊氣很聰明", "zh")
+        self.assertNotEqual(heard, generator.expected_reading(line, "zh"))
 
 
 if __name__ == "__main__":

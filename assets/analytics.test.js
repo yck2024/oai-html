@@ -94,8 +94,17 @@ test('storybook page-view metadata strips queries and fragments without changing
   assert.equal(page.location.hash, '#bai-zei-qi/7');
   assert.deepEqual(page.replacements, []);
   assert.equal(page.config.page_location, 'https://gallery.example/taiwan-ehon/');
-  assert.equal(page.config.page_referrer, 'https://gallery.example/');
+  assert.equal(page.config.page_referrer, 'https://gallery.example');
   assert.equal(page.config.page_title, 'Taiwan story picture books');
+});
+
+test('storybook page-view metadata strips the referrer path, not just its query and fragment', () => {
+  const page = storybookPageviewHarness(
+    'https://gallery.example/taiwan-ehon/',
+    'https://referrer.example/private/child-123-diary?ref=abc#section',
+  );
+
+  assert.equal(page.config.page_referrer, 'https://referrer.example');
 });
 
 test('automatic click analytics skip ignored story content without changing accessible names', () => {

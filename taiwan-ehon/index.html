@@ -8,14 +8,10 @@
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
     const pageReferrer = document.referrer ? new URL(document.referrer) : null;
-    if (pageReferrer) {
-      pageReferrer.search = '';
-      pageReferrer.hash = '';
-    }
     gtag('config', 'G-QLFWNZWDSS', {
       content_group: 'oai-html',
       page_location: `${location.origin}${location.pathname}`,
-      page_referrer: pageReferrer ? pageReferrer.href : '',
+      page_referrer: pageReferrer ? pageReferrer.origin : '',
       page_title: 'Taiwan story picture books'
     });
   </script>
