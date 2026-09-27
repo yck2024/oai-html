@@ -6,7 +6,9 @@ const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
 const E = require('./ehon.js');
-const stories = require('./stories.js');
+const TAIWAN_DIR = path.join(__dirname, '..', 'taiwan-ehon');
+const stories = require(path.join(TAIWAN_DIR, 'stories.js'));
+const SERIES = require(path.join(TAIWAN_DIR, 'series.config.js'));
 const { FakeElement, READER_IDS, createLocationHistory } = require('./test-dom.js');
 
 const ORIGIN = 'https://yck2024.github.io';
@@ -27,6 +29,7 @@ function createRoutingReader({ initialPath }) {
     querySelector: selector => elements.get(selector) || null,
     querySelectorAll: selector => (selector === 'input[name="listenMode"]' ? modeInputs : []),
     createElement: tagName => new FakeElement(tagName),
+    createTextNode: text => text,
     createDocumentFragment: () => new FakeElement('#fragment'),
     addEventListener() {},
   };
@@ -36,7 +39,7 @@ function createRoutingReader({ initialPath }) {
   const events = [];
   const nav = createLocationHistory(initialPath, ORIGIN);
   const context = {
-    window: { TaiwanEhon: E, TaiwanEhonStories: stories },
+    window: { Ehon: E, EhonStories: stories, EhonSeriesConfig: SERIES },
     document,
     localStorage,
     Audio: FakeAudio,
@@ -97,7 +100,7 @@ test('directly loading each book path opens that book at its cover, with no path
     assert.equal(reader.isShelfVisible(), false, `${story.id}: shelf should be hidden`);
     assert.equal(reader.currentPath(), initialPath, `${story.id}: path must not change on direct load`);
     assert.equal(pageViews(reader).length, 0, `${story.id}: initial load must not send its own page view`);
-    assert.deepEqual(bookOpens(reader), [['event', 'book_open', { book_id: story.id }]]);
+    assert.deepEqual(bookOpens(reader), [['event', 'book_open', { book_id: story.id, series_id: 'taiwan' }]]);
   }
 });
 

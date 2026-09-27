@@ -79,6 +79,18 @@
         "繁體中文"
       ],
       "status": "live"
+    },
+    {
+      "slug": "japan-ehon",
+      "title": "日本昔話絵本 | Japanese Folktales (準備中)",
+      "description": "Japanese folktale picture books, coming soon.",
+      "icon": "📚",
+      "tags": [
+        "Stories",
+        "Kids",
+        "Japanese"
+      ],
+      "status": "live"
     }
   ]
 }

@@ -6,7 +6,7 @@
 // the optional `jaTts` / `zhTts` replace the text sent to the narrator to fix a misreading.
 (function (root, stories) {
   if (typeof module === 'object' && module.exports) module.exports = stories;
-  else root.TaiwanEhonStories = stories;
+  else root.EhonStories = stories;
 })(typeof self !== 'undefined' ? self : this, [
   {
     "id": "bai-zei-qi",
