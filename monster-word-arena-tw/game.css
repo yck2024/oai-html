@@ -36,6 +36,15 @@ button:focus-visible, a:focus-visible { outline: 4px solid #dc6b5d; outline-offs
 .page-shell[data-stage="choose"] .arena-card { display: none; }
 .page-shell[data-stage="choose"] .arena-layout { grid-template-columns: minmax(0, 1fr); }
 .page-shell[data-stage="choose"] #playArea { display: none; }
+/* Stage 1 is the only thing on screen, so make it a big, inviting, centered choice on every size
+   (specificity keeps this above the laptop-compact rules below, which only apply once the arena
+   and question are also on screen and space is actually tight). */
+.page-shell[data-stage="champion"] { justify-content: center; }
+.page-shell[data-stage="champion"] .champion-options { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 560px; margin: 18px auto 0; gap: 18px; }
+.page-shell[data-stage="champion"] .champion-card { position: relative; flex-direction: column; justify-content: center; min-height: 200px; gap: 12px; padding: 22px 14px; }
+.page-shell[data-stage="champion"] .champion-emoji { width: 128px; height: 128px; font-size: 90px; line-height: 128px; }
+.page-shell[data-stage="champion"] .champion-copy strong { font-size: 19px; }
+.page-shell[data-stage="champion"] .pick-mark { position: absolute; top: 12px; right: 12px; margin-left: 0; }
 .topbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .pill-link, .pill-button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; border: 2px solid #fff; border-radius: 999px; padding: 8px 15px; background: #ffffffd9; color: #555a70; text-decoration: none; font-size: 14px; font-weight: 900; box-shadow: 0 3px 0 #bdb4a466; }
 .pill-button { cursor: pointer; }
@@ -285,6 +294,10 @@ footer { padding: 12px 0 0; color: #7c7b8c; text-align: center; font-size: 11px;
   .picker-heading h2, .challenge-title h2 { font-size: 16px; }
   .soft-note { font-size: 10px; }
   .champion-options { gap: 7px; margin-top: 8px; }
+  .page-shell[data-stage="champion"] .champion-options { gap: 10px; }
+  .page-shell[data-stage="champion"] .champion-card { min-height: 168px; padding: 16px 8px; }
+  .page-shell[data-stage="champion"] .champion-emoji { width: 96px; height: 96px; font-size: 68px; line-height: 96px; }
+  .page-shell[data-stage="champion"] .champion-copy strong { font-size: 15px; }
   .champion-card { min-height: 58px; gap: 5px; padding: 6px; }
   .champion-emoji { width: 40px; height: 40px; font-size: 29px; line-height: 40px; }
   .champion-copy strong { font-size: 11px; }

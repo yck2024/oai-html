@@ -1121,6 +1121,39 @@ test('the page reveals progressively: champion, then topic and level plus Start,
   assert.equal(pageShell.dataset.stage, 'play', 'Start reveals the arena and the question');
 });
 
+test('every Japanese UI string is written entirely in hiragana, with no katakana or kanji', () => {
+  const KATAKANA = /[ァ-ヺ]/;
+  const KANJI = /[一-鿿]/;
+  const checked = [];
+  function checkJa(label, text) {
+    checked.push(label);
+    assert.doesNotMatch(text, KATAKANA, `${label} has no katakana: ${text}`);
+    assert.doesNotMatch(text, KANJI, `${label} has no kanji: ${text}`);
+  }
+
+  for (const [key, value] of Object.entries(I18N.STRINGS)) {
+    checkJa(`STRINGS.${key}`, value.ja);
+  }
+  for (const [key, value] of Object.entries(I18N.TOPIC_NAMES)) checkJa(`TOPIC_NAMES.${key}`, value.ja);
+  for (const [key, value] of Object.entries(I18N.LEVEL_NAMES)) checkJa(`LEVEL_NAMES.${key}`, value.ja);
+  for (const [championId, champion] of Object.entries(I18N.CHAMPIONS)) {
+    for (const field of ['name', 'shortName', 'move', 'buddyShortName']) {
+      checkJa(`CHAMPIONS.${championId}.${field}`, champion[field].ja);
+    }
+    checkJa(`championReady(${championId})`, I18N.championReady(championId, 'ja'));
+    for (const finished of [false, true]) {
+      checkJa(`sparMessage(${championId},${finished})`, I18N.sparMessage(championId, finished, '', 'ja'));
+    }
+  }
+  for (const topic of TOPICS) checkJa(`topicChosenMessage(${topic})`, I18N.topicChosenMessage(topic, 'ja'));
+  for (const level of LEVELS) checkJa(`levelChosenMessage(${level})`, I18N.levelChosenMessage(level, 'ja'));
+  for (const topic of WORD_TOPIC_IDS) {
+    for (const word of WORD_TOPICS[topic].words) checkJa(`${topic}-${word.id}.ja`, word.ja);
+  }
+  checkJa('arena comboText', comboText(4, 'ja'));
+  assert.ok(checked.length > 30, 'the sweep actually covered the UI surface');
+});
+
 test('the game title and ready message are localized from the very first render, before any click', () => {
   const storage = new FakeLocalStorage();
   storage.setItem('monsterWordArena.settings.v1', JSON.stringify({ v: 1, speechLanguage: 'zh', textLanguage: 'zh', textLanguageManual: true }));
