@@ -107,6 +107,91 @@
     readyMessage: { en: 'Ready, team? Pick any challenge!', zh: '準備好了嗎？選一個挑戰吧！', ja: 'じゅんびは　いい？もんだいを　えらんでね！' },
     yourTurnMessage: { en: 'Your turn, team!', zh: '換你了！', ja: 'きみの　ばんだよ！' },
     blockMessage: { en: 'Pillow block! Let’s think together!', zh: '枕頭擋住了！我們一起想一想！', ja: 'まくらで　ぶろっく！いっしょに　かんがえよう！' },
+
+    settingsButton: { en: '⚙️ Grown-ups', zh: '⚙️ 家長專區', ja: '⚙️ おとなむけ' },
+    settingsButtonLabel: { en: 'Grown-up settings', zh: '家長設定', ja: 'おとなの　せってい' },
+    gateTitle: { en: 'Grown-ups only', zh: '僅限家長', ja: 'おとなだけ' },
+    gateBody: {
+      en: 'To keep settings for grown-ups, please solve this:',
+      zh: '為了保護家長設定，請先回答：',
+      ja: 'せっていを　まもるために、この　もんだいに　こたえてね：',
+    },
+    gateInputLabel: { en: 'Your answer', zh: '你的答案', ja: 'こたえ' },
+    gateSubmit: { en: 'Enter', zh: '確認', ja: 'けってい' },
+    gateWrong: {
+      en: 'Not quite—here’s a new one.',
+      zh: '不太對，換一題再試試。',
+      ja: 'ちがうよ。もんだいを　かえるね。' },
+    gateCancel: { en: 'Cancel', zh: '取消', ja: 'やめる' },
+    settingsTitle: { en: 'Grown-up settings', zh: '家長設定', ja: 'おとなの　せってい' },
+    settingsClose: { en: '✕ Close', zh: '✕ 關閉', ja: '✕ とじる' },
+    settingsLevelLockTitle: { en: 'Levels this child can pick', zh: '孩子可以選的難度', ja: 'えらべる　れべる' },
+    settingsLevelLockHint: {
+      en: 'Uncheck a level to hide it from the level picker. At least one stays on.',
+      zh: '取消勾選可隱藏該難度，至少會保留一個。',
+      ja: 'ちぇっくを　はずすと、その　れべるは　えらべなくなるよ。ひとつは　のこるよ。',
+    },
+    settingsSoundTitle: { en: 'Sound', zh: '聲音', ja: 'おと' },
+    settingsRewardsTitle: { en: 'Progress so far', zh: '目前的進度', ja: 'いままでの　きろく' },
+    settingsClearButton: { en: 'Clear sticker book', zh: '清空貼紙本', ja: 'しーるちょうを　けす' },
+    settingsConfirmClear: { en: 'Yes, clear it', zh: '確定清空', ja: 'けす' },
+    settingsKeepStickers: { en: 'Keep stickers', zh: '保留貼紙', ja: 'のこす' },
+    settingsClearedStatus: { en: 'Sticker book cleared.', zh: '貼紙本已清空。', ja: 'しーるちょうを　けしたよ。' },
+    settingsDeviceNote: {
+      en: 'These settings are saved on this device only.',
+      zh: '這些設定只存在這台裝置。',
+      ja: 'この　せっていは　この　きき　だけに　ほぞんされるよ。',
+    },
+
+    stickerBookButton: { en: '📒 Sticker book', zh: '📒 貼紙本', ja: '📒 しーるちょう' },
+    rewardBookTitle: { en: 'My Sticker Book', zh: '我的貼紙本', ja: 'わたしの　しーるちょう' },
+    rewardBookClose: { en: '✕ Close', zh: '✕ 關閉', ja: '✕ とじる' },
+    costumeTitle: { en: 'Dress-up for your champion', zh: '小隊長換裝', ja: 'せんしゅの　きがえ' },
+    rewardBookIntroEmpty: {
+      en: 'Win a match to get your first sticker!',
+      zh: '贏一場就能拿到第一張貼紙！',
+      ja: 'いちど　かつと、さいしょの　しーるが　もらえるよ！',
+    },
+    rewardBookFull: {
+      en: 'Your sticker book is full!',
+      zh: '貼紙簿滿了！',
+      ja: 'しーるちょうが　いっぱいに　なったよ！',
+    },
+    costumeNoneLabel: { en: 'None', zh: '不戴', ja: 'なし' },
+    saveNotePersistent: {
+      en: 'Saved on this device only: the number of wins and each champion’s costume.',
+      zh: '只存在這台裝置：贏的次數和服裝。',
+      ja: 'この　きき　だけに、かった　かずと　ふくを　ほぞんするよ。',
+    },
+    saveNoteNotPersistent: {
+      en: 'This browser can’t save, so stickers last for this visit.',
+      zh: '這個瀏覽器無法儲存，貼紙只保留到這次遊玩結束。',
+      ja: 'この　ぶらうざは　ほぞんできないから、しーるは　こんかいだけ　のこるよ。',
+    },
+    allCostumesUnlocked: {
+      en: 'All costumes unlocked!',
+      zh: '服裝全部拿到了！',
+      ja: 'ふくを　ぜんぶ　もらったよ！',
+    },
+    rewardNewStickerTitle: { en: 'New sticker!', zh: '新貼紙！', ja: 'あたらしい　しーる！' },
+    rewardAnotherStickerTitle: { en: 'Another sticker!', zh: '又一張貼紙！', ja: 'また　しーるが　ふえたよ！' },
+    rewardBookLinkButton: { en: '📒 Open sticker book', zh: '📒 打開貼紙本', ja: '📒 しーるちょうを　ひらく' },
+
+    breakPromptTitle: { en: 'Great playing!', zh: '玩得真棒！', ja: 'じょうずに　あそべたね！' },
+    breakPromptBody: {
+      en: 'Want one more round, or a break?',
+      zh: '要再玩一次，還是休息一下？',
+      ja: 'もう　いっかい　あそぶ？それとも　きゅうけいする？',
+    },
+    oneMoreRoundButton: { en: 'One more round 🔁', zh: '再玩一次 🔁', ja: 'もう　いっかい 🔁' },
+    takeBreakButton: { en: 'Take a break 🌤️', zh: '休息一下 🌤️', ja: 'きゅうけいする 🌤️' },
+    goodbyeTitle: { en: 'Great job today!', zh: '今天表現得真棒！', ja: 'きょうも　よく　がんばったね！' },
+    goodbyeBody: {
+      en: 'See you again soon, champion.',
+      zh: '小隊長，我們下次見！',
+      ja: 'せんしゅ、また　あそぼうね！',
+    },
+    backToPlayButton: { en: 'I’m ready to play! ↻', zh: '我準備好了！↻', ja: 'あそぶ　じゅんび　できたよ！↻' },
   };
 
   function championReady(championId, lang) {
@@ -150,7 +235,69 @@
     return comboText ? `${base} ${comboText}` : base;
   }
 
-  const api = { TEXT_LANGUAGES, TOPIC_NAMES, LEVEL_NAMES, CHAMPIONS, STRINGS, championReady, topicChosenMessage, levelChosenMessage, finishBody, sparMessage };
+  function settingsWinsSummary(wins, lang) {
+    return { en: `${wins} match${wins === 1 ? '' : 'es'} won`, zh: `贏了 ${wins} 場`, ja: `${wins}かい　かった` }[lang];
+  }
+
+  function settingsStickerSummary(collected, total, lang) {
+    return {
+      en: `${collected} / ${total} stickers collected`,
+      zh: `蒐集了 ${collected} / ${total} 張貼紙`,
+      ja: `しーるを　${collected} / ${total}まい　あつめたよ`,
+    }[lang];
+  }
+
+  function rewardBookIntroWins(wins, lang) {
+    return {
+      en: `You won ${wins} ${wins === 1 ? 'match' : 'matches'}! Every win brings a sticker.`,
+      zh: `你贏了 ${wins} 場！每贏一場就有一張貼紙。`,
+      ja: `${wins}かい　かったね！かつたびに　しーるが　もらえるよ。`,
+    }[lang];
+  }
+
+  function stickerStillToFind(index, lang) {
+    return { en: `Sticker ${index}: still to find`, zh: `第 ${index} 張：還沒拿到`, ja: `${index}まいめ：まだ　もってないよ` }[lang];
+  }
+
+  function costumeWinsToGo(wins, lang) {
+    return { en: `${wins} wins`, zh: `贏 ${wins} 次`, ja: `${wins}かい　かつと` }[lang];
+  }
+
+  function costumeSurpriseHint(name, lang) {
+    return { en: `${name} surprise`, zh: `${name}驚喜`, ja: `${name}の　おたのしみ` }[lang];
+  }
+
+  function costumeRowLabel(name, lang) {
+    return { en: `${name}'s costume`, zh: `${name}的服裝`, ja: `${name}の　ふく` }[lang];
+  }
+
+  function nextSurpriseHint(name, wins, lang) {
+    return {
+      en: `Next surprise: ${name} in ${wins} ${wins === 1 ? 'win' : 'wins'}`,
+      zh: `再贏 ${wins} 次拿${name}`,
+      ja: `あと${wins}かい　かつと　${name}`,
+    }[lang];
+  }
+
+  function rewardSummaryPattern(collected, total, lang) {
+    return { en: `📒 ${collected} / ${total} stickers`, zh: `📒 ${collected} / ${total} 張貼紙`, ja: `📒 しーる ${collected} / ${total}まい` }[lang];
+  }
+
+  function rewardUnlockText(championName, costumeName, lang) {
+    return {
+      en: `🎁 ${championName} gets a ${costumeName} to wear!`,
+      zh: `🎁 ${championName}戴上${costumeName}了！`,
+      ja: `🎁 ${championName}が　${costumeName}を　みにつけたよ！`,
+    }[lang];
+  }
+
+  const api = {
+    TEXT_LANGUAGES, TOPIC_NAMES, LEVEL_NAMES, CHAMPIONS, STRINGS,
+    championReady, topicChosenMessage, levelChosenMessage, finishBody, sparMessage,
+    settingsWinsSummary, settingsStickerSummary, rewardBookIntroWins, stickerStillToFind,
+    costumeWinsToGo, costumeSurpriseHint, costumeRowLabel, nextSurpriseHint,
+    rewardSummaryPattern, rewardUnlockText,
+  };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof window !== 'undefined') window.FriendlyArenaI18n = api;
 })();

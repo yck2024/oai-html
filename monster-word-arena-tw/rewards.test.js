@@ -366,10 +366,11 @@ function loadPage({ storage = new MemoryStorage(), withApp = false, recordWin, n
   const context = { window, document: page.document, Audio: FakeAudio, setInterval, clearInterval, setTimeout, clearTimeout };
   const run = file => vm.runInNewContext(fs.readFileSync(path.join(__dirname, file), 'utf8'), context);
   let game = null;
+  run('i18n.js');
   if (withApp) {
     game = gameApi.createGame(() => 0.3);
     window.FriendlyArena = { ...gameApi, createGame: () => game };
-    run('i18n.js');
+    run('pacing.js');
     run('sounds.js');
     run('arena.js');
     run('app.js');
@@ -388,9 +389,14 @@ function winMatch(page) {
   }
 }
 
-test('the rewards global exposes only match recording', () => {
+test('the rewards global exposes match recording, language switching, and a progress summary', () => {
   const page = loadPage();
-  assert.deepEqual(Object.keys(page.window.ArenaRewards), ['recordWin']);
+  assert.deepEqual(Object.keys(page.window.ArenaRewards), ['recordWin', 'setLanguage', 'getSummary']);
+  // getSummary() builds its object inside the page's own vm realm, so compare fields, not object identity/prototype.
+  const summary = page.window.ArenaRewards.getSummary();
+  assert.equal(summary.wins, 0);
+  assert.equal(summary.collected, 0);
+  assert.equal(summary.total, STICKERS.length);
 });
 
 test('winning a match in the game records exactly one reward for the chosen champion', () => {
@@ -412,21 +418,21 @@ test('a win shows the new sticker, and a costume unlock dresses the champion wit
   page.window.ArenaRewards.recordWin('dino');
   let note = page.finishPanel.querySelector('#rewardNote');
   assert.equal(page.finishPanel.children.at(-1).id, 'playAgainButton', 'the note sits before Play again');
-  assert.match(note.textContent, /New sticker! 新貼紙！ Star · 星星/);
+  assert.match(note.textContent, /New sticker! Star/);
   assert.equal(note.getAttribute('role'), 'status');
   assert.equal(page.heroFighter.querySelector('.costume-overlay'), null);
 
   page.window.ArenaRewards.recordWin('dino');
   assert.equal(page.finishPanel.querySelectorAll('#rewardNote').length, 1, 'the old note is replaced');
   note = page.finishPanel.querySelector('#rewardNote');
-  assert.match(note.textContent, /Rex gets a Crown to wear! 雷克斯戴上皇冠了！/);
+  assert.match(note.textContent, /Rex gets a Crown to wear!/);
   const overlay = page.heroFighter.children[0];
   assert.ok(overlay.classList.contains('costume-overlay'));
   assert.equal(page.heroFighter.children[1].id, 'heroEmoji', 'the costume sits just above the champion picture');
   assert.equal(overlay.getAttribute('aria-hidden'), 'true');
   const [art] = overlay.children;
   assert.equal(art.src, './images/costume-crown.webp');
-  assert.equal(art.alt, '皇冠 Crown');
+  assert.equal(art.alt, 'Crown');
   assert.equal(art.draggable, false);
   art.dispatch('error');
   assert.equal(overlay.textContent, '👑', 'the emoji stands in if the picture cannot load');
@@ -454,7 +460,7 @@ test('wins at the storage cap do not leave a sticker reward note', () => {
   assert.equal(saved(storage).wins, 9999);
   assert.equal(page.finishPanel.querySelector('#rewardNote'), null);
   page.action('open').click();
-  assert.equal(page.element('stickerBookIntro').textContent, 'Your sticker book is full! · 貼紙簿滿了！ · シールちょうがいっぱい！');
+  assert.equal(page.element('stickerBookIntro').textContent, 'Your sticker book is full!');
 });
 
 test('the sticker book shows collected stickers, lets the child change costumes, and has a two-step grown-up reset', () => {
@@ -466,8 +472,8 @@ test('the sticker book shows collected stickers, lets the child change costumes,
   assert.match(page.element('stickerBookIntro').textContent, /Every win brings a sticker/);
   const slots = page.element('stickerGrid').children;
   assert.equal(slots.length, STICKERS.length);
-  assert.match(slots[0].textContent, /星星Star/);
-  assert.equal(slots[0].querySelector('.reward-art').alt, '星星 Star');
+  assert.match(slots[0].textContent, /Star/);
+  assert.equal(slots[0].querySelector('.reward-art').alt, 'Star');
   assert.ok(slots[3].classList.contains('is-empty'));
   assert.match(slots[3].textContent, /Sticker 4: still to find/);
   assert.match(page.element('rewardSaveNote').textContent, /Saved on this device only/);
@@ -476,7 +482,7 @@ test('the sticker book shows collected stickers, lets the child change costumes,
   const choice = (champion, costume) => rows.querySelector(`[data-champion="${champion}"][data-costume="${costume}"]`);
   assert.equal(choice('dino', 'crown').getAttribute('aria-pressed'), 'true');
   assert.equal(choice('monster', 'party-hat').disabled, true);
-  assert.match(choice('monster', 'party-hat').textContent, /贏 4 次4 winsParty hat surprise/);
+  assert.match(choice('monster', 'party-hat').textContent, /4 winsParty hat surprise/);
   assert.ok([...rows.querySelectorAll('button')].every(button => !button.id && button.getAttribute('aria-label') === null), 'costume choices stay out of analytics');
   choice('monster', 'crown').click();
   assert.equal(choice('monster', 'crown').getAttribute('aria-pressed'), 'true');

@@ -45,7 +45,7 @@ button:focus-visible, a:focus-visible { outline: 4px solid #dc6b5d; outline-offs
 .page-shell[data-stage="champion"] .champion-emoji { width: 128px; height: 128px; font-size: 90px; line-height: 128px; }
 .page-shell[data-stage="champion"] .champion-copy strong { font-size: 19px; }
 .page-shell[data-stage="champion"] .pick-mark { position: absolute; top: 12px; right: 12px; margin-left: 0; }
-.topbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.topbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; row-gap: 6px; }
 .pill-link, .pill-button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; border: 2px solid #fff; border-radius: 999px; padding: 8px 15px; background: #ffffffd9; color: #555a70; text-decoration: none; font-size: 14px; font-weight: 900; box-shadow: 0 3px 0 #bdb4a466; }
 .pill-button { cursor: pointer; }
 .pill-link:hover, .pill-button:hover { transform: translateY(-1px); background: #fff; }
@@ -447,11 +447,6 @@ footer { padding: 12px 0 0; color: #7c7b8c; text-align: center; font-size: 11px;
 .costume-picture, .costume-none { width: 36px; height: 36px; display: grid; place-items: center; font-size: 26px; line-height: 1; }
 .costume-label { display: grid; font-size: 11px; font-weight: 950; line-height: 1.2; overflow-wrap: anywhere; }
 .costume-label small { font-size: 9px; font-weight: 800; }
-.grownup-zone { margin-top: 14px; border-top: 2px dashed #eadfcd; padding-top: 10px; color: #6f6a80; font-size: 12px; }
-.grownup-zone summary { min-height: 44px; display: flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 950; list-style: none; }
-.grownup-zone summary::-webkit-details-marker { display: none; }
-.grownup-zone summary::before { content: "▸"; transition: transform .15s; }
-.grownup-zone[open] summary::before { transform: rotate(90deg); }
 .reward-save-note { margin: 4px 0 8px; font-weight: 800; line-height: 1.45; }
 .reset-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .reset-button { min-height: 44px; border: 2px solid #e8dfd0; border-radius: 12px; padding: 6px 12px; background: #fff; color: #6d5c5c; font-size: 12px; font-weight: 950; cursor: pointer; }
@@ -474,4 +469,62 @@ footer { padding: 12px 0 0; color: #7c7b8c; text-align: center; font-size: 11px;
   .costume-picture, .costume-none { width: 30px; height: 30px; }
   .costume-label { font-size: 10px; }
   .sticker-book-head .pill-button { padding: 6px 10px; }
+}
+
+/* Rex or Bobo gently pointing toward the next thing to tap. Decorative only (aria-hidden);
+   prefers-reduced-motion's global animation-duration override already keeps it still. */
+.point-hint { display: none; align-items: center; justify-content: center; gap: 4px; margin: 6px 0 0; font-size: 22px; line-height: 1; pointer-events: none; animation: point-bounce 1.1s ease-in-out infinite; }
+.point-hint span:first-child { font-size: 25px; }
+.page-shell[data-pointer="champion"] #pointChampion,
+.page-shell[data-pointer="start"] #pointStart,
+.page-shell[data-pointer="answer"] #pointAnswer,
+.page-shell[data-pointer="next"] #pointNext,
+.page-shell[data-pointer="finish"] #pointFinish,
+.page-shell[data-pointer="break"] #pointBreak,
+.page-shell[data-pointer="goodbye"] #pointGoodbye { display: flex; }
+@keyframes point-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
+
+/* The soft "one more round or a break?" pacing nudge, and the calm goodbye screen it can lead to. */
+.break-prompt { margin-top: 12px; }
+.break-prompt-title { margin: 0; color: #6256a0; font-size: 16px; font-weight: 1000; }
+.break-prompt-body { margin: 4px 0 12px; color: #737287; font-size: 13px; font-weight: 850; }
+.break-prompt-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.break-choice { min-height: 51px; }
+.take-break { background: #7c9fc9; box-shadow: 0 4px 0 #5f80a3; }
+.take-break:hover { background: #6f90b8; }
+.goodbye-panel { padding: 18px 4px 7px; text-align: center; }
+.goodbye-panel .party-art { display: flex; align-items: flex-end; justify-content: center; gap: 10px; font-size: clamp(27px, 5vw, 42px); }
+.goodbye-panel .champion-art { width: clamp(78px, 11vw, 104px); aspect-ratio: 1; }
+.goodbye-panel h2 { margin: 9px 0 0; color: #6256a0; font-size: clamp(21px, 2.4vw, 27px); line-height: 1.2; }
+.goodbye-panel p { margin: 8px 0 16px; color: #737287; font-size: 14px; font-weight: 850; line-height: 1.6; }
+
+/* Grown-up settings: a math check gates a small panel with a level lock, mute, and a progress summary. */
+.settings-dialog { width: min(480px, calc(100% - 24px)); max-height: calc(100% - 24px); overflow: auto; border: 3px solid #fff; border-radius: 24px; padding: 16px; background: linear-gradient(160deg, #fffdf6, #eef4ff); color: var(--ink); box-shadow: 0 16px 40px #3a2f5a40; }
+.settings-dialog:not([open]) { display: none; }
+.settings-dialog::backdrop { background: #3a2f5a66; }
+.settings-gate { display: grid; gap: 10px; justify-items: center; padding: 6px 4px; text-align: center; }
+.settings-gate h2 { margin: 0; color: #5a4f8f; font-size: 19px; }
+.settings-gate p { margin: 0; color: #6f6a80; font-size: 13px; font-weight: 850; }
+.gate-question { font-size: 27px; font-weight: 1000; color: #4e3f73; font-variant-numeric: tabular-nums; }
+.gate-input-label { color: #6f6a80; font-size: 12px; font-weight: 900; }
+.gate-input { min-height: 46px; width: 130px; border: 2px solid #e8dfd0; border-radius: 12px; padding: 6px 10px; font-size: 19px; text-align: center; }
+.gate-status { min-height: 18px; margin: 0; color: #c1544a; font-size: 12px; font-weight: 900; }
+.gate-actions { display: flex; justify-content: center; gap: 8px; margin-top: 4px; }
+.gate-submit { min-width: 0; padding: 8px 22px; font-size: 15px; animation: none; }
+.settings-section { margin-top: 14px; border-top: 2px dashed #eadfcd; padding-top: 10px; }
+.settings-body > .settings-section:first-of-type { margin-top: 12px; }
+.settings-section h3 { margin: 0 0 4px; color: #5a4f8f; font-size: 14px; }
+.settings-hint { margin: 0 0 8px; color: #8b8898; font-size: 11px; font-weight: 800; line-height: 1.4; }
+.level-lock-options { display: flex; flex-wrap: wrap; gap: 8px; }
+.level-lock-option { display: flex; align-items: center; gap: 6px; min-height: 40px; border: 2px solid #e8dfd0; border-radius: 12px; padding: 6px 12px; background: #fff; font-size: 13px; font-weight: 900; color: #5f5a72; cursor: pointer; touch-action: manipulation; }
+.level-lock-option input { width: 18px; height: 18px; }
+#settingsRewardSummary { margin: 0 0 6px; color: #55536c; font-size: 13px; font-weight: 900; }
+.settings-device-note { margin: 14px 0 0; color: #8b8898; font-size: 11px; font-weight: 800; line-height: 1.4; text-align: center; }
+
+/* Phone play fit: once Start is tapped, tuck the champion/topic picking chrome out of the way so
+   the arena and the question with its answers are reachable without hunting. */
+@media (max-width: 760px) {
+  .page-shell[data-stage="play"] .intro,
+  .page-shell[data-stage="play"] .champion-picker,
+  .page-shell[data-stage="play"] .reward-bar { display: none; }
 }

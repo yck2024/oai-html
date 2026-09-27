@@ -109,6 +109,8 @@
     praise: ['reaction-praise-1', 'reaction-praise-2'],
     'try-again': ['reaction-try-again-1', 'reaction-try-again-2'],
     finish: ['reaction-finish-1'],
+    'break-prompt': ['reaction-break-prompt-1'],
+    'break-goodbye': ['reaction-break-goodbye-1'],
   };
   const ADDITION = [
     { left: 1, right: 1 },

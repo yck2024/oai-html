@@ -704,7 +704,7 @@ test('every math and vocabulary prompt has bundled English, Taiwan Mandarin, and
 
 test('every spoken reaction has bundled English, Taiwan Mandarin, and Japanese audio', () => {
   const reactionIds = Object.values(REACTIONS).flat();
-  assert.deepEqual(Object.keys(REACTIONS), ['praise', 'try-again', 'finish']);
+  assert.deepEqual(Object.keys(REACTIONS), ['praise', 'try-again', 'finish', 'break-prompt', 'break-goodbye']);
   assert.deepEqual([...reactionIds].sort(), Object.keys(reactions).sort());
   for (const variants of Object.values(REACTIONS)) assert.ok(variants.length >= 1 && variants.length <= 3);
   for (const audioId of reactionIds) {
@@ -807,17 +807,18 @@ test('a remembered voice and text language from an earlier visit win over the En
 test('choosing a language persists it to storage, and text follows the voice until set separately', () => {
   const storage = new FakeLocalStorage();
   const app = createAppFixture(createGame(steadyRandom), { localStorage: storage });
+  const withDefaults = overrides => ({ v: 1, speechMuted: false, allowedLevels: ['easy', 'harder', 'super'], ...overrides });
   app.speechLanguageButtons.find(button => button.dataset.language === 'zh').click();
   let saved = JSON.parse(storage.getItem('monsterWordArena.settings.v1'));
-  assert.deepEqual(saved, { v: 1, speechLanguage: 'zh', textLanguage: 'zh', textLanguageManual: false });
+  assert.deepEqual(saved, withDefaults({ speechLanguage: 'zh', textLanguage: 'zh', textLanguageManual: false }));
 
   app.textLanguageButtons.find(button => button.dataset.textLanguage === 'ja').click();
   saved = JSON.parse(storage.getItem('monsterWordArena.settings.v1'));
-  assert.deepEqual(saved, { v: 1, speechLanguage: 'zh', textLanguage: 'ja', textLanguageManual: true });
+  assert.deepEqual(saved, withDefaults({ speechLanguage: 'zh', textLanguage: 'ja', textLanguageManual: true }));
 
   app.speechLanguageButtons.find(button => button.dataset.language === 'en').click();
   saved = JSON.parse(storage.getItem('monsterWordArena.settings.v1'));
-  assert.deepEqual(saved, { v: 1, speechLanguage: 'en', textLanguage: 'ja', textLanguageManual: true }, 'text no longer follows voice once chosen separately');
+  assert.deepEqual(saved, withDefaults({ speechLanguage: 'en', textLanguage: 'ja', textLanguageManual: true }), 'text no longer follows voice once chosen separately');
 });
 
 test('settings persistence degrades safely when storage is unavailable', () => {
@@ -1161,15 +1162,134 @@ test('the page reveals progressively: champion, then topic and level plus Start,
   const app = createAppFixture(createGame(steadyRandom));
   const pageShell = app.document.querySelector('.page-shell');
   assert.equal(pageShell.dataset.stage, 'champion');
+  assert.equal(pageShell.dataset.pointer, 'champion', 'Rex/Bobo point at the champion picker first');
 
   app.championCards[1].click();
   assert.equal(pageShell.dataset.stage, 'choose', 'choosing a champion reveals the topic and level pickers');
+  assert.equal(pageShell.dataset.pointer, 'start', 'then they point at Start');
 
   app.championCards[0].click();
   assert.equal(pageShell.dataset.stage, 'choose', 'switching champion again does not re-collapse the reveal');
 
   app.startButton.click();
   assert.equal(pageShell.dataset.stage, 'play', 'Start reveals the arena and the question');
+  assert.equal(pageShell.dataset.pointer, 'answer', 'then they point at the answers');
+});
+
+function playMatchToFinish(app, game) {
+  for (;;) {
+    clickAnswer(app, game, true);
+    if (game.getState().finished) return;
+    app.nextButton.click();
+  }
+}
+
+test('after 2 or 3 wins in a row, a soft break prompt offers one more round with no timer or loss', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  app.championCards[0].click();
+  app.startButton.click();
+  const pageShell = app.document.querySelector('.page-shell');
+  const breakPrompt = app.elements.get('#breakPrompt');
+  const oneMoreRoundButton = app.document.querySelector('#oneMoreRoundButton');
+  const takeBreakButton = app.document.querySelector('#takeBreakButton');
+
+  let nudged = false;
+  for (let match = 0; match < 3 && !nudged; match += 1) {
+    playMatchToFinish(app, game);
+    assert.equal(game.getState().finished, true);
+    nudged = !breakPrompt.hidden;
+    if (!nudged) {
+      assert.equal(app.elements.get('#playAgainButton').hidden, false);
+      app.elements.get('#playAgainButton').click();
+    }
+  }
+  assert.ok(nudged, 'the nudge fires by the 3rd consecutive win at the latest');
+  assert.equal(app.elements.get('#playAgainButton').hidden, true, 'the break prompt replaces the single Play again button');
+  assert.equal(oneMoreRoundButton.hidden, false);
+  assert.equal(takeBreakButton.hidden, false);
+  assert.equal(pageShell.dataset.pointer, 'break');
+
+  oneMoreRoundButton.click();
+  assert.equal(game.getState().finished, false, 'one more round starts a fresh, unfinished match');
+  assert.equal(game.getState().stars, 0, 'nothing carries over as a loss');
+});
+
+test('taking a break shows a calm goodbye screen that can be left at any time, with nothing lost', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  app.championCards[0].click();
+  app.startButton.click();
+  const pageShell = app.document.querySelector('.page-shell');
+  const breakPrompt = app.elements.get('#breakPrompt');
+  const goodbyePanel = app.elements.get('#goodbyePanel');
+  const takeBreakButton = app.document.querySelector('#takeBreakButton');
+  const backToPlayButton = app.document.querySelector('#backToPlayButton');
+
+  for (let match = 0; match < 3 && breakPrompt.hidden; match += 1) {
+    playMatchToFinish(app, game);
+    if (breakPrompt.hidden) app.elements.get('#playAgainButton').click();
+  }
+  assert.equal(breakPrompt.hidden, false);
+
+  takeBreakButton.click();
+  assert.equal(goodbyePanel.hidden, false, 'taking a break shows a calm goodbye screen');
+  assert.equal(app.elements.get('#finishPanel').hidden, true);
+  assert.equal(pageShell.dataset.pointer, 'goodbye');
+
+  backToPlayButton.click();
+  assert.equal(goodbyePanel.hidden, true, 'the goodbye screen can be left at any time');
+  assert.equal(game.getState().finished, false, 'leaving the break starts a fresh, unfinished match — nothing was lost');
+});
+
+test('a small grown-up settings area is gated by a math check, then offers a level lock, mute mirror, and progress summary', () => {
+  const app = createAppFixture(createGame(steadyRandom));
+  const settingsButton = app.elements.get('#settingsButton');
+  const settingsGate = app.elements.get('#settingsGate');
+  const settingsBody = app.elements.get('#settingsBody');
+  const gateQuestion = app.elements.get('#gateQuestion');
+  const gateInput = app.elements.get('#gateInput');
+  const gateStatus = app.elements.get('#gateStatus');
+  const gateSubmitButton = app.document.querySelector('#gateSubmitButton');
+
+  settingsButton.click();
+  assert.equal(settingsGate.hidden, false);
+  assert.equal(settingsBody.hidden, true, 'a child cannot see settings without passing the gate');
+  const [a, b] = gateQuestion.textContent.match(/\d+/g).map(Number);
+  assert.ok(a >= 12 && b >= 14, 'the gate is two-digit addition, out of reach for a preschooler');
+
+  gateInput.value = String(a + b + 1);
+  gateSubmitButton.click();
+  assert.equal(settingsBody.hidden, true, 'a wrong answer keeps settings hidden');
+  assert.notEqual(gateStatus.textContent, '');
+
+  const [a2, b2] = gateQuestion.textContent.match(/\d+/g).map(Number);
+  gateInput.value = String(a2 + b2);
+  gateSubmitButton.click();
+  assert.equal(settingsGate.hidden, true);
+  assert.equal(settingsBody.hidden, false, 'the correct answer reveals the settings panel');
+
+  const superLock = app.document.querySelector('[data-level-lock="super"]');
+  const easyLock = app.document.querySelector('[data-level-lock="easy"]');
+  const harderLock = app.document.querySelector('[data-level-lock="harder"]');
+  superLock.querySelector('input').checked = false;
+  superLock.querySelector('input').dispatch('change');
+  const superButton = app.levelButtons.find(button => button.dataset.level === 'super');
+  assert.equal(superButton.hidden, true, 'locking a level hides it from the child\'s level picker');
+
+  easyLock.querySelector('input').checked = false;
+  easyLock.querySelector('input').dispatch('change');
+  harderLock.querySelector('input').checked = false;
+  harderLock.querySelector('input').dispatch('change');
+  assert.equal(harderLock.querySelector('input').checked, true, 'unchecking the last remaining level is rejected, keeping at least one');
+  assert.equal(app.levelButtons.find(button => button.dataset.level === 'harder').hidden, false);
+
+  const settingsMuteButton = app.document.querySelector('#settingsMuteButton');
+  assert.equal(settingsMuteButton.getAttribute('aria-pressed'), 'false');
+  settingsMuteButton.click();
+  assert.equal(app.muteButton.getAttribute('aria-pressed'), 'true', 'the settings mute mirrors the main mute button');
+
+  assert.match(app.elements.get('#settingsRewardSummary').textContent, /0 match/);
 });
 
 test('every Japanese UI string is written entirely in hiragana, with no katakana or kanji', () => {
@@ -1203,6 +1323,18 @@ test('every Japanese UI string is written entirely in hiragana, with no katakana
     for (const word of WORD_TOPICS[topic].words) checkJa(`${topic}-${word.id}.ja`, word.ja);
   }
   checkJa('arena comboText', comboText(4, 'ja'));
+  for (const sticker of STICKERS) checkJa(`STICKERS.${sticker.id}.ja`, sticker.ja);
+  for (const costume of COSTUMES) checkJa(`COSTUMES.${costume.id}.ja`, costume.ja);
+  checkJa('settingsWinsSummary(3)', I18N.settingsWinsSummary(3, 'ja'));
+  checkJa('settingsStickerSummary(2,12)', I18N.settingsStickerSummary(2, 12, 'ja'));
+  checkJa('rewardBookIntroWins(3)', I18N.rewardBookIntroWins(3, 'ja'));
+  checkJa('stickerStillToFind(1)', I18N.stickerStillToFind(1, 'ja'));
+  checkJa('costumeWinsToGo(2)', I18N.costumeWinsToGo(2, 'ja'));
+  checkJa('costumeSurpriseHint', I18N.costumeSurpriseHint(I18N.CHAMPIONS.dino.shortName.ja, 'ja'));
+  checkJa('costumeRowLabel', I18N.costumeRowLabel(I18N.CHAMPIONS.dino.shortName.ja, 'ja'));
+  checkJa('nextSurpriseHint', I18N.nextSurpriseHint(COSTUMES[0].ja, 2, 'ja'));
+  checkJa('rewardSummaryPattern(2,12)', I18N.rewardSummaryPattern(2, 12, 'ja'));
+  checkJa('rewardUnlockText', I18N.rewardUnlockText(I18N.CHAMPIONS.dino.shortName.ja, COSTUMES[0].ja, 'ja'));
   assert.ok(checked.length > 30, 'the sweep actually covered the UI surface');
 });
 
@@ -1230,6 +1362,11 @@ test('the on-screen text language switches every child-facing string and is inde
   assert.equal(app.elements.get('#championHeading').textContent, I18N.STRINGS.championHeading.ja);
   assert.doesNotMatch(app.elements.get('#championHeading').textContent, /[ァ-ヺ]/, 'Japanese chrome text has no katakana');
   assert.doesNotMatch(app.elements.get('#championHeading').textContent, /[一-鿿]/, 'Japanese chrome text has no kanji');
+  // The reward bar and sticker book are wired up by rewards-app.js, a separate script — this
+  // guards against it silently staying in whatever language it started in (a real regression
+  // caught in manual browser testing: it needs app.js to tell it about every language change).
+  assert.doesNotMatch(app.elements.get('#rewardSummary').textContent, /stickers/, 'the reward bar follows the text language too');
+  assert.equal(app.elements.get('#stickerBookButton').textContent, I18N.STRINGS.stickerBookButton.ja);
 
   // The spoken voice is unaffected by the text-language choice.
   app.speechLanguageButtons.find(button => button.dataset.language === 'en').click();
@@ -1586,7 +1723,7 @@ test('sound effects are synthesized locally with no files, network, or speech el
   assert.equal(board.getState().musicPlaying, true);
   assert.ok(ctx.sources.length > EFFECTS.length);
   assert.ok(ctx.sources.every(source => source.startTime !== undefined), 'every sound is an oscillator or generated noise');
-  assert.deepEqual(EFFECTS, ['tap', 'sparkle', 'whoosh', 'boing', 'giggle', 'cheer']);
+  assert.deepEqual(EFFECTS, ['tap', 'sparkle', 'whoosh', 'boing', 'giggle', 'cheer', 'chime']);
   assert.ok(EFFECT_LEVEL <= 0.4, 'effects stay well under the narration level');
   assert.ok(MUSIC_LEVEL < EFFECT_LEVEL, 'background music is quieter than the effects');
 });
@@ -1630,7 +1767,7 @@ test('rapid tapping retriggers an effect instead of piling copies up', () => {
   assert.equal(test.board.play('boing'), true);
   assert.equal(test.board.getState().voices, 1, 'a retriggered boing replaces the one still ringing');
 
-  for (const name of ['tap', 'sparkle', 'whoosh', 'giggle', 'cheer']) assert.equal(test.board.play(name), true, `${name} is never crowded out`);
+  for (const name of ['tap', 'sparkle', 'whoosh', 'giggle', 'cheer', 'chime']) assert.equal(test.board.play(name), true, `${name} is never crowded out`);
   assert.equal(test.board.getState().voices, EFFECTS.length);
   test.ctx.currentTime += 1.1;
   for (const name of EFFECTS) assert.equal(test.board.play(name), true);
@@ -1704,10 +1841,10 @@ test('the game plays gentle effects from the child\'s own taps without a voice c
   assert.equal(app.sound.ctx, null, 'nothing is audible before the child taps');
 
   clickAnswer(app, game, false);
-  assert.deepEqual(app.effects, ['tap', 'boing'], 'a miss is a soft pillow boing');
+  assert.deepEqual(app.effects, ['tap', 'boing', 'chime'], 'a miss is a soft pillow boing, and Rex/Bobo point at the answers again');
   app.later();
   clickAnswer(app, game, true);
-  assert.deepEqual(app.effects.slice(2), ['tap', 'sparkle', 'whoosh', 'giggle'], 'a right answer sparkles, whooshes, and giggles');
+  assert.deepEqual(app.effects.slice(3), ['tap', 'sparkle', 'whoosh', 'giggle', 'chime'], 'a right answer sparkles, whooshes, and giggles');
   assert.deepEqual(app.played, [], 'effects never play through the speech element or start narration');
 
   for (let star = 2; star <= GOAL_BY_LEVEL.easy; star += 1) {
@@ -1717,7 +1854,7 @@ test('the game plays gentle effects from the child\'s own taps without a voice c
     clickAnswer(app, game, true);
   }
   assert.equal(game.getState().finished, true);
-  assert.deepEqual(app.effects.slice(-3), ['sparkle', 'whoosh', 'cheer'], 'the win ends with a cheer');
+  assert.deepEqual(app.effects.slice(-4), ['sparkle', 'whoosh', 'cheer', 'chime'], 'the win ends with a cheer');
 });
 
 test('music is off by default, has its own toggle, and the mute button silences everything', () => {
@@ -1755,7 +1892,7 @@ test('effects and music duck under narration without touching the speech clip', 
   speech.dispatch('playing');
   assert.equal(app.sound.board.getState().speaking, true);
   clickAnswer(app, game, false);
-  assert.deepEqual(app.effects, ['tap', 'boing']);
+  assert.deepEqual(app.effects, ['chime', 'tap', 'boing'], 'Starting play points Rex/Bobo at the question first');
   assert.match(speech.src, /\/en\/reaction-try-again-1\.mp3$/, 'a miss effect never replaces the try-again reaction clip');
   speech.dispatch('ended');
   assert.equal(app.sound.board.getState().speaking, false);

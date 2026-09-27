@@ -2,6 +2,7 @@
   'use strict';
 
   const I18N = window.FriendlyArenaI18n;
+  const PACING = window.FriendlyArenaPacing;
   const game = window.FriendlyArena.createGame();
   const stage = window.FriendlyArenaStage.createArenaStage(document);
   const pageShell = document.querySelector('.page-shell');
@@ -9,6 +10,15 @@
   // Progressive reveal on first open: champion, then topic and level, then Start (which reveals the arena).
   function revealStage(name) {
     pageShell.dataset.stage = name;
+  }
+
+  // Rex or Bobo point at (or bounce toward) whatever the child should tap next, with a short chime.
+  let currentPointer = null;
+  function setPointer(key) {
+    if (key === currentPointer) return;
+    currentPointer = key;
+    pageShell.dataset.pointer = key || '';
+    if (key) sounds.play('chime');
   }
   const answerOptions = document.querySelector('#answerOptions');
   const questionPrompt = document.querySelector('#questionPrompt');
@@ -39,6 +49,30 @@
   const buddyName = document.querySelector('#buddyName');
   const rivalPower = document.querySelector('#rivalPower');
   const moveBubble = document.querySelector('#moveBubble');
+  const playAgainButton = document.querySelector('#playAgainButton');
+  const breakPrompt = document.querySelector('#breakPrompt');
+  const oneMoreRoundButton = document.querySelector('#oneMoreRoundButton');
+  const takeBreakButton = document.querySelector('#takeBreakButton');
+  const goodbyePanel = document.querySelector('#goodbyePanel');
+  const goodbyeBody = document.querySelector('#goodbyeBody');
+  const backToPlayButton = document.querySelector('#backToPlayButton');
+  const pointerEmojis = ['pointStartEmoji', 'pointAnswerEmoji', 'pointNextEmoji', 'pointFinishEmoji', 'pointBreakEmoji', 'pointGoodbyeEmoji']
+    .map(id => document.querySelector(`#${id}`)).filter(Boolean);
+
+  // Grown-up settings: a header icon, gated by a simple math check, away from the main play path.
+  const settingsButton = document.querySelector('#settingsButton');
+  const settingsDialog = document.querySelector('#settingsDialog');
+  const settingsGate = document.querySelector('#settingsGate');
+  const settingsBody = document.querySelector('#settingsBody');
+  const gateQuestion = document.querySelector('#gateQuestion');
+  const gateInput = document.querySelector('#gateInput');
+  const gateStatus = document.querySelector('#gateStatus');
+  const gateCancelButton = document.querySelector('#gateCancelButton');
+  const gateSubmitButton = document.querySelector('#gateSubmitButton');
+  const settingsCloseButton = document.querySelector('#settingsCloseButton');
+  const levelLockOptions = document.querySelector('#levelLockOptions');
+  const settingsMuteButton = document.querySelector('#settingsMuteButton');
+  const settingsRewardSummary = document.querySelector('#settingsRewardSummary');
 
   const SETTINGS_KEY = 'monsterWordArena.settings.v1';
 
@@ -68,8 +102,11 @@
   let speechLanguage = I18N.TEXT_LANGUAGES.includes(saved.speechLanguage) ? saved.speechLanguage : 'en';
   let textLanguageManual = Boolean(saved.textLanguageManual);
   let textLanguage = I18N.TEXT_LANGUAGES.includes(saved.textLanguage) ? saved.textLanguage : speechLanguage;
+  // Resolved before rewards-app.js loads, so it can pick up the saved text language on first render.
+  window.FriendlyArenaCurrentTextLanguage = () => textLanguage;
   let speechEnabled = false;
-  let speechMuted = false;
+  let speechMuted = Boolean(saved.speechMuted);
+  let allowedLevels = PACING.sanitizeAllowedLevels(saved.allowedLevels);
   let reactionPlaying = false;
   const reactionTurns = {};
   let questionAudio = null;
@@ -84,6 +121,8 @@
   // Effects and music use Web Audio, a separate channel from the speech element, so they never cut off a clip.
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   const sounds = window.FriendlyArenaSounds.createSoundBoard(AudioContextClass ? () => new AudioContextClass() : null);
+  sounds.setMuted(speechMuted);
+  const breakPacer = PACING.createBreakPacer();
   ['playing', 'pause', 'ended', 'error', 'emptied'].forEach(type => questionAudio?.addEventListener?.(type, () => {
     sounds.setSpeaking(type === 'playing');
   }));
@@ -93,7 +132,7 @@
   });
 
   function persistSettings() {
-    saveSettings({ v: 1, speechLanguage, textLanguage, textLanguageManual });
+    saveSettings({ v: 1, speechLanguage, textLanguage, textLanguageManual, speechMuted, allowedLevels });
   }
 
   function soundIsOff() {
@@ -139,6 +178,8 @@
     });
     muteButton.textContent = speechMuted ? I18N.STRINGS.unmuteButton[textLanguage] : I18N.STRINGS.muteButton[textLanguage];
     muteButton.setAttribute('aria-pressed', String(speechMuted));
+    settingsMuteButton.textContent = muteButton.textContent;
+    settingsMuteButton.setAttribute('aria-pressed', String(speechMuted));
     const musicOn = sounds.getState().musicOn;
     musicButton.classList.toggle('is-active', musicOn);
     musicButton.setAttribute('aria-pressed', String(musicOn));
@@ -177,6 +218,7 @@
     buddyEmoji.textContent = buddyId === 'dino' ? '🦖' : '👾';
     buddyName.textContent = champion.buddyShortName[textLanguage];
     moveBubble.textContent = state.champion === 'dino' ? '🌀' : '🫧';
+    pointerEmojis.forEach(node => { node.textContent = heroEmoji.textContent; });
     stage.setChampion(state.champion);
     championCards.forEach(card => {
       const selected = card.dataset.champion === state.champion;
@@ -332,10 +374,13 @@
       arenaMessage.textContent = I18N.STRINGS.blockMessage[textLanguage];
       playReaction('try-again');
       sounds.play('boing', { delay: 0.04 });
+      setPointer('answer');
       return;
     }
 
-    playReaction(state.finished ? 'finish' : 'praise');
+    // A soft "one more round or a break?" nudge after 2 or 3 wins in a row: no timer, nothing lost either way.
+    const nudge = state.finished && breakPacer.recordWin();
+    playReaction(nudge ? 'break-prompt' : state.finished ? 'finish' : 'praise');
     button.classList.add('right-answer');
     sounds.play('sparkle', { delay: 0.03 });
     answerOptions.querySelectorAll('button').forEach(choice => { choice.disabled = true; });
@@ -346,18 +391,50 @@
     if (state.finished) {
       questionPanel.hidden = true;
       finishPanel.hidden = false;
+      goodbyePanel.hidden = true;
       document.querySelector('#finishBody').textContent = I18N.finishBody(state.goal, textLanguage);
       window.ArenaRewards?.recordWin(state.champion);
       [...topicTabsContainer.children, ...levelChoiceContainer.querySelectorAll('.level-option')].forEach(button => { button.disabled = true; });
-      document.querySelector('#playAgainButton').focus();
+      if (nudge) {
+        playAgainButton.hidden = true;
+        breakPrompt.hidden = false;
+        setPointer('break');
+        oneMoreRoundButton.focus();
+      } else {
+        playAgainButton.hidden = false;
+        breakPrompt.hidden = true;
+        setPointer('finish');
+        playAgainButton.focus();
+      }
     } else {
       nextButton.hidden = false;
       nextButton.focus();
+      setPointer('next');
     }
+  }
+
+  // Brings the question and its answers into view on a phone, instead of leaving the child to
+  // scroll past the (now hidden) champion/topic chrome to find them. Waits a frame first so the
+  // sticky arena's height (--arena-card-height, set by a ResizeObserver in arena.js) is already
+  // measured — scrolling immediately would use a stale, too-small scroll-padding-top and leave
+  // the arena's sticky overlay clipping the very content this is meant to reveal.
+  function revealPlayArea() {
+    const scroll = () => questionPanel.scrollIntoView?.({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start' });
+    if (typeof requestAnimationFrame !== 'function') {
+      scroll();
+      return;
+    }
+    requestAnimationFrame(() => requestAnimationFrame(scroll));
+  }
+
+  function reducedMotion() {
+    return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
   }
 
   function enableSpeech() {
     revealStage('play');
+    setPointer('answer');
+    revealPlayArea();
     if (speechEnabled) return;
     speechEnabled = true;
     renderSpeechControls();
@@ -406,8 +483,9 @@
     playCurrentQuestion();
   });
 
-  muteButton.addEventListener('click', () => {
+  function toggleMute() {
     speechMuted = !speechMuted;
+    persistSettings();
     renderSpeechControls();
     sounds.setMuted(speechMuted);
     if (speechMuted) {
@@ -424,7 +502,10 @@
     speechStatus.textContent = '';
     renderQuestion(game.getState(), { speak: false });
     playCurrentQuestion();
-  });
+  }
+
+  muteButton.addEventListener('click', toggleMute);
+  settingsMuteButton.addEventListener('click', toggleMute);
 
   musicButton.addEventListener('click', () => {
     sounds.setMusic(!sounds.getState().musicOn);
@@ -440,6 +521,7 @@
     renderChampion(game.getState());
     arenaMessage.textContent = I18N.championReady(card.dataset.champion, textLanguage);
     if (pageShell.dataset.stage === 'champion') revealStage('choose');
+    if (pageShell.dataset.stage === 'choose') setPointer('start');
   }));
 
   function buildTopicTabs() {
@@ -461,6 +543,7 @@
         stage.settle();
         arenaMessage.textContent = I18N.topicChosenMessage(topic, textLanguage);
         renderQuestion(game.getState());
+        if (speechEnabled) setPointer('answer');
       });
       return tab;
     }));
@@ -484,14 +567,128 @@
         stage.settle();
         arenaMessage.textContent = I18N.levelChosenMessage(level, textLanguage);
         renderQuestion(game.getState());
+        if (speechEnabled) setPointer('answer');
       });
       return button;
     });
     levelChoiceContainer.append(...buttons);
   }
 
+  // A small grown-up control: which levels the level picker offers the child. Always keeps at
+  // least one level selectable, even if every box gets unchecked.
+  let levelLockEntries = [];
+  function buildLevelLockOptions() {
+    levelLockEntries = window.FriendlyArena.LEVELS.map(level => {
+      const optionLabel = document.createElement('label');
+      optionLabel.className = 'level-lock-option';
+      optionLabel.dataset.levelLock = level;
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      const text = document.createElement('span');
+      text.dataset.role = 'name';
+      optionLabel.append(input, text);
+      return { level, optionLabel, input, text };
+    });
+    levelLockOptions.replaceChildren(...levelLockEntries.map(entry => entry.optionLabel));
+    levelLockEntries.forEach(entry => {
+      entry.input.addEventListener('change', () => {
+        const checked = levelLockEntries.filter(other => other.input.checked).map(other => other.level);
+        if (!checked.length) {
+          entry.input.checked = true;
+          return;
+        }
+        allowedLevels = PACING.sanitizeAllowedLevels(checked);
+        persistSettings();
+        applyLevelLock();
+      });
+    });
+  }
+
+  function renderLevelLockOptions() {
+    levelLockEntries.forEach(({ level, input, text }) => {
+      input.checked = allowedLevels.includes(level);
+      text.textContent = `${I18N.LEVEL_NAMES[level].emoji} ${I18N.LEVEL_NAMES[level][textLanguage]}`;
+    });
+  }
+
+  function applyLevelLock() {
+    allowedLevels = PACING.sanitizeAllowedLevels(allowedLevels);
+    [...levelChoiceContainer.querySelectorAll('.level-option')].forEach(button => {
+      button.hidden = !allowedLevels.includes(button.dataset.level);
+    });
+    renderLevelLockOptions();
+    const state = game.getState();
+    const resolved = PACING.resolveAllowedLevel(state.level, allowedLevels);
+    if (resolved !== state.level && game.chooseLevel(resolved)) {
+      stage.settle();
+      renderQuestion(game.getState());
+    }
+  }
+
+  function renderSettingsSummary() {
+    const summary = window.ArenaRewards?.getSummary?.();
+    if (!summary) return;
+    settingsRewardSummary.textContent = `${I18N.settingsWinsSummary(summary.wins, textLanguage)} · ${I18N.settingsStickerSummary(summary.collected, summary.total, textLanguage)}`;
+  }
+
+  let gateChallenge = null;
+  let settingsReturnFocus = null;
+
+  function openSettings() {
+    settingsReturnFocus = document.activeElement;
+    settingsGate.hidden = false;
+    settingsBody.hidden = true;
+    gateStatus.textContent = '';
+    gateInput.value = '';
+    gateChallenge = PACING.generateParentChallenge();
+    gateQuestion.textContent = `${gateChallenge.a} + ${gateChallenge.b} = ?`;
+    if (typeof settingsDialog.showModal === 'function') settingsDialog.showModal();
+    else settingsDialog.setAttribute('open', '');
+    gateInput.focus?.();
+  }
+
+  function closeSettings() {
+    if (typeof settingsDialog.close === 'function') settingsDialog.close();
+    else {
+      settingsDialog.removeAttribute('open');
+      settingsReturnFocus?.focus?.();
+    }
+  }
+
+  function submitGate() {
+    if (PACING.checkParentAnswer(gateChallenge, gateInput.value)) {
+      settingsGate.hidden = true;
+      settingsBody.hidden = false;
+      renderLevelLockOptions();
+      renderSettingsSummary();
+      settingsCloseButton.focus();
+      return;
+    }
+    gateStatus.textContent = I18N.STRINGS.gateWrong[textLanguage];
+    gateChallenge = PACING.generateParentChallenge();
+    gateQuestion.textContent = `${gateChallenge.a} + ${gateChallenge.b} = ?`;
+    gateInput.value = '';
+    gateInput.focus?.();
+  }
+
+  settingsButton.addEventListener('click', openSettings);
+  settingsCloseButton.addEventListener('click', closeSettings);
+  gateCancelButton.addEventListener('click', closeSettings);
+  gateSubmitButton.addEventListener('click', submitGate);
+  gateInput.addEventListener('keydown', event => {
+    if (event.key === 'Enter') submitGate();
+  });
+  settingsDialog.addEventListener('click', event => {
+    const box = settingsDialog.getBoundingClientRect?.();
+    if (!box) return;
+    const outside = event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom;
+    if (event.target === settingsDialog && outside) closeSettings();
+  });
+  settingsDialog.addEventListener('close', () => settingsReturnFocus?.focus?.());
+
   function renderChrome() {
     document.documentElement.lang = textLanguage === 'zh' ? 'zh-Hant-TW' : textLanguage === 'ja' ? 'ja' : 'en';
+    window.ArenaRewards?.setLanguage?.(textLanguage);
     const S = I18N.STRINGS;
     document.querySelector('#galleryLink').textContent = S.galleryLink[textLanguage];
     document.querySelector('#topLabel').textContent = S.topLabel[textLanguage];
@@ -528,6 +725,35 @@
     document.querySelector('#footer').textContent = S.footer[textLanguage];
     document.querySelector('#nextButton').replaceChildren(document.createTextNode(`${S.nextButton[textLanguage]} `), (() => { const s = document.createElement('span'); s.setAttribute('aria-hidden', 'true'); s.textContent = '➜'; return s; })());
 
+    document.querySelector('#settingsButton').textContent = S.settingsButton[textLanguage];
+    document.querySelector('#settingsButton').setAttribute('aria-label', S.settingsButtonLabel[textLanguage]);
+    document.querySelector('#gateTitle').textContent = S.gateTitle[textLanguage];
+    document.querySelector('#gateBody').textContent = S.gateBody[textLanguage];
+    document.querySelector('#gateInputLabel').textContent = S.gateInputLabel[textLanguage];
+    gateSubmitButton.textContent = S.gateSubmit[textLanguage];
+    gateCancelButton.textContent = S.gateCancel[textLanguage];
+    document.querySelector('#settingsDialogTitle').textContent = S.settingsTitle[textLanguage];
+    settingsCloseButton.textContent = S.settingsClose[textLanguage];
+    document.querySelector('#settingsLevelLockTitle').textContent = S.settingsLevelLockTitle[textLanguage];
+    document.querySelector('#settingsLevelLockHint').textContent = S.settingsLevelLockHint[textLanguage];
+    document.querySelector('#settingsSoundTitle').textContent = S.settingsSoundTitle[textLanguage];
+    document.querySelector('#settingsRewardsTitle').textContent = S.settingsRewardsTitle[textLanguage];
+    document.querySelector('#settingsDeviceNote').textContent = S.settingsDeviceNote[textLanguage];
+    document.querySelector('[data-reward-action="reset"]').textContent = S.settingsClearButton[textLanguage];
+    document.querySelector('[data-reward-action="confirm-reset"]').textContent = S.settingsConfirmClear[textLanguage];
+    document.querySelector('[data-reward-action="keep"]').textContent = S.settingsKeepStickers[textLanguage];
+    document.querySelector('#stickerBookButton').textContent = S.stickerBookButton[textLanguage];
+    document.querySelector('#stickerBookTitle').textContent = S.rewardBookTitle[textLanguage];
+    document.querySelector('#stickerBookCloseButton').textContent = S.rewardBookClose[textLanguage];
+    document.querySelector('#costumeTitle').textContent = S.costumeTitle[textLanguage];
+    document.querySelector('#breakPromptTitle').textContent = S.breakPromptTitle[textLanguage];
+    document.querySelector('#breakPromptBody').textContent = S.breakPromptBody[textLanguage];
+    oneMoreRoundButton.textContent = S.oneMoreRoundButton[textLanguage];
+    takeBreakButton.textContent = S.takeBreakButton[textLanguage];
+    document.querySelector('#goodbyeTitle').textContent = S.goodbyeTitle[textLanguage];
+    goodbyeBody.textContent = S.goodbyeBody[textLanguage];
+    backToPlayButton.replaceChildren(document.createTextNode(`${S.backToPlayButton[textLanguage]} `), (() => { const s = document.createElement('span'); s.setAttribute('aria-hidden', 'true'); s.textContent = '↻'; return s; })());
+
     [...topicTabsContainer.children].forEach(tab => {
       tab.querySelector('[data-role="name"]').textContent = I18N.TOPIC_NAMES[tab.dataset.topic][textLanguage];
     });
@@ -538,6 +764,8 @@
       const label = championName(id);
       if (label) label.textContent = I18N.CHAMPIONS[id].name[textLanguage];
     });
+    renderLevelLockOptions();
+    if (!settingsBody.hidden) renderSettingsSummary();
     renderSpeechControls();
   }
 
@@ -548,6 +776,7 @@
     arenaMessage.textContent = I18N.STRINGS.yourTurnMessage[textLanguage];
     renderQuestion(game.getState());
     answerOptions.querySelector('button')?.focus();
+    setPointer('answer');
   });
 
   function restart() {
@@ -558,17 +787,39 @@
     renderChampion(state);
     renderQuestion(state, { speak: speechEnabled });
     answerOptions.querySelector('button')?.focus();
+    breakPrompt.hidden = true;
+    goodbyePanel.hidden = true;
+    playAgainButton.hidden = false;
+    if (speechEnabled) setPointer('answer');
   }
 
   document.querySelector('#restartButton').addEventListener('click', restart);
-  document.querySelector('#playAgainButton').addEventListener('click', restart);
+  playAgainButton.addEventListener('click', restart);
+  oneMoreRoundButton.addEventListener('click', restart);
+  takeBreakButton.addEventListener('click', () => {
+    finishPanel.hidden = true;
+    goodbyePanel.hidden = false;
+    playReaction('break-goodbye');
+    setPointer('goodbye');
+    backToPlayButton.focus();
+  });
+  backToPlayButton.addEventListener('click', () => {
+    goodbyePanel.hidden = true;
+    restart();
+  });
 
   buildTopicTabs();
   buildLevelButtons();
+  buildLevelLockOptions();
+  applyLevelLock();
   renderChrome();
   arenaMessage.textContent = I18N.STRINGS.readyMessage[textLanguage];
   const initialState = game.getState();
   renderChampion(initialState);
   renderSpeechControls();
   renderQuestion(initialState, { speak: false });
+  // No chime on the very first paint — nothing has happened yet to draw attention to;
+  // later pointer changes (through setPointer) do chime, since they follow a child's own action.
+  currentPointer = pageShell.dataset.stage === 'champion' ? 'champion' : 'start';
+  pageShell.dataset.pointer = currentPointer;
 })();
