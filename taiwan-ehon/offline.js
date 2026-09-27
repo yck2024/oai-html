@@ -173,7 +173,11 @@
         const response = await fetch(url);
         if (response && response.ok) {
           bytes += Number(response.headers.get('Content-Length') || 0);
-          await cache.put(url, response);
+          try {
+            await cache.put(url, response);
+          } catch (_error) {
+            failed += 1;
+          }
         } else if (!cached) {
           failed += 1;
         }
