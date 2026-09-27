@@ -471,11 +471,9 @@ footer { padding: 12px 0 0; color: #7c7b8c; text-align: center; font-size: 11px;
   .sticker-book-head .pill-button { padding: 6px 10px; }
 }
 
-/* Rex or Bobo gently pointing toward the next thing to tap. Decorative only (aria-hidden);
-   prefers-reduced-motion's global animation-duration override already keeps it still. */
+/* Rex or Bobo gently pointing toward the next thing to tap. Decorative only (aria-hidden). */
 .point-hint { display: none; align-items: center; justify-content: center; gap: 4px; margin: 6px 0 0; font-size: 22px; line-height: 1; pointer-events: none; animation: point-bounce 1.1s ease-in-out infinite; }
 .point-hint span:first-child { font-size: 25px; }
-.page-shell[data-pointer="champion"] #pointChampion,
 .page-shell[data-pointer="start"] #pointStart,
 .page-shell[data-pointer="answer"] #pointAnswer,
 .page-shell[data-pointer="next"] #pointNext,
@@ -483,6 +481,12 @@ footer { padding: 12px 0 0; color: #7c7b8c; text-align: center; font-size: 11px;
 .page-shell[data-pointer="break"] #pointBreak,
 .page-shell[data-pointer="goodbye"] #pointGoodbye { display: flex; }
 @keyframes point-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
+.page-shell[data-stage="champion"][data-pointer="champion"] .champion-card .champion-emoji { animation: champion-invite 1.4s ease-in-out infinite; }
+@keyframes champion-invite { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-7px) scale(1.04); } }
+@media (prefers-reduced-motion: reduce) {
+  .page-shell[data-stage="champion"][data-pointer="champion"] .champion-card { border-color: #efa079; box-shadow: 0 0 0 4px #efa07944, 0 3px 0 #e8dece; }
+  .page-shell[data-stage="champion"][data-pointer="champion"] .champion-card .champion-emoji { animation: none; }
+}
 
 /* The soft "one more round or a break?" pacing nudge, and the calm goodbye screen it can lead to. */
 .break-prompt { margin-top: 12px; }

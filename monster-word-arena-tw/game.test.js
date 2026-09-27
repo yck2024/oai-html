@@ -1182,6 +1182,7 @@ test('the page reveals progressively: champion, then topic and level plus Start,
   const pageShell = app.document.querySelector('.page-shell');
   assert.equal(pageShell.dataset.stage, 'champion');
   assert.equal(pageShell.dataset.pointer, 'champion', 'Rex/Bobo point at the champion picker first');
+  assert.deepEqual(app.effects, ['chime'], 'the champion invitation uses the existing chime');
 
   app.championCards[1].click();
   assert.equal(pageShell.dataset.stage, 'choose', 'choosing a champion reveals the topic and level pickers');
@@ -1901,10 +1902,10 @@ test('quickly restarting music carries on the queued tune instead of layering a 
 test('the game plays gentle effects from the child\'s own taps without a voice choice', () => {
   const game = createGame(steadyRandom);
   const app = createAppFixture(game);
-  assert.equal(app.sound.ctx, null, 'nothing is audible before the child taps');
+  assert.deepEqual(app.effects, ['chime'], 'the champion invitation is the only sound before the child taps');
 
   clickAnswer(app, game, false);
-  assert.deepEqual(app.effects, ['tap', 'boing', 'chime'], 'a miss is a soft pillow boing, and Rex/Bobo point at the answers again');
+  assert.deepEqual(app.effects, ['chime', 'tap', 'boing'], 'a miss is a soft pillow boing, and the invitation chime is not crowded by another prompt');
   app.later();
   clickAnswer(app, game, true);
   assert.deepEqual(app.effects.slice(3), ['tap', 'sparkle', 'whoosh', 'giggle', 'chime'], 'a right answer sparkles, whooshes, and giggles');
@@ -1932,8 +1933,9 @@ test('music is off by default, has its own toggle, and the mute button silences 
 
   app.muteButton.click();
   assert.equal(app.sound.board.getState().musicPlaying, false, 'mute stops the music');
+  const effectsBeforeMutedAnswer = app.effects.length;
   clickAnswer(app, game, true);
-  assert.deepEqual(app.effects, [], 'mute silences the effects');
+  assert.equal(app.effects.length, effectsBeforeMutedAnswer, 'mute silences the effects');
   app.musicButton.click();
   app.musicButton.click();
   assert.match(app.elements.get('#speechStatus').textContent, /muted|靜音|ミュート/i);
@@ -1955,7 +1957,7 @@ test('effects and music duck under narration without touching the speech clip', 
   speech.dispatch('playing');
   assert.equal(app.sound.board.getState().speaking, true);
   clickAnswer(app, game, false);
-  assert.deepEqual(app.effects, ['chime', 'tap', 'boing'], 'Starting play points Rex/Bobo at the question first');
+  assert.deepEqual(app.effects, ['chime', 'tap', 'boing'], 'the initial invitation chime is not crowded by another prompt');
   assert.match(speech.src, /\/en\/reaction-try-again-1\.mp3$/, 'a miss effect never replaces the try-again reaction clip');
   speech.dispatch('ended');
   assert.equal(app.sound.board.getState().speaking, false);

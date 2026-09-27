@@ -820,8 +820,5 @@
   renderChampion(initialState);
   renderSpeechControls();
   renderQuestion(initialState, { speak: false });
-  // No chime on the very first paint — nothing has happened yet to draw attention to;
-  // later pointer changes (through setPointer) do chime, since they follow a child's own action.
-  currentPointer = pageShell.dataset.stage === 'champion' ? 'champion' : 'start';
-  pageShell.dataset.pointer = currentPointer;
+  setPointer(pageShell.dataset.stage === 'champion' ? 'champion' : 'start');
 })();
