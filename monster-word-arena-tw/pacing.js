@@ -31,10 +31,6 @@
     return ordered.length ? ordered : [...ALL_LEVELS];
   }
 
-  function isLevelAllowed(level, allowedLevels) {
-    return sanitizeAllowedLevels(allowedLevels).includes(level);
-  }
-
   // If the current level just got locked out, hands back the closest allowed
   // level instead, preferring the earlier level on an exact tie.
   function resolveAllowedLevel(currentLevel, allowedLevels) {
@@ -70,14 +66,8 @@
       return false;
     }
 
-    function reset() {
-      count = 0;
-      threshold = rollThreshold();
-    }
-
     return {
       recordWin,
-      reset,
       get count() { return count; },
       get threshold() { return threshold; },
     };
@@ -88,7 +78,6 @@
     generateParentChallenge,
     checkParentAnswer,
     sanitizeAllowedLevels,
-    isLevelAllowed,
     resolveAllowedLevel,
     createBreakPacer,
   };

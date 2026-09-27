@@ -7,7 +7,6 @@ const {
   generateParentChallenge,
   checkParentAnswer,
   sanitizeAllowedLevels,
-  isLevelAllowed,
   resolveAllowedLevel,
   createBreakPacer,
 } = require('./pacing.js');
@@ -42,12 +41,6 @@ test('the level lock always keeps at least one level selectable', () => {
   assert.deepEqual(sanitizeAllowedLevels(['super', 'easy', 'harder']), ['easy', 'harder', 'super']);
 });
 
-test('the level lock reports whether a level is currently allowed', () => {
-  assert.equal(isLevelAllowed('easy', ['easy', 'harder']), true);
-  assert.equal(isLevelAllowed('super', ['easy', 'harder']), false);
-  assert.equal(isLevelAllowed('super', []), true, 'an empty lock list falls back to allowing everything');
-});
-
 test('the level lock moves a now-locked-out level to the closest allowed one', () => {
   assert.equal(resolveAllowedLevel('super', ['easy', 'harder']), 'harder');
   assert.equal(resolveAllowedLevel('easy', ['harder', 'super']), 'harder');
@@ -75,11 +68,3 @@ test('the break pacer re-rolls a fresh 2-or-3 threshold after each nudge', () =>
   assert.equal(pacer.threshold, 3, 'still re-rolls to 3 with this random source');
 });
 
-test('the break pacer can be reset without firing a nudge, e.g. after a break', () => {
-  const pacer = createBreakPacer(() => 0);
-  pacer.recordWin();
-  pacer.reset();
-  assert.equal(pacer.count, 0);
-  assert.equal(pacer.recordWin(), false);
-  assert.equal(pacer.recordWin(), true);
-});

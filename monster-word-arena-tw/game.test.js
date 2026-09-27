@@ -9,7 +9,7 @@ const vm = require('node:vm');
 const { GOAL_BY_LEVEL, CHOICE_COUNT, TOPICS, LEVELS, WORD_TOPICS, REACTIONS, createGame, createSpeechPlayer } = require('./game.js');
 const { EFFECTS, EFFECT_LEVEL, MUSIC_LEVEL, createSoundBoard } = require('./sounds.js');
 const { POSES, ART, TIMING, comboText } = require('./arena.js');
-const { STICKERS, COSTUMES } = require('./rewards.js');
+const { STORAGE_KEY, STICKERS, COSTUMES } = require('./rewards.js');
 const I18N = require('./i18n.js');
 const prompts = require('./audio/prompts.json');
 const reactions = require('./audio/reactions.json');
@@ -491,6 +491,7 @@ function createAppFixture(game, globals = {}) {
   const levelButtons = document.querySelectorAll('.level-option');
   return {
     elements, played, effects, sound, audioElements, audioState, championCards, speechLanguageButtons, textLanguageButtons, topicTabs, levelButtons,
+    dispatchWindowEvent(type, properties = {}) { window.dispatchEvent(Object.assign(new FixtureEvent(type), properties)); },
     answerOptions: elements.get('#answerOptions'), nextButton: elements.get('#nextButton'),
     muteButton: elements.get('#muteButton'), musicButton: elements.get('#musicButton'),
     startButton: elements.get('#startButton'), startRow: elements.get('#startRow'), clock, document,
@@ -1303,6 +1304,26 @@ test('clearing rewards refreshes the visible grown-up progress summary', () => {
   app.document.querySelector('[data-reward-action="open"]').click();
   app.document.querySelector('[data-reward-action="reset"]').click();
   app.document.querySelector('[data-reward-action="confirm-reset"]').click();
+  assert.match(summary.textContent, /0 match/);
+});
+
+test('external reward storage updates refresh the open grown-up progress summary', () => {
+  const storage = new FakeLocalStorage();
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game, { localStorage: storage });
+  app.championCards[0].click();
+  app.startButton.click();
+  playMatchToFinish(app, game);
+
+  app.elements.get('#settingsButton').click();
+  const [a, b] = app.elements.get('#gateQuestion').textContent.match(/\d+/g).map(Number);
+  app.elements.get('#gateInput').value = String(a + b);
+  app.document.querySelector('#gateSubmitButton').click();
+  const summary = app.elements.get('#settingsRewardSummary');
+  assert.match(summary.textContent, /1 match/);
+
+  storage.setItem(STORAGE_KEY, JSON.stringify({ v: 1, wins: 0, wearing: { dino: null, monster: null } }));
+  app.dispatchWindowEvent('storage', { key: STORAGE_KEY });
   assert.match(summary.textContent, /0 match/);
 });
 

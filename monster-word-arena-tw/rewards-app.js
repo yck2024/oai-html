@@ -294,6 +294,7 @@
       ? [focused.dataset.champion, focused.dataset.costume]
       : null;
     render();
+    window.dispatchEvent(new Event('arena-rewards-updated'));
     if (!choice) return;
     const replacement = costumeRows.querySelector(`[data-champion="${choice[0]}"][data-costume="${choice[1]}"]`);
     if (replacement && !replacement.disabled) replacement.focus();
