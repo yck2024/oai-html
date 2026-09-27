@@ -100,8 +100,11 @@ class GeminiUsageTests(unittest.TestCase):
             "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 2},
                                      {"modality": "AUDIO", "tokenCount": 3}],
             "candidatesTokenCount": 4,
+            "thoughtsTokenCount": 50,
         }, api="generate_content")
-        self.assertEqual(result, {"input": {"text": 2, "audio": 3}, "output": {"text": 4}})
+        self.assertEqual(result, {
+            "input": {"text": 2, "audio": 3}, "output": {"text": 54}
+        })
 
 
 if __name__ == "__main__":

@@ -47,6 +47,9 @@ def token_counts(usage, api="interactions", output_modalities=None):
         output_total = int(usage.get("candidatesTokenCount", 0))
         if output_total:
             split_outputs(output_total, output_modalities, outputs)
+        thought_total = int(usage.get("thoughtsTokenCount", 0))
+        if thought_total:
+            outputs["text"] += thought_total
     return {"input": dict(inputs), "output": dict(outputs)}
 
 
