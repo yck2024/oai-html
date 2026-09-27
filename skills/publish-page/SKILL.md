@@ -57,13 +57,7 @@ Use this workflow for the user's public HTML gallery.
    - The Pages workflow injects both at deploy time when missing, so this is also enforced centrally.
 
 5. Add meaningful interaction events when the page is interactive.
-   - GA4 Enhanced Measurement already tracks outbound clicks, form interactions, 90% scroll, and 10s engagement; do not add custom events for these.
-   - The shared helper automatically tracks:
-     - section navigation (in-page `#` links)
-     - button clicks, for buttons with an `id`, `aria-label`, or `data-analytics-label` (give meaningful buttons one of these)
-     - content copy (length bucket only; never copied text)
-     - scroll depth at 25/50/75%
-     - a 30s engagement signal
+   - Consult the repository's [Analytics documentation](../../README.md#analytics) for automatic events and privacy boundaries; avoid duplicating events it already tracks.
    - For page-specific actions, prefer declarative attributes:
 
      ```html
@@ -82,7 +76,7 @@ Use this workflow for the user's public HTML gallery.
      });
      ```
 
-   - Never send user-entered text, copied content, credentials, email addresses, query-string contents, or other sensitive/private values as analytics parameters.
+   - Follow the [Analytics privacy rule](../../README.md#analytics) when choosing event parameters.
 
 6. Publish to GitHub.
    - If the path is new, create it.
