@@ -243,7 +243,7 @@
         const playback = audio.play();
         if (playback && typeof playback.then === 'function') await playback;
       } catch (_error) {
-        state = 'idle';
+        state = 'paused';
         return false;
       }
       return true;

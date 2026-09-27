@@ -14,6 +14,7 @@
   const HINT = SERIES.hint;
   const UNAVAILABLE = SERIES.unavailable;
   const PREPARING_CONTINUOUS = 'よみつづける おとを つくっています… ・ 連續播放準備中…';
+  const TAP_TO_START = '▶ を おして はじめてね ・ 按 ▶ 開始播放';
   const SHELF_MARKER = SERIES.shelfMarker;
   const SHELF_PAGE_TITLE = SERIES.shelfPageTitle;
   const SHELF_DOCUMENT_TITLE = SERIES.shelfDocumentTitle;
@@ -262,8 +263,9 @@
     }
     speechStatus.textContent = '';
     const startAtMs = timeline.pages[book.index]?.startMs ?? 0;
-    await continuousPlayer.play(blob, timeline, { startAtMs, paused });
+    const started = await continuousPlayer.play(blob, timeline, { startAtMs, paused });
     if (token !== continuousToken) return;
+    if (!started) speechStatus.textContent = TAP_TO_START;
     updatePlayback();
   }
 
@@ -692,6 +694,7 @@
         const player = activeAudioPlayer();
         if (player.state === 'paused' && !muted) {
           listening = player === continuousPlayer || queueKind === 'page';
+          if (player === continuousPlayer) speechStatus.textContent = '';
           player.resume();
         } else if (player.state === 'idle') {
           readPage();
@@ -842,6 +845,7 @@
     }
     if (player.state === 'paused' && !muted) {
       listening = player === continuousPlayer || queueKind === 'page';
+      if (player === continuousPlayer) speechStatus.textContent = '';
       player.resume();
       updatePlayback();
       return;

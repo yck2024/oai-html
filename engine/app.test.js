@@ -60,10 +60,15 @@ function createReader({ analytics = true, series = SERIES, storyList = stories, 
     constructor() {
       this.played = [];
       this.currentTime = 0;
+      this.rejectNextPlay = false;
       FakeAudio.instances.push(this);
     }
     play() {
       this.played.push(this.src);
+      if (this.rejectNextPlay) {
+        this.rejectNextPlay = false;
+        return Promise.reject(new Error('autoplay rejected'));
+      }
       return Promise.resolve();
     }
     pause() {}
@@ -546,6 +551,31 @@ test('continuous mode: cancelling a pending build for sentence playback, mode ch
   mutedReader.releaseFetch();
   await flush();
   assert.equal(mutedReader.audio.played.length, 0);
+});
+
+test('continuous mode: rejected initial playback stays paused and retries the built Blob without refetching', async () => {
+  const reader = createReader();
+  const { elements, fetched, audio, mediaSession } = reader;
+  reader.setContinuous(true);
+  audio.rejectNextPlay = true;
+  elements.get('#playButton').dispatch('click');
+  await flush();
+
+  assert.equal(mediaSession.playbackState, 'paused');
+  assert.equal(elements.get('#playIcon').textContent, '▶');
+  assert.equal(elements.get('#speechStatus').textContent, '▶ を おして はじめてね ・ 按 ▶ 開始播放');
+  const fetchCount = fetched.length;
+  const builtBlob = audio.played[0];
+  assert.match(builtBlob, /^blob:/);
+
+  elements.get('#playButton').dispatch('click');
+  await flush();
+
+  assert.equal(audio.played.length, 2);
+  assert.equal(audio.played[1], builtBlob, 'retry resumes the already-loaded Blob');
+  assert.equal(fetched.length, fetchCount, 'retry does not rebuild or refetch');
+  assert.equal(mediaSession.playbackState, 'playing');
+  assert.equal(elements.get('#speechStatus').textContent, '');
 });
 
 test('continuous mode: pressing play builds one Blob for the whole book and starts playing it from the current page', async () => {
