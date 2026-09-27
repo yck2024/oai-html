@@ -107,7 +107,7 @@ class FakeElement {
   contains(node) { return node === this || this.descendants().includes(node); }
 }
 
-function createReader() {
+function createReader({ analytics = true } = {}) {
   const ids = [
     'shelf', 'bookList', 'reader', 'readerTitle', 'closeBook', 'settingsButton', 'settingsPanel',
     'zhuyinToggle', 'autoTurnToggle', 'stage', 'page', 'pageImage', 'pageText', 'speechStatus',
@@ -144,15 +144,17 @@ function createReader() {
     pause() {}
   }
   FakeAudio.instances = [];
-
-  vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'app.js'), 'utf8'), {
+  const events = [];
+  const context = {
     window: { TaiwanEhon: E, TaiwanEhonStories: stories },
     document,
     localStorage,
     Audio: FakeAudio,
     setTimeout: () => 1,
     clearTimeout() {},
-  });
+  };
+  if (analytics) context.gtag = (...args) => events.push(args);
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'app.js'), 'utf8'), context);
 
   elements.get('#bookList').querySelector('.book-card').dispatch('click');
   elements.get('#nextButton').dispatch('click');
@@ -160,12 +162,101 @@ function createReader() {
     audio: FakeAudio.instances[0],
     elements,
     modeInputs,
+    events,
+    openStory(index) { elements.get('#bookList').querySelectorAll('.book-card')[index].dispatch('click'); },
     selectMode(mode) {
       for (const input of modeInputs) input.checked = input.value === mode;
       modeInputs.find(input => input.value === mode).dispatch('change');
     },
   };
 }
+
+function recordedEvents(reader) {
+  return JSON.parse(JSON.stringify(reader.events));
+}
+
+test('opening a shelf book sends only its fixed story id; turns and sentence taps do not track', () => {
+  const reader = createReader();
+  const { elements } = reader;
+  assert.deepEqual(recordedEvents(reader), [['event', 'book_open', { book_id: stories[0].id }]]);
+  const sentence = elements.get('#pageText').querySelector('.line');
+  elements.get('#pageText').dispatch('click', { target: sentence });
+  elements.get('#nextButton').dispatch('click');
+  elements.get('#prevButton').dispatch('click');
+  elements.get('#playButton').dispatch('click');
+  assert.deepEqual(recordedEvents(reader), [['event', 'book_open', { book_id: stories[0].id }]]);
+  elements.get('#closeBook').dispatch('click');
+  reader.openStory(1);
+  assert.deepEqual(recordedEvents(reader).at(-1), ['event', 'book_open', { book_id: stories[1].id }]);
+});
+
+test('reaching the ending sends one completion per opening, including revisiting the ending', () => {
+  const reader = createReader();
+  const { elements } = reader;
+  const next = elements.get('#nextButton');
+  const prev = elements.get('#prevButton');
+  reader.events.length = 0;
+  for (let i = 0; i < stories[0].pages.length; i++) next.dispatch('click');
+  assert.deepEqual(recordedEvents(reader), [['event', 'book_complete', { book_id: stories[0].id }]]);
+  prev.dispatch('click');
+  next.dispatch('click');
+  next.dispatch('click');
+  elements.get('#page').querySelector('.end-button.primary').dispatch('click');
+  for (let i = 0; i < stories[0].pages.length; i++) next.dispatch('click');
+  assert.deepEqual(recordedEvents(reader), [['event', 'book_complete', { book_id: stories[0].id }]]);
+  elements.get('#closeBook').dispatch('click');
+  reader.openStory(1);
+  for (let i = 0; i < stories[1].pages.length; i++) next.dispatch('click');
+  assert.deepEqual(recordedEvents(reader).slice(-2), [
+    ['event', 'book_open', { book_id: stories[1].id }],
+    ['event', 'book_complete', { book_id: stories[1].id }],
+  ]);
+  elements.get('#closeBook').dispatch('click');
+  reader.openStory(0);
+  for (let i = 0; i < stories[0].pages.length; i++) next.dispatch('click');
+  assert.deepEqual(recordedEvents(reader).at(-1), ['event', 'book_complete', { book_id: stories[0].id }]);
+});
+
+test('only real settings changes send fixed mode and on/off values', () => {
+  const reader = createReader();
+  const { elements, modeInputs } = reader;
+  reader.events.length = 0;
+  reader.selectMode('ja-zh'); // unchanged default
+  const invalid = modeInputs[0];
+  invalid.value = 'arbitrary-text';
+  invalid.checked = true;
+  invalid.dispatch('change');
+  invalid.value = 'ja-zh';
+  reader.selectMode('zh-ja');
+  reader.selectMode('zh-ja');
+  reader.selectMode('ja');
+  const zhuyin = elements.get('#zhuyinToggle');
+  zhuyin.checked = false;
+  zhuyin.dispatch('change');
+  zhuyin.dispatch('change');
+  zhuyin.checked = true;
+  zhuyin.dispatch('change');
+  const autoTurn = elements.get('#autoTurnToggle');
+  autoTurn.checked = true;
+  autoTurn.dispatch('change');
+  autoTurn.checked = false;
+  autoTurn.dispatch('change');
+  assert.deepEqual(recordedEvents(reader), [
+    ['event', 'listen_mode_change', { listen_mode: 'zh-ja' }],
+    ['event', 'listen_mode_change', { listen_mode: 'ja' }],
+    ['event', 'zhuyin_toggle', { zhuyin: 'off' }],
+    ['event', 'zhuyin_toggle', { zhuyin: 'on' }],
+    ['event', 'auto_turn_toggle', { auto_turn: 'on' }],
+    ['event', 'auto_turn_toggle', { auto_turn: 'off' }],
+  ]);
+});
+
+test('storybook continues to work when gtag is unavailable', () => {
+  const reader = createReader({ analytics: false });
+  reader.selectMode('zh');
+  for (let i = 0; i < stories[0].pages.length; i++) reader.elements.get('#nextButton').dispatch('click');
+  assert.deepEqual(reader.events, []);
+});
 
 test('muted reader blocks page, replay, and sentence narration until toggled back on', () => {
   const reader = createReader();

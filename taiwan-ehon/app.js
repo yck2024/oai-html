@@ -42,6 +42,11 @@
   let swipeStart = null;
   let swipedAt = 0;
   let lastCard = null;
+  let completedThisOpening = false;
+
+  function track(eventName, params) {
+    if (typeof gtag === 'function') gtag('event', eventName, params);
+  }
 
   let audio = null;
   try {
@@ -166,6 +171,7 @@
 
   function openBook(story, index) {
     book = E.createBook(story, index);
+    completedThisOpening = false;
     listening = false;
     narrator.stop();
     reader.style.setProperty('--accent', story.theme.accent);
@@ -179,6 +185,7 @@
     reader.hidden = false;
     speechStatus.textContent = HINT;
     renderPage(null);
+    if (STORIES.includes(story)) track('book_open', { book_id: story.id });
     closeButton.focus({ preventScroll: true });
   }
 
@@ -335,6 +342,10 @@
     if (!book.goTo(index)) return;
     narrator.stop();
     renderPage(direction);
+    if (book.page().id === 'end' && !completedThisOpening) {
+      completedThisOpening = true;
+      if (STORIES.includes(book.story)) track('book_complete', { book_id: book.story.id });
+    }
     if (listening && !muted) turnTimer = setTimeout(readPage, TURN_SETTLE);
   }
 
@@ -399,25 +410,30 @@
 
   for (const input of modeInputs) {
     input.addEventListener('change', () => {
-      if (!input.checked) return;
+      if (!input.checked || !E.isMode(input.value) || input.value === settings.mode) return;
       const playbackState = narrator.state;
       const pageQueueActive = queueKind === 'page' && playbackState !== 'idle';
       settings.mode = input.value;
       saveSettings();
+      track('listen_mode_change', { listen_mode: settings.mode });
       renderText();
       if (pageQueueActive) readPage({ paused: playbackState === 'paused' });
     });
   }
 
   zhuyinToggle.addEventListener('change', () => {
+    if (settings.zhuyin === zhuyinToggle.checked) return;
     settings.zhuyin = zhuyinToggle.checked;
     saveSettings();
+    track('zhuyin_toggle', { zhuyin: settings.zhuyin ? 'on' : 'off' });
     applySettings();
   });
 
   autoTurnToggle.addEventListener('change', () => {
+    if (settings.autoTurn === autoTurnToggle.checked) return;
     settings.autoTurn = autoTurnToggle.checked;
     saveSettings();
+    track('auto_turn_toggle', { auto_turn: settings.autoTurn ? 'on' : 'off' });
     if (!settings.autoTurn) clearTimeout(turnTimer);
   });
 

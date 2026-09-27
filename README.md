@@ -50,7 +50,7 @@ Event parameters (`element_id`, `element_label`, `target_section`, `percent_scro
 
 Interactive pages can add semantic events with `data-analytics-event` / `data-analytics-label` or `window.oaiTrack(eventName, params)`.
 
-Do not send user-entered text, copied content, credentials, private identifiers, or other sensitive data to analytics. In the storybook, story selection and page turns stay in page state without URL or history changes; clicks and copies are excluded, and its page-view URL, referrer, and title omit the selected story and page identifiers. Listening mode, 注音 visibility, and auto-turn preference are remembered only in this browser; no identity, answers, or reading history are stored.
+Do not send user-entered text, copied content, credentials, private identifiers, or other sensitive data to analytics. Taiwan Ehon's event catalog and storybook-specific analytics/privacy behavior are documented in [its README](taiwan-ehon/README.md#analytics-and-reading-privacy).
 
 ## Narration API usage
 
