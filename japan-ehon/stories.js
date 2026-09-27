@@ -1701,7 +1701,7 @@
             "zh": "煙散了以後，浦島變成了一位白鬍子的老爺爺。",
             "zhuyin": "ㄧㄢ ㄙㄢˋ ˙ㄌㄜ ㄧˇ ㄏㄡˋ ㄆㄨˇ ㄉㄠˇ ㄅㄧㄢˋ ㄔㄥˊ ˙ㄌㄜ ㄧ ㄨㄟˋ ㄅㄞˊ ㄏㄨˊ ˙ㄗ ˙ㄉㄜ ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ",
             "en": "When the smoke cleared, Urashima had become an old man with a white beard.",
-            "zhTts": "煙散了以後，蒲島變成了一位白鬍子的老爺爺。"
+            "zhTts": "煙散了以後，普島變成了一位白鬍子的老爺爺。"
           },
           {
             "id": "p10-3",
