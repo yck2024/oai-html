@@ -7,24 +7,24 @@
   const MAX_WINS = 9999;
   // Original art; each emoji icon remains the fallback if its picture cannot load.
   const STICKERS = [
-    { id: 'star', zh: '星星', en: 'Star', icon: '⭐', image: './images/sticker-star.webp' },
-    { id: 'rainbow', zh: '彩虹', en: 'Rainbow', icon: '🌈', image: './images/sticker-rainbow.webp' },
-    { id: 'heart', zh: '愛心', en: 'Heart', icon: '💖', image: './images/sticker-heart.webp' },
-    { id: 'balloon', zh: '氣球', en: 'Balloon', icon: '🎈', image: './images/sticker-balloon.webp' },
-    { id: 'sun', zh: '太陽', en: 'Sun', icon: '☀️', image: './images/sticker-sun.webp' },
-    { id: 'medal', zh: '獎牌', en: 'Medal', icon: '🏅', image: './images/sticker-medal.webp' },
-    { id: 'cupcake', zh: '杯子蛋糕', en: 'Cupcake', icon: '🧁', image: './images/sticker-cupcake.webp' },
-    { id: 'bubbles', zh: '泡泡', en: 'Bubbles', icon: '🫧', image: './images/sticker-bubbles.webp' },
-    { id: 'flower', zh: '小花', en: 'Flower', icon: '🌼', image: './images/sticker-flower.webp' },
-    { id: 'moon', zh: '月亮', en: 'Moon', icon: '🌙', image: './images/sticker-moon.webp' },
-    { id: 'egg', zh: '恐龍蛋', en: 'Dino egg', icon: '🥚', image: './images/sticker-egg.webp' },
-    { id: 'lollipop', zh: '棒棒糖', en: 'Lollipop', icon: '🍭', image: './images/sticker-lollipop.webp' },
+    { id: 'star', zh: '星星', en: 'Star', ja: 'ほし', icon: '⭐', image: './images/sticker-star.webp' },
+    { id: 'rainbow', zh: '彩虹', en: 'Rainbow', ja: 'にじ', icon: '🌈', image: './images/sticker-rainbow.webp' },
+    { id: 'heart', zh: '愛心', en: 'Heart', ja: 'はーと', icon: '💖', image: './images/sticker-heart.webp' },
+    { id: 'balloon', zh: '氣球', en: 'Balloon', ja: 'ふうせん', icon: '🎈', image: './images/sticker-balloon.webp' },
+    { id: 'sun', zh: '太陽', en: 'Sun', ja: 'たいよう', icon: '☀️', image: './images/sticker-sun.webp' },
+    { id: 'medal', zh: '獎牌', en: 'Medal', ja: 'めだる', icon: '🏅', image: './images/sticker-medal.webp' },
+    { id: 'cupcake', zh: '杯子蛋糕', en: 'Cupcake', ja: 'かっぷけーき', icon: '🧁', image: './images/sticker-cupcake.webp' },
+    { id: 'bubbles', zh: '泡泡', en: 'Bubbles', ja: 'あわ', icon: '🫧', image: './images/sticker-bubbles.webp' },
+    { id: 'flower', zh: '小花', en: 'Flower', ja: 'おはな', icon: '🌼', image: './images/sticker-flower.webp' },
+    { id: 'moon', zh: '月亮', en: 'Moon', ja: 'つき', icon: '🌙', image: './images/sticker-moon.webp' },
+    { id: 'egg', zh: '恐龍蛋', en: 'Dino egg', ja: 'きょうりゅうの　たまご', icon: '🥚', image: './images/sticker-egg.webp' },
+    { id: 'lollipop', zh: '棒棒糖', en: 'Lollipop', ja: 'ぺろぺろきゃんでぃ', icon: '🍭', image: './images/sticker-lollipop.webp' },
   ];
   const COSTUMES = [
-    { id: 'crown', zh: '皇冠', en: 'Crown', icon: '👑', image: './images/costume-crown.webp', unlockAt: 2 },
-    { id: 'party-hat', zh: '派對帽', en: 'Party hat', icon: '🎉', image: './images/costume-party-hat.webp', unlockAt: 4 },
-    { id: 'flower-crown', zh: '花冠', en: 'Flower crown', icon: '🌸', image: './images/costume-flower-crown.webp', unlockAt: 6 },
-    { id: 'propeller-cap', zh: '螺旋槳帽', en: 'Propeller cap', icon: '🧢', image: './images/costume-propeller-cap.webp', unlockAt: 8 },
+    { id: 'crown', zh: '皇冠', en: 'Crown', ja: 'かんむり', icon: '👑', image: './images/costume-crown.webp', unlockAt: 2 },
+    { id: 'party-hat', zh: '派對帽', en: 'Party hat', ja: 'ぱーてぃーぼうし', icon: '🎉', image: './images/costume-party-hat.webp', unlockAt: 4 },
+    { id: 'flower-crown', zh: '花冠', en: 'Flower crown', ja: 'はなかんむり', icon: '🌸', image: './images/costume-flower-crown.webp', unlockAt: 6 },
+    { id: 'propeller-cap', zh: '螺旋槳帽', en: 'Propeller cap', ja: 'ぷろぺらぼうし', icon: '🧢', image: './images/costume-propeller-cap.webp', unlockAt: 8 },
   ];
 
   function emptyWearing() {

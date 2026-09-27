@@ -635,13 +635,14 @@ rt { font-weight: 500; }
   .end-actions { margin-top: 14px; justify-content: flex-start; }
 
   .controls {
-    grid-template-areas: "prev playback next";
+    grid-template-areas:
+      "counter counter counter"
+      "prev playback next";
     grid-template-columns: auto minmax(0, 1fr) auto;
     padding: 10px max(24px, calc((100% - 1240px) / 2));
   }
 
-  .page-counter { position: absolute; left: 50%; transform: translateX(-50%); bottom: 90px; }
-  .controls { position: relative; }
+  .page-counter { position: static; transform: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
