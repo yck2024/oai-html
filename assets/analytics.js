@@ -48,6 +48,7 @@
   };
 
   document.addEventListener("click", (event) => {
+    if (event.target.closest("[data-analytics-ignore]")) return;
     const el = event.target.closest("[data-analytics-event], a[href^='#'], button");
     if (!el) return;
 
@@ -77,7 +78,15 @@
   });
 
   document.addEventListener("copy", () => {
-    const length = String(window.getSelection?.() || "").length;
+    const selection = window.getSelection?.();
+    if (selection) {
+      for (const ignored of document.querySelectorAll("[data-analytics-ignore]")) {
+        for (let index = 0; index < selection.rangeCount; index += 1) {
+          if (selection.getRangeAt(index).intersectsNode(ignored)) return;
+        }
+      }
+    }
+    const length = String(selection || "").length;
     const bucket = length === 0 ? "0" : length < 40 ? "1_39" : length < 120 ? "40_119" : "120_plus";
     send("content_copy", { selection_length_bucket: bucket });
   });
