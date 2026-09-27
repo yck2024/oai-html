@@ -10,7 +10,7 @@ The gallery is manifest-driven. Published page metadata lives in `pages.json`, a
 
 ## Current pages
 
-See the [live gallery](https://yck2024.github.io/oai-html/) for the current page list; its cards are rendered from [`pages.json`](pages.json). Per-page detail docs: [Dino & Monster Word Arena](monster-word-arena-tw/README.md), [Taiwan Story Picture Books](#taiwan-story-references).
+See the [live gallery](https://yck2024.github.io/oai-html/) for the current page list; its cards are rendered from [`pages.json`](pages.json). Per-page detail docs: [Dino & Monster Word Arena](monster-word-arena-tw/README.md), [Taiwan Story Picture Books](taiwan-ehon/README.md).
 
 ## Publishing architecture
 
@@ -58,7 +58,7 @@ The Gemini narration generators record each call's reported token usage and esti
 
 ## Taiwan story references
 
-The bilingual retellings in [Taiwan Story Picture Books](taiwan-ehon/) are based on Taiwanese cultural sources, while simplifying events for young readers:
+The bilingual retellings in [Taiwan Story Picture Books](taiwan-ehon/) are based on Taiwanese cultural sources, while simplifying events for young readers. Sources and adaptation notes for 虎姑婆, 青瞑龍蛇, and 阿拉巴耐的石頭 are documented in the [storybook reference](taiwan-ehon/README.md).
 
 - **白賊七:** [National Taiwan University Library, “最新白賊七歌”](https://dl.lib.ntu.edu.tw/s/kua-a-tsheh/item/691216) catalogs a 1933 Taiwanese-language folk song about Bai Zeiqi’s deceptions; the [National Cultural Memory Bank, “白賊七”](https://tcmb.culture.tw/zh-tw/detail?id=17120012469&indexCode=MOCCOLLECTIONS) describes the familiar trickster and the story’s moral endings. The child-friendly [中讀網 retelling, “白賊七(一)”](https://readc.info/bedtime-story/big-liar/) includes the false grass-clothes and wondrous-pot tricks adapted here; this version softens the consequences and does not reproduce its text.
 - **射日英雄:** The [Ministry of Culture Children’s Cultural Center, “泰雅勇士大步向前”](https://children.moc.gov.tw/book/230747) introduces an Atayal sun-shooting story. The [Indigenous Sight article, “從前從前我們也曾射下好多太陽”](https://insight.ipcf.org.tw/article/25) describes the father-and-child relay and explains that accounts differ among Indigenous peoples; the [Taiwan Indigenous Peoples Encyclopedia, “射日”](https://aborgpedia.alcd.center/detail?cat=28&id=11532&race=0&search=&writer=) documents variation in the number of suns, heroes, generations, journey, and outcome.
