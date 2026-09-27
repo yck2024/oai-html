@@ -36,11 +36,16 @@
   }
 
   // If the current level just got locked out, hands back the closest allowed
-  // level instead (falling back to the first allowed level).
+  // level instead, preferring the earlier level on an exact tie.
   function resolveAllowedLevel(currentLevel, allowedLevels) {
     const allowed = sanitizeAllowedLevels(allowedLevels);
     if (allowed.includes(currentLevel)) return currentLevel;
-    return allowed[0];
+    const currentIndex = ALL_LEVELS.indexOf(currentLevel);
+    return allowed.reduce((closest, level) => {
+      const distance = Math.abs(ALL_LEVELS.indexOf(level) - currentIndex);
+      const closestDistance = Math.abs(ALL_LEVELS.indexOf(closest) - currentIndex);
+      return distance < closestDistance ? level : closest;
+    });
   }
 
   // After 2 or 3 match wins in a row (re-rolled each time), the pacer signals

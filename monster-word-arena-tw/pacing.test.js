@@ -49,7 +49,9 @@ test('the level lock reports whether a level is currently allowed', () => {
 });
 
 test('the level lock moves a now-locked-out level to the closest allowed one', () => {
-  assert.equal(resolveAllowedLevel('super', ['easy', 'harder']), 'easy');
+  assert.equal(resolveAllowedLevel('super', ['easy', 'harder']), 'harder');
+  assert.equal(resolveAllowedLevel('easy', ['harder', 'super']), 'harder');
+  assert.equal(resolveAllowedLevel('harder', ['easy', 'super']), 'easy', 'an exact tie prefers the earlier level');
   assert.equal(resolveAllowedLevel('easy', ['easy', 'harder']), 'easy');
   assert.equal(resolveAllowedLevel('harder', ['super']), 'super');
   assert.equal(resolveAllowedLevel('easy', []), 'easy', 'an empty lock list keeps the current level');
