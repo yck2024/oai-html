@@ -1753,5 +1753,1824 @@
         ]
       }
     ]
+  },
+  {
+    "id": "hanasaka-jiisan",
+    "title": {
+      "ja": "はなさかじいさん",
+      "zh": "開花爺爺",
+      "zhuyin": "ㄎㄞ ㄏㄨㄚ ㄧㄝˊ ˙ㄧㄝ",
+      "en": "The Old Man Who Made Flowers Bloom"
+    },
+    "tagline": {
+      "ja": "やさしい こころで、かれきに はなを さかせる おはなし",
+      "zh": "用溫柔的心，讓枯樹開花的故事",
+      "en": "A story of a kind heart that makes bare trees bloom"
+    },
+    "origin": {
+      "ja": "にほんの むかしばなし",
+      "zh": "日本民間故事",
+      "en": "A Japanese folktale"
+    },
+    "credit": {
+      "ja": "はなさかじいさんは、にほんで ながく かたりつがれて きた むかしばなしで、えどじだいの「あかほん」という ちいさな えほんにも かかれて います。 よく しられた おはなしでは、シロは となりの じいさんの せいで いのちを おとし、うすは シロの おはかに うえた きから つくられます。 この えほんでは、シロは さいごまで げんきで、うすは シロへの おれいに うえた まつから おちた えだで つくります。 となりの じいさんが ばつを うける ばめんは、あやまり、かわりの うすを つくって わたす ばめんに かえました。",
+      "zh": "〈開花爺爺〉是日本流傳已久的民間故事，江戶時代叫做「赤本」的小圖畫書裡就有記載。常見的版本裡，小白因為隔壁爺爺而喪命，臼是用種在小白墳上的樹做成的；這本繪本改成小白一直平安健康，臼是用為了感謝小白而種的松樹掉下來的樹枝做成的。有些版本裡隔壁爺爺會受到處罰，這裡改成他誠心道歉，並做一個新的臼賠給老夫婦。",
+      "en": "Hanasaka Jiisan is a long-loved Japanese folktale, already printed in the small Edo-period picture booklets called akahon. In a well-known version, Shiro loses his life because of the greedy neighbor, and the mortar is made from a tree planted on his grave. In this book, Shiro stays safe and well, and the mortar is made from a branch that falls from a pine planted to thank him. Instead of the punishment found in some versions, the neighbor apologizes sincerely and makes a new mortar to replace the one he burned."
+    },
+    "theme": {
+      "accent": "#b8506b",
+      "soft": "#fae3e9"
+    },
+    "pages": [
+      {
+        "id": "cover",
+        "image": "images/hanasaka-jiisan/cover.webp",
+        "alt": {
+          "ja": "さくらの はなびらが まう なか、はいを まく おじいさんと しろい いぬ",
+          "zh": "在飄落的櫻花花瓣中撒灰的老爺爺和白狗",
+          "en": "An old man scattering ash among drifting cherry petals, with a white dog beside him"
+        },
+        "lines": [
+          {
+            "id": "cover-1",
+            "speaker": "narrator",
+            "style": "warm, inviting storyteller opening a picture book",
+            "ja": "にほんの むかしばなし「はなさかじいさん」",
+            "zh": "日本民間故事〈開花爺爺〉",
+            "zhuyin": "ㄖˋ ㄅㄣˇ ㄇㄧㄣˊ ㄐㄧㄢ ㄍㄨˋ ㄕˋ ㄎㄞ ㄏㄨㄚ ㄧㄝˊ ˙ㄧㄝ",
+            "en": "A Japanese folktale: The Old Man Who Made Flowers Bloom"
+          },
+          {
+            "id": "cover-2",
+            "speaker": "narrator",
+            "style": "curious and gently wondering",
+            "ja": "かれた きに、はなが さく？ どうして かな？",
+            "zh": "枯掉的樹，也會開花？為什麼呢？",
+            "zhuyin": "ㄎㄨ ㄉㄧㄠˋ ˙ㄉㄜ ㄕㄨˋ ㄧㄝˇ ㄏㄨㄟˋ ㄎㄞ ㄏㄨㄚ ㄨㄟˋ ㄕㄣˊ ˙ㄇㄜ ˙ㄋㄜ",
+            "en": "Can flowers bloom on a bare, dead tree? How could that be?"
+          }
+        ]
+      },
+      {
+        "id": "p01",
+        "image": "images/hanasaka-jiisan/p01.webp",
+        "alt": {
+          "ja": "しろい こいぬを だいて にっこりする おじいさんと おばあさん",
+          "zh": "抱著白色小狗、笑咪咪的老爺爺和老奶奶",
+          "en": "A smiling old man and old woman holding a little white puppy"
+        },
+        "lines": [
+          {
+            "id": "p01-1",
+            "speaker": "narrator",
+            "style": "gentle once-upon-a-time storyteller",
+            "ja": "むかし むかし、やさしい おじいさんと おばあさんが、しろい こいぬを かって いました。",
+            "zh": "很久很久以前，有一對善良的老爺爺和老奶奶，養了一隻白色的小狗。",
+            "zhuyin": "ㄏㄣˇ ㄐㄧㄡˇ ㄏㄣˇ ㄐㄧㄡˇ ㄧˇ ㄑㄧㄢˊ ㄧㄡˇ ㄧ ㄉㄨㄟˋ ㄕㄢˋ ㄌㄧㄤˊ ˙ㄉㄜ ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄏㄢˋ ㄌㄠˇ ㄋㄞˇ ˙ㄋㄞ ㄧㄤˇ ˙ㄌㄜ ㄧ ㄓ ㄅㄞˊ ㄙㄜˋ ˙ㄉㄜ ㄒㄧㄠˇ ㄍㄡˇ",
+            "en": "Long, long ago, a kind old man and a kind old woman had a little white puppy."
+          },
+          {
+            "id": "p01-2",
+            "speaker": "narrator",
+            "style": "tender and affectionate",
+            "ja": "なまえは シロ。 おかねは すくなくても、ふたりは シロを じぶんの こどものように かわいがりました。",
+            "zh": "小狗叫小白。家裡雖然沒什麼錢，兩個人還是把小白當成自己的孩子一樣疼愛。",
+            "zhuyin": "ㄒㄧㄠˇ ㄍㄡˇ ㄐㄧㄠˋ ㄒㄧㄠˇ ㄅㄞˊ ㄐㄧㄚ ㄌㄧˇ ㄙㄨㄟ ㄖㄢˊ ㄇㄟˊ ㄕㄣˊ ˙ㄇㄜ ㄑㄧㄢˊ ㄌㄧㄤˇ ˙ㄍㄜ ㄖㄣˊ ㄏㄞˊ ㄕˋ ㄅㄚˇ ㄒㄧㄠˇ ㄅㄞˊ ㄉㄤ ㄔㄥˊ ㄗˋ ㄐㄧˇ ˙ㄉㄜ ㄏㄞˊ ˙ㄗ ㄧ ㄧㄤˋ ㄊㄥˊ ㄞˋ",
+            "en": "His name was Shiro, which means “White.” They had little money, but they loved him like their very own child."
+          }
+        ]
+      },
+      {
+        "id": "p02",
+        "image": "images/hanasaka-jiisan/p02.webp",
+        "alt": {
+          "ja": "はたけで じめんを かく シロと、くわで だえんけいの こばんを ほりだす おじいさん",
+          "zh": "小白在田裡扒土，老爺爺用鋤頭挖出橢圓形的小判金幣",
+          "en": "Shiro pawing at the ground in a field as the old man digs up oval koban gold coins with a hoe"
+        },
+        "lines": [
+          {
+            "id": "p02-1",
+            "speaker": "narrator",
+            "style": "lively, something is about to happen",
+            "ja": "ある ひ、はたけで シロが じめんを かきながら なきました。",
+            "zh": "有一天，小白在田裡一邊用腳扒土，一邊汪汪叫。",
+            "zhuyin": "ㄧㄡˇ ㄧ ㄊㄧㄢ ㄒㄧㄠˇ ㄅㄞˊ ㄗㄞˋ ㄊㄧㄢˊ ㄌㄧˇ ㄧ ㄅㄧㄢ ㄩㄥˋ ㄐㄧㄠˇ ㄅㄚ ㄊㄨˇ ㄧ ㄅㄧㄢ ㄨㄤ ㄨㄤ ㄐㄧㄠˋ",
+            "en": "One day, out in the field, Shiro pawed at the ground and barked."
+          },
+          {
+            "id": "p02-2",
+            "speaker": "shiro",
+            "style": "excited, bouncy little dog calling out",
+            "ja": "「ここ ほれ ワンワン！ ここ ほれ ワンワン！」",
+            "zh": "「挖這裡，汪汪！挖這裡，汪汪！」",
+            "zhuyin": "ㄨㄚ ㄓㄜˋ ㄌㄧˇ ㄨㄤ ㄨㄤ ㄨㄚ ㄓㄜˋ ㄌㄧˇ ㄨㄤ ㄨㄤ",
+            "en": "“Dig here, woof woof! Dig here, woof woof!”"
+          },
+          {
+            "id": "p02-3",
+            "speaker": "narrator",
+            "style": "amazed and delighted",
+            "ja": "おじいさんが ほって みると、きんいろの こばんが ざくざく でて きました！",
+            "zh": "老爺爺挖下去一看，冒出好多閃閃發亮的金幣！",
+            "zhuyin": "ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄨㄚ ㄒㄧㄚˋ ㄑㄩˋ ㄧ ㄎㄢˋ ㄇㄠˋ ㄔㄨ ㄏㄠˇ ㄉㄨㄛ ㄕㄢˇ ㄕㄢˇ ㄈㄚ ㄌㄧㄤˋ ˙ㄉㄜ ㄐㄧㄣ ㄅㄧˋ",
+            "en": "When the old man dug there, out came heaps of shiny gold coins!"
+          }
+        ]
+      },
+      {
+        "id": "p03",
+        "image": "images/hanasaka-jiisan/p03.webp",
+        "alt": {
+          "ja": "シロを つれて いく となりの よくばり じいさんと、しんぱいそうに みおくる おじいさん",
+          "zh": "隔壁貪心爺爺牽走小白，老爺爺在一旁擔心地看著",
+          "en": "The greedy neighbor leading Shiro away on a rope while the kind old man watches with worry"
+        },
+        "lines": [
+          {
+            "id": "p03-1",
+            "speaker": "narrator",
+            "style": "a little sly, pointing out someone peeking",
+            "ja": "それを となりの よくばり じいさんが、かきねの かげから みて いました。",
+            "zh": "隔壁那個貪心的爺爺，躲在籬笆後面，全都看見了。",
+            "zhuyin": "ㄍㄜˊ ㄅㄧˋ ㄋㄚˋ ˙ㄍㄜ ㄊㄢ ㄒㄧㄣ ˙ㄉㄜ ㄧㄝˊ ˙ㄧㄝ ㄉㄨㄛˇ ㄗㄞˋ ㄌㄧˊ ˙ㄅㄚ ㄏㄡˋ ㄇㄧㄢˋ ㄑㄩㄢˊ ㄉㄡ ㄎㄢˋ ㄐㄧㄢˋ ˙ㄌㄜ",
+            "en": "The greedy old man next door was watching from behind the fence."
+          },
+          {
+            "id": "p03-2",
+            "speaker": "neighbor",
+            "style": "pushy and grabby, comically greedy, never scary",
+            "ja": "「その いぬ、わしに かして くれ！」",
+            "zh": "「那隻狗，借我用用！」",
+            "zhuyin": "ㄋㄚˋ ㄓ ㄍㄡˇ ㄐㄧㄝˋ ㄨㄛˇ ㄩㄥˋ ㄩㄥˋ",
+            "en": "“Lend me that dog!”"
+          },
+          {
+            "id": "p03-3",
+            "speaker": "narrator",
+            "style": "gentle, a little uneasy",
+            "ja": "やさしい おじいさんは「すぐ かえしてね」と、シロを かして あげました。",
+            "zh": "善良的老爺爺說：「要早點還給我喔。」就把小白借給了他。",
+            "zhuyin": "ㄕㄢˋ ㄌㄧㄤˊ ˙ㄉㄜ ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄕㄨㄛ ㄧㄠˋ ㄗㄠˇ ㄉㄧㄢˇ ㄏㄨㄢˊ ㄍㄟˇ ㄨㄛˇ ㄛ ㄐㄧㄡˋ ㄅㄚˇ ㄒㄧㄠˇ ㄅㄞˊ ㄐㄧㄝˋ ㄍㄟˇ ˙ㄌㄜ ㄊㄚ",
+            "en": "“Please bring him back soon,” said the kind old man, and he lent Shiro to him."
+          }
+        ]
+      },
+      {
+        "id": "p04",
+        "image": "images/hanasaka-jiisan/p04.webp",
+        "alt": {
+          "ja": "われた おさらや いしころを みて おこる となりの じいさんと、にげて いく シロ",
+          "zh": "看著破盤子和石頭生氣的隔壁爺爺，和跑走的小白",
+          "en": "The neighbor glaring at broken dishes and stones while Shiro runs off"
+        },
+        "lines": [
+          {
+            "id": "p04-1",
+            "speaker": "narrator",
+            "style": "deflating, a funny letdown",
+            "ja": "シロが じめんを かいた ところを ほると、でて きたのは われた おさらと いしころばかり。",
+            "zh": "小白在地上扒了扒，貪心爺爺就挖那裡，可是挖出來的只有破盤子和小石頭。",
+            "zhuyin": "ㄒㄧㄠˇ ㄅㄞˊ ㄗㄞˋ ㄉㄧˋ ㄕㄤˋ ㄅㄚ ˙ㄌㄜ ㄅㄚ ㄊㄢ ㄒㄧㄣ ㄧㄝˊ ˙ㄧㄝ ㄐㄧㄡˋ ㄨㄚ ㄋㄚˋ ㄌㄧˇ ㄎㄜˇ ㄕˋ ㄨㄚ ㄔㄨ ㄌㄞˊ ˙ㄉㄜ ㄓˇ ㄧㄡˇ ㄆㄛˋ ㄆㄢˊ ˙ㄗ ㄏㄢˋ ㄒㄧㄠˇ ㄕˊ ˙ㄊㄡ",
+            "en": "Shiro pawed at the ground, and the greedy man dug there. But all he found were broken dishes and stones."
+          },
+          {
+            "id": "p04-2",
+            "speaker": "neighbor",
+            "style": "grumpy and huffy, a cartoonish temper",
+            "ja": "「なんだ、がらくたばかりじゃないか！ あっちへ いけ！」",
+            "zh": "「什麼嘛，全是破爛！走開！」",
+            "zhuyin": "ㄕㄣˊ ˙ㄇㄜ ˙ㄇㄚ ㄑㄩㄢˊ ㄕˋ ㄆㄛˋ ㄌㄢˋ ㄗㄡˇ ㄎㄞ",
+            "en": "“Nothing but junk! Go away!”"
+          },
+          {
+            "id": "p04-3",
+            "speaker": "narrator",
+            "style": "quick, then relieved",
+            "ja": "シロは びっくりして、やさしい おじいさんの ところへ はしって かえりました。",
+            "zh": "小白嚇了一跳，趕快跑回善良的老爺爺家。",
+            "zhuyin": "ㄒㄧㄠˇ ㄅㄞˊ ㄒㄧㄚˋ ˙ㄌㄜ ㄧ ㄊㄧㄠˋ ㄍㄢˇ ㄎㄨㄞˋ ㄆㄠˇ ㄏㄨㄟˊ ㄕㄢˋ ㄌㄧㄤˊ ˙ㄉㄜ ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄐㄧㄚ",
+            "en": "Shiro got a fright and ran all the way home to the kind old man."
+          }
+        ]
+      },
+      {
+        "id": "p05",
+        "image": "images/hanasaka-jiisan/p05.webp",
+        "alt": {
+          "ja": "シロを なでる おじいさんと、おおきく そだった まつの き。 きの したに ふとい えだが おちて いる",
+          "zh": "摸摸小白的老爺爺，和長得又高又大的松樹，樹下掉了一根粗樹枝",
+          "en": "The old man stroking Shiro beside a tall pine tree, with a thick fallen branch beneath it"
+        },
+        "lines": [
+          {
+            "id": "p05-1",
+            "speaker": "narrator",
+            "style": "soft and comforting",
+            "ja": "おじいさんは、ふるえる シロを やさしく なでました。",
+            "zh": "老爺爺溫柔地摸摸發抖的小白。",
+            "zhuyin": "ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄨㄣ ㄖㄡˊ ˙ㄉㄜ ㄇㄛ ㄇㄛ ㄈㄚ ㄉㄡˇ ˙ㄉㄜ ㄒㄧㄠˇ ㄅㄞˊ",
+            "en": "The kind old man gently stroked Shiro, who was trembling."
+          },
+          {
+            "id": "p05-2",
+            "speaker": "ojiisan",
+            "style": "calm, warm, reassuring grandfather, gentle and clear",
+            "ja": "「もう だいじょうぶ。 シロ、ありがとう。 こばんが でた ところに、まつの きを うえようね。」",
+            "zh": "「沒事啦。小白，謝謝你！我們在找到金幣的地方種一棵松樹吧。」",
+            "zhuyin": "ㄇㄟˊ ㄕˋ ˙ㄌㄚ ㄒㄧㄠˇ ㄅㄞˊ ㄒㄧㄝˋ ˙ㄒㄧㄝ ㄋㄧˇ ㄨㄛˇ ˙ㄇㄣ ㄗㄞˋ ㄓㄠˇ ㄉㄠˋ ㄐㄧㄣ ㄅㄧˋ ˙ㄉㄜ ㄉㄧˋ ㄈㄤ ㄓㄨㄥˋ ㄧ ㄎㄜ ㄙㄨㄥ ㄕㄨˋ ˙ㄅㄚ",
+            "en": "“You're safe now. Thank you, Shiro! Let's plant a pine tree where you found the gold.”"
+          },
+          {
+            "id": "p05-3",
+            "speaker": "narrator",
+            "style": "full of wonder",
+            "ja": "まつの きは みっかで おおきく なり、ふとい えだが どさっと おちました。",
+            "zh": "松樹才三天就長得又高又大，還掉下了一根粗粗的樹枝。",
+            "zhuyin": "ㄙㄨㄥ ㄕㄨˋ ㄘㄞˊ ㄙㄢ ㄊㄧㄢ ㄐㄧㄡˋ ㄓㄤˇ ˙ㄉㄜ ㄧㄡˋ ㄍㄠ ㄧㄡˋ ㄉㄚˋ ㄏㄞˊ ㄉㄧㄠˋ ㄒㄧㄚˋ ˙ㄌㄜ ㄧ ㄍㄣ ㄘㄨ ㄘㄨ ˙ㄉㄜ ㄕㄨˋ ㄓ",
+            "en": "In just three days the pine grew tall, and a thick branch fell from it with a thud."
+          }
+        ]
+      },
+      {
+        "id": "p06",
+        "image": "images/hanasaka-jiisan/p06.webp",
+        "alt": {
+          "ja": "まつの きで つくった うすで おもちを つく おじいさんと おばあさん。 うすから こばんが こぼれる",
+          "zh": "用松樹做的臼搗麻糬的老爺爺和老奶奶，臼裡滾出金幣",
+          "en": "The old couple pounding rice cakes in a pine-wood mortar as gold coins spill out"
+        },
+        "lines": [
+          {
+            "id": "p06-1",
+            "speaker": "narrator",
+            "style": "cheerful, festive",
+            "ja": "もうすぐ おしょうがつ。 おじいさんは その えだで うすを つくり、おばあさんと おもちを つきました。",
+            "zh": "日本的新年快到了。老爺爺用那根樹枝做了一個臼，和老奶奶一起搗麻糬。",
+            "zhuyin": "ㄖˋ ㄅㄣˇ ˙ㄉㄜ ㄒㄧㄣ ㄋㄧㄢˊ ㄎㄨㄞˋ ㄉㄠˋ ˙ㄌㄜ ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄩㄥˋ ㄋㄚˋ ㄍㄣ ㄕㄨˋ ㄓ ㄗㄨㄛˋ ˙ㄌㄜ ㄧ ˙ㄍㄜ ㄐㄧㄡˋ ㄏㄢˋ ㄌㄠˇ ㄋㄞˇ ˙ㄋㄞ ㄧ ㄑㄧˇ ㄉㄠˇ ㄇㄚˊ ㄕㄨˇ",
+            "en": "New Year was coming. The old man made a mortar from the branch, and he and the old woman pounded rice into mochi."
+          },
+          {
+            "id": "p06-2",
+            "speaker": "narrator",
+            "style": "rhythmic, then a happy surprise",
+            "ja": "ぺったん、ぺったん。 すると、うすの なかから こばんが ざくざく！",
+            "zh": "咚、咚！這時候，臼裡竟然冒出好多金幣！",
+            "zhuyin": "ㄉㄨㄥ ㄉㄨㄥ ㄓㄜˋ ㄕˊ ㄏㄡˋ ㄐㄧㄡˋ ㄌㄧˇ ㄐㄧㄥˋ ㄖㄢˊ ㄇㄠˋ ㄔㄨ ㄏㄠˇ ㄉㄨㄛ ㄐㄧㄣ ㄅㄧˋ",
+            "en": "Thump, thump! And out of the mortar poured gold coins!"
+          }
+        ]
+      },
+      {
+        "id": "p07",
+        "image": "images/hanasaka-jiisan/p07.webp",
+        "alt": {
+          "ja": "どろしか でない うすを まえに、おこって うすを もやす となりの じいさん",
+          "zh": "臼裡只搗出泥巴，氣得把臼燒掉的隔壁爺爺",
+          "en": "The neighbor, angry at a mortar full of mud, burning it in a fire"
+        },
+        "lines": [
+          {
+            "id": "p07-1",
+            "speaker": "narrator",
+            "style": "a little uneasy, he promises",
+            "ja": "よくばり じいさんが「こんどは きを つける」と やくそくしたので、おじいさんは うすを かしました。",
+            "zh": "貪心的爺爺保證說：「這次我會小心！」老爺爺才把臼借給他。",
+            "zhuyin": "ㄊㄢ ㄒㄧㄣ ˙ㄉㄜ ㄧㄝˊ ˙ㄧㄝ ㄅㄠˇ ㄓㄥˋ ㄕㄨㄛ ㄓㄜˋ ㄘˋ ㄨㄛˇ ㄏㄨㄟˋ ㄒㄧㄠˇ ㄒㄧㄣ ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄘㄞˊ ㄅㄚˇ ㄐㄧㄡˋ ㄐㄧㄝˋ ㄍㄟˇ ㄊㄚ",
+            "en": "“I'll be careful this time,” the greedy man promised, so the old man lent him the mortar."
+          },
+          {
+            "id": "p07-2",
+            "speaker": "narrator",
+            "style": "comic disappointment",
+            "ja": "でも、ついても ついても でて くるのは どろばかり。",
+            "jaTts": "でも、ついても、ついても、でて くるのは、どろばかり。",
+            "zh": "可是搗了又搗，冒出來的只有泥巴。",
+            "zhuyin": "ㄎㄜˇ ㄕˋ ㄉㄠˇ ˙ㄌㄜ ㄧㄡˋ ㄉㄠˇ ㄇㄠˋ ㄔㄨ ㄌㄞˊ ˙ㄉㄜ ㄓˇ ㄧㄡˇ ㄋㄧˊ ㄅㄚ",
+            "en": "But no matter how hard he pounded, only mud came out."
+          },
+          {
+            "id": "p07-3",
+            "speaker": "narrator",
+            "style": "serious and a little sad",
+            "ja": "よくばり じいさんは おこって、うすを もやして しまいました。",
+            "zh": "貪心爺爺氣得把臼燒掉了。",
+            "zhuyin": "ㄊㄢ ㄒㄧㄣ ㄧㄝˊ ˙ㄧㄝ ㄑㄧˋ ˙ㄉㄜ ㄅㄚˇ ㄐㄧㄡˋ ㄕㄠ ㄉㄧㄠˋ ˙ㄌㄜ",
+            "en": "In a temper, he burned the mortar to ashes."
+          }
+        ]
+      },
+      {
+        "id": "p08",
+        "image": "images/hanasaka-jiisan/p08.webp",
+        "alt": {
+          "ja": "はいを かごに いれた おじいさん。 かぜで とんだ はいで、かれた さくらの きに はなが さく",
+          "zh": "提著一籃灰的老爺爺，風把灰吹到枯櫻花樹上，樹開滿了花",
+          "en": "The old man with a basket of ash as the wind blows it onto a bare cherry tree, which bursts into bloom"
+        },
+        "lines": [
+          {
+            "id": "p08-1",
+            "speaker": "narrator",
+            "style": "quiet and sad, then gentle",
+            "ja": "うすを とりに いくと、はいだけが のこって いました。 おじいさんは かなしくて、はいを かごに いれて かえりました。",
+            "zh": "老爺爺去拿臼，卻只剩下一堆灰。他好傷心，把灰裝進籃子裡帶回家。",
+            "zhuyin": "ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄑㄩˋ ㄋㄚˊ ㄐㄧㄡˋ ㄑㄩㄝˋ ㄓˇ ㄕㄥˋ ㄒㄧㄚˋ ㄧ ㄉㄨㄟ ㄏㄨㄟ ㄊㄚ ㄏㄠˇ ㄕㄤ ㄒㄧㄣ ㄅㄚˇ ㄏㄨㄟ ㄓㄨㄤ ㄐㄧㄣˋ ㄌㄢˊ ˙ㄗ ㄌㄧˇ ㄉㄞˋ ㄏㄨㄟˊ ㄐㄧㄚ",
+            "en": "When the old man went to get his mortar back, only ashes were left. Sadly, he carried them home in a basket."
+          },
+          {
+            "id": "p08-2",
+            "speaker": "narrator",
+            "style": "light and airy, like a breeze",
+            "ja": "そのとき、かぜが ふいて、はいが かれた さくらの きに ふわり。",
+            "zh": "這時候，一陣風吹來，灰輕輕飄到枯掉的櫻花樹上。",
+            "zhuyin": "ㄓㄜˋ ㄕˊ ㄏㄡˋ ㄧ ㄓㄣˋ ㄈㄥ ㄔㄨㄟ ㄌㄞˊ ㄏㄨㄟ ㄑㄧㄥ ㄑㄧㄥ ㄆㄧㄠ ㄉㄠˋ ㄎㄨ ㄉㄧㄠˋ ˙ㄉㄜ ㄧㄥ ㄏㄨㄚ ㄕㄨˋ ㄕㄤˋ",
+            "en": "Just then, a breeze blew some of the ash onto a bare, dead cherry tree."
+          },
+          {
+            "id": "p08-3",
+            "speaker": "narrator",
+            "style": "joyful astonishment",
+            "ja": "すると、えだ いっぱいに さくらの はなが さきました！",
+            "zh": "沒想到，整棵樹竟然開滿了櫻花！",
+            "zhuyin": "ㄇㄟˊ ㄒㄧㄤˇ ㄉㄠˋ ㄓㄥˇ ㄎㄜ ㄕㄨˋ ㄐㄧㄥˋ ㄖㄢˊ ㄎㄞ ㄇㄢˇ ˙ㄌㄜ ㄧㄥ ㄏㄨㄚ",
+            "en": "And suddenly, every branch burst into cherry blossoms!"
+          }
+        ]
+      },
+      {
+        "id": "p09",
+        "image": "images/hanasaka-jiisan/p09.webp",
+        "alt": {
+          "ja": "さくらの きの うえで はいを まく おじいさん。 えだに はなが さき、はいの かごは きの ねもとに ある。 とのさまは ほうびの ふくろを もって よろこんで いる",
+          "zh": "老爺爺在櫻花樹上撒灰，樹枝開滿櫻花，灰籃放在樹下，領主大人拿著賞賜的小袋子高興地看著",
+          "en": "The old man scattering ash from a cherry tree as its branches burst into bloom; a basket of ash sits by the trunk, and the delighted lord watches with a reward pouch, his procession behind him"
+        },
+        "lines": [
+          {
+            "id": "p09-1",
+            "speaker": "narrator",
+            "style": "grand and stately",
+            "ja": "おじいさんが はいの かごを もって そとへ でると、とのさまの ぎょうれつが とおりかかりました。",
+            "zh": "老爺爺帶著一籃灰出門時，領主大人的隊伍剛好經過。",
+            "zhuyin": "ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄉㄞˋ ˙ㄓㄜ ㄧ ㄌㄢˊ ㄏㄨㄟ ㄔㄨ ㄇㄣˊ ㄕˊ ㄌㄧㄥˇ ㄓㄨˇ ㄉㄚˋ ㄖㄣˊ ˙ㄉㄜ ㄉㄨㄟˋ ㄨˇ ㄍㄤ ㄏㄠˇ ㄐㄧㄥ ㄍㄨㄛˋ",
+            "en": "As the old man carried his basket of ash outside, the lord came by with his procession."
+          },
+          {
+            "id": "p09-2",
+            "speaker": "ojiisan",
+            "style": "bright, joyful call from up in a tree",
+            "ja": "「かれきに はなを さかせましょう！」",
+            "zh": "「讓枯樹開花吧！」",
+            "zhuyin": "ㄖㄤˋ ㄎㄨ ㄕㄨˋ ㄎㄞ ㄏㄨㄚ ˙ㄅㄚ",
+            "en": "“I'll make flowers bloom on this bare tree!”"
+          },
+          {
+            "id": "p09-3",
+            "speaker": "narrator",
+            "style": "sweeping and delighted",
+            "ja": "はいを まくと、きに いっせいに はなが さきました。 とのさまは おおよろこびで、ごほうびを くれました。",
+            "zh": "老爺爺一撒灰，整棵樹一下子開滿了花。領主大人很高興，給了他獎賞。",
+            "zhuyin": "ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄧ ㄙㄚˇ ㄏㄨㄟ ㄓㄥˇ ㄎㄜ ㄕㄨˋ ㄧ ㄒㄧㄚˋ ˙ㄗ ㄎㄞ ㄇㄢˇ ˙ㄌㄜ ㄏㄨㄚ ㄌㄧㄥˇ ㄓㄨˇ ㄉㄚˋ ㄖㄣˊ ㄏㄣˇ ㄍㄠ ㄒㄧㄥˋ ㄍㄟˇ ˙ㄌㄜ ㄊㄚ ㄐㄧㄤˇ ㄕㄤˇ",
+            "en": "When he scattered the ash, the whole tree burst into blossom. The lord was delighted and gave him a reward."
+          }
+        ]
+      },
+      {
+        "id": "p10",
+        "image": "images/hanasaka-jiisan/p10.webp",
+        "alt": {
+          "ja": "はなが さかない かれきの そばで、かぜに とんだ はいを あびて けほけほ する とのさまと、あわてて あたまを さげる となりの じいさん",
+          "zh": "枯樹一朵花也沒開，風把灰吹到領主大人臉上，隔壁爺爺慌忙低頭道歉",
+          "en": "Beside a tree that stays bare, the wind blows ash into the coughing lord's face while the neighbor bows in a hurry"
+        },
+        "lines": [
+          {
+            "id": "p10-1",
+            "speaker": "narrator",
+            "style": "sly, you can guess what happens",
+            "ja": "となりの じいさんも ごほうびが ほしくて、かごに のこった はいを べつの かれきに まきました。",
+            "zh": "隔壁爺爺也想要獎賞，就拿了籃子裡剩下的灰，撒在另一棵枯樹上。",
+            "zhuyin": "ㄍㄜˊ ㄅㄧˋ ㄧㄝˊ ˙ㄧㄝ ㄧㄝˇ ㄒㄧㄤˇ ㄧㄠˋ ㄐㄧㄤˇ ㄕㄤˇ ㄐㄧㄡˋ ㄋㄚˊ ˙ㄌㄜ ㄌㄢˊ ˙ㄗ ㄌㄧˇ ㄕㄥˋ ㄒㄧㄚˋ ˙ㄉㄜ ㄏㄨㄟ ㄙㄚˇ ㄗㄞˋ ㄌㄧㄥˋ ㄧ ㄎㄜ ㄎㄨ ㄕㄨˋ ㄕㄤˋ",
+            "en": "The neighbor wanted a reward too. He took the ash left in the basket and scattered it on another bare tree."
+          },
+          {
+            "id": "p10-2",
+            "speaker": "narrator",
+            "style": "comic, a puff and a cough",
+            "ja": "でも、はなは ひとつも さかず、かぜで はいが とのさまの かおに ばさっ！",
+            "zh": "可是一朵花也沒開，一陣風把灰全吹到領主大人的臉上！",
+            "zhuyin": "ㄎㄜˇ ㄕˋ ㄧ ㄉㄨㄛˇ ㄏㄨㄚ ㄧㄝˇ ㄇㄟˊ ㄎㄞ ㄧ ㄓㄣˋ ㄈㄥ ㄅㄚˇ ㄏㄨㄟ ㄑㄩㄢˊ ㄔㄨㄟ ㄉㄠˋ ㄌㄧㄥˇ ㄓㄨˇ ㄉㄚˋ ㄖㄣˊ ˙ㄉㄜ ㄌㄧㄢˇ ㄕㄤˋ",
+            "en": "But not a single flower bloomed, and a gust blew the ash right into the lord's face!"
+          },
+          {
+            "id": "p10-3",
+            "speaker": "neighbor",
+            "style": "flustered and truly sorry",
+            "ja": "「ご、ごめんなさい！ よくばった わしが わるかった。」",
+            "zh": "「對、對不起！都怪我太貪心了。」",
+            "zhuyin": "ㄉㄨㄟˋ ㄉㄨㄟˋ ㄅㄨˋ ㄑㄧˇ ㄉㄡ ㄍㄨㄞˋ ㄨㄛˇ ㄊㄞˋ ㄊㄢ ㄒㄧㄣ ˙ㄌㄜ",
+            "en": "“I-I'm sorry! It was my greed that caused all this.”"
+          }
+        ]
+      },
+      {
+        "id": "end",
+        "image": "images/hanasaka-jiisan/end.webp",
+        "alt": {
+          "ja": "まんかいの さくらの したで わらう おじいさん、おばあさん、シロと、となりの じいさん。 そばに あたらしい うす",
+          "zh": "在盛開的櫻花樹下一起笑的老爺爺、老奶奶、小白和隔壁爺爺，旁邊放著新的臼",
+          "en": "The old couple, Shiro, and the neighbor smiling together under cherry trees in full bloom, with a new mortar beside them"
+        },
+        "lines": [
+          {
+            "id": "end-1",
+            "speaker": "narrator",
+            "style": "warm, forgiving",
+            "ja": "となりの じいさんは、シロと おじいさんと おばあさんに あやまって、かわりの うすを つくって わたしました。",
+            "zh": "隔壁爺爺向小白、老爺爺和老奶奶道歉，還做了一個新的臼賠給他們。",
+            "zhuyin": "ㄍㄜˊ ㄅㄧˋ ㄧㄝˊ ˙ㄧㄝ ㄒㄧㄤˋ ㄒㄧㄠˇ ㄅㄞˊ ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄏㄢˋ ㄌㄠˇ ㄋㄞˇ ˙ㄋㄞ ㄉㄠˋ ㄑㄧㄢˋ ㄏㄞˊ ㄗㄨㄛˋ ˙ㄌㄜ ㄧ ˙ㄍㄜ ㄒㄧㄣ ˙ㄉㄜ ㄐㄧㄡˋ ㄆㄟˊ ㄍㄟˇ ㄊㄚ ˙ㄇㄣ",
+            "en": "The neighbor apologized to Shiro and the old couple, then made them a new mortar to replace the one he burned."
+          },
+          {
+            "id": "end-2",
+            "speaker": "narrator",
+            "style": "bright and happy, spring has come",
+            "ja": "まんかいの さくらの したで、みんなは シロと いっしょに おはなみを しました。",
+            "zh": "大家和小白一起，在盛開的櫻花樹下賞花。",
+            "zhuyin": "ㄉㄚˋ ㄐㄧㄚ ㄏㄢˋ ㄒㄧㄠˇ ㄅㄞˊ ㄧ ㄑㄧˇ ㄗㄞˋ ㄕㄥˋ ㄎㄞ ˙ㄉㄜ ㄧㄥ ㄏㄨㄚ ㄕㄨˋ ㄒㄧㄚˋ ㄕㄤˇ ㄏㄨㄚ",
+            "en": "Under the cherry trees in full bloom, everyone enjoyed the blossoms with Shiro."
+          },
+          {
+            "id": "end-3",
+            "speaker": "narrator",
+            "style": "gentle, loving close, slow and clear",
+            "ja": "やさしい こころは、はなを さかせるんだね。 おしまい。",
+            "zh": "溫柔的心，能讓花朵盛開喔。故事說完了。",
+            "zhuyin": "ㄨㄣ ㄖㄡˊ ˙ㄉㄜ ㄒㄧㄣ ㄋㄥˊ ㄖㄤˋ ㄏㄨㄚ ㄉㄨㄛˇ ㄕㄥˋ ㄎㄞ ㄛ ㄍㄨˋ ㄕˋ ㄕㄨㄛ ㄨㄢˊ ˙ㄌㄜ",
+            "en": "A kind heart can make flowers bloom. The end."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "omusubi-kororin",
+    "title": {
+      "ja": "おむすびころりん",
+      "zh": "飯糰滾呀滾",
+      "zhuyin": "ㄈㄢˋ ㄊㄨㄢˊ ㄍㄨㄣˇ ˙ㄧㄚ ㄍㄨㄣˇ",
+      "en": "The Rolling Rice Ball"
+    },
+    "tagline": {
+      "ja": "ころがった おむすびが おじいさんを つれて いった、ねずみたちの おうちの おはなし",
+      "zh": "滾走的飯糰，帶老爺爺到老鼠們家的故事",
+      "en": "A rolling rice ball leads an old man to the mice's home"
+    },
+    "origin": {
+      "ja": "にほんの むかしばなし",
+      "zh": "日本民間故事",
+      "en": "A Japanese folktale"
+    },
+    "credit": {
+      "ja": "おむすびころりんは、にほんの あちこちで かたられて きた むかしばなしで、「ねずみじょうど」とも よばれます。 ちいきに よって、ねずみの うたや おみやげが ちがいます。 むかしからの おはなしの なかには、ねこの まねを した となりの じいさんが、ねずみに かまれたり、あなから でられなく なったり する ものも あります。 この えほんでは、ねずみたちが あかりを けして かくれ、となりの じいさんが なにも もらえずに かえる おはなしに しました。",
+      "zh": "〈飯糰滾呀滾〉是日本各地流傳的民間故事，也叫做「老鼠淨土」。各地的老鼠歌和禮物都不太一樣。有些版本裡，學貓叫的隔壁爺爺會被老鼠咬，或是困在洞裡出不來；這本繪本改成老鼠們吹熄燈火躲起來，隔壁爺爺什麼也沒拿到就回家了。",
+      "en": "Omusubi Kororin (“The Rolling Rice Ball”) is a folktale told all over Japan, also known as Nezumi Jōdo, “the Mouse Pure Land.” The mice's song and their gifts differ from place to place. In some tellings, the neighbor who meows like a cat is bitten by the mice or trapped underground. In this book, the mice simply blow out their lanterns and hide, and the neighbor goes home with nothing."
+    },
+    "theme": {
+      "accent": "#a8752a",
+      "soft": "#f6ebd3"
+    },
+    "pages": [
+      {
+        "id": "cover",
+        "image": "images/omusubi-kororin/cover.webp",
+        "alt": {
+          "ja": "さかみちを ころがる おむすびを おいかける おじいさん",
+          "zh": "追著飯糰滾下山坡的老爺爺",
+          "en": "An old man chasing a rice ball rolling down a slope"
+        },
+        "lines": [
+          {
+            "id": "cover-1",
+            "speaker": "narrator",
+            "style": "warm, inviting storyteller opening a picture book",
+            "ja": "にほんの むかしばなし「おむすびころりん」",
+            "zh": "日本民間故事〈飯糰滾呀滾〉",
+            "zhuyin": "ㄖˋ ㄅㄣˇ ㄇㄧㄣˊ ㄐㄧㄢ ㄍㄨˋ ㄕˋ ㄈㄢˋ ㄊㄨㄢˊ ㄍㄨㄣˇ ˙ㄧㄚ ㄍㄨㄣˇ",
+            "en": "A Japanese folktale: The Rolling Rice Ball"
+          },
+          {
+            "id": "cover-2",
+            "speaker": "narrator",
+            "style": "playful and curious",
+            "ja": "ころころ ころがった おむすびは、どこへ いくのかな？",
+            "zh": "滾呀滾的飯糰，會滾到哪裡去呢？",
+            "zhuyin": "ㄍㄨㄣˇ ˙ㄧㄚ ㄍㄨㄣˇ ˙ㄉㄜ ㄈㄢˋ ㄊㄨㄢˊ ㄏㄨㄟˋ ㄍㄨㄣˇ ㄉㄠˋ ㄋㄚˇ ㄌㄧˇ ㄑㄩˋ ˙ㄋㄜ",
+            "en": "Where will the rolling rice ball go?"
+          }
+        ]
+      },
+      {
+        "id": "p01",
+        "image": "images/omusubi-kororin/p01.webp",
+        "alt": {
+          "ja": "おむすびの つつみを わたす おばあさんと、しょいこを せおった おじいさん",
+          "zh": "遞出飯糰包袱的老奶奶，和背著柴架的老爺爺",
+          "en": "The old woman handing a bundle of rice balls to the old man, who carries a wooden frame on his back"
+        },
+        "lines": [
+          {
+            "id": "p01-1",
+            "speaker": "narrator",
+            "style": "gentle once-upon-a-time storyteller",
+            "ja": "むかし むかし、やまの ふもとに、おじいさんと おばあさんが すんで いました。",
+            "zh": "很久很久以前，山腳下住著老爺爺和老奶奶。",
+            "zhuyin": "ㄏㄣˇ ㄐㄧㄡˇ ㄏㄣˇ ㄐㄧㄡˇ ㄧˇ ㄑㄧㄢˊ ㄕㄢ ㄐㄧㄠˇ ㄒㄧㄚˋ ㄓㄨˋ ˙ㄓㄜ ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄏㄢˋ ㄌㄠˇ ㄋㄞˇ ˙ㄋㄞ",
+            "en": "Long, long ago, an old man and an old woman lived at the foot of a mountain."
+          },
+          {
+            "id": "p01-2",
+            "speaker": "narrator",
+            "style": "cozy and easygoing",
+            "ja": "ある あさ、おじいさんは おばあさんが にぎった おむすびを もって、やまへ しばかりに いきました。",
+            "zh": "一天早上，老爺爺帶著老奶奶做的飯糰，上山撿柴。",
+            "zhuyin": "ㄧ ㄊㄧㄢ ㄗㄠˇ ㄕㄤˋ ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄉㄞˋ ˙ㄓㄜ ㄌㄠˇ ㄋㄞˇ ˙ㄋㄞ ㄗㄨㄛˋ ˙ㄉㄜ ㄈㄢˋ ㄊㄨㄢˊ ㄕㄤˋ ㄕㄢ ㄐㄧㄢˇ ㄔㄞˊ",
+            "en": "One morning, he took the rice balls she had made and went up the mountain to gather firewood."
+          }
+        ]
+      },
+      {
+        "id": "p02",
+        "image": "images/omusubi-kororin/p02.webp",
+        "alt": {
+          "ja": "きりかぶに すわって おむすびを もつ おじいさん。 もう ひとつの おむすびが ころがって、おおきな きの ねもとの あなへ むかう",
+          "zh": "坐在樹墩上拿著飯糰的老爺爺，另一個飯糰滾向大樹根旁的洞口",
+          "en": "The old man sitting on a stump with a rice ball in his hand, as another rice ball rolls toward the hole among a big tree's roots"
+        },
+        "lines": [
+          {
+            "id": "p02-1",
+            "speaker": "narrator",
+            "style": "relaxed, then a little oops",
+            "ja": "おひるに なって、おじいさんが つつみを ひらくと……",
+            "zh": "到了中午，老爺爺打開布包……",
+            "zhuyin": "ㄉㄠˋ ˙ㄌㄜ ㄓㄨㄥ ㄨˇ ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄉㄚˇ ㄎㄞ ㄅㄨˋ ㄅㄠ",
+            "en": "At lunchtime, the old man opened his bundle, and…"
+          },
+          {
+            "id": "p02-2",
+            "speaker": "narrator",
+            "style": "bouncy and rhythmic, like something rolling",
+            "ja": "おむすびが ひとつ、ころりん ころりん、さかみちを ころがって いきました。",
+            "zh": "一個飯糰掉了下來，咕嚕咕嚕地沿著山坡滾下去。",
+            "zhuyin": "ㄧ ˙ㄍㄜ ㄈㄢˋ ㄊㄨㄢˊ ㄉㄧㄠˋ ˙ㄌㄜ ㄒㄧㄚˋ ㄌㄞˊ ㄍㄨ ˙ㄌㄨ ㄍㄨ ˙ㄌㄨ ˙ㄉㄜ ㄧㄢˊ ˙ㄓㄜ ㄕㄢ ㄆㄛ ㄍㄨㄣˇ ㄒㄧㄚˋ ㄑㄩˋ",
+            "en": "one rice ball tumbled out and rolled, roly-poly, down the slope."
+          },
+          {
+            "id": "p02-3",
+            "speaker": "narrator",
+            "style": "a funny little drop",
+            "ja": "そして、きの ねもとの あなに、すっとんとん！",
+            "zh": "然後，咚的一聲，掉進了大樹下的洞裡！",
+            "zhuyin": "ㄖㄢˊ ㄏㄡˋ ㄉㄨㄥ ˙ㄉㄜ ㄧ ㄕㄥ ㄉㄧㄠˋ ㄐㄧㄣˋ ˙ㄌㄜ ㄉㄚˋ ㄕㄨˋ ㄒㄧㄚˋ ˙ㄉㄜ ㄉㄨㄥˋ ㄌㄧˇ",
+            "en": "And then, plop! It dropped into a hole under a tree."
+          }
+        ]
+      },
+      {
+        "id": "p03",
+        "image": "images/omusubi-kororin/p03.webp",
+        "alt": {
+          "ja": "あなの そばに ひざを ついて みみを すませ、にっこり わらう おじいさん。 あなの おくに ちいさな ねずみたちの すがた",
+          "zh": "跪在洞口旁、豎起耳朵聽、笑咪咪的老爺爺，洞裡有小老鼠們的身影",
+          "en": "The old man kneeling by the hole, listening with a smile, as little mice appear inside the hole"
+        },
+        "lines": [
+          {
+            "id": "p03-1",
+            "speaker": "narrator",
+            "style": "hushed and delighted",
+            "ja": "すると、あなの なかから かわいい うたが きこえて きました。",
+            "zh": "這時候，洞裡傳出了可愛的歌聲。",
+            "zhuyin": "ㄓㄜˋ ㄕˊ ㄏㄡˋ ㄉㄨㄥˋ ㄌㄧˇ ㄔㄨㄢˊ ㄔㄨ ˙ㄌㄜ ㄎㄜˇ ㄞˋ ˙ㄉㄜ ㄍㄜ ㄕㄥ",
+            "en": "Then, from inside the hole, came a sweet little song."
+          },
+          {
+            "id": "p03-2",
+            "speaker": "mouse",
+            "style": "tiny, cheerful sing-song chorus",
+            "ja": "「おむすび ころりん すっとんとん。 ころころ ころりん すっとんとん。」",
+            "zh": "「飯糰滾呀滾，咚咚咚。咕嚕咕嚕滾，咚咚咚。」",
+            "zhuyin": "ㄈㄢˋ ㄊㄨㄢˊ ㄍㄨㄣˇ ˙ㄧㄚ ㄍㄨㄣˇ ㄉㄨㄥ ㄉㄨㄥ ㄉㄨㄥ ㄍㄨ ˙ㄌㄨ ㄍㄨ ˙ㄌㄨ ㄍㄨㄣˇ ㄉㄨㄥ ㄉㄨㄥ ㄉㄨㄥ",
+            "en": "“Rice ball rolling, down, down, plop! Roly-poly, down, down, plop!”"
+          },
+          {
+            "id": "p03-3",
+            "speaker": "ojiisan",
+            "style": "charmed, chuckling grandfather",
+            "ja": "「おや、たのしい うただ。 もう ひとつ ころがして みよう。」",
+            "zh": "「哎呀，真有趣的歌！我再滾一個下去吧。」",
+            "zhuyin": "ㄞ ㄧㄚ ㄓㄣ ㄧㄡˇ ㄑㄩˋ ˙ㄉㄜ ㄍㄜ ㄨㄛˇ ㄗㄞˋ ㄍㄨㄣˇ ㄧ ˙ㄍㄜ ㄒㄧㄚˋ ㄑㄩˋ ˙ㄅㄚ",
+            "en": "“My, what a fun song! I'll roll another one down.”"
+          }
+        ]
+      },
+      {
+        "id": "p04",
+        "image": "images/omusubi-kororin/p04.webp",
+        "alt": {
+          "ja": "きの ねもとの ひろい あなに すべりこむ おじいさんと、きの かげから のぞく となりの じいさん",
+          "zh": "滑進大樹根下寬洞口的老爺爺，和躲在樹後偷看的隔壁爺爺",
+          "en": "The old man slipping into the wide hole under the tree roots, while the neighbor peeks out from behind the tree"
+        },
+        "lines": [
+          {
+            "id": "p04-1",
+            "speaker": "narrator",
+            "style": "curious, leaning in",
+            "ja": "おじいさんは もう ひとつ おむすびを ころがして、あなを のぞきこみました。",
+            "zh": "老爺爺又把一個飯糰滾進洞裡，探頭往裡看。",
+            "zhuyin": "ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄧㄡˋ ㄅㄚˇ ㄧ ˙ㄍㄜ ㄈㄢˋ ㄊㄨㄢˊ ㄍㄨㄣˇ ㄐㄧㄣˋ ㄉㄨㄥˋ ㄌㄧˇ ㄊㄢˋ ㄊㄡˊ ㄨㄤˇ ㄌㄧˇ ㄎㄢˋ",
+            "en": "He rolled another rice ball into the hole, then leaned in to peek."
+          },
+          {
+            "id": "p04-2",
+            "speaker": "narrator",
+            "style": "suspenseful, a comic slip",
+            "ja": "すると、あしが つるりと すべって……",
+            "zh": "沒想到腳底一滑……",
+            "zhuyin": "ㄇㄟˊ ㄒㄧㄤˇ ㄉㄠˋ ㄐㄧㄠˇ ㄉㄧˇ ㄧ ㄏㄨㄚˊ",
+            "en": "But his foot slipped, and…"
+          },
+          {
+            "id": "p04-3",
+            "speaker": "narrator",
+            "style": "silly and bouncy, not scary at all",
+            "ja": "おじいさんも、ころりん すっとんとん！",
+            "zh": "老爺爺也咕嚕咕嚕，咚的一聲滾了進去！",
+            "zhuyin": "ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄧㄝˇ ㄍㄨ ˙ㄌㄨ ㄍㄨ ˙ㄌㄨ ㄉㄨㄥ ˙ㄉㄜ ㄧ ㄕㄥ ㄍㄨㄣˇ ˙ㄌㄜ ㄐㄧㄣˋ ㄑㄩˋ",
+            "en": "down he went too, roly-poly, plop!"
+          }
+        ]
+      },
+      {
+        "id": "p05",
+        "image": "images/omusubi-kororin/p05.webp",
+        "alt": {
+          "ja": "ちょうちんの あかりが ともる ねずみの いえで、おおぜいの ねずみに かこまれる おじいさん",
+          "zh": "在掛滿燈籠的老鼠家裡，被一大群老鼠圍著的老爺爺",
+          "en": "The old man surrounded by many mice in their lantern-lit home"
+        },
+        "lines": [
+          {
+            "id": "p05-1",
+            "speaker": "narrator",
+            "style": "soft landing, full of wonder",
+            "ja": "おじいさんが ふわりと おりた ところは、ちょうちんの ともる、ねずみたちの いえでした。",
+            "zh": "他輕輕落在一個掛滿燈籠的地方，原來是老鼠們的家。",
+            "zhuyin": "ㄊㄚ ㄑㄧㄥ ㄑㄧㄥ ㄌㄨㄛˋ ㄗㄞˋ ㄧ ˙ㄍㄜ ㄍㄨㄚˋ ㄇㄢˇ ㄉㄥ ㄌㄨㄥˊ ˙ㄉㄜ ㄉㄧˋ ㄈㄤ ㄩㄢˊ ㄌㄞˊ ㄕˋ ㄌㄠˇ ㄕㄨˇ ˙ㄇㄣ ˙ㄉㄜ ㄐㄧㄚ",
+            "en": "He landed softly in a place lit with lanterns. It was the home of the mice!"
+          },
+          {
+            "id": "p05-2",
+            "speaker": "mouse",
+            "style": "tiny, polite and bubbly",
+            "ja": "「おじいさん、おいしい おむすびを ありがとう！ おれいに ごちそうします。」",
+            "zh": "「老爺爺，謝謝你的飯糰，真好吃！我們請你吃大餐。」",
+            "zhuyin": "ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄒㄧㄝˋ ˙ㄒㄧㄝ ㄋㄧˇ ˙ㄉㄜ ㄈㄢˋ ㄊㄨㄢˊ ㄓㄣ ㄏㄠˇ ㄔ ㄨㄛˇ ˙ㄇㄣ ㄑㄧㄥˇ ㄋㄧˇ ㄔ ㄉㄚˋ ㄘㄢ",
+            "en": "“Thank you for the delicious rice balls, Grandpa! Let us treat you to a feast.”"
+          }
+        ]
+      },
+      {
+        "id": "p06",
+        "image": "images/omusubi-kororin/p06.webp",
+        "alt": {
+          "ja": "おもちを ついて うたい おどる ねずみたちと、おもちの おさらを まえに てを たたく おじいさん",
+          "zh": "搗麻糬、又唱又跳的老鼠們，和面前擺著一盤麻糬、拍著手的老爺爺",
+          "en": "Mice pounding rice cakes, singing and dancing, while the old man claps along with a plate of rice cakes in front of him"
+        },
+        "lines": [
+          {
+            "id": "p06-1",
+            "speaker": "narrator",
+            "style": "festive and merry",
+            "ja": "ねずみたちは おもちを ついて おじいさんに ごちそうし、うたって おどりました。",
+            "zh": "老鼠們搗了麻糬請他吃，還唱歌跳舞。",
+            "zhuyin": "ㄌㄠˇ ㄕㄨˇ ˙ㄇㄣ ㄉㄠˇ ˙ㄌㄜ ㄇㄚˊ ㄕㄨˇ ㄑㄧㄥˇ ㄊㄚ ㄔ ㄏㄞˊ ㄔㄤˋ ㄍㄜ ㄊㄧㄠˋ ㄨˇ",
+            "en": "The mice pounded rice to make rice cakes for the old man, then sang and danced."
+          },
+          {
+            "id": "p06-2",
+            "speaker": "mouse",
+            "style": "tiny, cheerful sing-song chorus with a playful shiver on the last part",
+            "ja": "「ぺったん ぺったん ぺったんこ。 ねこさえ いなけりゃ、たのしい おうち！」",
+            "zh": "「搗呀搗呀搗麻糬，咚咚咚。沒有貓來，家裡真開心！」",
+            "zhuyin": "ㄉㄠˇ ˙ㄧㄚ ㄉㄠˇ ˙ㄧㄚ ㄉㄠˇ ㄇㄚˊ ㄕㄨˇ ㄉㄨㄥ ㄉㄨㄥ ㄉㄨㄥ ㄇㄟˊ ㄧㄡˇ ㄇㄠ ㄌㄞˊ ㄐㄧㄚ ㄌㄧˇ ㄓㄣ ㄎㄞ ㄒㄧㄣ",
+            "en": "“Thump, thump, thump! With no cats around, our home is full of fun!”"
+          },
+          {
+            "id": "p06-3",
+            "speaker": "narrator",
+            "style": "happy and cozy",
+            "ja": "おじいさんも てを たたいて、いっしょに わらいました。",
+            "zh": "老爺爺也跟著拍手，和大家一起笑。",
+            "zhuyin": "ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄧㄝˇ ㄍㄣ ˙ㄓㄜ ㄆㄞ ㄕㄡˇ ㄏㄢˋ ㄉㄚˋ ㄐㄧㄚ ㄧ ㄑㄧˇ ㄒㄧㄠˋ",
+            "en": "The old man clapped along and laughed with them."
+          }
+        ]
+      },
+      {
+        "id": "p07",
+        "image": "images/omusubi-kororin/p07.webp",
+        "alt": {
+          "ja": "おおきい つづらと ちいさい つづらを さしだす ねずみと、ちいさい ほうを えらぶ おじいさん",
+          "zh": "拿出大箱子和小箱子的老鼠，和選了小箱子的老爺爺",
+          "en": "A mouse offering a big and a small wicker box, and the old man choosing the small one"
+        },
+        "lines": [
+          {
+            "id": "p07-1",
+            "speaker": "mouse",
+            "style": "tiny, polite and bubbly",
+            "ja": "「おみやげです。 おおきい つづらと ちいさい つづら、どちらが いいですか？」",
+            "zh": "「送你禮物。大箱子和小箱子，你要哪一個呢？」",
+            "zhuyin": "ㄙㄨㄥˋ ㄋㄧˇ ㄌㄧˇ ㄨˋ ㄉㄚˋ ㄒㄧㄤ ˙ㄗ ㄏㄢˋ ㄒㄧㄠˇ ㄒㄧㄤ ˙ㄗ ㄋㄧˇ ㄧㄠˋ ㄋㄚˇ ㄧ ˙ㄍㄜ ˙ㄋㄜ",
+            "en": "“Here is a present. A big wicker box or a small one, which would you like?”"
+          },
+          {
+            "id": "p07-2",
+            "speaker": "ojiisan",
+            "style": "humble, kindly grandfather",
+            "ja": "「おおきいのは おもくて もてません。 ちいさいので じゅうぶんです。 ありがとう。」",
+            "zh": "「大的太重了，小的就夠了。謝謝你們。」",
+            "zhuyin": "ㄉㄚˋ ˙ㄉㄜ ㄊㄞˋ ㄓㄨㄥˋ ˙ㄌㄜ ㄒㄧㄠˇ ˙ㄉㄜ ㄐㄧㄡˋ ㄍㄡˋ ˙ㄌㄜ ㄒㄧㄝˋ ˙ㄒㄧㄝ ㄋㄧˇ ˙ㄇㄣ",
+            "en": "“The big one is too heavy for me. The small one is plenty. Thank you!”"
+          },
+          {
+            "id": "p07-3",
+            "speaker": "narrator",
+            "style": "warm goodbye",
+            "ja": "おじいさんは ちいさな つづらを せおって、ねずみたちに てを ふって かえりました。",
+            "zh": "老爺爺背起小箱子，向老鼠們揮揮手回家了。",
+            "zhuyin": "ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄅㄟ ㄑㄧˇ ㄒㄧㄠˇ ㄒㄧㄤ ˙ㄗ ㄒㄧㄤˋ ㄌㄠˇ ㄕㄨˇ ˙ㄇㄣ ㄏㄨㄟ ㄏㄨㄟ ㄕㄡˇ ㄏㄨㄟˊ ㄐㄧㄚ ˙ㄌㄜ",
+            "en": "He carried the small box on his back and waved goodbye to the mice."
+          }
+        ]
+      },
+      {
+        "id": "p08",
+        "image": "images/omusubi-kororin/p08.webp",
+        "alt": {
+          "ja": "つづらから でて きた だえんけいの こばんや きれいな ぬのに おどろく おじいさんと おばあさん。 まどの そとから となりの じいさんが のぞいて いる",
+          "zh": "看見箱子裡的橢圓形小判金幣和漂亮的布、嚇一跳的老爺爺和老奶奶，隔壁爺爺在窗外偷看",
+          "en": "The old couple amazed by oval koban gold coins and beautiful cloth in the box, while the neighbor peeks in through the window"
+        },
+        "lines": [
+          {
+            "id": "p08-1",
+            "speaker": "narrator",
+            "style": "delighted surprise",
+            "ja": "いえで つづらを あけると、こばんや きれいな ぬのが いっぱい！",
+            "zh": "回到家打開箱子，裡面裝滿了金幣和漂亮的布！",
+            "zhuyin": "ㄏㄨㄟˊ ㄉㄠˋ ㄐㄧㄚ ㄉㄚˇ ㄎㄞ ㄒㄧㄤ ˙ㄗ ㄌㄧˇ ㄇㄧㄢˋ ㄓㄨㄤ ㄇㄢˇ ˙ㄌㄜ ㄐㄧㄣ ㄅㄧˋ ㄏㄢˋ ㄆㄧㄠˋ ˙ㄌㄧㄤ ˙ㄉㄜ ㄅㄨˋ",
+            "en": "At home, they opened the box. It was full of gold coins and beautiful cloth!"
+          },
+          {
+            "id": "p08-2",
+            "speaker": "grandma",
+            "style": "happy, grateful grandmother",
+            "ja": "「まあ、ねずみさんたちの おかげだね。」",
+            "zh": "「哎呀，這都要謝謝老鼠們呢。」",
+            "zhuyin": "ㄞ ㄧㄚ ㄓㄜˋ ㄉㄡ ㄧㄠˋ ㄒㄧㄝˋ ˙ㄒㄧㄝ ㄌㄠˇ ㄕㄨˇ ˙ㄇㄣ ˙ㄋㄜ",
+            "en": "“Oh my! We have the mice to thank for this.”"
+          }
+        ]
+      },
+      {
+        "id": "p09",
+        "image": "images/omusubi-kororin/p09.webp",
+        "alt": {
+          "ja": "おなじ きの ねもとの あなに おむすびを なげこむ となりの よくばり じいさん",
+          "zh": "把飯糰丟進同一個樹根洞口的隔壁貪心爺爺",
+          "en": "The greedy neighbor tossing a rice ball into the same hole under the tree roots"
+        },
+        "lines": [
+          {
+            "id": "p09-1",
+            "speaker": "narrator",
+            "style": "a little sly, here comes trouble",
+            "ja": "こばんを みた となりの じいさんは、おじいさんに あなの ばしょを きいて、やまへ いきました。",
+            "zh": "隔壁爺爺看見金幣，問老爺爺洞口在哪裡，就上山去了。",
+            "zhuyin": "ㄍㄜˊ ㄅㄧˋ ㄧㄝˊ ˙ㄧㄝ ㄎㄢˋ ㄐㄧㄢˋ ㄐㄧㄣ ㄅㄧˋ ㄨㄣˋ ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄉㄨㄥˋ ㄎㄡˇ ㄗㄞˋ ㄋㄚˇ ㄌㄧˇ ㄐㄧㄡˋ ㄕㄤˋ ㄕㄢ ㄑㄩˋ ˙ㄌㄜ",
+            "en": "The neighbor saw the gold coins, asked the old man where the hole was, and went up the mountain."
+          },
+          {
+            "id": "p09-2",
+            "speaker": "narrator",
+            "style": "brisk and comic",
+            "ja": "おむすびを あなへ ぽいっと なげこんで、じぶんも どすんと とびこみました。",
+            "zh": "他把飯糰往洞裡一丟，自己也咚的一聲跳了進去。",
+            "zhuyin": "ㄊㄚ ㄅㄚˇ ㄈㄢˋ ㄊㄨㄢˊ ㄨㄤˇ ㄉㄨㄥˋ ㄌㄧˇ ㄧ ㄉㄧㄡ ㄗˋ ㄐㄧˇ ㄧㄝˇ ㄉㄨㄥ ˙ㄉㄜ ㄧ ㄕㄥ ㄊㄧㄠˋ ˙ㄌㄜ ㄐㄧㄣˋ ㄑㄩˋ",
+            "en": "He tossed a rice ball into the hole and jumped in after it. Thump!"
+          },
+          {
+            "id": "p09-3",
+            "speaker": "neighbor",
+            "style": "scheming, comically greedy, never scary",
+            "ja": "「ねこの こえで ねずみを おどかせば、たからは ぜんぶ わしの もの！」",
+            "zh": "「學貓叫把老鼠嚇跑，寶物就全是我的了！」",
+            "zhuyin": "ㄒㄩㄝˊ ㄇㄠ ㄐㄧㄠˋ ㄅㄚˇ ㄌㄠˇ ㄕㄨˇ ㄒㄧㄚˋ ㄆㄠˇ ㄅㄠˇ ㄨˋ ㄐㄧㄡˋ ㄑㄩㄢˊ ㄕˋ ㄨㄛˇ ˙ㄉㄜ ˙ㄌㄜ",
+            "en": "“If I scare the mice away with a meow, all their treasure will be mine!”"
+          }
+        ]
+      },
+      {
+        "id": "p10",
+        "image": "images/omusubi-kororin/p10.webp",
+        "alt": {
+          "ja": "ねこの まねを する となりの じいさんと、つづらを かかえて ちょうちんを けしながら かくれる ねずみたち。 おくの あなぐちから ひかりが さして いる",
+          "zh": "學貓叫的隔壁爺爺，和抱著箱子、一邊吹熄燈籠一邊躲起來的老鼠們，遠處洞口透進陽光",
+          "en": "The neighbor meowing like a cat while the mice carry their boxes away and blow out the lanterns; daylight shines in from the opening far behind"
+        },
+        "lines": [
+          {
+            "id": "p10-1",
+            "speaker": "neighbor",
+            "style": "a loud, silly, exaggerated cat impression",
+            "ja": "「にゃーお！」",
+            "zh": "「喵嗚——！」",
+            "zhuyin": "ㄇㄧㄠ ㄨ",
+            "en": "“Meow!”"
+          },
+          {
+            "id": "p10-2",
+            "speaker": "narrator",
+            "style": "quick and hushed",
+            "ja": "ねずみたちは びっくりして、あかりを けし、たからものを もって かくれて しまいました。",
+            "zh": "老鼠們嚇了一跳，吹熄燈火，帶著寶物躲起來了。",
+            "zhuyin": "ㄌㄠˇ ㄕㄨˇ ˙ㄇㄣ ㄒㄧㄚˋ ˙ㄌㄜ ㄧ ㄊㄧㄠˋ ㄔㄨㄟ ㄒㄧ ㄉㄥ ㄏㄨㄛˇ ㄉㄞˋ ˙ㄓㄜ ㄅㄠˇ ㄨˋ ㄉㄨㄛˇ ㄑㄧˇ ㄌㄞˊ ˙ㄌㄜ",
+            "en": "The startled mice blew out their lanterns and hid, taking their treasures with them."
+          },
+          {
+            "id": "p10-3",
+            "speaker": "narrator",
+            "style": "comic and a little rueful",
+            "ja": "あなぐちの ひかりを たよりに、じいさんは てぶらで かえりました。",
+            "zh": "他朝洞口的亮光走去，兩手空空地回家了。",
+            "zhuyin": "ㄊㄚ ㄔㄠˊ ㄉㄨㄥˋ ㄎㄡˇ ˙ㄉㄜ ㄌㄧㄤˋ ㄍㄨㄤ ㄗㄡˇ ㄑㄩˋ ㄌㄧㄤˇ ㄕㄡˇ ㄎㄨㄥ ㄎㄨㄥ ˙ㄉㄜ ㄏㄨㄟˊ ㄐㄧㄚ ˙ㄌㄜ",
+            "en": "He followed the daylight out and went home empty-handed."
+          }
+        ]
+      },
+      {
+        "id": "end",
+        "image": "images/omusubi-kororin/end.webp",
+        "alt": {
+          "ja": "きの ねもとの あなへ、おむすびを そっと ころがす おじいさんと おばあさん",
+          "zh": "把飯糰輕輕滾進樹根洞口的老爺爺和老奶奶",
+          "en": "The old couple gently rolling a rice ball into the hole under the tree roots"
+        },
+        "lines": [
+          {
+            "id": "end-1",
+            "speaker": "narrator",
+            "style": "warm and content",
+            "ja": "やさしい おじいさんと おばあさんは、それからも ときどき、あなに おむすびを ころがしました。",
+            "zh": "善良的老爺爺和老奶奶，後來有時也會把飯糰滾進洞裡。",
+            "zhuyin": "ㄕㄢˋ ㄌㄧㄤˊ ˙ㄉㄜ ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄏㄢˋ ㄌㄠˇ ㄋㄞˇ ˙ㄋㄞ ㄏㄡˋ ㄌㄞˊ ㄧㄡˇ ㄕˊ ㄧㄝˇ ㄏㄨㄟˋ ㄅㄚˇ ㄈㄢˋ ㄊㄨㄢˊ ㄍㄨㄣˇ ㄐㄧㄣˋ ㄉㄨㄥˋ ㄌㄧˇ",
+            "en": "After that, the kind old couple rolled rice balls into the hole now and then."
+          },
+          {
+            "id": "end-2",
+            "speaker": "mouse",
+            "style": "tiny, cheerful sing-song chorus, grateful",
+            "ja": "「おむすび ころりん すっとんとん。 ありがとう、ありがとう、すっとんとん。」",
+            "zh": "「飯糰滾呀滾，咚咚咚。謝謝你呀謝謝你，咚咚咚。」",
+            "zhuyin": "ㄈㄢˋ ㄊㄨㄢˊ ㄍㄨㄣˇ ˙ㄧㄚ ㄍㄨㄣˇ ㄉㄨㄥ ㄉㄨㄥ ㄉㄨㄥ ㄒㄧㄝˋ ˙ㄒㄧㄝ ㄋㄧˇ ˙ㄧㄚ ㄒㄧㄝˋ ˙ㄒㄧㄝ ㄋㄧˇ ㄉㄨㄥ ㄉㄨㄥ ㄉㄨㄥ",
+            "en": "“Rice ball rolling, down, down, plop! Thank you, thank you, plop, plop, plop!”"
+          },
+          {
+            "id": "end-3",
+            "speaker": "narrator",
+            "style": "soft, cozy ending",
+            "ja": "おしまい。",
+            "zh": "故事說完了。",
+            "zhuyin": "ㄍㄨˋ ㄕˋ ㄕㄨㄛ ㄨㄢˊ ˙ㄌㄜ",
+            "en": "The end."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "issun-boshi",
+    "title": {
+      "ja": "{一寸法師|いっすんぼうし}",
+      "zh": "一寸法師",
+      "zhuyin": "ㄧ ㄘㄨㄣˋ ㄈㄚˇ ㄕ",
+      "en": "Issun-boshi, the One-Inch Boy"
+    },
+    "tagline": {
+      "ja": "ゆびくらいの ちいさな おとこのこの、おおきな ぼうけん",
+      "zh": "像手指一樣小的男孩的大冒險",
+      "en": "The big adventure of a boy no bigger than a thumb"
+    },
+    "origin": {
+      "ja": "にほんの むかしばなし",
+      "zh": "日本民間故事",
+      "en": "A Japanese folktale"
+    },
+    "credit": {
+      "ja": "いっすんぼうしは、むろまちじだいの おわりには つたわって いたと かんがえられ、のちに「おとぎぞうし」にも のりました。 「{一寸|いっすん}」は むかしの ながさの たんいで、およそ 3センチです。 おとぎぞうしでは、いっすんぼうしが だいじんに「むすめが こめを ぬすんだ」と うそを つき、むすめが いえを おわれる ばめんが あります。 この えほんでは その ばめんを はぶき、めいじじだいに いわや さざなみが こどもむけに かいた おはなしを さんこうに しました。 おおくの おはなしでは、いっすんぼうしは だいじんの むすめと けっこんしますが、この えほんでは ふるさとへ かえり、りょうしんと くらします。",
+      "zh": "〈一寸法師〉在日本室町時代晚期就已經流傳，後來也收錄在「御伽草子」裡。「一寸」是古代的長度單位，大約三公分。御伽草子的版本裡，一寸法師誣賴大臣的女兒偷米，害她被趕出家門；本書省略了這段情節，並參考巖谷小波在明治時代為孩子寫的版本。許多版本裡，一寸法師最後和大臣的女兒結婚；本書則讓他回到家鄉，和爸爸媽媽一起生活。",
+      "en": "Issun-boshi was known by the late Muromachi period and later appeared among the otogizōshi tales. An issun is an old unit of length, about 3 centimeters. In the otogizōshi tale, he falsely accuses the minister's daughter of stealing rice, and she is driven from her home. This book leaves out that episode and draws on the retelling for children that Iwaya Sazanami wrote in the Meiji era. In many tellings he marries the minister's daughter; here he goes home to live with his parents."
+    },
+    "theme": {
+      "accent": "#c0462c",
+      "soft": "#f9e0d8"
+    },
+    "pages": [
+      {
+        "id": "cover",
+        "image": "images/issun-boshi/cover.webp",
+        "alt": {
+          "ja": "おわんの ふねに のって、はしで こぐ ちいさな いっすんぼうし",
+          "zh": "坐著木碗小船、用筷子划槳的小小一寸法師",
+          "en": "Tiny Issun-boshi paddling a rice-bowl boat with a chopstick"
+        },
+        "lines": [
+          {
+            "id": "cover-1",
+            "speaker": "narrator",
+            "style": "warm, inviting storyteller opening a picture book",
+            "ja": "にほんの むかしばなし「{一寸法師|いっすんぼうし}」",
+            "zh": "日本民間故事〈一寸法師〉",
+            "zhuyin": "ㄖˋ ㄅㄣˇ ㄇㄧㄣˊ ㄐㄧㄢ ㄍㄨˋ ㄕˋ ㄧ ㄘㄨㄣˋ ㄈㄚˇ ㄕ",
+            "en": "A Japanese folktale: Issun-boshi, the One-Inch Boy"
+          },
+          {
+            "id": "cover-2",
+            "speaker": "narrator",
+            "style": "bright and adventurous",
+            "ja": "ゆびくらいの ちいさな おとこのこが、おおきな ぼうけんに でかけます。",
+            "zh": "一個像手指那麼小的男孩，要出發去大冒險了。",
+            "zhuyin": "ㄧ ˙ㄍㄜ ㄒㄧㄤˋ ㄕㄡˇ ㄓˇ ㄋㄚˋ ˙ㄇㄜ ㄒㄧㄠˇ ˙ㄉㄜ ㄋㄢˊ ㄏㄞˊ ㄧㄠˋ ㄔㄨ ㄈㄚ ㄑㄩˋ ㄉㄚˋ ㄇㄠˋ ㄒㄧㄢˇ ˙ㄌㄜ",
+            "en": "A boy no bigger than a thumb sets off on a big adventure."
+          }
+        ]
+      },
+      {
+        "id": "p01",
+        "image": "images/issun-boshi/p01.webp",
+        "alt": {
+          "ja": "おみやで てを あわせる おじいさんと おばあさん",
+          "zh": "在神社雙手合十祈禱的老爺爺和老奶奶",
+          "en": "An old man and an old woman praying with their palms together at a shrine"
+        },
+        "lines": [
+          {
+            "id": "p01-1",
+            "speaker": "narrator",
+            "style": "gentle once-upon-a-time storyteller",
+            "ja": "むかし むかし、こどもの いない おじいさんと おばあさんが いました。",
+            "zh": "很久很久以前，有一對沒有孩子的老爺爺和老奶奶。",
+            "zhuyin": "ㄏㄣˇ ㄐㄧㄡˇ ㄏㄣˇ ㄐㄧㄡˇ ㄧˇ ㄑㄧㄢˊ ㄧㄡˇ ㄧ ㄉㄨㄟˋ ㄇㄟˊ ㄧㄡˇ ㄏㄞˊ ˙ㄗ ˙ㄉㄜ ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄏㄢˋ ㄌㄠˇ ㄋㄞˇ ˙ㄋㄞ",
+            "en": "Long, long ago, there lived an old man and an old woman who had no children."
+          },
+          {
+            "id": "p01-2",
+            "speaker": "narrator",
+            "style": "quiet and heartfelt",
+            "ja": "ふたりは まいにち、すみよしの かみさまに おいのりしました。",
+            "zh": "他們每天都向住吉的神明祈禱。",
+            "zhuyin": "ㄊㄚ ˙ㄇㄣ ㄇㄟˇ ㄊㄧㄢ ㄉㄡ ㄒㄧㄤˋ ㄓㄨˋ ㄐㄧˊ ˙ㄉㄜ ㄕㄣˊ ㄇㄧㄥˊ ㄑㄧˊ ㄉㄠˇ",
+            "en": "Every day, they prayed to the god of the Sumiyoshi shrine."
+          },
+          {
+            "id": "p01-3",
+            "speaker": "grandma",
+            "style": "earnest, hopeful, softly pleading",
+            "ja": "「どんなに ちいさくても いいから、こどもを さずけて ください。」",
+            "zh": "「就算很小很小也沒關係，請賜給我們一個孩子吧。」",
+            "zhuyin": "ㄐㄧㄡˋ ㄙㄨㄢˋ ㄏㄣˇ ㄒㄧㄠˇ ㄏㄣˇ ㄒㄧㄠˇ ㄧㄝˇ ㄇㄟˊ ㄍㄨㄢ ㄒㄧˋ ㄑㄧㄥˇ ㄘˋ ㄍㄟˇ ㄨㄛˇ ˙ㄇㄣ ㄧ ˙ㄍㄜ ㄏㄞˊ ˙ㄗ ˙ㄅㄚ",
+            "en": "“Please give us a child, even a very, very small one.”"
+          }
+        ]
+      },
+      {
+        "id": "p02",
+        "image": "images/issun-boshi/p02.webp",
+        "alt": {
+          "ja": "おばあさんの てのひらの うえで わらう、ゆびくらいの あかちゃん",
+          "zh": "在老奶奶手心上笑的、像手指一樣小的寶寶",
+          "en": "A thumb-sized baby laughing in the palm of the old woman's hand"
+        },
+        "lines": [
+          {
+            "id": "p02-1",
+            "speaker": "narrator",
+            "style": "joyful, then amused",
+            "ja": "すると ほんとうに あかちゃんが うまれました。 でも、おやゆびくらいの ちいささです。",
+            "zh": "後來，真的生下了一個寶寶，可是他只有大拇指那麼小。",
+            "zhuyin": "ㄏㄡˋ ㄌㄞˊ ㄓㄣ ˙ㄉㄜ ㄕㄥ ㄒㄧㄚˋ ˙ㄌㄜ ㄧ ˙ㄍㄜ ㄅㄠˇ ㄅㄠˇ ㄎㄜˇ ㄕˋ ㄊㄚ ㄓˇ ㄧㄡˇ ㄉㄚˋ ㄇㄨˇ ㄓˇ ㄋㄚˋ ˙ㄇㄜ ㄒㄧㄠˇ",
+            "en": "And then a baby really was born. But he was only as big as a thumb."
+          },
+          {
+            "id": "p02-2",
+            "speaker": "narrator",
+            "style": "fond and a little playful",
+            "ja": "ふたりは あかちゃんを「いっすんぼうし」と なづけました。 なんねん たっても、ちいさい ままです。",
+            "zh": "老爺爺和老奶奶給他取名叫「一寸法師」。過了好多年，他還是一樣小。",
+            "zhuyin": "ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄏㄢˋ ㄌㄠˇ ㄋㄞˇ ˙ㄋㄞ ㄍㄟˇ ㄊㄚ ㄑㄩˇ ㄇㄧㄥˊ ㄐㄧㄠˋ ㄧ ㄘㄨㄣˋ ㄈㄚˇ ㄕ ㄍㄨㄛˋ ˙ㄌㄜ ㄏㄠˇ ㄉㄨㄛ ㄋㄧㄢˊ ㄊㄚ ㄏㄞˊ ㄕˋ ㄧ ㄧㄤˋ ㄒㄧㄠˇ",
+            "en": "The old couple named him Issun-boshi, the One-Inch Boy. Years went by, but he stayed just as small."
+          }
+        ]
+      },
+      {
+        "id": "p03",
+        "image": "images/issun-boshi/p03.webp",
+        "alt": {
+          "ja": "はりの かたなを こしに さした いっすんぼうしと、おわんと はしを わたす おじいさんと おばあさん",
+          "zh": "腰間插著針刀的一寸法師，和遞給他木碗和筷子的老爺爺老奶奶",
+          "en": "Issun-boshi with a needle sword at his waist, as the old couple hand him a bowl and a chopstick"
+        },
+        "lines": [
+          {
+            "id": "p03-1",
+            "speaker": "issun",
+            "style": "small but brave and determined boy",
+            "ja": "「ぼく、みやこで はたらきたい！ いつか おとうさんと おかあさんを たすけたいんだ。」",
+            "zh": "「我想去京城工作，將來幫爸爸媽媽的忙。」",
+            "zhuyin": "ㄨㄛˇ ㄒㄧㄤˇ ㄑㄩˋ ㄐㄧㄥ ㄔㄥˊ ㄍㄨㄥ ㄗㄨㄛˋ ㄐㄧㄤ ㄌㄞˊ ㄅㄤ ㄅㄚˋ ˙ㄅㄚ ㄇㄚ ˙ㄇㄚ ˙ㄉㄜ ㄇㄤˊ",
+            "en": "“I want to work in the capital, and someday I'll help you both!”"
+          },
+          {
+            "id": "p03-2",
+            "speaker": "narrator",
+            "style": "warm and supportive",
+            "ja": "おばあさんは はりで かたなを、おじいさんは おわんの ふねと はしの かいを つくって くれました。",
+            "zh": "老奶奶用針做了一把刀，老爺爺用木碗做了小船，還用筷子做了船槳。",
+            "zhuyin": "ㄌㄠˇ ㄋㄞˇ ˙ㄋㄞ ㄩㄥˋ ㄓㄣ ㄗㄨㄛˋ ˙ㄌㄜ ㄧ ㄅㄚˇ ㄉㄠ ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄩㄥˋ ㄇㄨˋ ㄨㄢˇ ㄗㄨㄛˋ ˙ㄌㄜ ㄒㄧㄠˇ ㄔㄨㄢˊ ㄏㄞˊ ㄩㄥˋ ㄎㄨㄞˋ ˙ㄗ ㄗㄨㄛˋ ˙ㄌㄜ ㄔㄨㄢˊ ㄐㄧㄤˇ",
+            "en": "The old woman made him a sword from a sewing needle, and the old man made him a rice-bowl boat and a chopstick paddle."
+          }
+        ]
+      },
+      {
+        "id": "p04",
+        "image": "images/issun-boshi/p04.webp",
+        "alt": {
+          "ja": "かわの なみを こえて、おわんの ふねを こぐ いっすんぼうし",
+          "zh": "划著木碗小船、越過河浪的一寸法師",
+          "en": "Issun-boshi paddling his bowl boat over the river's waves"
+        },
+        "lines": [
+          {
+            "id": "p04-1",
+            "speaker": "narrator",
+            "style": "adventurous and flowing",
+            "ja": "いっすんぼうしは おわんの ふねに のって、かわを さかのぼり、みやこへ むかいました。",
+            "zh": "一寸法師坐上木碗小船，逆著河水往京城划。",
+            "zhuyin": "ㄧ ㄘㄨㄣˋ ㄈㄚˇ ㄕ ㄗㄨㄛˋ ㄕㄤˋ ㄇㄨˋ ㄨㄢˇ ㄒㄧㄠˇ ㄔㄨㄢˊ ㄋㄧˋ ˙ㄓㄜ ㄏㄜˊ ㄕㄨㄟˇ ㄨㄤˇ ㄐㄧㄥ ㄔㄥˊ ㄏㄨㄚˊ",
+            "en": "Issun-boshi climbed into his bowl boat and paddled upriver toward the capital."
+          },
+          {
+            "id": "p04-2",
+            "speaker": "narrator",
+            "style": "splashy, then brave and rhythmic",
+            "ja": "なみが ざぶん！ でも まけずに、えっさ ほいさ。",
+            "zh": "浪花嘩啦一聲打過來！他不放棄，嘿咻、嘿咻地划！",
+            "zhuyin": "ㄌㄤˋ ㄏㄨㄚ ㄏㄨㄚ ㄌㄚ ㄧ ㄕㄥ ㄉㄚˇ ㄍㄨㄛˋ ㄌㄞˊ ㄊㄚ ㄅㄨˋ ㄈㄤˋ ㄑㄧˋ ㄏㄟ ㄒㄧㄡ ㄏㄟ ㄒㄧㄡ ˙ㄉㄜ ㄏㄨㄚˊ",
+            "en": "A wave crashed over the little boat! Still he paddled on. Heave-ho, heave-ho!"
+          }
+        ]
+      },
+      {
+        "id": "p05",
+        "image": "images/issun-boshi/p05.webp",
+        "alt": {
+          "ja": "おおきな おやしきの げたの そばで あいさつする いっすんぼうしと、おどろく だいじん",
+          "zh": "在大宅院的木屐旁打招呼的一寸法師，和嚇一跳的大臣",
+          "en": "Issun-boshi greeting from beside a pair of wooden sandals at a grand mansion, and the surprised minister"
+        },
+        "lines": [
+          {
+            "id": "p05-1",
+            "speaker": "narrator",
+            "style": "grand arrival",
+            "ja": "みやこに ついた いっすんぼうしは、おおきな おやしきの まえで おおごえを だしました。",
+            "zh": "到了京城，一寸法師在一座大宅院前大聲喊。",
+            "zhuyin": "ㄉㄠˋ ˙ㄌㄜ ㄐㄧㄥ ㄔㄥˊ ㄧ ㄘㄨㄣˋ ㄈㄚˇ ㄕ ㄗㄞˋ ㄧ ㄗㄨㄛˋ ㄉㄚˋ ㄓㄞˊ ㄩㄢˋ ㄑㄧㄢˊ ㄉㄚˋ ㄕㄥ ㄏㄢˇ",
+            "en": "When he reached the capital, Issun-boshi called out in a big voice in front of a grand mansion."
+          },
+          {
+            "id": "p05-2",
+            "speaker": "issun",
+            "style": "loud, polite, full of spirit",
+            "ja": "「ごめんください！ ここで はたらかせて ください！」",
+            "zh": "「有人在嗎？請讓我在這裡工作！」",
+            "zhuyin": "ㄧㄡˇ ㄖㄣˊ ㄗㄞˋ ˙ㄇㄚ ㄑㄧㄥˇ ㄖㄤˋ ㄨㄛˇ ㄗㄞˋ ㄓㄜˋ ㄌㄧˇ ㄍㄨㄥ ㄗㄨㄛˋ",
+            "en": "“Hello! Please let me work here!”"
+          },
+          {
+            "id": "p05-3",
+            "speaker": "narrator",
+            "style": "amused and warm",
+            "ja": "だいじんは、げたの そばの ちいさな すがたに びっくり。 でも、げんきな いっすんぼうしを きに いりました。",
+            "zh": "大臣看見木屐旁的小小身影，嚇了一跳，可是他很喜歡這個有精神的孩子。",
+            "zhuyin": "ㄉㄚˋ ㄔㄣˊ ㄎㄢˋ ㄐㄧㄢˋ ㄇㄨˋ ㄐㄧ ㄆㄤˊ ˙ㄉㄜ ㄒㄧㄠˇ ㄒㄧㄠˇ ㄕㄣ ㄧㄥˇ ㄒㄧㄚˋ ˙ㄌㄜ ㄧ ㄊㄧㄠˋ ㄎㄜˇ ㄕˋ ㄊㄚ ㄏㄣˇ ㄒㄧˇ ㄏㄨㄢ ㄓㄜˋ ˙ㄍㄜ ㄧㄡˇ ㄐㄧㄥ ㄕㄣˊ ˙ㄉㄜ ㄏㄞˊ ˙ㄗ",
+            "en": "The minister was amazed to find such a tiny boy beside his sandals, but he liked the lively little fellow at once."
+          }
+        ]
+      },
+      {
+        "id": "p06",
+        "image": "images/issun-boshi/p06.webp",
+        "alt": {
+          "ja": "だいじんの むすめの つくえの うえで、いっしょに ほんを よむ いっすんぼうし",
+          "zh": "在大臣女兒的書桌上，和她一起看書的一寸法師",
+          "en": "Issun-boshi reading a book with the minister's daughter on top of her desk"
+        },
+        "lines": [
+          {
+            "id": "p06-1",
+            "speaker": "narrator",
+            "style": "proud and warm",
+            "ja": "だいじんは いっすんぼうしに、むすめと いっしょに ほんを よむように たのみました。",
+            "zh": "大臣請一寸法師陪女兒讀書。",
+            "zhuyin": "ㄉㄚˋ ㄔㄣˊ ㄑㄧㄥˇ ㄧ ㄘㄨㄣˋ ㄈㄚˇ ㄕ ㄆㄟˊ ㄋㄩˇ ㄦˊ ㄉㄨˊ ㄕㄨ",
+            "en": "The minister asked Issun-boshi to read with his daughter."
+          },
+          {
+            "id": "p06-2",
+            "speaker": "narrator",
+            "style": "sweet and friendly",
+            "ja": "ふたりは なかよしに なりました。 だいじんは むすめを かわいがって、「おひめさま」と よんで いました。",
+            "zh": "兩個人成了好朋友。大臣很疼女兒，叫她「公主」。",
+            "zhuyin": "ㄌㄧㄤˇ ˙ㄍㄜ ㄖㄣˊ ㄔㄥˊ ˙ㄌㄜ ㄏㄠˇ ㄆㄥˊ ㄧㄡˇ ㄉㄚˋ ㄔㄣˊ ㄏㄣˇ ㄊㄥˊ ㄋㄩˇ ㄦˊ ㄐㄧㄠˋ ㄊㄚ ㄍㄨㄥ ㄓㄨˇ",
+            "en": "They became good friends. The minister fondly called his daughter “Princess.”"
+          }
+        ]
+      },
+      {
+        "id": "p07",
+        "image": "images/issun-boshi/p07.webp",
+        "alt": {
+          "ja": "きよみずでらからの かえりみち、おひめさまの まえに あらわれた おおきな あかおに",
+          "zh": "從清水寺回家的路上，出現在公主面前的大紅鬼",
+          "en": "A big red oni appearing before the princess on the way home from Kiyomizu Temple"
+        },
+        "lines": [
+          {
+            "id": "p07-1",
+            "speaker": "narrator",
+            "style": "calm, then building suspense",
+            "ja": "ある ひ、おひめさまと きよみずでらへ おまいりに いった かえりみち……",
+            "zh": "有一天，他陪公主去清水寺參拜，在回家的路上……",
+            "zhuyin": "ㄧㄡˇ ㄧ ㄊㄧㄢ ㄊㄚ ㄆㄟˊ ㄍㄨㄥ ㄓㄨˇ ㄑㄩˋ ㄑㄧㄥ ㄕㄨㄟˇ ㄙˋ ㄘㄢ ㄅㄞˋ ㄗㄞˋ ㄏㄨㄟˊ ㄐㄧㄚ ˙ㄉㄜ ㄌㄨˋ ㄕㄤˋ",
+            "en": "One day, on the way home from praying at Kiyomizu Temple with the princess…"
+          },
+          {
+            "id": "p07-2",
+            "speaker": "narrator",
+            "style": "sudden, big but not frightening",
+            "ja": "おおきな おにが あらわれました！",
+            "zh": "突然出現了一隻大鬼！",
+            "zhuyin": "ㄊㄨ ㄖㄢˊ ㄔㄨ ㄒㄧㄢˋ ˙ㄌㄜ ㄧ ㄓ ㄉㄚˋ ㄍㄨㄟˇ",
+            "en": "Suddenly, a great big oni appeared!"
+          },
+          {
+            "id": "p07-3",
+            "speaker": "akaoni",
+            "style": "big, blustery, booming ogre, more silly than scary",
+            "ja": "「その おひめさまを つれて いくぞ！」",
+            "zh": "「我要把公主帶走！」",
+            "zhuyin": "ㄨㄛˇ ㄧㄠˋ ㄅㄚˇ ㄍㄨㄥ ㄓㄨˇ ㄉㄞˋ ㄗㄡˇ",
+            "en": "“I'm taking that princess with me!”"
+          }
+        ]
+      },
+      {
+        "id": "p08",
+        "image": "images/issun-boshi/p08.webp",
+        "alt": {
+          "ja": "おなかを おさえる まるい かおの あかおに。 すけて みえる おなかの なかで、いっすんぼうしが はりの かたなで ちくちく。 そばに おひめさま",
+          "zh": "圓臉的大紅鬼捧著肚子，透過肚子可以看見一寸法師在裡面用針刀戳呀戳，公主在一旁看著",
+          "en": "A comical red oni clutching its tummy; a gentle see-through view shows Issun-boshi inside pricking with his needle sword, while the princess watches nearby"
+        },
+        "lines": [
+          {
+            "id": "p08-1",
+            "speaker": "issun",
+            "style": "small but fearless, ringing voice",
+            "ja": "「まて！ おひめさまに てを だすな！」",
+            "zh": "「站住！不准你碰公主！」",
+            "zhuyin": "ㄓㄢˋ ㄓㄨˋ ㄅㄨˋ ㄓㄨㄣˇ ㄋㄧˇ ㄆㄥˋ ㄍㄨㄥ ㄓㄨˇ",
+            "en": "“Stop! Don't you touch the princess!”"
+          },
+          {
+            "id": "p08-2",
+            "speaker": "narrator",
+            "style": "dramatic but playful",
+            "ja": "おには わらって、いっすんぼうしを つまみあげ、ぱくりと のみこんで しまいました。",
+            "zh": "大鬼哈哈大笑，把一寸法師捏起來，一口吞進了肚子裡。",
+            "zhuyin": "ㄉㄚˋ ㄍㄨㄟˇ ㄏㄚ ㄏㄚ ㄉㄚˋ ㄒㄧㄠˋ ㄅㄚˇ ㄧ ㄘㄨㄣˋ ㄈㄚˇ ㄕ ㄋㄧㄝ ㄑㄧˇ ㄌㄞˊ ㄧ ㄎㄡˇ ㄊㄨㄣ ㄐㄧㄣˋ ˙ㄌㄜ ㄉㄨˋ ˙ㄗ ㄌㄧˇ",
+            "en": "The oni laughed, picked him up, and swallowed him in one gulp!"
+          },
+          {
+            "id": "p08-3",
+            "speaker": "narrator",
+            "style": "mischievous and quick",
+            "ja": "でも いっすんぼうしは、おなかの なかで はりの かたなを ちくちく！",
+            "zh": "可是一寸法師在大鬼的肚子裡，用針刀戳呀戳！",
+            "zhuyin": "ㄎㄜˇ ㄕˋ ㄧ ㄘㄨㄣˋ ㄈㄚˇ ㄕ ㄗㄞˋ ㄉㄚˋ ㄍㄨㄟˇ ˙ㄉㄜ ㄉㄨˋ ˙ㄗ ㄌㄧˇ ㄩㄥˋ ㄓㄣ ㄉㄠ ㄔㄨㄛ ˙ㄧㄚ ㄔㄨㄛ",
+            "en": "But inside the oni's tummy, Issun-boshi went prick, prick with his needle sword!"
+          }
+        ]
+      },
+      {
+        "id": "p09",
+        "image": "images/issun-boshi/p09.webp",
+        "alt": {
+          "ja": "ほっとして いっすんぼうしの そばに しゃがむ おひめさまと、とおくへ にげて いく おに。 じめんに こづちが おちて いる",
+          "zh": "鬆了一口氣、蹲在一寸法師旁邊的公主，和逃向遠處的大鬼，地上掉著一把小槌子",
+          "en": "The relieved princess crouching beside Issun-boshi, the oni running off in the distance, and a little mallet left on the ground"
+        },
+        "lines": [
+          {
+            "id": "p09-1",
+            "speaker": "akaoni",
+            "style": "big ogre whimpering comically, giving up",
+            "ja": "「いたた、いたた！ まいった、まいった！」",
+            "zh": "「哎喲、哎喲！我投降，我投降！」",
+            "zhuyin": "ㄞ ㄧㄛ ㄞ ㄧㄛ ㄨㄛˇ ㄊㄡˊ ㄒㄧㄤˊ ㄨㄛˇ ㄊㄡˊ ㄒㄧㄤˊ",
+            "en": "“Ouch, ouch! I give up, I give up!”"
+          },
+          {
+            "id": "p09-2",
+            "speaker": "narrator",
+            "style": "brisk and funny",
+            "ja": "おには いっすんぼうしを ぽんと はきだすと、こづちを おとして にげて いきました。",
+            "zh": "大鬼把一寸法師吐了出來，慌慌張張地逃走，連小槌子都掉了。",
+            "zhuyin": "ㄉㄚˋ ㄍㄨㄟˇ ㄅㄚˇ ㄧ ㄘㄨㄣˋ ㄈㄚˇ ㄕ ㄊㄨˇ ˙ㄌㄜ ㄔㄨ ㄌㄞˊ ㄏㄨㄤ ㄏㄨㄤ ㄓㄤ ㄓㄤ ˙ㄉㄜ ㄊㄠˊ ㄗㄡˇ ㄌㄧㄢˊ ㄒㄧㄠˇ ㄔㄨㄟˊ ˙ㄗ ㄉㄡ ㄉㄧㄠˋ ˙ㄌㄜ",
+            "en": "The oni spat him out with a pop, dropped its little mallet, and ran away."
+          },
+          {
+            "id": "p09-3",
+            "speaker": "princess",
+            "style": "relieved and grateful, warm",
+            "ja": "「たすけて くれて、ありがとう！」",
+            "zh": "「謝謝你救了我！」",
+            "zhuyin": "ㄒㄧㄝˋ ˙ㄒㄧㄝ ㄋㄧˇ ㄐㄧㄡˋ ˙ㄌㄜ ㄨㄛˇ",
+            "en": "“Thank you for saving me!”"
+          }
+        ]
+      },
+      {
+        "id": "p10",
+        "image": "images/issun-boshi/p10.webp",
+        "alt": {
+          "ja": "こづちを ふる おひめさまと、ぐんぐん おおきく なる いっすんぼうし",
+          "zh": "揮著小槌子的公主，和越長越高的一寸法師",
+          "en": "The princess swinging the mallet as Issun-boshi grows taller and taller"
+        },
+        "lines": [
+          {
+            "id": "p10-1",
+            "speaker": "princess",
+            "style": "kind, bright young noblewoman",
+            "ja": "「あっ、うちでの こづち！ ねがいが かなうんだって。」",
+            "zh": "「啊，是萬寶槌！聽說它能實現願望！」",
+            "zhuyin": "ㄚ ㄕˋ ㄨㄢˋ ㄅㄠˇ ㄔㄨㄟˊ ㄊㄧㄥ ㄕㄨㄛ ㄊㄚ ㄋㄥˊ ㄕˊ ㄒㄧㄢˋ ㄩㄢˋ ㄨㄤˋ",
+            "en": "“Oh, the magic mallet! They say it grants wishes!”"
+          },
+          {
+            "id": "p10-2",
+            "speaker": "issun",
+            "style": "sincere and thoughtful",
+            "ja": "「おおきく なって、ふるさとで おとうさんと おかあさんを たすけたい！」",
+            "zh": "「我想長高，回家幫爸爸媽媽的忙！」",
+            "zhuyin": "ㄨㄛˇ ㄒㄧㄤˇ ㄓㄤˇ ㄍㄠ ㄏㄨㄟˊ ㄐㄧㄚ ㄅㄤ ㄅㄚˋ ˙ㄅㄚ ㄇㄚ ˙ㄇㄚ ˙ㄉㄜ ㄇㄤˊ",
+            "en": "“I want to grow tall and go home to help my parents!”"
+          },
+          {
+            "id": "p10-3",
+            "speaker": "narrator",
+            "style": "magical, rising with wonder",
+            "ja": "「おおきく なあれ、おおきく なあれ！」 おひめさまが こづちを ふると、いっすんぼうしは ぐんぐん のびました。",
+            "zh": "「變大吧，變大吧！」公主揮了揮小槌子，一寸法師越長越高。",
+            "zhuyin": "ㄅㄧㄢˋ ㄉㄚˋ ˙ㄅㄚ ㄅㄧㄢˋ ㄉㄚˋ ˙ㄅㄚ ㄍㄨㄥ ㄓㄨˇ ㄏㄨㄟ ˙ㄌㄜ ㄏㄨㄟ ㄒㄧㄠˇ ㄔㄨㄟˊ ˙ㄗ ㄧ ㄘㄨㄣˋ ㄈㄚˇ ㄕ ㄩㄝˋ ㄓㄤˇ ㄩㄝˋ ㄍㄠ",
+            "en": "“Grow big, grow big!” The princess swung the mallet, and up, up he grew!"
+          }
+        ]
+      },
+      {
+        "id": "end",
+        "image": "images/issun-boshi/end.webp",
+        "alt": {
+          "ja": "いえの まえで、りっぱな わかものに なった いっすんぼうしを むかえる おじいさんと おばあさん。 いっすんぼうしは おばあさんの みずおけに てを のばす",
+          "zh": "在家門口，老爺爺和老奶奶迎接長成青年的一寸法師，他伸手去接老奶奶手上的水桶",
+          "en": "At their doorway, the old couple welcome Issun-boshi home as a fine young man; he reaches for the water bucket the old woman is carrying"
+        },
+        "lines": [
+          {
+            "id": "end-1",
+            "speaker": "narrator",
+            "style": "warm homecoming",
+            "ja": "いっすんぼうしが かえると、おじいさんと おばあさんは うれしなみだを ながしました。",
+            "zh": "一寸法師回家了，老爺爺和老奶奶高興得流下眼淚。",
+            "zhuyin": "ㄧ ㄘㄨㄣˋ ㄈㄚˇ ㄕ ㄏㄨㄟˊ ㄐㄧㄚ ˙ㄌㄜ ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄏㄢˋ ㄌㄠˇ ㄋㄞˇ ˙ㄋㄞ ㄍㄠ ㄒㄧㄥˋ ˙ㄉㄜ ㄌㄧㄡˊ ㄒㄧㄚˋ ㄧㄢˇ ㄌㄟˋ",
+            "en": "When Issun-boshi came home, the old man and the old woman cried happy tears."
+          },
+          {
+            "id": "end-2",
+            "speaker": "grandma",
+            "style": "tender and proud grandmother",
+            "ja": "「ちいさくても おおきくても、あなたは わたしたちの じまんの こどもだよ。」",
+            "zh": "「不管你是小小的，還是高高的，我們都為你感到驕傲！」",
+            "zhuyin": "ㄅㄨˋ ㄍㄨㄢˇ ㄋㄧˇ ㄕˋ ㄒㄧㄠˇ ㄒㄧㄠˇ ˙ㄉㄜ ㄏㄞˊ ㄕˋ ㄍㄠ ㄍㄠ ˙ㄉㄜ ㄨㄛˇ ˙ㄇㄣ ㄉㄡ ㄨㄟˋ ㄋㄧˇ ㄍㄢˇ ㄉㄠˋ ㄐㄧㄠ ㄠˋ",
+            "en": "“Big or small, we will always be proud of you.”"
+          },
+          {
+            "id": "end-3",
+            "speaker": "narrator",
+            "style": "warm, happy close, slow and clear",
+            "ja": "それから いっすんぼうしは みずくみを てつだい、みんなで なかよく くらしました。 おしまい。",
+            "zh": "從此，一寸法師幫忙提水，一家人快快樂樂地生活。故事說完了。",
+            "zhuyin": "ㄘㄨㄥˊ ㄘˇ ㄧ ㄘㄨㄣˋ ㄈㄚˇ ㄕ ㄅㄤ ㄇㄤˊ ㄊㄧˊ ㄕㄨㄟˇ ㄧ ㄐㄧㄚ ㄖㄣˊ ㄎㄨㄞˋ ㄎㄨㄞˋ ㄌㄜˋ ㄌㄜˋ ˙ㄉㄜ ㄕㄥ ㄏㄨㄛˊ ㄍㄨˋ ㄕˋ ㄕㄨㄛ ㄨㄢˊ ˙ㄌㄜ",
+            "en": "From then on, he helped fetch water, and they all lived happily together. The end."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "tsuru-no-ongaeshi",
+    "title": {
+      "ja": "{鶴|つる}の{恩返|おんがえ}し",
+      "zh": "白鶴報恩",
+      "zhuyin": "ㄅㄞˊ ㄏㄜˋ ㄅㄠˋ ㄣ",
+      "en": "The Grateful Crane"
+    },
+    "tagline": {
+      "ja": "たすけて もらった つると、たいせつな やくそくの おはなし",
+      "zh": "一隻被救的白鶴，和一個重要的約定",
+      "en": "A rescued crane, and a promise that mattered"
+    },
+    "origin": {
+      "ja": "にほんの むかしばなし",
+      "zh": "日本民間故事",
+      "en": "A Japanese folktale"
+    },
+    "credit": {
+      "ja": "つるの おんがえしは、にほんの あちこちで かたられて きた むかしばなしです。 わかものが つるを たすけ、つるが その およめさんに なる おはなしも あり、やまがたけん なんようしに つたわるのも その おはなしです。 この えほんは、つるが むすめの すがたで、おじいさんと おばあさんの もとに やって くる おはなしを もとに しました。 つるが じぶんの はねを ぬく ようすは えがかず、おばあさんが のぞいて しまう わけは、むすめを しんぱいした から と しました。",
+      "zh": "〈白鶴報恩〉是日本各地流傳的民間故事。有些版本裡，救鶴的是年輕人，鶴後來成了他的妻子，山形縣南陽市流傳的就是這個版本。這本繪本採用的是白鶴化成姑娘，來到老爺爺和老奶奶家的版本。本書沒有畫出白鶴拔羽毛的樣子，並把老奶奶偷看的原因，寫成是因為擔心姑娘。",
+      "en": "The Grateful Crane is told all over Japan. In some versions a young man saves the crane and she becomes his wife; that is the version handed down in Nan'yō City, Yamagata. This book follows the version in which the crane comes to an old couple as a young woman. It does not show the crane plucking her feathers, and the old woman peeks into the room because she is worried about the girl."
+    },
+    "theme": {
+      "accent": "#2f4f86",
+      "soft": "#dfe7f3"
+    },
+    "pages": [
+      {
+        "id": "cover",
+        "image": "images/tsuru-no-ongaeshi/cover.webp",
+        "alt": {
+          "ja": "ゆきの ふる よる、ちいさな いえの うえを とぶ いちわの つる",
+          "zh": "下雪的夜晚，飛過小屋上空的一隻白鶴",
+          "en": "A crane flying over a little house on a snowy night"
+        },
+        "lines": [
+          {
+            "id": "cover-1",
+            "speaker": "narrator",
+            "style": "warm, inviting storyteller opening a picture book, hushed like falling snow",
+            "ja": "にほんの むかしばなし「{鶴|つる}の{恩返|おんがえ}し」",
+            "zh": "日本民間故事〈白鶴報恩〉",
+            "zhuyin": "ㄖˋ ㄅㄣˇ ㄇㄧㄣˊ ㄐㄧㄢ ㄍㄨˋ ㄕˋ ㄅㄞˊ ㄏㄜˋ ㄅㄠˋ ㄣ",
+            "en": "A Japanese folktale: The Grateful Crane"
+          },
+          {
+            "id": "cover-2",
+            "speaker": "narrator",
+            "style": "soft and curious",
+            "ja": "たすけて もらった つるは、どんな おれいを するのかな？",
+            "zh": "被救的白鶴，會怎麼報答呢？",
+            "zhuyin": "ㄅㄟˋ ㄐㄧㄡˋ ˙ㄉㄜ ㄅㄞˊ ㄏㄜˋ ㄏㄨㄟˋ ㄗㄣˇ ˙ㄇㄜ ㄅㄠˋ ㄉㄚˊ ˙ㄋㄜ",
+            "en": "How will the rescued crane say thank you?"
+          }
+        ]
+      },
+      {
+        "id": "p01",
+        "image": "images/tsuru-no-ongaeshi/p01.webp",
+        "alt": {
+          "ja": "ゆきの なか、なわの わなに かかった つるを みつける おじいさん",
+          "zh": "在雪地裡，發現鶴被繩圈陷阱困住的老爺爺",
+          "en": "The old man finding a crane caught in a rope snare in the snow"
+        },
+        "lines": [
+          {
+            "id": "p01-1",
+            "speaker": "narrator",
+            "style": "gentle once-upon-a-time storyteller, quiet winter mood",
+            "ja": "むかし むかし、ゆきの ふかい むらに、やさしい おじいさんと おばあさんが いました。",
+            "zh": "從前，在積滿雪的村子裡，住著一對善良的老爺爺和老奶奶。",
+            "zhuyin": "ㄘㄨㄥˊ ㄑㄧㄢˊ ㄗㄞˋ ㄐㄧ ㄇㄢˇ ㄒㄩㄝˇ ˙ㄉㄜ ㄘㄨㄣ ˙ㄗ ㄌㄧˇ ㄓㄨˋ ˙ㄓㄜ ㄧ ㄉㄨㄟˋ ㄕㄢˋ ㄌㄧㄤˊ ˙ㄉㄜ ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄏㄢˋ ㄌㄠˇ ㄋㄞˇ ˙ㄋㄞ",
+            "en": "Long ago, a kind old man and old woman lived in a snowy village."
+          },
+          {
+            "id": "p01-2",
+            "speaker": "narrator",
+            "style": "quiet, a little sad",
+            "ja": "ふたりには、あたたかい ふとんを かう おかねも ありませんでした。",
+            "zh": "他們窮得連一床暖和的棉被都買不起。",
+            "zhuyin": "ㄊㄚ ˙ㄇㄣ ㄑㄩㄥˊ ˙ㄉㄜ ㄌㄧㄢˊ ㄧ ㄔㄨㄤˊ ㄋㄨㄢˇ ˙ㄏㄨㄛ ˙ㄉㄜ ㄇㄧㄢˊ ㄅㄟˋ ㄉㄡ ㄇㄞˇ ㄅㄨˋ ㄑㄧˇ",
+            "en": "They didn't even have enough money for a warm quilt."
+          },
+          {
+            "id": "p01-3",
+            "speaker": "narrator",
+            "style": "concerned, noticing someone in trouble",
+            "ja": "ある ひ、まちで まきを うった かえりみち、おじいさんは わなに かかった つるを みつけました。",
+            "zh": "一天，老爺爺賣完柴回家時，看見一隻困在陷阱裡的鶴。",
+            "zhuyin": "ㄧ ㄊㄧㄢ ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄇㄞˋ ㄨㄢˊ ㄔㄞˊ ㄏㄨㄟˊ ㄐㄧㄚ ㄕˊ ㄎㄢˋ ㄐㄧㄢˋ ㄧ ㄓ ㄎㄨㄣˋ ㄗㄞˋ ㄒㄧㄢˋ ㄐㄧㄥˇ ㄌㄧˇ ˙ㄉㄜ ㄏㄜˋ",
+            "en": "One day, on his way home from selling firewood, the old man found a crane caught in a snare."
+          }
+        ]
+      },
+      {
+        "id": "p02",
+        "image": "images/tsuru-no-ongaeshi/p02.webp",
+        "alt": {
+          "ja": "わなを はずして もらい、そらへ とびたつ つるを みあげる おじいさん",
+          "zh": "被解開陷阱、飛上天空的鶴，和抬頭看的老爺爺",
+          "en": "The old man looking up as the freed crane takes off into the sky"
+        },
+        "lines": [
+          {
+            "id": "p02-1",
+            "speaker": "ojiisan",
+            "style": "gentle, kind grandfather, soothing",
+            "ja": "「かわいそうに。 いま はずして あげるからね。」",
+            "zh": "「好可憐啊，我馬上幫你解開。」",
+            "zhuyin": "ㄏㄠˇ ㄎㄜˇ ㄌㄧㄢˊ ˙ㄚ ㄨㄛˇ ㄇㄚˇ ㄕㄤˋ ㄅㄤ ㄋㄧˇ ㄐㄧㄝˇ ㄎㄞ",
+            "en": "“You poor thing. I'll set you free.”"
+          },
+          {
+            "id": "p02-2",
+            "speaker": "narrator",
+            "style": "uplifting, like wings opening",
+            "ja": "おじいさんは わなの なわを ほどきました。 つるは そらへ まいあがり、おじいさんの うえを くるりと まわって とんで いきました。",
+            "zh": "老爺爺解開了繩圈。白鶴飛上天空，在老爺爺頭上繞了一圈，才飛走。",
+            "zhuyin": "ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄐㄧㄝˇ ㄎㄞ ˙ㄌㄜ ㄕㄥˊ ㄑㄩㄢ ㄅㄞˊ ㄏㄜˋ ㄈㄟ ㄕㄤˋ ㄊㄧㄢ ㄎㄨㄥ ㄗㄞˋ ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄊㄡˊ ㄕㄤˋ ㄖㄠˋ ˙ㄌㄜ ㄧ ㄑㄩㄢ ㄘㄞˊ ㄈㄟ ㄗㄡˇ",
+            "en": "The old man untied the snare. The crane rose into the sky, circled once over his head, and flew away."
+          },
+          {
+            "id": "p02-3",
+            "speaker": "narrator",
+            "style": "tender",
+            "ja": "まるで「ありがとう」と いって いるようでした。",
+            "zh": "好像在說「謝謝」一樣。",
+            "zhuyin": "ㄏㄠˇ ㄒㄧㄤˋ ㄗㄞˋ ㄕㄨㄛ ㄒㄧㄝˋ ˙ㄒㄧㄝ ㄧ ㄧㄤˋ",
+            "en": "It seemed to be saying “thank you.”"
+          }
+        ]
+      },
+      {
+        "id": "p03",
+        "image": "images/tsuru-no-ongaeshi/p03.webp",
+        "alt": {
+          "ja": "ゆきの よる、とを あけて わかい むすめを むかえいれる おじいさんと おばあさん",
+          "zh": "下雪的晚上，打開門迎接年輕姑娘的老爺爺和老奶奶",
+          "en": "On a snowy night, the old couple open their door to a young woman"
+        },
+        "lines": [
+          {
+            "id": "p03-1",
+            "speaker": "narrator",
+            "style": "quiet night, a soft knock",
+            "ja": "その よる、とを トントンと たたく おとが しました。",
+            "zh": "那天晚上，有人咚咚地敲門。",
+            "zhuyin": "ㄋㄚˋ ㄊㄧㄢ ㄨㄢˇ ㄕㄤˋ ㄧㄡˇ ㄖㄣˊ ㄉㄨㄥ ㄉㄨㄥ ˙ㄉㄜ ㄑㄧㄠ ㄇㄣˊ",
+            "en": "That night, someone knocked at the door: knock, knock!"
+          },
+          {
+            "id": "p03-2",
+            "speaker": "daughter",
+            "style": "gentle, polite young woman, a little shy and cold",
+            "ja": "「そとは ゆきで、とても さむいのです。 ひとばん とめて いただけませんか。」",
+            "zh": "「外面下著大雪，好冷喔。可以讓我借住一晚嗎？」",
+            "zhuyin": "ㄨㄞˋ ㄇㄧㄢˋ ㄒㄧㄚˋ ˙ㄓㄜ ㄉㄚˋ ㄒㄩㄝˇ ㄏㄠˇ ㄌㄥˇ ㄛ ㄎㄜˇ ㄧˇ ㄖㄤˋ ㄨㄛˇ ㄐㄧㄝˋ ㄓㄨˋ ㄧ ㄨㄢˇ ˙ㄇㄚ",
+            "en": "“It's snowing, and I'm so cold. May I stay the night?”"
+          },
+          {
+            "id": "p03-3",
+            "speaker": "grandma",
+            "style": "warm, motherly grandmother",
+            "ja": "「まあ、さむかったでしょう。 さあ、はいって あたたまって。」",
+            "zh": "「哎呀，一定很冷吧，快進來取暖。」",
+            "zhuyin": "ㄞ ㄧㄚ ㄧ ㄉㄧㄥˋ ㄏㄣˇ ㄌㄥˇ ˙ㄅㄚ ㄎㄨㄞˋ ㄐㄧㄣˋ ㄌㄞˊ ㄑㄩˇ ㄋㄨㄢˇ",
+            "en": "“Oh, you must be freezing! Come in and get warm.”"
+          }
+        ]
+      },
+      {
+        "id": "p04",
+        "image": "images/tsuru-no-ongaeshi/p04.webp",
+        "alt": {
+          "ja": "いろりばたで、おじいさんと おばあさんと わらいあう むすめ",
+          "zh": "在日式地爐旁，和老爺爺、老奶奶一起笑的姑娘",
+          "en": "The young woman laughing with the old couple by the sunken irori hearth"
+        },
+        "lines": [
+          {
+            "id": "p04-1",
+            "speaker": "narrator",
+            "style": "cozy and warm",
+            "ja": "ゆきは なんにちも ふりつづき、むすめは いえの しごとを てつだいました。",
+            "zh": "雪下了好多天，姑娘也幫忙做家事。",
+            "zhuyin": "ㄒㄩㄝˇ ㄒㄧㄚˋ ˙ㄌㄜ ㄏㄠˇ ㄉㄨㄛ ㄊㄧㄢ ㄍㄨ ˙ㄋㄧㄤ ㄧㄝˇ ㄅㄤ ㄇㄤˊ ㄗㄨㄛˋ ㄐㄧㄚ ㄕˋ",
+            "en": "The snow fell for days, and the girl helped with the chores."
+          },
+          {
+            "id": "p04-2",
+            "speaker": "daughter",
+            "style": "gentle, polite young woman, hopeful",
+            "ja": "「ここで いっしょに くらしても いいですか。」",
+            "zh": "「我可以留在這裡，和你們一起住嗎？」",
+            "zhuyin": "ㄨㄛˇ ㄎㄜˇ ㄧˇ ㄌㄧㄡˊ ㄗㄞˋ ㄓㄜˋ ㄌㄧˇ ㄏㄢˋ ㄋㄧˇ ˙ㄇㄣ ㄧ ㄑㄧˇ ㄓㄨˋ ˙ㄇㄚ",
+            "en": "“May I stay and live here with you?”"
+          },
+          {
+            "id": "p04-3",
+            "speaker": "narrator",
+            "style": "happy, heartwarming",
+            "ja": "こどもの いない ふたりは おおよろこびで、むすめを じぶんたちの こどもとして むかえました。",
+            "zh": "沒有孩子的兩個老人好高興，把她當成自己的女兒。",
+            "zhuyin": "ㄇㄟˊ ㄧㄡˇ ㄏㄞˊ ˙ㄗ ˙ㄉㄜ ㄌㄧㄤˇ ˙ㄍㄜ ㄌㄠˇ ㄖㄣˊ ㄏㄠˇ ㄍㄠ ㄒㄧㄥˋ ㄅㄚˇ ㄊㄚ ㄉㄤ ㄔㄥˊ ㄗˋ ㄐㄧˇ ˙ㄉㄜ ㄋㄩˇ ㄦˊ",
+            "en": "The old couple had no children of their own, and they happily welcomed her as their daughter."
+          }
+        ]
+      },
+      {
+        "id": "p05",
+        "image": "images/tsuru-no-ongaeshi/p05.webp",
+        "alt": {
+          "ja": "ふるい はたおりきの ある へやの まえで、ていねいに おねがいする むすめと、うなずく おじいさんと おばあさん",
+          "zh": "在放著舊織布機的房間前，有禮貌地請求的姑娘，和點頭的老爺爺老奶奶",
+          "en": "The young woman politely asking a favor at the door of a room with an old loom, as the old couple nod"
+        },
+        "lines": [
+          {
+            "id": "p05-1",
+            "speaker": "daughter",
+            "style": "gentle, polite young woman, grateful",
+            "ja": "「おせわに なった おれいに、ぬのを おりたいのです。 いとを すこし かって きて いただけませんか。」",
+            "zh": "「我想織布，報答你們的照顧。可以幫我買一些線回來嗎？」",
+            "zhuyin": "ㄨㄛˇ ㄒㄧㄤˇ ㄓ ㄅㄨˋ ㄅㄠˋ ㄉㄚˊ ㄋㄧˇ ˙ㄇㄣ ˙ㄉㄜ ㄓㄠˋ ㄍㄨˋ ㄎㄜˇ ㄧˇ ㄅㄤ ㄨㄛˇ ㄇㄞˇ ㄧ ㄒㄧㄝ ㄒㄧㄢˋ ㄏㄨㄟˊ ㄌㄞˊ ˙ㄇㄚ",
+            "en": "“I'd like to weave some cloth to thank you for your kindness. Could you buy me a little thread?”"
+          },
+          {
+            "id": "p05-2",
+            "speaker": "daughter",
+            "style": "soft but very serious, a solemn request",
+            "ja": "「でも、おって いる あいだは、けっして のぞかないで ください。 のぞかれたら、ここには いられません。」",
+            "zh": "「可是我織布的時候，千萬不要偷看喔。不然，我就不能留下來了。」",
+            "zhuyin": "ㄎㄜˇ ㄕˋ ㄨㄛˇ ㄓ ㄅㄨˋ ˙ㄉㄜ ㄕˊ ㄏㄡˋ ㄑㄧㄢ ㄨㄢˋ ㄅㄨˋ ㄧㄠˋ ㄊㄡ ㄎㄢˋ ㄛ ㄅㄨˋ ㄖㄢˊ ㄨㄛˇ ㄐㄧㄡˋ ㄅㄨˋ ㄋㄥˊ ㄌㄧㄡˊ ㄒㄧㄚˋ ㄌㄞˊ ˙ㄌㄜ",
+            "en": "“But please don't peek while I weave. If you do, I can't stay.”"
+          },
+          {
+            "id": "p05-3",
+            "speaker": "narrator",
+            "style": "steady and sincere",
+            "ja": "ふたりは「やくそくするよ」と うなずき、おじいさんは いとを かって きました。",
+            "zh": "兩個老人點點頭：「我們答應妳。」老爺爺就去買了線回來。",
+            "zhuyin": "ㄌㄧㄤˇ ˙ㄍㄜ ㄌㄠˇ ㄖㄣˊ ㄉㄧㄢˇ ㄉㄧㄢˇ ㄊㄡˊ ㄨㄛˇ ˙ㄇㄣ ㄉㄚ ˙ㄧㄥ ㄋㄧˇ ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄐㄧㄡˋ ㄑㄩˋ ㄇㄞˇ ˙ㄌㄜ ㄒㄧㄢˋ ㄏㄨㄟˊ ㄌㄞˊ",
+            "en": "“We promise,” said the old couple, and the old man went and bought the thread."
+          }
+        ]
+      },
+      {
+        "id": "p06",
+        "image": "images/tsuru-no-ongaeshi/p06.webp",
+        "alt": {
+          "ja": "しょうじの まえで、つかれた かおの むすめが、しろく かがやく ぬのを さしだす",
+          "zh": "在紙門前，一臉疲倦的姑娘捧出白得發亮的布",
+          "en": "In front of the paper door, the tired young woman holds out a shining white cloth she has woven"
+        },
+        "lines": [
+          {
+            "id": "p06-1",
+            "speaker": "narrator",
+            "style": "rhythmic like a loom, hushed",
+            "ja": "とん からり、とん からり。 はたおりの おとが、みっか みばん つづきました。",
+            "zh": "咚、喀啦，咚、喀啦。織布的聲音持續了三天三夜。",
+            "zhuyin": "ㄉㄨㄥ ㄎㄚ ㄌㄚ ㄉㄨㄥ ㄎㄚ ㄌㄚ ㄓ ㄅㄨˋ ˙ㄉㄜ ㄕㄥ ㄧㄣ ㄔˊ ㄒㄩˋ ˙ㄌㄜ ㄙㄢ ㄊㄧㄢ ㄙㄢ ㄧㄝˋ",
+            "en": "Clack, clatter, clack, clatter. The sound of weaving went on for three days and three nights."
+          },
+          {
+            "id": "p06-2",
+            "speaker": "narrator",
+            "style": "awed, admiring beauty",
+            "ja": "やっと でて きた むすめは、つかれた かおで、ゆきのように しろく かがやく ぬのを さしだしました。",
+            "zh": "姑娘終於走出來了。她一臉疲倦，捧出一匹像雪一樣白、閃閃發亮的布。",
+            "zhuyin": "ㄍㄨ ˙ㄋㄧㄤ ㄓㄨㄥ ㄩˊ ㄗㄡˇ ㄔㄨ ㄌㄞˊ ˙ㄌㄜ ㄊㄚ ㄧ ㄌㄧㄢˇ ㄆㄧˊ ㄐㄩㄢˋ ㄆㄥˇ ㄔㄨ ㄧ ㄆㄧˇ ㄒㄧㄤˋ ㄒㄩㄝˇ ㄧ ㄧㄤˋ ㄅㄞˊ ㄕㄢˇ ㄕㄢˇ ㄈㄚ ㄌㄧㄤˋ ˙ㄉㄜ ㄅㄨˋ",
+            "en": "At last the girl came out, looking very tired, and held out a cloth that shone as white as snow."
+          }
+        ]
+      },
+      {
+        "id": "p07",
+        "image": "images/tsuru-no-ongaeshi/p07.webp",
+        "alt": {
+          "ja": "まちで ぬのを うって、ふとんと おこめと いとの たばを もって かえる おじいさん",
+          "zh": "在鎮上賣掉布，帶著棉被、米和一捆線回家的老爺爺",
+          "en": "The old man coming home from town with a quilt, rice, and a bundle of thread after selling the cloth"
+        },
+        "lines": [
+          {
+            "id": "p07-1",
+            "speaker": "narrator",
+            "style": "pleased and relieved",
+            "ja": "おじいさんが まちへ ぬのを もって いくと、たかい ねだんで うれました。",
+            "zh": "老爺爺把布拿到鎮上，賣了好價錢。",
+            "zhuyin": "ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄅㄚˇ ㄅㄨˋ ㄋㄚˊ ㄉㄠˋ ㄓㄣˋ ㄕㄤˋ ㄇㄞˋ ˙ㄌㄜ ㄏㄠˇ ㄐㄧㄚˋ ㄑㄧㄢˊ",
+            "en": "The old man took the cloth to town, and it sold for a very high price."
+          },
+          {
+            "id": "p07-2",
+            "speaker": "narrator",
+            "style": "warm and grateful",
+            "ja": "おかげで、あたたかい ふとんと おこめと、つぎの ぬのの ための いとが かえました。",
+            "zh": "他買了一床暖和的棉被、一些米，還有再織布要用的線。",
+            "zhuyin": "ㄊㄚ ㄇㄞˇ ˙ㄌㄜ ㄧ ㄔㄨㄤˊ ㄋㄨㄢˇ ˙ㄏㄨㄛ ˙ㄉㄜ ㄇㄧㄢˊ ㄅㄟˋ ㄧ ㄒㄧㄝ ㄇㄧˇ ㄏㄞˊ ㄧㄡˇ ㄗㄞˋ ㄓ ㄅㄨˋ ㄧㄠˋ ㄩㄥˋ ˙ㄉㄜ ㄒㄧㄢˋ",
+            "en": "With the money he bought a warm quilt, some rice, and more thread."
+          },
+          {
+            "id": "p07-3",
+            "speaker": "narrator",
+            "style": "quiet, a hint of worry",
+            "ja": "ふたりが ふゆを こせるように、むすめは また ぬのを おりはじめました。",
+            "zh": "為了讓兩個老人平安過冬，姑娘又開始織布。",
+            "zhuyin": "ㄨㄟˋ ˙ㄌㄜ ㄖㄤˋ ㄌㄧㄤˇ ˙ㄍㄜ ㄌㄠˇ ㄖㄣˊ ㄆㄧㄥˊ ㄢ ㄍㄨㄛˋ ㄉㄨㄥ ㄍㄨ ˙ㄋㄧㄤ ㄧㄡˋ ㄎㄞ ㄕˇ ㄓ ㄅㄨˋ",
+            "en": "To help them through the winter, the girl began weaving again."
+          }
+        ]
+      },
+      {
+        "id": "p08",
+        "image": "images/tsuru-no-ongaeshi/p08.webp",
+        "alt": {
+          "ja": "しょうじを ゆび いっぽんぶん そっと あける おばあさん。 なかは まだ みえない",
+          "zh": "輕輕把紙門拉開一條縫的老奶奶，還看不見裡面",
+          "en": "The old woman sliding the paper door open a finger's width; what is inside is still hidden"
+        },
+        "lines": [
+          {
+            "id": "p08-1",
+            "speaker": "narrator",
+            "style": "rhythmic, then concerned",
+            "ja": "また とん からり。 なんにち たっても、むすめは でて きません。",
+            "zh": "房裡又響起咚、喀啦的聲音。過了好幾天，姑娘還是沒有出來。",
+            "zhuyin": "ㄈㄤˊ ㄌㄧˇ ㄧㄡˋ ㄒㄧㄤˇ ㄑㄧˇ ㄉㄨㄥ ㄎㄚ ㄌㄚ ˙ㄉㄜ ㄕㄥ ㄧㄣ ㄍㄨㄛˋ ˙ㄌㄜ ㄏㄠˇ ㄐㄧˇ ㄊㄧㄢ ㄍㄨ ˙ㄋㄧㄤ ㄏㄞˊ ㄕˋ ㄇㄟˊ ㄧㄡˇ ㄔㄨ ㄌㄞˊ",
+            "en": "Clack, clatter went the loom again. Days passed, but the girl did not come out."
+          },
+          {
+            "id": "p08-2",
+            "speaker": "grandma",
+            "style": "worried, whispering grandmother",
+            "ja": "「だいじょうぶかい？ へんじを して おくれ。」",
+            "zh": "「孩子，妳還好嗎？回答我一聲呀！」",
+            "zhuyin": "ㄏㄞˊ ˙ㄗ ㄋㄧˇ ㄏㄞˊ ㄏㄠˇ ˙ㄇㄚ ㄏㄨㄟˊ ㄉㄚˊ ㄨㄛˇ ㄧ ㄕㄥ ˙ㄧㄚ",
+            "en": "“Are you all right, dear? Please answer me!”"
+          },
+          {
+            "id": "p08-3",
+            "speaker": "narrator",
+            "style": "hushed, holding breath",
+            "ja": "へんじは ありません。 おばあさんは しんぱいで たまらず、やくそくを やぶって、そっと しょうじを あけました。",
+            "zh": "沒有人回答。老奶奶擔心得不得了，還是違背了約定，輕輕拉開了紙門。",
+            "zhuyin": "ㄇㄟˊ ㄧㄡˇ ㄖㄣˊ ㄏㄨㄟˊ ㄉㄚˊ ㄌㄠˇ ㄋㄞˇ ˙ㄋㄞ ㄉㄢ ㄒㄧㄣ ˙ㄉㄜ ㄅㄨˋ ㄉㄜˊ ㄌㄧㄠˇ ㄏㄞˊ ㄕˋ ㄨㄟˊ ㄅㄟˋ ˙ㄌㄜ ㄩㄝ ㄉㄧㄥˋ ㄑㄧㄥ ㄑㄧㄥ ㄌㄚ ㄎㄞ ˙ㄌㄜ ㄓˇ ㄇㄣˊ",
+            "en": "No answer came. Terribly worried, the old woman broke her promise and quietly slid the paper door open."
+          }
+        ]
+      },
+      {
+        "id": "p09",
+        "image": "images/tsuru-no-ongaeshi/p09.webp",
+        "alt": {
+          "ja": "はたおりきの まえで、じぶんの はねを ぬのに おりこむ いちわの つる。 そばに はねが すこし おちて いる",
+          "zh": "在織布機前，把自己的羽毛織進布裡的一隻白鶴，旁邊散落著幾根羽毛",
+          "en": "A crane at the loom, weaving her own white feathers into the cloth, with a few loose feathers nearby"
+        },
+        "lines": [
+          {
+            "id": "p09-1",
+            "speaker": "narrator",
+            "style": "quiet surprise, gentle and slow",
+            "ja": "そこに いたのは、むすめでは なく、いちわの つるでした。",
+            "zh": "房裡的不是姑娘，而是一隻白鶴。",
+            "zhuyin": "ㄈㄤˊ ㄌㄧˇ ˙ㄉㄜ ㄅㄨˋ ㄕˋ ㄍㄨ ˙ㄋㄧㄤ ㄦˊ ㄕˋ ㄧ ㄓ ㄅㄞˊ ㄏㄜˋ",
+            "en": "Inside was not the girl, but a crane."
+          },
+          {
+            "id": "p09-2",
+            "speaker": "narrator",
+            "style": "tender and a little sad",
+            "ja": "つるは じぶんの はねを、ぬのに おりこんで いたのです。 だから、あんなに つかれて いたのでした。",
+            "zh": "白鶴正把自己的羽毛織進布裡。難怪她那麼累。",
+            "zhuyin": "ㄅㄞˊ ㄏㄜˋ ㄓㄥˋ ㄅㄚˇ ㄗˋ ㄐㄧˇ ˙ㄉㄜ ㄩˇ ㄇㄠˊ ㄓ ㄐㄧㄣˋ ㄅㄨˋ ㄌㄧˇ ㄋㄢˊ ㄍㄨㄞˋ ㄊㄚ ㄋㄚˋ ˙ㄇㄜ ㄌㄟˋ",
+            "en": "The crane was weaving her own feathers into the cloth. That was why she had been so tired."
+          },
+          {
+            "id": "p09-3",
+            "speaker": "narrator",
+            "style": "gentle, magical and quiet",
+            "ja": "つるは おばあさんに きが つくと、むすめの すがたに もどりました。",
+            "zh": "白鶴發現了老奶奶，就變回了姑娘的模樣。",
+            "zhuyin": "ㄅㄞˊ ㄏㄜˋ ㄈㄚ ㄒㄧㄢˋ ˙ㄌㄜ ㄌㄠˇ ㄋㄞˇ ˙ㄋㄞ ㄐㄧㄡˋ ㄅㄧㄢˋ ㄏㄨㄟˊ ˙ㄌㄜ ㄍㄨ ˙ㄋㄧㄤ ˙ㄉㄜ ㄇㄨˊ ㄧㄤˋ",
+            "en": "When the crane saw the old woman, she changed back into the girl."
+          }
+        ]
+      },
+      {
+        "id": "p10",
+        "image": "images/tsuru-no-ongaeshi/p10.webp",
+        "alt": {
+          "ja": "いろりの そばで わかれを つげる むすめと、なみだぐむ おじいさんと おばあさん",
+          "zh": "在地爐旁告別的姑娘，和眼眶泛淚的老爺爺老奶奶",
+          "en": "The young woman saying goodbye by the hearth, as the old couple hold back tears"
+        },
+        "lines": [
+          {
+            "id": "p10-1",
+            "speaker": "daughter",
+            "style": "gentle and sad, calm farewell",
+            "ja": "「わたしは、あの ひ たすけて いただいた つるです。 おれいが したくて、ここへ きました。」",
+            "zh": "「我就是那天被您救的鶴，是來報答你們的。」",
+            "zhuyin": "ㄨㄛˇ ㄐㄧㄡˋ ㄕˋ ㄋㄚˋ ㄊㄧㄢ ㄅㄟˋ ㄋㄧㄣˊ ㄐㄧㄡˋ ˙ㄉㄜ ㄏㄜˋ ㄕˋ ㄌㄞˊ ㄅㄠˋ ㄉㄚˊ ㄋㄧˇ ˙ㄇㄣ ˙ㄉㄜ",
+            "en": "“I am the crane you saved that day. I came here to thank you.”"
+          },
+          {
+            "id": "p10-2",
+            "speaker": "daughter",
+            "style": "gentle and sad, calm farewell",
+            "ja": "「しんぱいして くださったのですね。 でも、ほんとうの すがたを みられたので、もう ここには いられません。」",
+            "zh": "「我知道您是擔心我。可是您看見了我真正的樣子，我不能再留下來了。」",
+            "zhuyin": "ㄨㄛˇ ㄓ ㄉㄠˋ ㄋㄧㄣˊ ㄕˋ ㄉㄢ ㄒㄧㄣ ㄨㄛˇ ㄎㄜˇ ㄕˋ ㄋㄧㄣˊ ㄎㄢˋ ㄐㄧㄢˋ ˙ㄌㄜ ㄨㄛˇ ㄓㄣ ㄓㄥˋ ˙ㄉㄜ ㄧㄤˋ ˙ㄗ ㄨㄛˇ ㄅㄨˋ ㄋㄥˊ ㄗㄞˋ ㄌㄧㄡˊ ㄒㄧㄚˋ ㄌㄞˊ ˙ㄌㄜ",
+            "en": "“I know you were worried about me. But you have seen who I really am, so I cannot stay.”"
+          },
+          {
+            "id": "p10-3",
+            "speaker": "grandma",
+            "style": "regretful, tearful grandmother",
+            "ja": "「やくそくを やぶって、ごめんなさい……。」",
+            "zh": "「對不起，是我違背了約定……」",
+            "zhuyin": "ㄉㄨㄟˋ ㄅㄨˋ ㄑㄧˇ ㄕˋ ㄨㄛˇ ㄨㄟˊ ㄅㄟˋ ˙ㄌㄜ ㄩㄝ ㄉㄧㄥˋ",
+            "en": "“I'm so sorry I broke my promise…”"
+          }
+        ]
+      },
+      {
+        "id": "end",
+        "image": "images/tsuru-no-ongaeshi/end.webp",
+        "alt": {
+          "ja": "ゆきの ふる いえの うえを まわって とんで いく つると、おりかけの しろい ぬのを だいて てを ふる おじいさんと おばあさん",
+          "zh": "白鶴在下雪的屋子上方繞圈飛走，老爺爺和老奶奶抱著還沒織完的白布揮手",
+          "en": "The crane circling over the snowy house as it flies away, and the old couple waving from the doorway, holding the partly woven white cloth"
+        },
+        "lines": [
+          {
+            "id": "end-1",
+            "speaker": "narrator",
+            "style": "slow, bittersweet",
+            "ja": "むすめは つるの すがたに もどり、いえの うえを くるりと まわって、ゆきの そらへ とんで いきました。",
+            "zh": "姑娘變回白鶴，在屋子上方繞了一圈，飛進飄雪的天空。",
+            "zhuyin": "ㄍㄨ ˙ㄋㄧㄤ ㄅㄧㄢˋ ㄏㄨㄟˊ ㄅㄞˊ ㄏㄜˋ ㄗㄞˋ ㄨ ˙ㄗ ㄕㄤˋ ㄈㄤ ㄖㄠˋ ˙ㄌㄜ ㄧ ㄑㄩㄢ ㄈㄟ ㄐㄧㄣˋ ㄆㄧㄠ ㄒㄩㄝˇ ˙ㄉㄜ ㄊㄧㄢ ㄎㄨㄥ",
+            "en": "The girl turned back into a crane, circled once over the house, and flew away into the snowy sky."
+          },
+          {
+            "id": "end-2",
+            "speaker": "ojiisan",
+            "style": "warm, tearful but loving farewell call",
+            "ja": "「ありがとう。 げんきでね。」",
+            "zh": "「謝謝妳，要好好的喔！」",
+            "zhuyin": "ㄒㄧㄝˋ ˙ㄒㄧㄝ ㄋㄧˇ ㄧㄠˋ ㄏㄠˇ ㄏㄠˇ ˙ㄉㄜ ㄛ",
+            "en": "“Thank you! Be well!”"
+          },
+          {
+            "id": "end-3",
+            "speaker": "narrator",
+            "style": "gentle, loving close, slow and clear",
+            "ja": "ふたりは おりかけの しろい ぬのを だきしめました。 ふゆの あいだ、あたたかい ふとんで ねむりながら、むすめの ことを おもいました。 おしまい。",
+            "zh": "兩個老人抱著還沒織完的白布。整個冬天，他們蓋著暖和的棉被，常常想起姑娘。故事說完了。",
+            "zhuyin": "ㄌㄧㄤˇ ˙ㄍㄜ ㄌㄠˇ ㄖㄣˊ ㄅㄠˋ ˙ㄓㄜ ㄏㄞˊ ㄇㄟˊ ㄓ ㄨㄢˊ ˙ㄉㄜ ㄅㄞˊ ㄅㄨˋ ㄓㄥˇ ˙ㄍㄜ ㄉㄨㄥ ㄊㄧㄢ ㄊㄚ ˙ㄇㄣ ㄍㄞˋ ˙ㄓㄜ ㄋㄨㄢˇ ˙ㄏㄨㄛ ˙ㄉㄜ ㄇㄧㄢˊ ㄅㄟˋ ㄔㄤˊ ㄔㄤˊ ㄒㄧㄤˇ ㄑㄧˇ ㄍㄨ ˙ㄋㄧㄤ ㄍㄨˋ ㄕˋ ㄕㄨㄛ ㄨㄢˊ ˙ㄌㄜ",
+            "en": "They held the unfinished white cloth close. All winter they slept warm under their quilt and remembered their daughter. The end."
+          }
+        ]
+      }
+    ]
   }
 ]);

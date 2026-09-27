@@ -51,7 +51,7 @@ module.exports = {
 
 ## The `en` field is optional, per line and per label
 
-English is optional in the schema, but all four currently published stories include English text
+English is optional in the schema, but all eight currently published stories include English text
 and narration. See this series' README for the selected voice and audition notes. A story with no
 `en` fields at all reads and narrates in `ja`/`zh` exactly like a taiwan-ehon story; the engine only
 ever displays/narrates the languages this series' `series.config.js` declares

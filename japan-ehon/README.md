@@ -134,6 +134,55 @@ listens to his story, is written for this book. The credit mentions the older cr
 - National Diet Library reference record on the tale's origins:
   <https://crd.ndl.go.jp/reference/entry/index.php?page=ref_view&id=1000184143>
 
+### 花咲かじいさん (hanasaka-jiisan)
+
+Keeps the famous chain of 「ここ ほれ ワンワン」, the gold, the mortar, the ash, and 「かれきに
+はなを さかせましょう」 before a passing lord. In well-known versions the neighbor kills Shiro and
+the mortar comes from a tree on the dog's grave; here Shiro is only frightened and stays well, and
+the mortar is made from a branch of a pine the old man plants to thank him. The neighbor burns the
+borrowed mortar, fails with the leftover ash, and instead of being punished apologizes and makes a
+new mortar. For Taiwan readers the title is 開花爺爺, the dog is 小白, and the New Year is 日本的新年.
+
+- Japanese Wikipedia, 「花咲か爺」 (the dog, mortar, ash and lord episodes; akahon and later
+  versions; the neighbor's varying punishments): <https://ja.wikipedia.org/wiki/花咲か爺>
+
+### おむすびころりん (omusubi-kororin)
+
+Follows the common Nezumi Jōdo telling: a rolling rice ball, the mice's 「おむすび ころりん
+すっとんとん」 song, a feast of pounded mochi, and the old man choosing the small wicker box. The
+mice's song says only a cat could spoil their home, which sets up the greedy neighbor's fake
+miaow. In some versions the mice bite him or he is trapped underground; here they blow out their
+lanterns and hide their boxes, and he follows the daylight home empty-handed.
+
+- Japanese Wikipedia, 「おむすびころりん」 (Muromachi-era origins, the box choice, the cat-meow
+  episode and its endings): <https://ja.wikipedia.org/wiki/おむすびころりん>
+
+### 一寸法師 (issun-boshi)
+
+Draws on Iwaya Sazanami's Meiji-era children's retelling rather than the otogizōshi text, which
+includes his false accusation that gets the minister's daughter driven from home. He paddles his
+bowl boat upriver to the capital, works for a minister, and reads with the daughter the household
+calls 「おひめさま」. The oni swallows him and spits him out after a comic prick of the needle sword,
+leaving the magic mallet. Instead of marrying the daughter, he wishes to grow so he can help his
+parents, and goes home to do so.
+
+- Japanese Wikipedia, 「一寸法師」 (otogizōshi and Meiji versions): <https://ja.wikipedia.org/wiki/一寸法師>
+- National Diet Library, 「本の万華鏡」 feature on otogizōshi and 一寸法師:
+  <https://www.ndl.go.jp/kaleido/entry/36/2.html>
+
+### 鶴の恩返し (tsuru-no-ongaeshi)
+
+Follows the version in which the crane comes to a poor old couple as a young woman, not the
+crane-wife version (the tale told in Nan'yō, Yamagata, and the basis of the play 夕鶴, whose names
+and staging are not used). She asks for thread, forbids looking, and weaves two cloths; the first
+buys a quilt, rice, and more thread. The old woman peeks after calling through the door with no
+answer, out of worry rather than curiosity, and the daughter acknowledges that worry before she
+leaves. The crane is never shown plucking her feathers.
+
+- Japanese Wikipedia, 「鶴の恩返し」 (old-couple and crane-wife versions, the weaving taboo):
+  <https://ja.wikipedia.org/wiki/鶴の恩返し>
+- Nan'yō City, Yamagata, on the tale's local tradition: <http://www.city.nanyo.yamagata.jp/kankomidokoro/338>
+
 ### Production notes
 
 - Illustrations: original artwork generated locally with gpt-image-2.5-flare at medium quality in
