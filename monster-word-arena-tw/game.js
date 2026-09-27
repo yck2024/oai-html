@@ -286,14 +286,16 @@
       return true;
     }
 
-    function restart() {
+    function restart(level = state.level) {
+      const nextLevel = LEVELS.includes(level) ? level : state.level;
       state = {
         ...state,
+        level: nextLevel,
         stars: 0,
         solved: false,
         finished: false,
         feedback: '',
-        question: questionFor(state.topic, state.level, random, state.question.key),
+        question: questionFor(state.topic, nextLevel, random, state.question.key),
       };
       return getState();
     }

@@ -281,6 +281,7 @@
     rewards.reset();
     showResetConfirm(false);
     render();
+    window.dispatchEvent(new Event('arena-rewards-updated'));
     resetStatus.textContent = I18N.STRINGS.settingsClearedStatus[currentLanguage];
     resetButton.focus();
   });

@@ -219,6 +219,10 @@ class FakeElement {
     return this.attributes[name] ?? null;
   }
 
+  removeAttribute(name) {
+    delete this.attributes[name];
+  }
+
   focus() {}
 }
 
@@ -421,7 +425,22 @@ function createAppFixture(game, globals = {}) {
   const textLanguageButtons = document.querySelectorAll('.text-language');
   const effects = [];
   const sound = { board: null, ctx: null, timers: createFakeTimers() };
-  const window = { AudioContext: FakeAudioContext, addEventListener() {} };
+  const windowListeners = new Map();
+  class FixtureEvent {
+    constructor(type) { this.type = type; }
+  }
+  const window = {
+    AudioContext: FakeAudioContext,
+    Event: FixtureEvent,
+    addEventListener(type, callback) {
+      const listeners = windowListeners.get(type) || [];
+      listeners.push(callback);
+      windowListeners.set(type, listeners);
+    },
+    dispatchEvent(event) {
+      for (const callback of windowListeners.get(event.type) || []) callback(event);
+    },
+  };
   if (globals.localStorage) window.localStorage = globals.localStorage;
   // The page's own scripts publish these modules; the fixture swaps in the test game and records sounds.
   const hooks = {
@@ -466,7 +485,7 @@ function createAppFixture(game, globals = {}) {
   }
   const clock = createClock();
   // Runs the scripts in the order index.html lists them, as the browser does.
-  const page = vm.createContext({ window, document, Audio: RecordingAudio, setTimeout: clock.setTimeout, clearTimeout: clock.clearTimeout, ...globals });
+  const page = vm.createContext({ window, document, Event: FixtureEvent, Audio: RecordingAudio, setTimeout: clock.setTimeout, clearTimeout: clock.clearTimeout, ...globals });
   for (const src of PAGE_SCRIPTS) vm.runInContext(fs.readFileSync(path.join(__dirname, src), 'utf8'), page, { filename: src });
   const topicTabs = document.querySelectorAll('.topic-tab');
   const levelButtons = document.querySelectorAll('.level-option');
@@ -1240,6 +1259,50 @@ test('taking a break shows a calm goodbye screen that can be left at any time, w
   backToPlayButton.click();
   assert.equal(goodbyePanel.hidden, true, 'the goodbye screen can be left at any time');
   assert.equal(game.getState().finished, false, 'leaving the break starts a fresh, unfinished match — nothing was lost');
+});
+
+test('restarting after locking the finished level starts on the nearest allowed level', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  app.championCards[0].click();
+  app.levelButtons.find(button => button.dataset.level === 'super').click();
+  app.startButton.click();
+  playMatchToFinish(app, game);
+  app.document.querySelector('#takeBreakButton').click();
+
+  app.elements.get('#settingsButton').click();
+  const [a, b] = app.elements.get('#gateQuestion').textContent.match(/\d+/g).map(Number);
+  app.elements.get('#gateInput').value = String(a + b);
+  app.document.querySelector('#gateSubmitButton').click();
+  const superLock = app.document.querySelector('[data-level-lock="super"]').querySelector('input');
+  superLock.checked = false;
+  superLock.dispatch('change');
+  assert.equal(game.getState().level, 'super', 'the finished match does not change difficulty prematurely');
+  app.document.querySelector('#settingsCloseButton').click();
+
+  app.document.querySelector('#backToPlayButton').click();
+  assert.equal(game.getState().finished, false);
+  assert.equal(game.getState().level, 'harder', 'returning from the break never resumes on a locked level');
+});
+
+test('clearing rewards refreshes the visible grown-up progress summary', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  app.championCards[0].click();
+  app.startButton.click();
+  playMatchToFinish(app, game);
+
+  app.elements.get('#settingsButton').click();
+  const [a, b] = app.elements.get('#gateQuestion').textContent.match(/\d+/g).map(Number);
+  app.elements.get('#gateInput').value = String(a + b);
+  app.document.querySelector('#gateSubmitButton').click();
+  const summary = app.elements.get('#settingsRewardSummary');
+  assert.match(summary.textContent, /1 match/);
+
+  app.document.querySelector('[data-reward-action="open"]').click();
+  app.document.querySelector('[data-reward-action="reset"]').click();
+  app.document.querySelector('[data-reward-action="confirm-reset"]').click();
+  assert.match(summary.textContent, /0 match/);
 });
 
 test('a small grown-up settings area is gated by a math check, then offers a level lock, mute mirror, and progress summary', () => {

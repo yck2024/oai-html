@@ -685,6 +685,7 @@
     if (event.target === settingsDialog && outside) closeSettings();
   });
   settingsDialog.addEventListener('close', () => settingsReturnFocus?.focus?.());
+  window.addEventListener('arena-rewards-updated', renderSettingsSummary);
 
   function renderChrome() {
     document.documentElement.lang = textLanguage === 'zh' ? 'zh-Hant-TW' : textLanguage === 'ja' ? 'ja' : 'en';
@@ -780,7 +781,8 @@
   });
 
   function restart() {
-    const state = game.restart();
+    const level = PACING.resolveAllowedLevel(game.getState().level, allowedLevels);
+    const state = game.restart(level);
     sounds.play('tap');
     stage.startMatch();
     arenaMessage.textContent = I18N.STRINGS.readyMessage[textLanguage];
