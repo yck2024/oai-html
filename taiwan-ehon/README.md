@@ -45,9 +45,10 @@ and snake really to blame for the floods? People said a dragon lived in 急水�
 曾文溪, and called them "青瞑" (Taiwanese for "cannot see") because they seemed to rush about blindly.
 In this new story a village child, Tong, is told to watch from high ground in heavy rain, raises
 the alarm, walks with everyone to a hill away from the river, and sees that the water moves first
-and the snake only follows — so the flood was nobody's fault. There is no disaster scene or battle
-with a deity, and the book never uses not seeing as the reason for causing harm. Tong and the
-evacuation are written for this book.
+and the snake only follows — so the flood was nobody's fault. The rising river is shown from a safe
+distance as the warning; no one is hurt, and there is no scene of destruction or battle with a deity.
+The book never uses not seeing as the reason for causing harm. Tong and the evacuation are written
+for this book.
 
 - **Origin note:** this is a localized Tainan/台江 water-and-landscape legend, distinct from
   general dragon myths — the published adaptation this book draws on is itself a modern puppet-play
