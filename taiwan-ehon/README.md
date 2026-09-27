@@ -96,6 +96,39 @@ for this book; a Malan Amis reader should still review the words and pictures.
   Amis ancestors travelling north from Hengchun along the coast, over the mountains, or by sail:
   <https://udn.com/news/story/7328/9562778>
 
+## 白鹿傳說 (shao-white-deer) — where the name 日月潭 comes from
+
+The hunters follow the white deer until it leaps into a lake, and they bring their people to live
+there. While the story happens, the book calls it only "the lake", because 日月潭 is a later name,
+not the Thao's own. The name is set up in the pictures and text instead of appearing out of
+nowhere. When the hunters first reach the lake they see a small island in the middle, which the
+Thao call Lalu (p07). From the mountain they see the lake round where the island is and thin and
+curved beside it (p10). At the end the book says that much later the lake came to be called
+日月潭, that 日 means the sun and 月 the moon, and that people say the round side looks like the sun
+and the curved side like the moon. It then says the Thao still live by the lake today. The credit
+adds the older colour explanation and notes that the pictured shoreline is drawn for the story,
+not a record of the old lake, whose outline changed after the hydropower works of the Japanese era.
+
+- **Name origin:** Qing-era records, commonly cited as 鄧傳安's 《蠡測彙抄》 (1821), explain the name
+  by the water's two colours (水分丹、碧二色). The explanation by shape, with the island as the
+  dividing line, came later and is the one official sources give today. Official sources differ on
+  the directions (north/south or east/west), so the book gives none. The book uses the shape
+  explanation because a young child can see it in the picture, and it says so in the credit.
+- Council of Indigenous Peoples, "邵族", on the white deer leaping into the lake, the fish and
+  fertile land that made the ancestors settle, and Lalu as the Thao's highest ancestral-spirit
+  site: <https://www.cip.gov.tw/zh-tw/tribe/grid-list/3343FD21497CA007D0636733C6861689/info.html?cumid=D0636733C6861689>
+- Taiwan Tourism Administration, "日月潭拉魯島", on the island dividing a sun-shaped and a
+  crescent-shaped half, on the area being where the Thao lived, and on the island's Thao name
+  Lalu, restored in 2000: <https://www.taiwan.net.tw/m1.aspx?sNo=0001114&id=R45>
+- Sun Moon Lake National Scenic Area Administration, "發現日月潭", on the name coming from the
+  lake's sun-like and moon-like sides on either side of Lalu, and on the hydropower works begun in 1919:
+  <https://www.sunmoonlake.gov.tw/guides/ArticlesFull?a=32>
+- Council of Indigenous Peoples notice, relayed by the Executive Yuan, on the Thao Ethnic Council's
+  2023 decision to correct the ethnic name's spelling from "Thao" to "Thau" (the credit's self-name
+  reads Ita Thau): <https://eycc.ey.gov.tw/Page/9FAC64F67005E355/43b9cdd8-fbcc-4ef3-b48c-488533b914c4>
+- Wikipedia (zh), "日月潭", for 鄧傳安's colour explanation quoted from 〈遊水裡社記〉 and the later
+  shape explanation: <https://zh.wikipedia.org/zh-tw/%E6%97%A5%E6%9C%88%E6%BD%AD>
+
 ## Production notes (all three stories)
 
 - Illustrations: original picture-book-style artwork generated locally (gpt-image-2.5-flare, medium
