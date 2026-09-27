@@ -215,7 +215,8 @@ module.exports = {
           "ja": "あまりに たのしくて、うらしまは ときが たつのも わすれて しまいました。",
           "zh": "浦島玩得太開心，連時間過了多久都忘了。",
           "zhuyin": "ㄆㄨˇ ㄉㄠˇ ㄨㄢˊ ˙ㄉㄜ ㄊㄞˋ ㄎㄞ ㄒㄧㄣ ㄌㄧㄢˊ ㄕˊ ㄐㄧㄢ ㄍㄨㄛˋ ˙ㄌㄜ ㄉㄨㄛ ㄐㄧㄡˇ ㄉㄡ ㄨㄤˋ ˙ㄌㄜ",
-          "en": "He was having so much fun that he forgot how much time was passing."
+          "en": "He was having so much fun that he forgot how much time was passing.",
+          "zhTts": "普島玩得太開心，連時間過了多久都忘了。"
         }
       ]
     },
@@ -387,7 +388,8 @@ module.exports = {
           "ja": "けむりが きえると、うらしまは しろい ひげの おじいさんに なって いました。",
           "zh": "煙散了以後，浦島變成了一位白鬍子的老爺爺。",
           "zhuyin": "ㄧㄢ ㄙㄢˋ ˙ㄌㄜ ㄧˇ ㄏㄡˋ ㄆㄨˇ ㄉㄠˇ ㄅㄧㄢˋ ㄔㄥˊ ˙ㄌㄜ ㄧ ㄨㄟˋ ㄅㄞˊ ㄏㄨˊ ˙ㄗ ˙ㄉㄜ ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ",
-          "en": "When the smoke cleared, Urashima had become an old man with a white beard."
+          "en": "When the smoke cleared, Urashima had become an old man with a white beard.",
+          "zhTts": "煙散了以後，蒲島變成了一位白鬍子的老爺爺。"
         },
         {
           "id": "p10-3",
@@ -423,8 +425,8 @@ module.exports = {
           "speaker": "narrator",
           "style": "warm, gentle, honest closing",
           "ja": "うらしまは、まだ おかあさんが こいしかったけれど、おじいさんと ならんで あるきながら、りゅうぐうじょうの おはなしを はじめました。",
-          "zh": "浦島還是很想念媽媽。他和老爺爺並肩走著，說起了龍宮城的故事。",
-          "zhuyin": "ㄆㄨˇ ㄉㄠˇ ㄏㄞˊ ㄕˋ ㄏㄣˇ ㄒㄧㄤˇ ㄋㄧㄢˋ ㄇㄚ ˙ㄇㄚ ㄊㄚ ㄏㄢˋ ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄅㄧㄥˋ ㄐㄧㄢ ㄗㄡˇ ˙ㄓㄜ ㄕㄨㄛ ㄑㄧˇ ˙ㄌㄜ ㄌㄨㄥˊ ㄍㄨㄥ ㄔㄥˊ ˙ㄉㄜ ㄍㄨˋ ㄕˋ",
+          "zh": "浦島太郎還是很想念媽媽。他和老爺爺並肩走著，說起了龍宮城的故事。",
+          "zhuyin": "ㄆㄨˇ ㄉㄠˇ ㄊㄞˋ ㄌㄤˊ ㄏㄞˊ ㄕˋ ㄏㄣˇ ㄒㄧㄤˇ ㄋㄧㄢˋ ㄇㄚ ˙ㄇㄚ ㄊㄚ ㄏㄢˋ ㄌㄠˇ ㄧㄝˊ ˙ㄧㄝ ㄅㄧㄥˋ ㄐㄧㄢ ㄗㄡˇ ˙ㄓㄜ ㄕㄨㄛ ㄑㄧˇ ˙ㄌㄜ ㄌㄨㄥˊ ㄍㄨㄥ ㄔㄥˊ ˙ㄉㄜ ㄍㄨˋ ㄕˋ",
           "en": "Urashima still missed his mother. But as they walked side by side, he began to tell the old man all about the Dragon Palace."
         },
         {

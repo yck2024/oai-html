@@ -188,7 +188,8 @@ module.exports = {
           "ja": "その ころ、おにがしまの おにたちが なんども むらに きて、みんなの おこめや たからものを もって いって しまいました。",
           "zh": "那時候，鬼島上的鬼一次又一次跑到村子裡，把大家的米和寶物都拿走了。",
           "zhuyin": "ㄋㄚˋ ㄕˊ ㄏㄡˋ ㄍㄨㄟˇ ㄉㄠˇ ㄕㄤˋ ˙ㄉㄜ ㄍㄨㄟˇ ㄧ ㄘˋ ㄧㄡˋ ㄧ ㄘˋ ㄆㄠˇ ㄉㄠˋ ㄘㄨㄣ ˙ㄗ ㄌㄧˇ ㄅㄚˇ ㄉㄚˋ ㄐㄧㄚ ˙ㄉㄜ ㄇㄧˇ ㄏㄢˋ ㄅㄠˇ ㄨˋ ㄉㄡ ㄋㄚˊ ㄗㄡˇ ˙ㄌㄜ",
-          "en": "In those days, the oni from Oni Island kept coming to the village and carrying off everyone's rice and treasures."
+          "en": "In those days, the oni from Oni Island kept coming to the village and carrying off everyone's rice and treasures.",
+          "enTts": "In those days, the oh-nee from Oh-nee Island kept coming to the village and carrying off everyone's rice and treasures."
         },
         {
           "id": "p05-2",
@@ -235,7 +236,8 @@ module.exports = {
           "ja": "「おにがしまへ いくんだよ。 はい、どうぞ」",
           "zh": "「我要去鬼島喔。來，請你吃。」",
           "zhuyin": "ㄨㄛˇ ㄧㄠˋ ㄑㄩˋ ㄍㄨㄟˇ ㄉㄠˇ ㄛ ㄌㄞˊ ㄑㄧㄥˇ ㄋㄧˇ ㄔ",
-          "en": "\"I'm going to Oni Island. Here you are.\""
+          "en": "\"I'm going to Oni Island. Here you are.\"",
+          "enTts": "I'm going to Oh-nee Island. Here you are."
         },
         {
           "id": "p06-3",
