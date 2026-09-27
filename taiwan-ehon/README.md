@@ -11,7 +11,7 @@ covers the second batch of three stories, prepared alongside a parallel batch (�
 
 ## Analytics and reading privacy
 
-This storybook uses the existing GA4 tag (`G-QLFWNZWDSS`) for its page view and five small events, with only the listed parameters:
+This storybook uses the existing GA4 tag (`G-QLFWNZWDSS`) for its page views and five small events, with only the listed parameters:
 
 - `book_open` (`book_id`: a fixed story id), when a book is opened from the bookshelf
 - `book_complete` (`book_id`: a fixed story id), once per opening upon reaching its ending page
@@ -19,7 +19,7 @@ This storybook uses the existing GA4 tag (`G-QLFWNZWDSS`) for its page view and 
 - `zhuyin_toggle` (`zhuyin`: `on` or `off`), when 注音 visibility changes
 - `auto_turn_toggle` (`auto_turn`: `on` or `off`), when auto-turn changes
 
-`book_id`, `listen_mode`, `zhuyin`, and `auto_turn` only appear in GA reports after registration as event-scoped custom dimensions in GA Admin → Custom definitions. That registration must be done by a GA administrator; this repository cannot do it. No story text, page-by-page or sentence-level events, timing, durations, or user identifiers beyond GA defaults are sent. Shared click and copy tracking stays off via `data-analytics-ignore`. Book selection and page turns never change the URL, hash, or history. The page-view URL is trimmed to the path, referrer to its origin, and title fixed, even while the visible reader title changes. Settings are saved locally for reading, but nothing new is stored in the browser for analytics; no reading history is saved.
+`book_id`, `listen_mode`, `zhuyin`, and `auto_turn` only appear in GA reports after registration as event-scoped custom dimensions in GA Admin → Custom definitions. That registration must be done by a GA administrator; this repository cannot do it. No story text, page-by-page or sentence-level events, timing, durations, or user identifiers beyond GA defaults are sent. Shared click and copy tracking stays off via `data-analytics-ignore`. Each book has its own path (`/taiwan-ehon/<book-id>/`) and its own GA4 page view — `page_location` is that path, `page_title` is the book's title — so which book someone opens is now visible in the URL and in page views, the same information `book_open` already reported. Page turns, sentence taps, and reading position stay out of the URL, hash, and page views entirely; only the book selection appears there, and only the shelf and book paths exist, never a page, sentence, or query. Referrer stays trimmed to its origin. Settings are saved locally on the device for reading, but nothing new is stored in the browser for analytics; no reading history is saved.
 
 ## 虎姑婆 (hu-gu-po)
 

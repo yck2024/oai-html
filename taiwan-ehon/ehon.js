@@ -35,8 +35,8 @@
     return page.lines.flatMap(line => order.map(lang => ({ lineId: line.id, lang })));
   }
 
-  function clipPath(storyId, lang, lineId) {
-    return `./audio/${storyId}/${lang}/${lineId}.mp3`;
+  function clipPath(storyId, lang, lineId, base = './') {
+    return `${base}audio/${storyId}/${lang}/${lineId}.mp3`;
   }
 
   // Japanese text marks furigana as {漢字|かんじ}; everything else is plain kana.
@@ -110,7 +110,7 @@
 
   // Plays a list of {lineId, lang} steps through one audio element. Every new request or
   // stop bumps a token, so a late "ended" or failure from an old clip is ignored.
-  function createNarrator(audio, handlers = {}, wait = (ms, fn) => setTimeout(fn, ms)) {
+  function createNarrator(audio, handlers = {}, wait = (ms, fn) => setTimeout(fn, ms), assetBase = './') {
     const { onStep = () => {}, onDone = () => {}, onUnavailable = () => {} } = handlers;
     let token = 0;
     let steps = [];
@@ -192,7 +192,7 @@
         }
       };
       audio.onerror = () => fail(current);
-      audio.src = clipPath(storyId, step.lang, step.lineId);
+      audio.src = clipPath(storyId, step.lang, step.lineId, assetBase);
       if (!startPaused) playAudio(current);
     }
 
