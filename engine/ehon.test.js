@@ -1,11 +1,20 @@
 'use strict';
 
+// Exercises the shared engine's pure logic against the taiwan-ehon dataset — the only series
+// with a full, real story catalog today. See multi-series.test.js for the generic checks that
+// run against every registered series (including one, like japan-ehon, with zero stories yet).
+
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 const E = require('./ehon.js');
-const stories = require('./stories.js');
+
+const TAIWAN_DIR = path.join(__dirname, '..', 'taiwan-ehon');
+const stories = require(path.join(TAIWAN_DIR, 'stories.js'));
+const SERIES = require(path.join(TAIWAN_DIR, 'series.config.js'));
+const LISTEN_MODES = E.buildListenModes(SERIES.languages);
+const DEFAULT_MODE = SERIES.defaultMode;
 
 const HAN = /\p{Script=Han}/u;
 const storyById = id => stories.find(story => story.id === id);
@@ -25,8 +34,8 @@ test('each data-driven book has a cover, numbered illustrated story pages, and a
 
     for (const page of story.pages) {
       assert.ok(page.alt.ja && page.alt.zh, `${story.id}/${page.id} has bilingual alt text`);
-      assert.ok(fs.existsSync(path.join(__dirname, page.image)), `${story.id}/${page.id} illustration exists`);
-      const image = fs.readFileSync(path.join(__dirname, page.image));
+      assert.ok(fs.existsSync(path.join(TAIWAN_DIR, page.image)), `${story.id}/${page.id} illustration exists`);
+      const image = fs.readFileSync(path.join(TAIWAN_DIR, page.image));
       assert.equal(image.toString('latin1', 0, 4), 'RIFF', `${story.id}/${page.id} image is RIFF`);
       assert.equal(image.toString('latin1', 8, 12), 'WEBP', `${story.id}/${page.id} image is WebP`);
       assert.ok(page.lines.length >= 1 && page.lines.length <= 3, `${story.id}/${page.id} has one to three sentence clips`);
@@ -37,8 +46,8 @@ test('each data-driven book has a cover, numbered illustrated story pages, and a
         for (const segment of E.parseRuby(line.ja)) {
           if (!segment.ruby) assert.ok(![...segment.text].some(char => HAN.test(char)), `${story.id}/${line.id} has kana-first Japanese or explicit furigana`);
         }
-        for (const language of E.LANGUAGES) {
-          const clip = path.join(__dirname, 'audio', story.id, language, `${line.id}.mp3`);
+        for (const language of SERIES.languages) {
+          const clip = path.join(TAIWAN_DIR, 'audio', story.id, language, `${line.id}.mp3`);
           assert.ok(fs.existsSync(clip), `${story.id}/${language}/${line.id}.mp3 exists`);
           assert.ok(fs.statSync(clip).size > 1024, `${story.id}/${language}/${line.id}.mp3 is non-empty`);
         }
@@ -49,22 +58,22 @@ test('each data-driven book has a cover, numbered illustrated story pages, and a
 
 test('the four listening modes keep matching sentences adjacent and use Japanese then Chinese by default', () => {
   const page = storyById('bai-zei-qi').pages.find(item => item.id === 'p02');
-  assert.equal(E.DEFAULT_MODE, 'ja-zh');
-  assert.deepEqual(E.languagesFor('ja-zh'), ['ja', 'zh']);
-  assert.deepEqual(E.languagesFor('zh-ja'), ['zh', 'ja']);
-  assert.deepEqual(E.languagesFor('ja'), ['ja']);
-  assert.deepEqual(E.languagesFor('zh'), ['zh']);
-  assert.equal(E.isMode('other'), false);
-  assert.deepEqual(E.languagesFor('other'), ['ja', 'zh']);
+  assert.equal(DEFAULT_MODE, 'ja-zh');
+  assert.deepEqual(E.languagesFor(LISTEN_MODES, DEFAULT_MODE, 'ja-zh'), ['ja', 'zh']);
+  assert.deepEqual(E.languagesFor(LISTEN_MODES, DEFAULT_MODE, 'zh-ja'), ['zh', 'ja']);
+  assert.deepEqual(E.languagesFor(LISTEN_MODES, DEFAULT_MODE, 'ja'), ['ja']);
+  assert.deepEqual(E.languagesFor(LISTEN_MODES, DEFAULT_MODE, 'zh'), ['zh']);
+  assert.equal(E.isMode(LISTEN_MODES, 'other'), false);
+  assert.deepEqual(E.languagesFor(LISTEN_MODES, DEFAULT_MODE, 'other'), ['ja', 'zh']);
 
   const pairs = page.lines.flatMap(line => [
     { lineId: line.id, lang: 'ja' },
     { lineId: line.id, lang: 'zh' },
   ]);
-  assert.deepEqual(E.pageQueue(page, 'ja-zh'), pairs);
-  assert.deepEqual(E.pageQueue(page, 'zh-ja'), pairs.map((step, index) => ({ ...step, lang: index % 2 ? 'ja' : 'zh' })));
-  assert.deepEqual(E.pageQueue(page, 'ja'), page.lines.map(line => ({ lineId: line.id, lang: 'ja' })));
-  assert.deepEqual(E.pageQueue(page, 'zh'), page.lines.map(line => ({ lineId: line.id, lang: 'zh' })));
+  assert.deepEqual(E.pageQueue(page, LISTEN_MODES, DEFAULT_MODE, 'ja-zh'), pairs);
+  assert.deepEqual(E.pageQueue(page, LISTEN_MODES, DEFAULT_MODE, 'zh-ja'), pairs.map((step, index) => ({ ...step, lang: index % 2 ? 'ja' : 'zh' })));
+  assert.deepEqual(E.pageQueue(page, LISTEN_MODES, DEFAULT_MODE, 'ja'), page.lines.map(line => ({ lineId: line.id, lang: 'ja' })));
+  assert.deepEqual(E.pageQueue(page, LISTEN_MODES, DEFAULT_MODE, 'zh'), page.lines.map(line => ({ lineId: line.id, lang: 'zh' })));
 });
 
 test('page navigation clamps safely and swipe gestures only turn on a horizontal drag', () => {
@@ -182,7 +191,7 @@ test('narration highlights each queued language clip and advances one sentence a
   };
   const narrator = E.createNarrator(audio, { onStep: step => highlighted.push(step) }, (ms, fn) => waits.push({ ms, fn }));
   const page = storyById('bai-zei-qi').pages.find(item => item.id === 'p01');
-  narrator.play('bai-zei-qi', E.pageQueue(page, 'ja-zh'));
+  narrator.play('bai-zei-qi', E.pageQueue(page, LISTEN_MODES, DEFAULT_MODE, 'ja-zh'));
 
   assert.deepEqual(played, ['./audio/bai-zei-qi/ja/p01-1.mp3']);
   assert.deepEqual(highlighted[0], { lineId: 'p01-1', lang: 'ja' });
@@ -196,4 +205,32 @@ test('narration highlights each queued language clip and advances one sentence a
   waits.shift().fn();
   assert.equal(played[2], './audio/bai-zei-qi/ja/p01-2.mp3');
   assert.deepEqual(highlighted[2], { lineId: 'p01-2', lang: 'ja' });
+});
+
+test('buildListenModes generalizes to a three-language series while keeping display capped at two', () => {
+  const languages = ['ja', 'zh', 'en'];
+  const modes = E.buildListenModes(languages);
+  assert.deepEqual(Object.keys(modes), ['ja-zh', 'ja-en', 'zh-ja', 'zh-en', 'en-ja', 'en-zh', 'ja', 'zh', 'en']);
+  assert.deepEqual(modes['ja-en'], ['ja', 'en']);
+
+  // A pair mode already shows exactly two languages, narratedOnly or not.
+  assert.deepEqual(E.displayLanguagesFor(languages, ['ja', 'en'], false), ['ja', 'en']);
+  assert.deepEqual(E.displayLanguagesFor(languages, ['ja', 'en'], true), ['ja', 'en']);
+
+  // A single-language mode pairs the narrated language with a companion by default (still
+  // capped at two), and collapses to just the narrated language once narratedOnly is on.
+  assert.deepEqual(E.displayLanguagesFor(languages, ['en'], false), ['en', 'ja']);
+  assert.deepEqual(E.displayLanguagesFor(languages, ['en'], true), ['en']);
+
+  // A two-language series (taiwan-ehon's shape) always shows both, matching its original,
+  // mode-independent display behavior exactly — this is what keeps Taiwan's reader unchanged.
+  assert.deepEqual(E.displayLanguagesFor(['ja', 'zh'], ['zh'], false), ['zh', 'ja']);
+  assert.deepEqual(E.displayLanguagesFor(['ja', 'zh'], ['ja', 'zh'], false), ['ja', 'zh']);
+});
+
+test('metadata languages stay within the selected display cap and fall back when English metadata is absent', () => {
+  const languages = ['ja', 'zh', 'en'];
+  assert.deepEqual(E.metadataLanguages(languages, ['en', 'zh'], { ja: '日本語', zh: '中文' }), ['ja', 'zh']);
+  assert.deepEqual(E.metadataLanguages(languages, ['en'], { ja: '日本語', zh: '中文' }), ['ja']);
+  assert.deepEqual(E.metadataLanguages(languages, ['en', 'zh'], { ja: '日本語', zh: '中文', en: 'English' }), ['zh', 'en']);
 });
