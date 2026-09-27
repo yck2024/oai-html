@@ -693,6 +693,7 @@
   // narration voice should differ from the on-screen language. Rebuilt on every language change,
   // since which languages count as "the other one" depends on the current main language.
   function renderSecondLanguageOptions() {
+    const hadFocus = secondLanguageOptions.contains(document.activeElement);
     const choices = [null, ...I18N.TEXT_LANGUAGES.filter(language => language !== textLanguage)];
     secondLanguageOptions.replaceChildren(...choices.map(language => {
       const button = document.createElement('button');
@@ -711,9 +712,11 @@
       });
       return button;
     }));
+    if (hadFocus) secondLanguageOptions.querySelector(`[data-second-language="${secondLanguage || 'off'}"]`)?.focus();
   }
 
   function renderVoiceLanguageOptions() {
+    const hadFocus = voiceLanguageOptions.contains(document.activeElement);
     const choices = [null, ...I18N.TEXT_LANGUAGES];
     voiceLanguageOptions.replaceChildren(...choices.map(language => {
       const button = document.createElement('button');
@@ -732,6 +735,7 @@
       });
       return button;
     }));
+    if (hadFocus) voiceLanguageOptions.querySelector(`[data-voice-option="${voiceOverride ? voiceLanguage : 'match'}"]`)?.focus();
   }
 
   let gateChallenge = null;
@@ -758,19 +762,23 @@
     }
   }
 
-  function submitGate() {
+  function submitGate(fromKeyboard = false) {
     if (PACING.checkParentAnswer(gateChallenge, gateInput.value)) {
       settingsGate.hidden = true;
       settingsBody.hidden = false;
+      if (fromKeyboard) {
+        const focusCloseAfterKeyup = () => {
+          document.removeEventListener('keyup', focusCloseAfterKeyup, true);
+          settingsCloseButton.focus();
+        };
+        document.addEventListener('keyup', focusCloseAfterKeyup, true);
+      } else {
+        settingsCloseButton.focus();
+      }
       renderLevelLockOptions();
       renderSecondLanguageOptions();
       renderVoiceLanguageOptions();
       renderSettingsSummary();
-      // Deferred: moving focus here inside the same keydown that submitted with Enter would let
-      // that key's keyup land on this now-focused button and re-trigger it as a click, closing
-      // the dialog it just opened. Waiting a tick keeps the still-in-flight Enter press with the
-      // input instead.
-      setTimeout(() => settingsCloseButton.focus(), 0);
       return;
     }
     gateStatus.textContent = I18N.STRINGS.gateWrong[textLanguage];
@@ -787,7 +795,7 @@
   gateInput.addEventListener('keydown', event => {
     if (event.key !== 'Enter') return;
     event.preventDefault();
-    submitGate();
+    submitGate(true);
   });
   settingsDialog.addEventListener('click', event => {
     const box = settingsDialog.getBoundingClientRect?.();

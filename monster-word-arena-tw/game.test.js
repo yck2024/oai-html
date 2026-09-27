@@ -223,7 +223,12 @@ class FakeElement {
     delete this.attributes[name];
   }
 
-  focus() {}
+  contains(element) {
+    for (let current = element; current; current = current.parentNode) if (current === this) return true;
+    return false;
+  }
+
+  focus() { this.ownerDocument.activeElement = this; }
 }
 
 function attrToCamel(attr) {
@@ -407,14 +412,32 @@ function createPageDocument() {
     return found;
   }
 
+  const documentListeners = new Map();
   const document = {
     documentElement: allElements.find(element => element.tagName === 'HTML'),
     hidden: false,
+    activeElement: null,
+    addEventListener(type, callback, options) {
+      const listeners = documentListeners.get(type) || [];
+      listeners.push({ callback, options });
+      documentListeners.set(type, listeners);
+    },
+    removeEventListener(type, callback) {
+      documentListeners.set(type, (documentListeners.get(type) || []).filter(listener => listener.callback !== callback));
+    },
+    dispatchEvent(event) {
+      for (const listener of documentListeners.get(event.type) || []) listener.callback(event);
+    },
     querySelector: selector => liveElements().find(element => matchesSelector(element, selector)) || null,
     querySelectorAll: selector => liveElements().filter(element => matchesSelector(element, selector)),
-    createElement: tagName => new FakeElement(tagName),
+    createElement: tagName => {
+      const element = new FakeElement(tagName);
+      element.ownerDocument = document;
+      return element;
+    },
     createTextNode: text => ({ textContent: String(text) }),
   };
+  allElements.forEach(element => { element.ownerDocument = document; });
   return { document, elements, allElements };
 }
 
@@ -1453,7 +1476,7 @@ test('a small grown-up settings area is gated by a math check, then offers a lev
   assert.match(app.elements.get('#settingsRewardSummary').textContent, /0 match/);
 });
 
-test('pressing Enter on a correct grown-up answer shows the settings, deferring focus so a still-in-flight Enter keyup cannot re-close the dialog', () => {
+test('pressing Enter on a correct grown-up answer waits for keyup before focusing Close', () => {
   const app = createAppFixture(createGame(steadyRandom));
   app.elements.get('#settingsButton').click();
   const gateQuestion = app.elements.get('#gateQuestion');
@@ -1472,9 +1495,26 @@ test('pressing Enter on a correct grown-up answer shows the settings, deferring 
   assert.equal(defaultPrevented, true, 'Enter\'s default action is suppressed so it cannot also trigger an implicit submission');
   assert.equal(settingsGate.hidden, true);
   assert.equal(settingsBody.hidden, false, 'a correct answer shows the settings instead of the dialog closing');
-  assert.equal(focusCalls, 0, 'focus is deferred past the still-in-flight Enter keyup, not moved synchronously');
-  app.clock.tick(0);
-  assert.equal(focusCalls, 1, 'focus still lands on Close once the Enter press has fully finished');
+  assert.equal(focusCalls, 0, 'focus does not move while Enter remains held');
+  app.document.dispatchEvent({ type: 'keyup', key: 'Enter' });
+  assert.equal(focusCalls, 1, 'focus lands on Close after Enter is released');
+  app.document.dispatchEvent({ type: 'keyup', key: 'x' });
+  assert.equal(focusCalls, 1, 'the release listener removes itself after firing');
+});
+
+test('language option rebuilds keep keyboard focus on the selected second-language and voice options', () => {
+  const app = createAppFixture(createGame(steadyRandom));
+  passGate(app);
+
+  let option = app.document.querySelector('[data-second-language="zh"]');
+  option.focus();
+  app.document.querySelector('[data-second-language="ja"]').click();
+  assert.equal(app.document.activeElement, app.document.querySelector('[data-second-language="ja"]'));
+
+  option = app.document.querySelector('[data-voice-option="match"]');
+  option.focus();
+  app.document.querySelector('[data-voice-option="ja"]').click();
+  assert.equal(app.document.activeElement, app.document.querySelector('[data-voice-option="ja"]'));
 });
 
 test('pressing Enter on a wrong grown-up answer keeps the check open with a gentle message', () => {
