@@ -168,18 +168,21 @@
     let bytes = 0;
     onProgress({ done, total: files.length, bytes });
     for (const url of files) {
-      if (!(await cache.match(url))) {
-        try {
-          const response = await fetch(url);
-          if (response && response.ok) {
-            bytes += Number(response.headers.get('Content-Length') || 0);
+      const cached = await cache.match(url);
+      try {
+        const response = await fetch(url);
+        if (response && response.ok) {
+          bytes += Number(response.headers.get('Content-Length') || 0);
+          try {
             await cache.put(url, response);
-          } else {
+          } catch (_error) {
             failed += 1;
           }
-        } catch (_error) {
+        } else if (!cached) {
           failed += 1;
         }
+      } catch (_error) {
+        if (!cached) failed += 1;
       }
       done += 1;
       onProgress({ done, total: files.length, bytes });

@@ -15,7 +15,7 @@ function fakeCaches() {
     if (!named.has(name)) named.set(name, new Map());
     const store = named.get(name);
     return {
-      match: async url => store.get(url),
+      match: async url => store.get(url)?.clone(),
       put: async (url, response) => { store.set(url, response.clone ? response.clone() : response); },
       delete: async url => store.delete(url),
       addAll: async urls => { for (const url of urls) store.set(url, new Response(`stub:${url}`)); },
@@ -84,18 +84,27 @@ test('respond() falls back to the network for a shell asset with no cached copy 
   assert.equal(await response.text(), '<html>fresh</html>');
 });
 
-test('respond() caches a media file on first use and serves it from cache afterward', async () => {
+test('online media refreshes changed cached files, while unchanged and offline copies remain available', async () => {
   const caches = fakeCaches();
-  let fetchCount = 0;
-  const fetchImpl = async () => { fetchCount += 1; return new Response(new Uint8Array([1, 2, 3, 4]), { headers: { 'Content-Type': 'image/webp' } }); };
   const url = `${BASE}images/hu-gu-po/cover.webp`;
-  const first = await sw.respond(new Request(url), { caches, fetch: fetchImpl });
-  assert.equal(fetchCount, 1);
-  assert.equal((await first.arrayBuffer()).byteLength, 4);
+  const cache = await caches.open(sw.MEDIA_CACHE_NAME);
+  await cache.put(url, new Response(new Uint8Array([1, 2, 3, 4]), { headers: { 'Content-Type': 'image/webp' } }));
 
-  const second = await sw.respond(new Request(url), { caches, fetch: fetchImpl });
-  assert.equal(fetchCount, 1, 'the second request is served from the media cache, no new fetch');
-  assert.equal((await second.arrayBuffer()).byteLength, 4);
+  const changed = await sw.respond(new Request(url), {
+    caches,
+    fetch: async () => new Response(new Uint8Array([5, 6, 7]), { headers: { 'Content-Type': 'image/webp' } }),
+  });
+  assert.deepEqual([...new Uint8Array(await changed.arrayBuffer())], [5, 6, 7]);
+  const cachedChanged = await cache.match(url);
+  assert.deepEqual([...new Uint8Array(await cachedChanged.arrayBuffer())], [5, 6, 7]);
+
+  const unchanged = await sw.respond(new Request(url), {
+    caches,
+    fetch: async () => new Response(new Uint8Array([5, 6, 7]), { headers: { 'Content-Type': 'image/webp' } }),
+  });
+  assert.deepEqual([...new Uint8Array(await unchanged.arrayBuffer())], [5, 6, 7]);
+  const offline = await sw.respond(new Request(url), { caches, fetch: async () => { throw new Error('offline'); } });
+  assert.deepEqual([...new Uint8Array(await offline.arrayBuffer())], [5, 6, 7]);
 });
 
 test('a first Range request waits for caching and returns the fetched response if caching fails', async () => {
@@ -170,6 +179,152 @@ test('a cached audio clip answers a Range request with a correct 206 partial res
   const body = new Uint8Array(await response.arrayBuffer());
   assert.equal(body.length, 500);
   assert.deepEqual([...body.slice(0, 3)], [...bytes.slice(500, 503)]);
+});
+
+test('concurrent cached Range requests return immediately and share one refresh that updates the cache', async () => {
+  const caches = fakeCaches();
+  const url = `${BASE}audio/hu-gu-po/ja/p01-1.mp3`;
+  const cache = await caches.open(sw.MEDIA_CACHE_NAME);
+  await cache.put(url, new Response(new Uint8Array([1, 2, 3, 4]), { headers: { 'Content-Type': 'audio/mpeg' } }));
+
+  let releaseFetch;
+  const fetchGate = new Promise(resolve => { releaseFetch = resolve; });
+  let fetchCount = 0;
+  const refreshes = [];
+  const fetchImpl = async () => {
+    fetchCount += 1;
+    await fetchGate;
+    return new Response(new Uint8Array([5, 6, 7]), { headers: { 'Content-Type': 'audio/mpeg' } });
+  };
+  const onBackground = refresh => refreshes.push(refresh);
+  const requestA = new Request(url, { headers: { Range: 'bytes=0-1' } });
+  const requestB = new Request(url, { headers: { Range: 'bytes=2-3' } });
+
+  const [responseA, responseB] = await Promise.all([
+    sw.respond(requestA, { caches, fetch: fetchImpl, onBackground }),
+    sw.respond(requestB, { caches, fetch: fetchImpl, onBackground }),
+  ]);
+  assert.deepEqual([...new Uint8Array(await responseA.arrayBuffer())], [1, 2]);
+  assert.deepEqual([...new Uint8Array(await responseB.arrayBuffer())], [3, 4]);
+  assert.equal(fetchCount, 1, 'concurrent Range requests share a single full-file fetch');
+  assert.equal(refreshes.length, 2);
+  assert.strictEqual(refreshes[0], refreshes[1], 'each event keeps the shared refresh alive');
+
+  releaseFetch();
+  await Promise.all(refreshes);
+  const refreshed = await cache.match(url);
+  assert.deepEqual([...new Uint8Array(await refreshed.arrayBuffer())], [5, 6, 7]);
+});
+
+test('in-flight media refreshes do not restore assets removed from the cache', async () => {
+  const caches = fakeCaches();
+  const cache = await caches.open(sw.MEDIA_CACHE_NAME);
+  const rangeUrl = `${BASE}audio/hu-gu-po/ja/p01-2.mp3`;
+  const onlineUrl = `${BASE}images/hu-gu-po/page01.webp`;
+  const original = new Response(new Uint8Array([1]), { headers: { 'Content-Type': 'application/octet-stream' } });
+  await cache.put(rangeUrl, original);
+  await cache.put(onlineUrl, original);
+
+  let releaseRangeFetch;
+  const rangeGate = new Promise(resolve => { releaseRangeFetch = resolve; });
+  const background = [];
+  const rangeResponse = await sw.respond(new Request(rangeUrl, { headers: { Range: 'bytes=0-0' } }), {
+    caches,
+    fetch: async () => {
+      await rangeGate;
+      return new Response(new Uint8Array([2]));
+    },
+    onBackground: promise => background.push(promise),
+  });
+  assert.equal(rangeResponse.status, 206);
+  await cache.delete(rangeUrl);
+  releaseRangeFetch();
+  await Promise.all(background);
+  assert.equal(await cache.match(rangeUrl), undefined, 'Range refresh must not recreate a removed asset');
+
+  let releaseOnlineFetch;
+  let onlineFetchStarted;
+  const onlineStarted = new Promise(resolve => { onlineFetchStarted = resolve; });
+  const onlineGate = new Promise(resolve => { releaseOnlineFetch = resolve; });
+  const onlineResponse = sw.respond(new Request(onlineUrl), {
+    caches,
+    fetch: async () => {
+      onlineFetchStarted();
+      await onlineGate;
+      return new Response(new Uint8Array([3]));
+    },
+  });
+  await onlineStarted;
+  await cache.delete(onlineUrl);
+  releaseOnlineFetch();
+  assert.deepEqual([...new Uint8Array(await (await onlineResponse).arrayBuffer())], [3]);
+  assert.equal(await cache.match(onlineUrl), undefined, 'online refresh must not recreate a removed asset');
+});
+
+test('the production fetch handler keeps cached Range refreshes alive and returns cached bytes immediately', async () => {
+  const caches = fakeCaches();
+  const url = `${BASE}audio/hu-gu-po/ja/p01-1.mp3`;
+  const cache = await caches.open(sw.MEDIA_CACHE_NAME);
+  await cache.put(url, new Response(new Uint8Array([1, 2, 3, 4]), { headers: { 'Content-Type': 'audio/mpeg' } }));
+
+  const previousCaches = globalThis.caches;
+  const previousFetch = globalThis.fetch;
+  let releaseFetch;
+  const fetchGate = new Promise(resolve => { releaseFetch = resolve; });
+  globalThis.caches = caches;
+  globalThis.fetch = async () => {
+    await fetchGate;
+    return new Response(new Uint8Array([5, 6, 7]), { headers: { 'Content-Type': 'audio/mpeg' } });
+  };
+  try {
+    const handlers = new Map();
+    sw.attach({
+      registration: { scope: BASE },
+      addEventListener: (type, handler) => handlers.set(type, handler),
+    });
+    const waitUntilPromises = [];
+    let responsePromise;
+    let dispatching = true;
+    handlers.get('fetch')({
+      request: new Request(url, { headers: { Range: 'bytes=1-2' } }),
+      waitUntil: promise => {
+        if (!dispatching) throw new Error('waitUntil called after dispatch');
+        waitUntilPromises.push(promise);
+      },
+      respondWith: promise => { responsePromise = promise; },
+    });
+    dispatching = false;
+
+    const response = await responsePromise;
+    assert.equal(response.status, 206);
+    assert.deepEqual([...new Uint8Array(await response.arrayBuffer())], [2, 3]);
+    assert.equal(waitUntilPromises.length, 1, 'the fetch event owns the background refresh lifetime');
+
+    releaseFetch();
+    await Promise.all(waitUntilPromises);
+    const refreshed = await cache.match(url);
+    assert.deepEqual([...new Uint8Array(await refreshed.arrayBuffer())], [5, 6, 7]);
+
+    const noRefreshLifetimes = [];
+    let noRefreshResponse;
+    dispatching = true;
+    handlers.get('fetch')({
+      request: new Request(url),
+      waitUntil: promise => {
+        if (!dispatching) throw new Error('waitUntil called after dispatch');
+        noRefreshLifetimes.push(promise);
+      },
+      respondWith: promise => { noRefreshResponse = promise; },
+    });
+    dispatching = false;
+    assert.equal((await noRefreshResponse).status, 200);
+    assert.equal(noRefreshLifetimes.length, 1);
+    await noRefreshLifetimes[0];
+  } finally {
+    releaseFetch();
+    globalThis.caches = previousCaches;
+    globalThis.fetch = previousFetch;
+  }
 });
 
 test('parseRange rejects absent, malformed, and out-of-bounds ranges so callers fall back to the full file', () => {

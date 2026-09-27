@@ -29,6 +29,7 @@
 })(typeof self !== 'undefined' ? self : this, (E, STORIES) => {
   const SHELL_CACHE_NAME = E.SHELL_CACHE_NAME;
   const MEDIA_CACHE_NAME = E.MEDIA_CACHE_NAME;
+  const mediaRefreshes = new Map();
 
   function shellUrls(base) {
     return E.shellAssetUrls(STORIES, base);
@@ -87,22 +88,50 @@
     });
   }
 
-  async function handleMedia(request, caches, fetch) {
+  async function refreshCachedMedia(cache, url, response) {
+    if (!(await cache.match(url))) return;
+    await cache.put(url, response.clone());
+  }
+
+  async function handleMedia(request, caches, fetch, onBackground = () => {}) {
     const cache = await caches.open(MEDIA_CACHE_NAME);
     const cached = await cache.match(request.url);
-    if (cached) return buildRangeResponse(cached, request.headers.get('Range'));
-    const response = await fetch(request.url);
     const rangeHeader = request.headers.get('Range');
-    if (response && response.ok && rangeHeader) {
-      try {
-        await cache.put(request.url, response.clone());
-      } catch (_error) {
-        return response;
+
+    // A cached full response can answer iOS audio Range requests without a network round-trip.
+    // Refresh its full copy in the background when online; never put a partial 206 in CacheStorage.
+    if (cached && rangeHeader) {
+      let refresh = mediaRefreshes.get(request.url);
+      if (!refresh) {
+        refresh = Promise.resolve().then(() => fetch(request.url)).then(response => {
+          if (response && response.ok) return refreshCachedMedia(cache, request.url, response);
+        }).catch(() => {}).finally(() => {
+          if (mediaRefreshes.get(request.url) === refresh) mediaRefreshes.delete(request.url);
+        });
+        mediaRefreshes.set(request.url, refresh);
       }
-      return buildRangeResponse(await cache.match(request.url), rangeHeader);
+      onBackground(refresh);
+      return buildRangeResponse(cached, rangeHeader);
     }
-    if (response && response.ok) cache.put(request.url, response.clone());
-    return response;
+
+    // Prefer the current online media so same-name story fixes appear on the next visit, while
+    // retaining the cached copy as the offline fallback.
+    try {
+      const response = await fetch(request.url);
+      if (response && response.ok) {
+        try {
+          if (cached) await refreshCachedMedia(cache, request.url, response);
+          else await cache.put(request.url, response.clone());
+        } catch (_error) {
+          return response;
+        }
+        return rangeHeader ? buildRangeResponse(response, rangeHeader) : response;
+      }
+      if (!cached) return response;
+    } catch (error) {
+      if (!cached) throw error;
+    }
+    return cached ? buildRangeResponse(cached, null) : undefined;
   }
 
   async function handleShell(request, caches, fetch) {
@@ -121,10 +150,10 @@
     throw new Error(`taiwan-ehon: shell asset unavailable offline: ${request.url}`);
   }
 
-  async function respond(request, { caches, fetch }) {
+  async function respond(request, { caches, fetch, onBackground = () => {} }) {
     const kind = requestKind(request.url);
     if (kind === 'analytics') return fetch(request);
-    if (kind === 'media') return handleMedia(request, caches, fetch);
+    if (kind === 'media') return handleMedia(request, caches, fetch, onBackground);
     return handleShell(request, caches, fetch);
   }
 
@@ -154,7 +183,21 @@
       const url = event.request.url;
       if (!url.startsWith(scope) && requestKind(url) !== 'analytics') return;
       if (event.request.method !== 'GET') return;
-      event.respondWith(respond(event.request, { caches, fetch }).catch(() => fetch(event.request)));
+      let finishLifetime;
+      const lifetime = new Promise(resolve => { finishLifetime = resolve; });
+      event.waitUntil(lifetime);
+      let refreshRegistered = false;
+      const response = respond(event.request, {
+        caches,
+        fetch,
+        onBackground: refresh => {
+          refreshRegistered = true;
+          return refresh.finally(finishLifetime);
+        },
+      }).catch(() => fetch(event.request));
+      event.respondWith(response.finally(() => {
+        if (!refreshRegistered) finishLifetime();
+      }));
     });
 
     // Lets the page ask the waiting worker to activate immediately after showing an
