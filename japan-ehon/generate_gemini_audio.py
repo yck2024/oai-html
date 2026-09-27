@@ -14,8 +14,8 @@ Every sentence is one clip per language (audio/<story>/<ja|zh|en>/<line>.mp3), v
 narrator or a story character with that line's style direction. --check transcribes the
 bundled clips with a Gemini text model so misreadings can be caught and regenerated.
 
-Before using --language en for real narration, audition 2-3 candidate voices on one sentence
-and record the choice in this series' README — see its "English narration" section.
+The English narrator voice was chosen by an audition recorded in this series' README ("English
+narration").
 """
 
 import argparse
@@ -73,23 +73,61 @@ LANGUAGES = {
     },
 }
 
-# Voice casting per speaker key used in stories/*.js's "speaker" field. Seeded here with only
-# "narrator" (every empty-shelf placeholder needs none yet); add one entry per named character
-# as stories are written, the same way taiwan-ehon's SPEAKERS grew story by story. The `en`
-# voice for "narrator" is a placeholder pending the audition this series' README calls for —
-# do not generate real `en` narration before that audition is recorded.
+# Voice casting per speaker key used in stories/*.js's "speaker" field; add one entry per named
+# character as stories are written, the same way taiwan-ehon's SPEAKERS grew story by story. The
+# `en` narrator voice (Kore) was chosen by the audition recorded in this series' README.
 SPEAKERS = {
     "narrator": {
         "persona": "the warm storyteller of a picture book, reading to a young child",
         "voices": {"ja": "ja-jp-tutor-1", "zh": "Kore", "en": "Kore"},
     },
     "grandpa": {
-        "persona": "a kind, gentle old man from a Japanese village, warm and soft-spoken",
-        "voices": {"ja": "ja-jp-storyteller-5", "zh": "Iapetus", "en": "Iapetus"},
+        "persona": "a kind, gentle old man from a Japanese mountain village",
+        "voices": {"ja": "ja-jp-storyteller-4", "zh": "Algenib", "en": "Algenib"},
     },
     "grandma": {
-        "persona": "a kind, gentle old woman from a Japanese village, warm and loving",
+        "persona": "a warm, cheerful old woman who loves her family",
         "voices": {"ja": "ja-jp-storyteller-8", "zh": "Gacrux", "en": "Gacrux"},
+    },
+    "jizo": {
+        "persona": "a soft, friendly chorus of stone Jizo guardians, calm and kind, never eerie",
+        "voices": {"ja": "ja-jp-storyteller-5", "zh": "Iapetus", "en": "Iapetus"},
+    },
+    "momotaro": {
+        "persona": "Momotaro, a brave, cheerful, kind boy of about twelve",
+        "voices": {"ja": "ja-jp-assistant-12", "zh": "Puck", "en": "Puck"},
+    },
+    "dog": {
+        "persona": "an eager, friendly, loyal dog",
+        "voices": {"ja": "ja-jp-assistant-7", "zh": "Fenrir", "en": "Fenrir"},
+    },
+    "oni": {
+        "persona": "a big, blustery, comically clumsy oni who turns out to be sorry, never scary",
+        "voices": {"ja": "ja-jp-storyteller-11", "zh": "Charon", "en": "Charon"},
+    },
+    "kaguya": {
+        "persona": "Kaguya-hime, a graceful, gentle, kind young woman",
+        "voices": {"ja": "ja-jp-storyteller-2", "zh": "Leda", "en": "Leda"},
+    },
+    "urashima": {
+        "persona": "Urashima Taro, a warm, kind young fisherman",
+        "voices": {"ja": "ja-jp-podcaster-8", "zh": "Orus", "en": "Orus"},
+    },
+    "turtle": {
+        "persona": "a gentle, grateful, slightly formal sea turtle",
+        "voices": {"ja": "ja-jp-assistant-9", "zh": "Achird", "en": "Achird"},
+    },
+    "otohime": {
+        "persona": "Princess Otohime of the Dragon Palace, graceful, warm, and kind",
+        "voices": {"ja": "ja-jp-storyteller-2", "zh": "Leda", "en": "Leda"},
+    },
+    "villager": {
+        "persona": "a kind, thoughtful old village man",
+        "voices": {"ja": "ja-jp-storyteller-4", "zh": "Algenib", "en": "Algenib"},
+    },
+    "ojiisan": {
+        "persona": "a kind, gentle old man from a Japanese village, warm and soft-spoken",
+        "voices": {"ja": "ja-jp-storyteller-5", "zh": "Iapetus", "en": "Iapetus"},
     },
     "neighbor": {
         "persona": "a fussy, comically greedy old neighbor, silly rather than scary",
@@ -111,8 +149,8 @@ SPEAKERS = {
         "persona": "a kind, bright girl of about twelve, a nobleman's daughter",
         "voices": {"ja": "ja-jp-assistant-9", "zh": "Aoede", "en": "Aoede"},
     },
-    "oni": {
-        "persona": "a big, blustery, clumsy ogre, loud but silly and never frightening",
+    "akaoni": {
+        "persona": "a big, blustery, clumsy red ogre, loud but silly and never frightening",
         "voices": {"ja": "ja-jp-storyteller-4", "zh": "Algenib", "en": "Algenib"},
     },
     "daughter": {

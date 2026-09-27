@@ -20,7 +20,7 @@ module.exports = {
   title: {
     ja: '{桃太郎|ももたろう}',      // {漢字|かんじ} marks furigana; plain kana elsewhere
     zh: '桃太郎',
-    en: 'Momotaro, the Peach Boy', // omit until English is actually staffed for this book — see note below
+    en: 'Momotaro, the Peach Boy', // include when this book has English narration
     zhuyin: 'ㄊㄠˊ ㄊㄞˋ ㄌㄤˊ',    // one 注音 syllable per Han character in `zh`, space-separated
   },
   tagline: { ja: '...', zh: '...', en: '...' },
@@ -51,13 +51,13 @@ module.exports = {
 
 ## The `en` field is optional, per line and per label
 
-Add `en`/`enTts` only to a story once English narration is actually being produced for it — see
-`generate_gemini_audio.py`'s `--language en` support and the voice-audition note in this
-series' own README before recording. A story with no `en` fields at all reads and narrates in
-`ja`/`zh` exactly like a taiwan-ehon story; the engine only ever displays/narrates the languages
-this series' `series.config.js` declares (`languages: ['ja', 'zh', 'en']` here) and that are
-actually present on a given line, so a partially-translated story never shows a blank English
-line — it simply behaves as ja/zh-only for any line missing `en`.
+English is optional in the schema, but all four currently published stories include English text
+and narration. See this series' README for the selected voice and audition notes. A story with no
+`en` fields at all reads and narrates in `ja`/`zh` exactly like a taiwan-ehon story; the engine only
+ever displays/narrates the languages this series' `series.config.js` declares
+(`languages: ['ja', 'zh', 'en']` here) and that are actually present on a given line, so a
+partially-translated story never shows a blank English line — it simply behaves as ja/zh-only for
+any line missing `en`.
 
 ## Images and audio
 
@@ -83,6 +83,6 @@ derived from `stories.js`.
 ## Story writing process
 
 Per the standing house rule: draft the story on Claude Opus, then have GPT-6 Sol review it
-adversarially (factual/source fidelity, age-appropriateness, cultural framing, bilingual
-equivalence) and revise before recording narration or generating art. This applies to every
-story text in this folder — the story is the part of this product most worth getting right.
+adversarially (factual/source fidelity, age-appropriateness, cultural framing, and equivalence
+across all three languages) and revise before recording narration or generating art. This applies
+to every story text in this folder — the story is the part of this product most worth getting right.

@@ -110,7 +110,7 @@
       "lines": [
         {
           "id": "p02-1",
-          "speaker": "grandpa",
+          "speaker": "ojiisan",
           "style": "gentle, kind grandfather, soothing",
           "ja": "「かわいそうに。 いま はずして あげるからね。」",
           "zh": "「好可憐啊，我馬上幫你解開。」",
@@ -452,7 +452,7 @@
         },
         {
           "id": "end-2",
-          "speaker": "grandpa",
+          "speaker": "ojiisan",
           "style": "warm, tearful but loving farewell call",
           "ja": "「ありがとう。 げんきでね。」",
           "zh": "「謝謝妳，要好好的喔！」",

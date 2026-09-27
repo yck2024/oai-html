@@ -224,7 +224,7 @@
         },
         {
           "id": "p05-2",
-          "speaker": "grandpa",
+          "speaker": "ojiisan",
           "style": "calm, warm, reassuring grandfather, gentle and clear",
           "ja": "「もう だいじょうぶ。 シロ、ありがとう。 こばんが でた ところに、まつの きを うえようね。」",
           "zh": "「沒事啦。小白，謝謝你！我們在找到金幣的地方種一棵松樹吧。」",
@@ -368,7 +368,7 @@
         },
         {
           "id": "p09-2",
-          "speaker": "grandpa",
+          "speaker": "ojiisan",
           "style": "bright, joyful call from up in a tree",
           "ja": "「かれきに はなを さかせましょう！」",
           "zh": "「讓枯樹開花吧！」",

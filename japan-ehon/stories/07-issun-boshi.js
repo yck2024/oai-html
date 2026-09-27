@@ -282,7 +282,7 @@
         },
         {
           "id": "p07-3",
-          "speaker": "oni",
+          "speaker": "akaoni",
           "style": "big, blustery, booming ogre, more silly than scary",
           "ja": "「その おひめさまを つれて いくぞ！」",
           "zh": "「我要把公主帶走！」",
@@ -340,7 +340,7 @@
       "lines": [
         {
           "id": "p09-1",
-          "speaker": "oni",
+          "speaker": "akaoni",
           "style": "big ogre whimpering comically, giving up",
           "ja": "「いたた、いたた！ まいった、まいった！」",
           "zh": "「哎喲、哎喲！我投降，我投降！」",

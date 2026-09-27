@@ -157,7 +157,7 @@
         },
         {
           "id": "p03-3",
-          "speaker": "grandpa",
+          "speaker": "ojiisan",
           "style": "charmed, chuckling grandfather",
           "ja": "「おや、たのしい うただ。 もう ひとつ ころがして みよう。」",
           "zh": "「哎呀，真有趣的歌！我再滾一個下去吧。」",
@@ -291,7 +291,7 @@
         },
         {
           "id": "p07-2",
-          "speaker": "grandpa",
+          "speaker": "ojiisan",
           "style": "humble, kindly grandfather",
           "ja": "「おおきいのは おもくて もてません。 ちいさいので じゅうぶんです。 ありがとう。」",
           "zh": "「大的太重了，小的就夠了。謝謝你們。」",
