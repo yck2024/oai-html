@@ -7,6 +7,13 @@
   // correct Gemini TTS pronunciation and may use kanji or katakana.
   const TEXT_LANGUAGES = ['en', 'zh', 'ja'];
 
+  // Each language's own name, always shown in itself (never translated), for language pickers.
+  const LANGUAGE_NAMES = { en: 'English', zh: '繁體中文', ja: 'にほんご' };
+
+  // The one on-screen/voice language a child or grown-up picks also sets a default second,
+  // smaller language shown under key text, echoing the game's original English+Chinese pairing.
+  const DEFAULT_SECOND_LANGUAGE = { en: 'zh', zh: 'en', ja: 'en' };
+
   const TOPIC_NAMES = {
     math: { en: 'Math', zh: '數學', ja: 'すうがく', emoji: '➕' },
     colors: { en: 'Colors', zh: '顏色', ja: 'いろ', emoji: '🎨' },
@@ -63,7 +70,7 @@
       zh: '點一下開始，打開聲音，聽第一題！',
       ja: 'すたーとを　たっぷして　おとを　つけると、さいしょの　もんだいが　きこえるよ！',
     },
-    textLabel: { en: 'TEXT', zh: '文字', ja: 'もじ' },
+    textLabel: { en: 'LANGUAGE', zh: '語言', ja: 'げんご' },
     arenaSectionLabel: { en: 'The sparring arena', zh: '對打擂台', ja: 'たいけつすてーじ' },
     arenaHeading: { en: 'THE SPARRING ARENA', zh: '對打擂台', ja: 'たいけつすてーじ' },
     heroSide: { en: 'YOUR CHAMPION', zh: '你的隊長', ja: 'きみの　せんしゅ' },
@@ -76,8 +83,6 @@
     topicTabsLabel: { en: 'Learning challenges', zh: '學習挑戰', ja: 'まなびの　もんだい' },
     levelGroupLabel: { en: 'Level', zh: '難度', ja: 'れべる' },
     levelLabel: { en: 'LEVEL', zh: '難度', ja: 'れべる' },
-    voiceLabel: { en: 'VOICE', zh: '語音', ja: 'おんせい' },
-    voiceGroupLabel: { en: 'Spoken language', zh: '語音語言', ja: 'はなす　ことば' },
     soundControlsLabel: { en: 'Sound controls', zh: '聲音控制', ja: 'おとの　そうさ' },
     replayButton: { en: '↻ Hear question', zh: '↻ 再聽一次', ja: '↻ もんだいを　きく' },
     muteButton: { en: '🔊 Mute', zh: '🔊 靜音', ja: '🔊 みゅーと' },
@@ -125,14 +130,43 @@
     gateCancel: { en: 'Cancel', zh: '取消', ja: 'やめる' },
     settingsTitle: { en: 'Grown-up settings', zh: '家長設定', ja: 'おとなの　せってい' },
     settingsClose: { en: '✕ Close', zh: '✕ 關閉', ja: '✕ とじる' },
+    settingsIntro: {
+      en: 'Choose what your child can play, hear, and see here.',
+      zh: '在這裡選擇孩子能玩、能聽、能看到的內容。',
+      ja: 'ここで　おこさんが　あそべる／きける／みられる　ないようを　えらべるよ。',
+    },
     settingsLevelLockTitle: { en: 'Levels this child can pick', zh: '孩子可以選的難度', ja: 'えらべる　れべる' },
     settingsLevelLockHint: {
       en: 'Uncheck a level to hide it from the level picker. At least one stays on.',
       zh: '取消勾選可隱藏該難度，至少會保留一個。',
       ja: 'ちぇっくを　はずすと、その　れべるは　えらべなくなるよ。ひとつは　のこるよ。',
     },
+    settingsSecondLanguageTitle: { en: 'Second language', zh: '第二語言', ja: 'にばんめの　げんご' },
+    settingsSecondLanguageHint: {
+      en: 'Shows a smaller second language under key words and titles. Turn it off for one language only.',
+      zh: '在重要文字下方顯示較小的第二語言。關閉即可只顯示一種語言。',
+      ja: 'だいじな　ことばの　したに、ちいさく　にばんめの　げんごを　みせるよ。けすと　げんごは　ひとつだけに　なるよ。',
+    },
+    settingsSecondLanguageOff: { en: 'Off', zh: '關閉', ja: 'けす' },
+    settingsVoiceTitle: { en: 'Narration voice', zh: '朗讀語音', ja: 'よみあげの　こえ' },
+    settingsVoiceHint: {
+      en: 'By default the spoken narration matches the language above. A grown-up can pick a different voice here.',
+      zh: '預設語音朗讀會跟上面選的語言一樣。家長可以在這裡選擇不同的語音。',
+      ja: 'ふつうは、うえで　えらんだ　げんごと　おなじ　こえで　よみあげるよ。おとなは　ここで　ちがう　こえを　えらべるよ。',
+    },
+    settingsVoiceMatchLabel: { en: 'Same as language', zh: '跟語言一樣', ja: 'げんごと　おなじ' },
     settingsSoundTitle: { en: 'Sound', zh: '聲音', ja: 'おと' },
+    settingsSoundHint: {
+      en: 'Turns narration and sound effects off for everyone playing.',
+      zh: '關閉語音朗讀和音效，所有玩家都會靜音。',
+      ja: 'よみあげと　こうかおんを　けすよ。あそぶ　ひと　みんなに　きくよ。',
+    },
     settingsRewardsTitle: { en: 'Progress so far', zh: '目前的進度', ja: 'いままでの　きろく' },
+    settingsRewardsHint: {
+      en: 'Wins and stickers earned so far, saved only on this device.',
+      zh: '目前贏的次數和貼紙，只存在這台裝置。',
+      ja: 'いままで　かった　かずと　しーるだよ。この　きき　だけに　ほぞんするよ。',
+    },
     settingsClearButton: { en: 'Clear sticker book', zh: '清空貼紙本', ja: 'しーるちょうを　けす' },
     settingsConfirmClear: { en: 'Yes, clear it', zh: '確定清空', ja: 'けす' },
     settingsKeepStickers: { en: 'Keep stickers', zh: '保留貼紙', ja: 'のこす' },
@@ -291,12 +325,30 @@
     }[lang];
   }
 
+  function bilingualNode(mainText, secondValue) {
+    if (!secondValue || secondValue === mainText) return document.createTextNode(mainText);
+    const wrap = document.createElement('span');
+    wrap.className = 'bilingual';
+    const main = document.createElement('span');
+    main.className = 'lang-main';
+    main.textContent = mainText;
+    const second = document.createElement('span');
+    second.className = 'lang-second';
+    second.textContent = secondValue;
+    wrap.append(main, second);
+    return wrap;
+  }
+
+  function setBilingual(el, mainText, secondValue) {
+    el.replaceChildren(bilingualNode(mainText, secondValue));
+  }
+
   const api = {
-    TEXT_LANGUAGES, TOPIC_NAMES, LEVEL_NAMES, CHAMPIONS, STRINGS,
+    TEXT_LANGUAGES, LANGUAGE_NAMES, DEFAULT_SECOND_LANGUAGE, TOPIC_NAMES, LEVEL_NAMES, CHAMPIONS, STRINGS,
     championReady, topicChosenMessage, levelChosenMessage, finishBody, sparMessage,
     settingsWinsSummary, settingsStickerSummary, rewardBookIntroWins, stickerStillToFind,
     costumeWinsToGo, costumeSurpriseHint, costumeRowLabel, nextSurpriseHint,
-    rewardSummaryPattern, rewardUnlockText,
+    rewardSummaryPattern, rewardUnlockText, bilingualNode, setBilingual,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof window !== 'undefined') window.FriendlyArenaI18n = api;

@@ -213,6 +213,10 @@ class FakeElement {
     return node;
   }
 
+  contains(node) {
+    return node === this || this.children.some(child => child instanceof FakeElement && child.contains(node));
+  }
+
   append(...children) { this.children.push(...children.map(child => this.adopt(child))); }
   prepend(...children) { this.children.unshift(...children.map(child => this.adopt(child))); }
   insertBefore(child, before) {

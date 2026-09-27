@@ -17,8 +17,8 @@
       <button class="pill-button" id="restartButton" type="button">↻ Start over</button>
     </header>
 
-    <div class="text-language-row" role="group" aria-label="On-screen text language">
-      <span class="speech-label" id="textLabel">TEXT</span>
+    <div class="text-language-row" role="group" aria-label="Language: on-screen text and narration voice">
+      <span class="speech-label" id="textLabel">LANGUAGE</span>
       <button class="text-language" type="button" data-text-language="en" aria-pressed="false">English</button>
       <button class="text-language" type="button" data-text-language="zh" aria-pressed="false">繁體中文</button>
       <button class="text-language" type="button" data-text-language="ja" aria-pressed="false">にほんご</button>
@@ -104,12 +104,6 @@
 
         <div id="playArea">
           <div class="speech-controls" id="speechControls">
-            <div class="speech-languages" role="group" aria-label="Spoken language">
-              <span class="speech-label" id="voiceLabel">VOICE</span>
-              <button class="speech-language" type="button" data-language="en" aria-pressed="false">English</button>
-              <button class="speech-language" type="button" data-language="zh" aria-pressed="false">繁體中文</button>
-              <button class="speech-language" type="button" data-language="ja" aria-pressed="false">にほんご</button>
-            </div>
             <div class="speech-playback" role="group" aria-label="Sound controls">
               <button class="speech-control" id="replayPromptButton" type="button">↻ Hear question</button>
               <button class="speech-control" id="muteButton" type="button" aria-pressed="false">🔊 Mute</button>
@@ -188,17 +182,30 @@
           <h2 id="settingsDialogTitle">Grown-up settings</h2>
           <button class="pill-button" type="button" id="settingsCloseButton">✕ Close</button>
         </div>
+        <p class="settings-intro" id="settingsIntro">Choose what your child can play, hear, and see here.</p>
         <section class="settings-section">
           <h3 id="settingsLevelLockTitle">Levels this child can pick</h3>
           <p class="settings-hint" id="settingsLevelLockHint">Uncheck a level to hide it from the level picker. At least one stays on.</p>
           <div class="level-lock-options" id="levelLockOptions" role="group" aria-label="Level lock"></div>
         </section>
         <section class="settings-section">
+          <h3 id="settingsSecondLanguageTitle">Second language</h3>
+          <p class="settings-hint" id="settingsSecondLanguageHint">Shows a smaller second language under key words and titles. Turn it off for one language only.</p>
+          <div class="language-options" id="secondLanguageOptions" role="group" aria-label="Second language"></div>
+        </section>
+        <section class="settings-section">
+          <h3 id="settingsVoiceTitle">Narration voice</h3>
+          <p class="settings-hint" id="settingsVoiceHint">By default the spoken narration matches the language above. A grown-up can pick a different voice here.</p>
+          <div class="language-options" id="voiceLanguageOptions" role="group" aria-label="Narration voice"></div>
+        </section>
+        <section class="settings-section">
           <h3 id="settingsSoundTitle">Sound</h3>
+          <p class="settings-hint" id="settingsSoundHint">Turns narration and sound effects off for everyone playing.</p>
           <button class="speech-control" type="button" id="settingsMuteButton" aria-pressed="false">🔊 Mute</button>
         </section>
         <section class="settings-section">
           <h3 id="settingsRewardsTitle">Progress so far</h3>
+          <p class="settings-hint" id="settingsRewardsHint">Wins and stickers earned so far, saved only on this device.</p>
           <p id="settingsRewardSummary"></p>
           <p class="reward-save-note" id="rewardSaveNote">Saved on this device only: the number of wins and each champion’s costume.</p>
           <div class="reset-actions">

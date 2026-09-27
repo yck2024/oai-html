@@ -3,6 +3,7 @@
 
   const { STICKERS, STORAGE_KEY, createRewards } = window.ArenaRewardsCore;
   const I18N = window.FriendlyArenaI18n;
+  const { bilingualNode, setBilingual } = I18N;
   const CHAMPION_IDS = ['dino', 'monster'];
 
   function deviceStorage() {
@@ -33,14 +34,22 @@
   const keepButton = action('keep');
   const resetStatus = $('#resetStatus');
   let returnFocus = null;
-  // app.js runs before this script and already resolved the saved text language;
+  let lastRewardNote = null;
+  // app.js runs before this script and already resolved the saved languages;
   // later language switches arrive through window.ArenaRewards.setLanguage.
   let currentLanguage = I18N.TEXT_LANGUAGES.includes(window.FriendlyArenaCurrentTextLanguage?.())
     ? window.FriendlyArenaCurrentTextLanguage()
     : 'en';
+  let currentSecondLanguage = I18N.TEXT_LANGUAGES.includes(window.FriendlyArenaCurrentSecondLanguage?.())
+    ? window.FriendlyArenaCurrentSecondLanguage()
+    : null;
 
   function label(item) {
     return item[currentLanguage];
+  }
+
+  function secondLabel(item) {
+    return currentSecondLanguage ? item[currentSecondLanguage] : null;
   }
 
   function picture(item, className) {
@@ -86,10 +95,13 @@
   function renderSummary(state) {
     const total = STICKERS.length;
     const next = state.nextCostume;
-    const hint = next
-      ? ` · ${I18N.nextSurpriseHint(label(next), next.winsToGo, currentLanguage)}`
-      : ` · ${I18N.STRINGS.allCostumesUnlocked[currentLanguage]}`;
-    summary.textContent = `${I18N.rewardSummaryPattern(state.collected, total, currentLanguage)}${hint}`;
+    const line = language => {
+      const hint = next
+        ? ` · ${I18N.nextSurpriseHint(next[language], next.winsToGo, language)}`
+        : ` · ${I18N.STRINGS.allCostumesUnlocked[language]}`;
+      return `${I18N.rewardSummaryPattern(state.collected, total, language)}${hint}`;
+    };
+    setBilingual(summary, line(currentLanguage), currentSecondLanguage && line(currentSecondLanguage));
   }
 
   function stickerSlot(sticker, index) {
@@ -109,7 +121,7 @@
     }
     const name = document.createElement('span');
     name.className = 'sticker-name';
-    name.textContent = label(sticker);
+    setBilingual(name, label(sticker), secondLabel(sticker));
     slot.append(picture(sticker, 'sticker-picture'), name);
     if (sticker.count > 1) {
       const count = document.createElement('span');
@@ -131,9 +143,10 @@
     button.classList.toggle('is-worn', selected);
     const text = document.createElement('span');
     text.className = 'costume-label';
-    text.textContent = !costume
-      ? I18N.STRINGS.costumeNoneLabel[currentLanguage]
-      : costume.unlocked ? label(costume) : I18N.costumeWinsToGo(costume.unlockAt, currentLanguage);
+    const labelFor = language => !costume
+      ? I18N.STRINGS.costumeNoneLabel[language]
+      : costume.unlocked ? costume[language] : I18N.costumeWinsToGo(costume.unlockAt, language);
+    setBilingual(text, labelFor(currentLanguage), currentSecondLanguage && labelFor(currentSecondLanguage));
     if (costume?.unlocked) {
       button.append(picture(costume, 'costume-picture'), text);
     } else {
@@ -160,11 +173,12 @@
   }
 
   function renderBook(state) {
-    bookIntro.textContent = state.wins >= 9999
-      ? I18N.STRINGS.rewardBookFull[currentLanguage]
+    const introFor = language => state.wins >= 9999
+      ? I18N.STRINGS.rewardBookFull[language]
       : state.wins
-        ? I18N.rewardBookIntroWins(state.wins, currentLanguage)
-        : I18N.STRINGS.rewardBookIntroEmpty[currentLanguage];
+        ? I18N.rewardBookIntroWins(state.wins, language)
+        : I18N.STRINGS.rewardBookIntroEmpty[language];
+    setBilingual(bookIntro, introFor(currentLanguage), currentSecondLanguage && introFor(currentSecondLanguage));
     stickerGrid.replaceChildren(...state.stickers.map(stickerSlot));
     costumeRows.replaceChildren(...CHAMPION_IDS.map(champion => {
       const row = document.createElement('div');
@@ -174,7 +188,7 @@
       row.setAttribute('aria-label', I18N.costumeRowLabel(shortName, currentLanguage));
       const heading = document.createElement('span');
       heading.className = 'costume-row-name';
-      heading.textContent = shortName;
+      setBilingual(heading, shortName, currentSecondLanguage && I18N.CHAMPIONS[champion].shortName[currentSecondLanguage]);
       const options = document.createElement('div');
       options.className = 'costume-options';
       options.append(costumeButton(champion, null, state.wearing[champion]),
@@ -182,9 +196,10 @@
       row.append(heading, options);
       return row;
     }));
-    saveNote.textContent = state.persistent
-      ? I18N.STRINGS.saveNotePersistent[currentLanguage]
-      : I18N.STRINGS.saveNoteNotPersistent[currentLanguage];
+    const saveNoteFor = language => state.persistent
+      ? I18N.STRINGS.saveNotePersistent[language]
+      : I18N.STRINGS.saveNoteNotPersistent[language];
+    setBilingual(saveNote, saveNoteFor(currentLanguage), currentSecondLanguage && saveNoteFor(currentSecondLanguage));
   }
 
   function render() {
@@ -225,22 +240,23 @@
     note.setAttribute('role', 'status');
     const text = document.createElement('p');
     text.className = 'reward-text';
+    const titleEntry = result.firstTime ? I18N.STRINGS.rewardNewStickerTitle : I18N.STRINGS.rewardAnotherStickerTitle;
     const title = document.createElement('strong');
-    title.textContent = result.firstTime ? I18N.STRINGS.rewardNewStickerTitle[currentLanguage] : I18N.STRINGS.rewardAnotherStickerTitle[currentLanguage];
-    text.append(title, document.createTextNode(` ${label(result.sticker)}`));
+    setBilingual(title, titleEntry[currentLanguage], secondLabel(titleEntry));
+    text.append(title, bilingualNode(` ${label(result.sticker)}`, secondLabel(result.sticker)));
     note.append(picture(result.sticker, 'reward-sticker'), text);
     if (result.unlocked) {
       const unlock = document.createElement('p');
       unlock.className = 'reward-unlock';
       const championKey = CHAMPION_IDS.includes(champion) ? champion : 'dino';
-      const championName = I18N.CHAMPIONS[championKey].shortName[currentLanguage];
-      unlock.textContent = I18N.rewardUnlockText(championName, label(result.unlocked), currentLanguage);
+      const unlockFor = language => I18N.rewardUnlockText(I18N.CHAMPIONS[championKey].shortName[language], result.unlocked[language], language);
+      setBilingual(unlock, unlockFor(currentLanguage), currentSecondLanguage && unlockFor(currentSecondLanguage));
       note.append(unlock);
     }
     const open = document.createElement('button');
     open.type = 'button';
     open.className = 'reward-book-link';
-    open.textContent = I18N.STRINGS.rewardBookLinkButton[currentLanguage];
+    setBilingual(open, I18N.STRINGS.rewardBookLinkButton[currentLanguage], secondLabel(I18N.STRINGS.rewardBookLinkButton));
     open.addEventListener('click', openBook);
     note.append(open);
     return note;
@@ -251,7 +267,9 @@
     render();
     const finishPanel = $('#finishPanel');
     finishPanel?.querySelector('#rewardNote')?.remove();
+    lastRewardNote = null;
     if (result.rewarded && finishPanel) {
+      lastRewardNote = { result, champion };
       const note = rewardNote(result, champion);
       const playAgain = $('#playAgainButton');
       if (playAgain && playAgain.parentNode === finishPanel) finishPanel.insertBefore(note, playAgain);
@@ -303,10 +321,14 @@
 
   window.ArenaRewards = {
     recordWin,
-    setLanguage(lang) {
-      if (!I18N.TEXT_LANGUAGES.includes(lang) || lang === currentLanguage) return;
-      currentLanguage = lang;
+    setLanguage(lang, secondLang) {
+      const validSecond = I18N.TEXT_LANGUAGES.includes(secondLang) ? secondLang : null;
+      if ((!I18N.TEXT_LANGUAGES.includes(lang) || lang === currentLanguage) && validSecond === currentSecondLanguage) return;
+      if (I18N.TEXT_LANGUAGES.includes(lang)) currentLanguage = lang;
+      currentSecondLanguage = validSecond;
       render();
+      const note = $('#finishPanel')?.querySelector('#rewardNote');
+      if (lastRewardNote && note) note.replaceWith(rewardNote(lastRewardNote.result, lastRewardNote.champion));
     },
     getSummary() {
       const state = rewards.getState();

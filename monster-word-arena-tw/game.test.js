@@ -122,8 +122,16 @@ class FakeElement {
     this.dispatch('click');
   }
 
-  dispatch(type) {
-    for (const callback of this.listeners[type] || []) callback({ currentTarget: this, target: this });
+  dispatch(type, properties = {}) {
+    for (const callback of this.listeners[type] || []) callback({ currentTarget: this, target: this, preventDefault() {}, ...properties });
+  }
+
+  get id() {
+    return this.attributes.id || '';
+  }
+
+  set id(value) {
+    this.attributes.id = String(value);
   }
 
   get className() {
@@ -223,7 +231,12 @@ class FakeElement {
     delete this.attributes[name];
   }
 
-  focus() {}
+  contains(element) {
+    for (let current = element; current; current = current.parentNode) if (current === this) return true;
+    return false;
+  }
+
+  focus() { this.ownerDocument.activeElement = this; }
 }
 
 function attrToCamel(attr) {
@@ -407,21 +420,38 @@ function createPageDocument() {
     return found;
   }
 
+  const documentListeners = new Map();
   const document = {
     documentElement: allElements.find(element => element.tagName === 'HTML'),
     hidden: false,
+    activeElement: null,
+    addEventListener(type, callback, options) {
+      const listeners = documentListeners.get(type) || [];
+      listeners.push({ callback, options });
+      documentListeners.set(type, listeners);
+    },
+    removeEventListener(type, callback) {
+      documentListeners.set(type, (documentListeners.get(type) || []).filter(listener => listener.callback !== callback));
+    },
+    dispatchEvent(event) {
+      for (const listener of documentListeners.get(event.type) || []) listener.callback(event);
+    },
     querySelector: selector => liveElements().find(element => matchesSelector(element, selector)) || null,
     querySelectorAll: selector => liveElements().filter(element => matchesSelector(element, selector)),
-    createElement: tagName => new FakeElement(tagName),
+    createElement: tagName => {
+      const element = new FakeElement(tagName);
+      element.ownerDocument = document;
+      return element;
+    },
     createTextNode: text => ({ textContent: String(text) }),
   };
+  allElements.forEach(element => { element.ownerDocument = document; });
   return { document, elements, allElements };
 }
 
 function createAppFixture(game, globals = {}) {
   const { document, elements } = createPageDocument();
   const championCards = document.querySelectorAll('.champion-card');
-  const speechLanguageButtons = document.querySelectorAll('.speech-language');
   const textLanguageButtons = document.querySelectorAll('.text-language');
   const effects = [];
   const sound = { board: null, ctx: null, timers: createFakeTimers() };
@@ -490,7 +520,7 @@ function createAppFixture(game, globals = {}) {
   const topicTabs = document.querySelectorAll('.topic-tab');
   const levelButtons = document.querySelectorAll('.level-option');
   return {
-    elements, played, effects, sound, audioElements, audioState, championCards, speechLanguageButtons, textLanguageButtons, topicTabs, levelButtons,
+    elements, played, effects, sound, audioElements, audioState, championCards, textLanguageButtons, topicTabs, levelButtons,
     dispatchWindowEvent(type, properties = {}) { window.dispatchEvent(Object.assign(new FixtureEvent(type), properties)); },
     answerOptions: elements.get('#answerOptions'), nextButton: elements.get('#nextButton'),
     muteButton: elements.get('#muteButton'), musicButton: elements.get('#musicButton'),
@@ -511,7 +541,6 @@ test('the shipped page markup initializes the arena and game', () => {
   assert.equal(app.championCards.length, 2);
   assert.equal(app.topicTabs.length, TOPICS.length);
   assert.equal(app.levelButtons.length, LEVELS.length);
-  assert.equal(app.speechLanguageButtons.length, 3);
   assert.equal(app.textLanguageButtons.length, 3);
   assert.equal(app.document.querySelectorAll('.fighter-body').length, 2);
   for (const action of ['open', 'close', 'reset', 'confirm-reset', 'keep']) {
@@ -796,7 +825,7 @@ print(json.dumps({
 test('English is the default voice and text; the child stays silent until Start, a language, replay, or unmute', () => {
   const game = createGame(steadyRandom);
   const app = createAppFixture(game);
-  const pressed = () => app.speechLanguageButtons.filter(button => button.getAttribute('aria-pressed') === 'true').map(button => button.dataset.language);
+  const pressed = () => app.textLanguageButtons.filter(button => button.getAttribute('aria-pressed') === 'true').map(button => button.dataset.textLanguage);
   assert.deepEqual(pressed(), ['en'], 'English shows as the default voice from the start');
   assert.equal(app.startRow.hidden, false, 'the Start button is offered before any sound plays');
 
@@ -812,39 +841,127 @@ test('English is the default voice and text; the child stays silent until Start,
   assert.equal(app.played.length, 2, 'sound stays on across a restart');
 });
 
-test('a remembered voice and text language from an earlier visit win over the English default', () => {
+test('a remembered language from an earlier visit wins over the English default and sets the voice too', () => {
+  const storage = new FakeLocalStorage();
+  storage.setItem('monsterWordArena.settings.v1', JSON.stringify({ v: 2, textLanguage: 'zh', secondLanguage: 'en', voiceOverride: false, voiceLanguage: 'zh' }));
+  const app = createAppFixture(createGame(steadyRandom), { localStorage: storage });
+  const pressed = () => app.textLanguageButtons.filter(button => button.getAttribute('aria-pressed') === 'true').map(button => button.dataset.textLanguage);
+  assert.deepEqual(pressed(), ['zh']);
+  app.startButton.click();
+  assert.match(app.played[0], /^\.\/audio\/zh\//);
+});
+
+test('an old saved settings shape migrates: the old text language becomes the language, and a voice that differed from it becomes a grown-up override', () => {
   const storage = new FakeLocalStorage();
   storage.setItem('monsterWordArena.settings.v1', JSON.stringify({ v: 1, speechLanguage: 'ja', textLanguage: 'zh', textLanguageManual: true }));
   const app = createAppFixture(createGame(steadyRandom), { localStorage: storage });
-  const pressedVoice = () => app.speechLanguageButtons.filter(button => button.getAttribute('aria-pressed') === 'true').map(button => button.dataset.language);
-  const pressedText = () => app.textLanguageButtons.filter(button => button.getAttribute('aria-pressed') === 'true').map(button => button.dataset.textLanguage);
-  assert.deepEqual(pressedVoice(), ['ja']);
-  assert.deepEqual(pressedText(), ['zh']);
+  const pressed = () => app.textLanguageButtons.filter(button => button.getAttribute('aria-pressed') === 'true').map(button => button.dataset.textLanguage);
+  assert.deepEqual(pressed(), ['zh'], 'the old text language becomes the new single language');
   app.startButton.click();
-  assert.match(app.played[0], /^\.\/audio\/ja\//);
+  assert.match(app.played[0], /^\.\/audio\/ja\//, 'a voice that differed from the old text language is kept as a grown-up override');
+
+  const withoutOverride = new FakeLocalStorage();
+  withoutOverride.setItem('monsterWordArena.settings.v1', JSON.stringify({ v: 1, speechLanguage: 'en', textLanguage: 'en' }));
+  const plainApp = createAppFixture(createGame(steadyRandom), { localStorage: withoutOverride });
+  plainApp.startButton.click();
+  assert.match(plainApp.played[0], /^\.\/audio\/en\//, 'a voice that matched the old text language follows the language, not an override');
 });
 
-test('choosing a language persists it to storage, and text follows the voice until set separately', () => {
+test('choosing a language sets both the on-screen text and, by default, the voice, with the pairing\'s default second language', () => {
   const storage = new FakeLocalStorage();
   const app = createAppFixture(createGame(steadyRandom), { localStorage: storage });
-  const withDefaults = overrides => ({ v: 1, speechMuted: false, allowedLevels: ['easy', 'harder', 'super'], ...overrides });
-  app.speechLanguageButtons.find(button => button.dataset.language === 'zh').click();
+  const withDefaults = overrides => ({ v: 2, secondLanguageManual: false, voiceOverride: false, speechMuted: false, allowedLevels: ['easy', 'harder', 'super'], ...overrides });
+  app.textLanguageButtons.find(button => button.dataset.textLanguage === 'zh').click();
   let saved = JSON.parse(storage.getItem('monsterWordArena.settings.v1'));
-  assert.deepEqual(saved, withDefaults({ speechLanguage: 'zh', textLanguage: 'zh', textLanguageManual: false }));
+  assert.deepEqual(saved, withDefaults({ textLanguage: 'zh', secondLanguage: 'en', voiceLanguage: 'zh' }), '繁體中文 pairs with English by default');
+  assert.match(app.played[0], /^\.\/audio\/zh\//, 'choosing a language is also the sound-on gesture');
 
   app.textLanguageButtons.find(button => button.dataset.textLanguage === 'ja').click();
   saved = JSON.parse(storage.getItem('monsterWordArena.settings.v1'));
-  assert.deepEqual(saved, withDefaults({ speechLanguage: 'zh', textLanguage: 'ja', textLanguageManual: true }));
+  assert.deepEqual(saved, withDefaults({ textLanguage: 'ja', secondLanguage: 'en', voiceLanguage: 'ja' }), 'にほんご pairs with English by default');
 
-  app.speechLanguageButtons.find(button => button.dataset.language === 'en').click();
+  app.textLanguageButtons.find(button => button.dataset.textLanguage === 'en').click();
   saved = JSON.parse(storage.getItem('monsterWordArena.settings.v1'));
-  assert.deepEqual(saved, withDefaults({ speechLanguage: 'en', textLanguage: 'ja', textLanguageManual: true }), 'text no longer follows voice once chosen separately');
+  assert.deepEqual(saved, withDefaults({ textLanguage: 'en', secondLanguage: 'zh', voiceLanguage: 'en' }), 'English pairs with 繁體中文 by default, the game\'s original bilingual pairing');
+});
+
+function passGate(app) {
+  app.elements.get('#settingsButton').click();
+  const [a, b] = app.elements.get('#gateQuestion').textContent.match(/\d+/g).map(Number);
+  app.elements.get('#gateInput').value = String(a + b);
+  app.document.querySelector('#gateSubmitButton').click();
+}
+
+test('changing the second language refreshes the visible question prompt immediately', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  app.topicTabs.find(tab => tab.dataset.topic === 'fruit').click();
+  const question = game.getState().question;
+  passGate(app);
+  app.document.querySelector('[data-second-language="ja"]').click();
+  assert.equal(app.elements.get('#questionPrompt').textContent, question.promptEn + question.promptJa);
+});
+
+test('a grown-up can change the second language or turn it off in settings', () => {
+  const storage = new FakeLocalStorage();
+  const app = createAppFixture(createGame(steadyRandom), { localStorage: storage });
+  passGate(app);
+  const secondLanguageButton = language => app.document.querySelector(`[data-second-language="${language}"]`);
+  assert.equal(secondLanguageButton('zh').getAttribute('aria-pressed'), 'true', 'English defaults to a 繁體中文 second language');
+  assert.equal(secondLanguageButton('en'), null, 'the current main language is never offered as its own second language');
+  assert.notEqual(secondLanguageButton('off'), null, 'turning the second language off is always offered');
+
+  secondLanguageButton('ja').click();
+  assert.equal(JSON.parse(storage.getItem('monsterWordArena.settings.v1')).secondLanguage, 'ja');
+  assert.equal(app.elements.get('#gameTitle').textContent, I18N.STRINGS.gameTitle.en + I18N.STRINGS.gameTitle.ja, 'the game title now shows Japanese as the smaller second line');
+
+  app.document.querySelector('[data-second-language="off"]').click();
+  assert.equal(JSON.parse(storage.getItem('monsterWordArena.settings.v1')).secondLanguage, null);
+  assert.equal(app.elements.get('#gameTitle').textContent, I18N.STRINGS.gameTitle.en, 'turning the second language off leaves only the main language');
+});
+
+test('a grown-up\'s manual second-language choice sticks across later language-picker taps, unlike the untouched default pairing', () => {
+  const storage = new FakeLocalStorage();
+  const app = createAppFixture(createGame(steadyRandom), { localStorage: storage });
+  passGate(app);
+  app.document.querySelector('[data-second-language="ja"]').click();
+
+  app.textLanguageButtons.find(button => button.dataset.textLanguage === 'zh').click();
+  let saved = JSON.parse(storage.getItem('monsterWordArena.settings.v1'));
+  assert.equal(saved.secondLanguage, 'ja', 'the grown-up\'s choice survives a main-language switch that does not collide with it');
+
+  app.textLanguageButtons.find(button => button.dataset.textLanguage === 'ja').click();
+  saved = JSON.parse(storage.getItem('monsterWordArena.settings.v1'));
+  assert.equal(saved.secondLanguage, 'en', 'a switch that would collide with the manual choice falls back to that language\'s default pairing instead');
+});
+
+test('a grown-up can pick a narration voice different from the on-screen language, off by default', () => {
+  const storage = new FakeLocalStorage();
+  const app = createAppFixture(createGame(steadyRandom), { localStorage: storage });
+  app.startButton.click();
+  assert.match(app.played[0], /^\.\/audio\/en\//);
+  passGate(app);
+  assert.equal(app.document.querySelector('[data-voice-option="match"]').getAttribute('aria-pressed'), 'true', 'the voice matches the language by default');
+
+  app.document.querySelector('[data-voice-option="ja"]').click();
+  const saved = JSON.parse(storage.getItem('monsterWordArena.settings.v1'));
+  assert.equal(saved.voiceOverride, true);
+  assert.equal(saved.voiceLanguage, 'ja');
+  app.elements.get('#replayPromptButton').click();
+  assert.match(app.played.at(-1), /^\.\/audio\/ja\//, 'narration now uses the overridden voice');
+  const pressed = () => app.textLanguageButtons.filter(button => button.getAttribute('aria-pressed') === 'true').map(button => button.dataset.textLanguage);
+  assert.deepEqual(pressed(), ['en'], 'the on-screen language is unaffected by the voice override');
+
+  app.document.querySelector('[data-voice-option="match"]').click();
+  assert.equal(JSON.parse(storage.getItem('monsterWordArena.settings.v1')).voiceOverride, false);
+  app.elements.get('#replayPromptButton').click();
+  assert.match(app.played.at(-1), /^\.\/audio\/en\//, 'the voice follows the language again once the override is off');
 });
 
 test('settings persistence degrades safely when storage is unavailable', () => {
   assert.doesNotThrow(() => {
     const app = createAppFixture(createGame(steadyRandom));
-    app.speechLanguageButtons.find(button => button.dataset.language === 'ja').click();
+    app.textLanguageButtons.find(button => button.dataset.textLanguage === 'ja').click();
   });
 });
 
@@ -1125,8 +1242,19 @@ test('the finish message names the actual number of power moves for the chosen l
     app.answerOptions.children.find(button => button.dataset.choice === answerId).click();
     if (star < goal) app.nextButton.click();
   }
-  assert.equal(app.elements.get('#finishBody').textContent, I18N.finishBody(goal, 'en'));
+  assert.equal(app.elements.get('#finishBody').textContent, I18N.finishBody(goal, 'en') + I18N.finishBody(goal, 'zh'), 'English pairs with 繁體中文 as the default second language');
   assert.match(app.elements.get('#finishBody').textContent, new RegExp(`^${goal} power moves`));
+
+  const rewardNoteBefore = app.elements.get('#finishPanel').children.find(child => child.classList.contains('reward-note'));
+  const rewardTitle = rewardNoteBefore.textContent.includes(I18N.STRINGS.rewardNewStickerTitle.en)
+    ? I18N.STRINGS.rewardNewStickerTitle
+    : I18N.STRINGS.rewardAnotherStickerTitle;
+  passGate(app);
+  app.document.querySelector('[data-second-language="ja"]').click();
+  const rewardNote = app.elements.get('#finishPanel').children.find(child => child.classList.contains('reward-note'));
+  assert.ok(rewardNote.textContent.includes(rewardTitle.ja), 'an existing finish reward note immediately uses the new second language');
+  const sticker = STICKERS.find(item => rewardNoteBefore.textContent.includes(item.en));
+  assert.ok(rewardNote.querySelector('.reward-text').textContent.includes(sticker.ja), 'the sticker name is bilingual too');
 });
 
 test('harder hides the picture and shows the written word instead, in the chosen text language', () => {
@@ -1377,6 +1505,81 @@ test('a small grown-up settings area is gated by a math check, then offers a lev
   assert.match(app.elements.get('#settingsRewardSummary').textContent, /0 match/);
 });
 
+test('pressing Enter on a correct grown-up answer waits for keyup before focusing Close', () => {
+  const app = createAppFixture(createGame(steadyRandom));
+  app.elements.get('#settingsButton').click();
+  const gateQuestion = app.elements.get('#gateQuestion');
+  const gateInput = app.elements.get('#gateInput');
+  const settingsGate = app.elements.get('#settingsGate');
+  const settingsBody = app.elements.get('#settingsBody');
+  const settingsCloseButton = app.document.querySelector('#settingsCloseButton');
+  let focusCalls = 0;
+  settingsCloseButton.focus = () => { focusCalls += 1; };
+
+  const [a, b] = gateQuestion.textContent.match(/\d+/g).map(Number);
+  gateInput.value = String(a + b);
+  let defaultPrevented = false;
+  gateInput.dispatch('keydown', { key: 'Enter', preventDefault: () => { defaultPrevented = true; } });
+
+  assert.equal(defaultPrevented, true, 'Enter\'s default action is suppressed so it cannot also trigger an implicit submission');
+  assert.equal(settingsGate.hidden, true);
+  assert.equal(settingsBody.hidden, false, 'a correct answer shows the settings instead of the dialog closing');
+  assert.equal(focusCalls, 0, 'focus does not move while Enter remains held');
+  app.document.dispatchEvent({ type: 'keyup', key: 'x' });
+  assert.equal(focusCalls, 0, 'a different key release does not move focus');
+  app.document.dispatchEvent({ type: 'keyup', key: 'Enter' });
+  assert.equal(focusCalls, 1, 'focus lands on Close after Enter is released');
+  app.document.dispatchEvent({ type: 'keyup', key: 'Enter' });
+  assert.equal(focusCalls, 1, 'the release listener removes itself after firing');
+});
+
+test('language option rebuilds keep keyboard focus on the selected second-language and voice options', () => {
+  const app = createAppFixture(createGame(steadyRandom));
+  passGate(app);
+
+  let option = app.document.querySelector('[data-second-language="zh"]');
+  option.focus();
+  app.document.querySelector('[data-second-language="ja"]').click();
+  assert.equal(app.document.activeElement, app.document.querySelector('[data-second-language="ja"]'));
+
+  option = app.document.querySelector('[data-voice-option="match"]');
+  option.focus();
+  app.document.querySelector('[data-voice-option="ja"]').click();
+  assert.equal(app.document.activeElement, app.document.querySelector('[data-voice-option="ja"]'));
+});
+
+test('pressing Enter on a wrong grown-up answer keeps the check open with a gentle message', () => {
+  const app = createAppFixture(createGame(steadyRandom));
+  app.elements.get('#settingsButton').click();
+  const gateQuestion = app.elements.get('#gateQuestion');
+  const gateInput = app.elements.get('#gateInput');
+  const gateStatus = app.elements.get('#gateStatus');
+  const settingsGate = app.elements.get('#settingsGate');
+  const settingsBody = app.elements.get('#settingsBody');
+
+  const [a, b] = gateQuestion.textContent.match(/\d+/g).map(Number);
+  gateInput.value = String(a + b + 1);
+  gateInput.dispatch('keydown', { key: 'Enter' });
+
+  assert.equal(settingsGate.hidden, false, 'a wrong answer keeps the check open');
+  assert.equal(settingsBody.hidden, true);
+  assert.notEqual(gateStatus.textContent, '', 'a gentle message explains the wrong answer');
+});
+
+test('Cancel closes the settings dialog without answering the check', () => {
+  const app = createAppFixture(createGame(steadyRandom));
+  const settingsDialog = app.elements.get('#settingsDialog');
+  const settingsGate = app.elements.get('#settingsGate');
+  app.elements.get('#settingsButton').click();
+  assert.equal(settingsDialog.getAttribute('open'), '', 'opening the settings shows the dialog');
+
+  app.document.querySelector('#gateCancelButton').click();
+  assert.equal(settingsDialog.getAttribute('open'), null, 'Cancel closes the dialog');
+
+  app.elements.get('#settingsButton').click();
+  assert.equal(settingsGate.hidden, false, 'reopening starts back at the check, not mid-answer');
+});
+
 test('every Japanese UI string is written entirely in hiragana, with no katakana or kanji', () => {
   const KATAKANA = /[ァ-ヺ]/;
   const KANJI = /[一-鿿]/;
@@ -1425,13 +1628,13 @@ test('every Japanese UI string is written entirely in hiragana, with no katakana
 
 test('the game title and ready message are localized from the very first render, before any click', () => {
   const storage = new FakeLocalStorage();
-  storage.setItem('monsterWordArena.settings.v1', JSON.stringify({ v: 1, speechLanguage: 'zh', textLanguage: 'zh', textLanguageManual: true }));
+  storage.setItem('monsterWordArena.settings.v1', JSON.stringify({ v: 2, textLanguage: 'zh', secondLanguage: null, voiceOverride: false, voiceLanguage: 'zh' }));
   const app = createAppFixture(createGame(steadyRandom), { localStorage: storage });
   assert.equal(app.elements.get('#gameTitle').textContent, I18N.STRINGS.gameTitle.zh);
   assert.equal(app.elements.get('#arenaMessage').textContent, I18N.STRINGS.readyMessage.zh);
 });
 
-test('the on-screen text language switches every child-facing string and is independent of the spoken voice', () => {
+test('the on-screen text language switches every child-facing string and, by default, the spoken voice with it', () => {
   const game = createGame(steadyRandom);
   const app = createAppFixture(game);
   app.topicTabs.find(tab => tab.dataset.topic === 'fruit').click();
@@ -1439,6 +1642,7 @@ test('the on-screen text language switches every child-facing string and is inde
   assert.equal(app.elements.get('#championHeading').textContent, I18N.STRINGS.championHeading.zh);
   assert.equal(app.elements.get('#answerHint').textContent, I18N.STRINGS.answerHint.zh);
   assert.match(app.elements.get('#questionPrompt').textContent, /[㐀-鿿]/);
+  assert.match(app.played[app.played.length - 1], /^\.\/audio\/zh\//, 'the language choice is also the sound-on gesture and sets the voice');
   const question = game.getState().question;
   const target = question.options.find(option => option.id === question.answerId);
   assert.equal(app.answerOptions.children.find(button => button.dataset.choice === target.id).children[1].textContent, target.zh);
@@ -1447,16 +1651,17 @@ test('the on-screen text language switches every child-facing string and is inde
   assert.equal(app.elements.get('#championHeading').textContent, I18N.STRINGS.championHeading.ja);
   assert.doesNotMatch(app.elements.get('#championHeading').textContent, /[ァ-ヺ]/, 'Japanese chrome text has no katakana');
   assert.doesNotMatch(app.elements.get('#championHeading').textContent, /[一-鿿]/, 'Japanese chrome text has no kanji');
+  assert.match(app.played[app.played.length - 1], /^\.\/audio\/ja\//, 'the voice follows the language too');
   // The reward bar and sticker book are wired up by rewards-app.js, a separate script — this
   // guards against it silently staying in whatever language it started in (a real regression
   // caught in manual browser testing: it needs app.js to tell it about every language change).
-  assert.doesNotMatch(app.elements.get('#rewardSummary').textContent, /stickers/, 'the reward bar follows the text language too');
-  assert.equal(app.elements.get('#stickerBookButton').textContent, I18N.STRINGS.stickerBookButton.ja);
+  assert.ok(app.elements.get('#rewardSummary').textContent.startsWith(I18N.rewardSummaryPattern(0, 12, 'ja')), 'the reward bar follows the text language too');
+  assert.match(app.elements.get('#stickerBookButton').textContent, /^📒/, 'the sticker book button still renders');
+  assert.ok(app.elements.get('#stickerBookButton').textContent.includes(I18N.STRINGS.stickerBookButton.ja));
 
-  // The spoken voice is unaffected by the text-language choice.
-  app.speechLanguageButtons.find(button => button.dataset.language === 'en').click();
-  assert.match(app.played[app.played.length - 1], /^\.\/audio\/en\//);
-  assert.equal(app.elements.get('#championHeading').textContent, I18N.STRINGS.championHeading.ja, 'text language stays put when only the voice changes');
+  app.textLanguageButtons.find(button => button.dataset.textLanguage === 'en').click();
+  assert.match(app.played[app.played.length - 1], /^\.\/audio\/en\//, 'switching to English switches the voice back too');
+  assert.equal(app.elements.get('#championHeading').textContent, I18N.STRINGS.championHeading.en);
 });
 
 test('speech player replaces stale clips, ignores stale failures, and stops on mute', async () => {
@@ -1513,7 +1718,7 @@ test('reactions stay silent before Start, then follow the chosen voice', () => {
   assert.equal(app.startRow.hidden, false);
 
   app.nextButton.click();
-  app.speechLanguageButtons.find(button => button.dataset.language === 'zh').click();
+  app.textLanguageButtons.find(button => button.dataset.textLanguage === 'zh').click();
   assert.equal(app.startRow.hidden, true, 'a language choice turns on the questions and cheers together');
   clickAnswer(app, game, false);
   clickAnswer(app, game, false);
@@ -1536,11 +1741,11 @@ test('a reaction never outlives the moment it belongs to', () => {
   const game = createGame(steadyRandom);
   const app = createAppFixture(game);
   const last = () => app.played[app.played.length - 1];
-  app.speechLanguageButtons.find(button => button.dataset.language === 'en').click();
+  app.textLanguageButtons.find(button => button.dataset.textLanguage === 'en').click();
 
   clickAnswer(app, game, true);
   assert.match(last(), /reaction-praise-1/);
-  app.speechLanguageButtons.find(button => button.dataset.language === 'ja').click();
+  app.textLanguageButtons.find(button => button.dataset.textLanguage === 'ja').click();
   assert.match(last(), /^\.\/audio\/ja\/math-/, 'switching language replaces the reaction with the question');
 
   app.nextButton.click();
@@ -1574,7 +1779,7 @@ test('a reaction never outlives the moment it belongs to', () => {
 test('the finish cheer stops when the language changes on the finish screen', () => {
   const game = createGame(steadyRandom);
   const app = createAppFixture(game);
-  app.speechLanguageButtons.find(button => button.dataset.language === 'en').click();
+  app.textLanguageButtons.find(button => button.dataset.textLanguage === 'en').click();
   for (let star = 1; star <= GOAL_BY_LEVEL.easy; star += 1) {
     clickAnswer(app, game, true);
     if (star < GOAL_BY_LEVEL.easy) app.nextButton.click();
@@ -1582,7 +1787,7 @@ test('the finish cheer stops when the language changes on the finish screen', ()
   assert.match(app.played[app.played.length - 1], /en\/reaction-finish-1/);
   const count = app.played.length;
   const pauses = app.audioState.pauses;
-  app.speechLanguageButtons.find(button => button.dataset.language === 'zh').click();
+  app.textLanguageButtons.find(button => button.dataset.textLanguage === 'zh').click();
   assert.equal(app.played.length, count);
   assert.ok(app.audioState.pauses > pauses);
 });
@@ -1973,7 +2178,7 @@ test('effects and music duck under narration without touching the speech clip', 
   const game = createGame(steadyRandom);
   const app = createAppFixture(game);
   app.musicButton.click();
-  app.speechLanguageButtons.find(button => button.dataset.language === 'en').click();
+  app.textLanguageButtons.find(button => button.dataset.textLanguage === 'en').click();
   const [speech] = app.audioElements;
   speech.dispatch('playing');
   assert.equal(app.sound.board.getState().speaking, true);
