@@ -24,21 +24,30 @@ function createMediaSession() {
   };
 }
 
-function createReader({ analytics = true } = {}) {
+function createReader({ analytics = true, series = SERIES, storyList = stories } = {}) {
   const elements = new Map(READER_IDS.map(id => [`#${id}`, new FakeElement()]));
-  const modeInputs = ['ja-zh', 'zh-ja', 'ja', 'zh'].map(value => {
+  const modeInputs = Object.keys(E.buildListenModes(series.languages)).map(value => {
     const input = new FakeElement('input');
     input.value = value;
     return input;
   });
+  const documentListeners = new Map();
   const document = {
     title: '',
     visibilityState: 'visible',
     querySelector: selector => elements.get(selector) || null,
     querySelectorAll: selector => selector === 'input[name="listenMode"]' ? modeInputs : [],
     createElement: tagName => new FakeElement(tagName),
+    createTextNode: text => text,
     createDocumentFragment: () => new FakeElement('#fragment'),
-    addEventListener() {},
+    addEventListener(type, listener) {
+      const listeners = documentListeners.get(type) || [];
+      listeners.push(listener);
+      documentListeners.set(type, listeners);
+    },
+    dispatchEvent(event) {
+      for (const listener of documentListeners.get(event.type) || []) listener(event);
+    },
   };
   const stored = new Map();
   const localStorage = {
@@ -58,12 +67,13 @@ function createReader({ analytics = true } = {}) {
   }
   FakeAudio.instances = [];
   const events = [];
-  const nav = createLocationHistory('/taiwan-ehon/');
+  const nav = createLocationHistory(`/${series.folder}/`);
   const mediaSession = createMediaSession();
   const fetched = [];
   const context = {
-    window: { Ehon: E, EhonStories: stories, EhonSeriesConfig: SERIES },
+    window: { Ehon: E, EhonStories: storyList, EhonSeriesConfig: series },
     document,
+    Event: class { constructor(type) { this.type = type; } },
     localStorage,
     Audio: FakeAudio,
     navigator: { mediaSession },
@@ -342,6 +352,83 @@ test('Media Session exposes the book\'s title and cover art, and its controls mi
   elements.get('#closeBook').dispatch('click');
   assert.equal(mediaSession.metadata, null);
   assert.equal(mediaSession.playbackState, 'none');
+});
+
+test('Japan story metadata follows selected languages across shelf, reader, notes, alt text, and media controls', () => {
+  const japan = {
+    ...SERIES,
+    folder: 'japan-ehon',
+    id: 'japan',
+    shelfMarker: '/japan-ehon/',
+    languages: ['ja', 'zh', 'en'],
+    defaultMode: 'ja-zh',
+    narratedOnlyToggle: true,
+    siteNameSuffix: ' · Japan Ehon',
+  };
+  const story = {
+    id: 'metadata-book',
+    title: { ja: '{桃|もも}', zh: '桃子', zhuyin: 'ㄊㄠˊ ㄗ', en: 'Peach Boy' },
+    origin: { ja: '昔話', zh: '民間故事', en: 'Folktale' },
+    tagline: { ja: '冒険', zh: '冒險', en: 'An adventure' },
+    credit: { ja: '出典', zh: '來源', en: 'Source' },
+    theme: { accent: '#273968', soft: '#d7dcee' },
+    pages: [
+      { id: 'cover', image: 'cover.webp', alt: { ja: '表紙', zh: '封面', en: 'Cover' }, lines: [] },
+      { id: 'p01', image: 'page.webp', alt: { ja: '桃', zh: '桃子', en: 'Peach' }, lines: [] },
+      { id: 'end', image: 'end.webp', alt: { ja: '終わり', zh: '結束', en: 'The end' }, lines: [] },
+    ],
+  };
+  const reader = createReader({ series: japan, storyList: [story] });
+  reader.selectMode('en-zh');
+  const { elements, document, mediaSession } = reader;
+  const card = elements.get('#bookList').querySelector('.book-card');
+  const titleLangs = card.querySelectorAll('.book-title-ja, .book-title-zh, .book-title-en');
+  assert.deepEqual(titleLangs.map(node => [node.className, node.lang]), [['book-title-zh', 'zh-Hant-TW'], ['book-title-en', 'en']]);
+  assert.deepEqual(elements.get('#readerTitle').children.map(node => node.lang), ['zh-Hant-TW', 'en']);
+  assert.equal(document.title, 'Peach Boy｜桃子 · Japan Ehon');
+  assert.equal(mediaSession.metadata.title, 'Peach Boy｜桃子');
+  assert.equal(elements.get('#pageImage').alt, '桃子 ／ Peach');
+
+  elements.get('#prevButton').dispatch('click');
+  const coverNotes = elements.get('#page').querySelector('.page-note').children;
+  assert.deepEqual(coverNotes.map(node => node.lang), ['zh-Hant-TW', 'en']);
+  assert.equal(coverNotes.map(node => node.children.map(child => typeof child === 'string' ? child : child.children.join('')).join('')).join('|'), '民間故事 ・ 冒險|Folktale ・ An adventure');
+
+  elements.get('#nextButton').dispatch('click');
+  elements.get('#nextButton').dispatch('click');
+  const endNotes = elements.get('#page').querySelector('.page-note').children;
+  assert.deepEqual(endNotes.map(node => node.lang), ['zh-Hant-TW', 'en']);
+});
+
+test('optional English metadata falls back to available languages in every visible reader label', () => {
+  const japan = {
+    ...SERIES,
+    folder: 'japan-ehon',
+    id: 'japan',
+    shelfMarker: '/japan-ehon/',
+    languages: ['ja', 'zh', 'en'],
+    defaultMode: 'ja-zh',
+    narratedOnlyToggle: true,
+    siteNameSuffix: ' · Japan Ehon',
+  };
+  const story = {
+    id: 'metadata-book',
+    title: { ja: '桃太郎', zh: '桃太郎', zhuyin: 'ㄊㄠˊ ㄊㄞˋ ㄌㄤˊ' },
+    origin: { ja: '昔話', zh: '民間故事' },
+    tagline: { ja: '冒険', zh: '冒險' },
+    credit: { ja: '出典', zh: '來源' },
+    theme: { accent: '#273968', soft: '#d7dcee' },
+    pages: [{ id: 'cover', image: 'cover.webp', alt: { ja: '表紙', zh: '封面' }, lines: [] }],
+  };
+  const reader = createReader({ series: japan, storyList: [story] });
+  reader.selectMode('en');
+  const { elements, document, mediaSession } = reader;
+  const card = elements.get('#bookList').querySelector('.book-card');
+  assert.deepEqual(card.querySelectorAll('.book-title-ja, .book-title-zh, .book-title-en').map(node => [node.className, node.lang]), [['book-title-ja', 'ja'], ['book-title-zh', 'zh-Hant-TW']]);
+  assert.deepEqual(elements.get('#readerTitle').children.map(node => node.lang), ['ja', 'zh-Hant-TW']);
+  assert.equal(document.title, '桃太郎｜桃太郎 · Japan Ehon');
+  assert.equal(mediaSession.metadata.title, '桃太郎｜桃太郎');
+  assert.equal(elements.get('#pageImage').alt, '表紙 ／ 封面');
 });
 
 test('starting to read a page warms the cache for its remaining clips and the next page\'s first line', () => {

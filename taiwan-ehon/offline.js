@@ -9,6 +9,8 @@
   const E = window.Ehon;
   const STORIES = window.EhonStories;
   const SERIES = window.EhonSeriesConfig;
+  const LISTEN_MODES = E.buildListenModes(SERIES.languages);
+  const SETTINGS_KEY = `${SERIES.folder}-settings`;
   const SHELF_MARKER = SERIES.shelfMarker;
   const IOS_HINT_KEY = `${SERIES.folder}-ios-install-hint-seen`;
   const { shellCacheName: SHELL_CACHE_NAME, mediaCacheName: MEDIA_CACHE_NAME } = E.cacheNames(SERIES.folder);
@@ -44,6 +46,25 @@
     const node = document.createElement(tag);
     if (className) node.className = className;
     return node;
+  }
+
+  function displayLanguages() {
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}'); } catch (_error) { saved = {}; }
+    const mode = E.isMode(LISTEN_MODES, saved.mode) ? saved.mode : SERIES.defaultMode;
+    const order = E.languagesFor(LISTEN_MODES, SERIES.defaultMode, mode);
+    return E.displayLanguagesFor(SERIES.languages, order, SERIES.narratedOnlyToggle && saved.narratedOnly === true);
+  }
+
+  function renderOfflineTitle(target, story) {
+    target.replaceChildren();
+    const languages = E.metadataLanguages(SERIES.languages, displayLanguages(), story.title);
+    for (const [index, lang] of languages.entries()) {
+      const title = element('span', `${lang === 'zh' ? 'zh ' : ''}${index ? 'metadata-secondary' : ''}`.trim());
+      title.lang = lang === 'zh' ? 'zh-Hant-TW' : lang;
+      title.textContent = lang === 'ja' ? E.plainJapanese(story.title[lang]) : story.title[lang];
+      target.append(title);
+    }
   }
 
   // ---------- Service worker registration + "new version" notice ----------
@@ -257,10 +278,7 @@
     for (const story of STORIES) {
       const row = element('li', 'offline-book-row');
       const title = element('span', 'offline-book-title');
-      title.append(E.plainJapanese(story.title.ja));
-      const zh = element('span', 'zh');
-      zh.textContent = story.title.zh;
-      title.append(zh);
+      renderOfflineTitle(title, story);
       const downloadButton = element('button', 'offline-button');
       downloadButton.type = 'button';
       downloadButton.textContent = 'ダウンロード ・ 下載';
@@ -272,7 +290,7 @@
       progress.hidden = true;
       row.append(title, downloadButton, removeButton, progress);
       offlineBookList.append(row);
-      rows.set(story.id, { row, downloadButton, removeButton, progress });
+      rows.set(story.id, { row, title, downloadButton, removeButton, progress });
 
       downloadButton.addEventListener('click', () => runDownload(story));
       removeButton.addEventListener('click', () => runRemove(story));
@@ -293,7 +311,12 @@
       return status;
     }
 
+    function refreshOfflineTitles() {
+      for (const story of STORIES) renderOfflineTitle(rows.get(story.id).title, story);
+    }
+
     async function refreshAll() {
+      refreshOfflineTitles();
       const statuses = await Promise.all(STORIES.map(async story => applyStatus(story, await storyFileStatus(story))));
       removeAllButton.hidden = !statuses.some(status => status.cached > 0);
       updateStorageNote(offlineStorageNote);
@@ -382,6 +405,8 @@
       removeAllButton.disabled = false;
       await refreshAll();
     });
+
+    document.addEventListener('ehon:metadatachange', refreshOfflineTitles);
 
     if (bookDownloadButton && bookRemoveButton) {
       bookDownloadButton.addEventListener('click', () => {

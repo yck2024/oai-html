@@ -187,6 +187,7 @@ rt { font-weight: 500; }
   font-weight: 700;
 }
 
+.book-title { display: grid; gap: 6px; }
 .book-title-ja { font-size: 1.35rem; font-weight: 800; line-height: 1.5; }
 .book-title-ja rt { font-size: 0.5em; }
 .book-title-zh { font-size: 1.2rem; font-weight: 700; color: var(--ink-soft); line-height: 1.9; }
@@ -266,6 +267,7 @@ rt { font-weight: 500; }
 }
 
 .reader-title .zh { margin-left: 0.5em; color: var(--ink-soft); font-family: var(--font-zh); }
+.reader-title .metadata-secondary:not(.zh) { margin-left: 0.5em; }
 
 .icon-button {
   display: inline-flex;
@@ -742,6 +744,7 @@ rt { font-weight: 500; }
 
 .offline-book-title { font-weight: 700; font-size: 0.92rem; }
 .offline-book-title .zh { margin-left: 0.4em; color: var(--ink-soft); font-family: var(--font-zh); }
+.offline-book-title .metadata-secondary:not(.zh) { margin-left: 0.4em; }
 
 .offline-book-row .offline-button {
   min-height: 36px;

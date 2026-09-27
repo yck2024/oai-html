@@ -60,6 +60,18 @@
     return companion ? [order[0], companion] : order;
   }
 
+  function metadataLanguages(languages, selected, record) {
+    const limit = Math.min(selected.length, 2);
+    const included = selected.filter(language => record[language] !== undefined && record[language] !== null);
+    for (const language of languages) {
+      if (included.length >= limit) break;
+      if (!included.includes(language) && record[language] !== undefined && record[language] !== null) {
+        included.push(language);
+      }
+    }
+    return languages.filter(language => included.includes(language));
+  }
+
   // One step per sentence and language, sentence by sentence, so meaning in the first
   // language comes right before the same sentence in the second.
   function pageQueue(page, modes, defaultMode, mode) {
@@ -343,6 +355,7 @@
     isMode,
     languagesFor,
     displayLanguagesFor,
+    metadataLanguages,
     pageQueue,
     clipPath,
     shellAssetUrls,

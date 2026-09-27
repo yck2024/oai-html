@@ -227,3 +227,10 @@ test('buildListenModes generalizes to a three-language series while keeping disp
   assert.deepEqual(E.displayLanguagesFor(['ja', 'zh'], ['zh'], false), ['zh', 'ja']);
   assert.deepEqual(E.displayLanguagesFor(['ja', 'zh'], ['ja', 'zh'], false), ['ja', 'zh']);
 });
+
+test('metadata languages stay within the selected display cap and fall back when English metadata is absent', () => {
+  const languages = ['ja', 'zh', 'en'];
+  assert.deepEqual(E.metadataLanguages(languages, ['en', 'zh'], { ja: '日本語', zh: '中文' }), ['ja', 'zh']);
+  assert.deepEqual(E.metadataLanguages(languages, ['en'], { ja: '日本語', zh: '中文' }), ['ja']);
+  assert.deepEqual(E.metadataLanguages(languages, ['en', 'zh'], { ja: '日本語', zh: '中文', en: 'English' }), ['zh', 'en']);
+});

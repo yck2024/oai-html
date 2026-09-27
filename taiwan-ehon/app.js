@@ -240,12 +240,75 @@
 
   function langNodes(lang, text, zhuyin) {
     if (lang === 'ja') return japanese(text);
-    if (lang === 'zh') return chinese(text, zhuyin);
+    if (lang === 'zh' && zhuyin) return chinese(text, zhuyin);
     return document.createTextNode(text || '');
   }
 
   function langPlainText(lang, text) {
     return lang === 'ja' ? E.plainJapanese(text) : (text || '');
+  }
+
+  function displayLanguages() {
+    const order = E.languagesFor(LISTEN_MODES, DEFAULT_MODE, settings.mode);
+    return E.displayLanguagesFor(SERIES.languages, order, SERIES.narratedOnlyToggle && settings.narratedOnly);
+  }
+
+  function metadataLanguages(record) {
+    return E.metadataLanguages(SERIES.languages, displayLanguages(), record);
+  }
+
+  function metadataLanguagesFor(...records) {
+    const available = Object.fromEntries(SERIES.languages.map(lang => [
+      lang,
+      records.some(record => record[lang] !== undefined && record[lang] !== null),
+    ]));
+    return E.metadataLanguages(SERIES.languages, displayLanguages(), available);
+  }
+
+  function metadataLanguage(record, requested) {
+    if (record[requested] !== undefined && record[requested] !== null) return requested;
+    return SERIES.languages.find(lang => record[lang] !== undefined && record[lang] !== null);
+  }
+
+  function appendMetadataLanguage(target, record, requested) {
+    const lang = metadataLanguage(record, requested);
+    if (!lang) return;
+    const node = element('span', '', langAttr(lang));
+    node.append(langNodes(lang, record[lang], record.zhuyin));
+    target.append(node);
+  }
+
+  function appendMetadata(target, record, { separator = '', classFor = () => '', plainJa = false, withZhuyin = true } = {}) {
+    const languages = metadataLanguages(record);
+    languages.forEach((lang, index) => {
+      if (index && separator) target.append(typeof separator === 'function' ? separator() : separator);
+      const node = element('span', classFor(lang, index), langAttr(lang));
+      const value = lang === 'ja' && plainJa ? document.createTextNode(E.plainJapanese(record[lang]))
+        : langNodes(lang, record[lang], withZhuyin ? record.zhuyin : undefined);
+      node.append(value);
+      target.append(node);
+    });
+    return languages;
+  }
+
+  function metadataText(record, separator, reverse = false) {
+    const languages = metadataLanguages(record);
+    if (reverse) languages.reverse();
+    return languages.map(lang => langPlainText(lang, record[lang])).join(separator);
+  }
+
+  function renderBookInfo(story) {
+    const info = element('span', 'book-info');
+    const origin = element('span', 'book-origin');
+    appendMetadata(origin, story.origin, { separator: ' · ' });
+    const title = element('span', 'book-title');
+    appendMetadata(title, story.title, { classFor: lang => `book-title-${lang}` });
+    const tagline = element('span', 'book-tagline');
+    appendMetadata(tagline, story.tagline, { separator: () => document.createElement('br') });
+    const open = element('span', 'book-open');
+    open.textContent = `よむ ・ 開始閱讀（${story.pages.length}ページ）`;
+    info.append(origin, title, tagline, open);
+    return info;
   }
 
   function renderShelf() {
@@ -264,24 +327,7 @@
       cover.width = 768;
       cover.height = 512;
 
-      const info = element('span', 'book-info');
-      const origin = element('span', 'book-origin');
-      origin.append(japanese(story.origin.ja), ' · ');
-      const originZh = element('span', '', 'zh-Hant-TW');
-      originZh.textContent = story.origin.zh;
-      origin.append(originZh);
-      const titleJa = element('span', 'book-title-ja', 'ja');
-      titleJa.append(japanese(story.title.ja));
-      const titleZh = element('span', 'book-title-zh', 'zh-Hant-TW');
-      titleZh.append(chinese(story.title.zh, story.title.zhuyin));
-      const tagline = element('span', 'book-tagline');
-      const taglineZh = element('span', '', 'zh-Hant-TW');
-      taglineZh.textContent = story.tagline.zh;
-      tagline.append(japanese(story.tagline.ja), document.createElement('br'), taglineZh);
-      const open = element('span', 'book-open');
-      open.textContent = `よむ ・ 開始閱讀（${story.pages.length}ページ）`;
-      info.append(origin, titleJa, titleZh, tagline, open);
-      card.append(cover, info);
+      card.append(cover, renderBookInfo(story));
       card.addEventListener('click', () => {
         lastCard = card;
         openBook(story, 0);
@@ -297,8 +343,33 @@
     if (comingSoon) comingSoon.hidden = STORIES.length > 0;
   }
 
+  function refreshShelfMetadata() {
+    for (const story of STORIES) {
+      const card = [...bookList.querySelectorAll('.book-card')].find(item => item.dataset.story === story.id);
+      const info = card?.querySelector('.book-info');
+      if (!info) continue;
+      const replacement = renderBookInfo(story);
+      info.replaceChildren(...replacement.children);
+    }
+  }
+
   function bookTitle(story) {
-    return `${story.title.zh}｜${E.plainJapanese(story.title.ja)}${SERIES.siteNameSuffix}`;
+    return `${metadataText(story.title, '｜', true)}${SERIES.siteNameSuffix}`;
+  }
+
+  function updateBookMetadata(story) {
+    readerTitle.replaceChildren();
+    appendMetadata(readerTitle, story.title, {
+      classFor: (lang, index) => `${lang === 'zh' ? 'zh ' : ''}${index ? 'metadata-secondary' : ''}`.trim(),
+      plainJa: true,
+      withZhuyin: false,
+    });
+    document.title = bookTitle(story);
+    updateMediaMetadata(story);
+  }
+
+  function notifyMetadataChange() {
+    document.dispatchEvent(new Event('ehon:metadatachange'));
   }
 
   function openBook(story, index, { push = true, send = true } = {}) {
@@ -307,12 +378,7 @@
     listening = false;
     narrator.stop();
     applyBookTheme(reader, story.theme, '--accent', '--accent-soft');
-    readerTitle.replaceChildren(E.plainJapanese(story.title.ja));
-    const zh = element('span', 'zh', 'zh-Hant-TW');
-    zh.textContent = story.title.zh;
-    readerTitle.append(zh);
-    document.title = bookTitle(story);
-    updateMediaMetadata(story);
+    updateBookMetadata(story);
     reader.dataset.book = story.id;
     shelf.hidden = true;
     reader.hidden = false;
@@ -367,8 +433,7 @@
   function renderText() {
     const page = book.page();
     const order = E.languagesFor(LISTEN_MODES, DEFAULT_MODE, settings.mode);
-    const narratedOnly = SERIES.narratedOnlyToggle && settings.narratedOnly;
-    const shown = E.displayLanguagesFor(SERIES.languages, order, narratedOnly);
+    const shown = displayLanguages();
     pageText.dataset.mode = settings.mode;
     pageText.dataset.first = order[0];
     pageText.replaceChildren();
@@ -396,16 +461,24 @@
     const story = book.story;
     if (kind === 'story') return;
     const note = element('div', 'page-note');
-    const noteJa = element('p', '', 'ja');
-    const noteZh = element('p', '', 'zh-Hant-TW');
+    const selected = kind === 'cover'
+      ? metadataLanguagesFor(story.origin, story.tagline)
+      : metadataLanguages(story.credit);
     if (kind === 'cover') {
-      noteJa.append(japanese(story.origin.ja), ' ・ ', japanese(story.tagline.ja));
-      noteZh.textContent = `${story.origin.zh} · ${story.tagline.zh}`;
+      for (const lang of selected) {
+        const line = element('p', '', langAttr(lang));
+        appendMetadataLanguage(line, story.origin, lang);
+        line.append(' ・ ');
+        appendMetadataLanguage(line, story.tagline, lang);
+        note.append(line);
+      }
     } else {
-      noteJa.append(japanese(story.credit.ja));
-      noteZh.textContent = story.credit.zh;
+      for (const lang of selected) {
+        const line = element('p', '', langAttr(lang));
+        appendMetadataLanguage(line, story.credit, lang);
+        note.append(line);
+      }
     }
-    note.append(noteJa, noteZh);
     pageEl.append(note);
     if (kind !== 'end') return;
 
@@ -430,7 +503,7 @@
     pageEl.dataset.kind = kind;
     pageArt.classList.remove('offline-missing');
     pageImage.src = `${ASSET_BASE}${page.image}`;
-    pageImage.alt = `${page.alt.ja} ／ ${page.alt.zh}`;
+    pageImage.alt = metadataText(page.alt, ' ／ ');
     renderText();
     renderExtras(kind);
     pageCounter.textContent = `${book.index + 1} / ${book.total}`;
@@ -471,7 +544,7 @@
   function updateMediaMetadata(story) {
     if (typeof navigator === 'undefined' || !navigator.mediaSession || typeof MediaMetadata === 'undefined') return;
     navigator.mediaSession.metadata = new MediaMetadata({
-      title: `${story.title.zh}｜${E.plainJapanese(story.title.ja)}`,
+      title: metadataText(story.title, '｜', true),
       artist: SHELF_DOCUMENT_TITLE,
       artwork: [{ src: `${ASSET_BASE}${story.pages[0].image}`, sizes: '768x512', type: 'image/webp' }],
     });
@@ -657,7 +730,12 @@
       settings.mode = input.value;
       saveSettings();
       track('listen_mode_change', { listen_mode: settings.mode });
-      renderText();
+      refreshShelfMetadata();
+      if (book) {
+        updateBookMetadata(book.story);
+        renderPage(null);
+      }
+      notifyMetadataChange();
       if (pageQueueActive) readPage({ paused: playbackState === 'paused' });
     });
   }
@@ -683,7 +761,12 @@
       if (settings.narratedOnly === narratedOnlyToggle.checked) return;
       settings.narratedOnly = narratedOnlyToggle.checked;
       saveSettings();
-      if (book) renderText();
+      refreshShelfMetadata();
+      if (book) {
+        updateBookMetadata(book.story);
+        renderPage(null);
+      }
+      notifyMetadataChange();
     });
   }
 
