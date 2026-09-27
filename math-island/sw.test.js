@@ -83,6 +83,41 @@ test('respond() serves a cached shell asset immediately (stale-while-revalidate)
   assert.equal(fetchCalled, true);
 });
 
+test('folder navigations serve the cached index.html for the hub and each game while offline', async () => {
+  const caches = fakeCaches();
+  const cache = await caches.open(sw.SHELL_CACHE_NAME);
+  const folders = ['', 'poko/', 'number-garden/', 'dino-spirit/'];
+  for (const folder of folders) {
+    await cache.put(`${BASE}${folder}index.html`, new Response(`cached:${folder || 'hub'}`));
+  }
+  const fetchImpl = async () => { throw new Error('offline'); };
+
+  for (const folder of folders) {
+    const request = { url: `${BASE}${folder}`, mode: 'navigate' };
+    const response = await sw.respond(request, { caches, fetch: fetchImpl, scope: BASE });
+    assert.equal(await response.text(), `cached:${folder || 'hub'}`);
+  }
+});
+
+test('folder navigation without a cached index falls back to the network or errors offline', async () => {
+  const caches = fakeCaches();
+  const request = { url: `${BASE}missing/`, mode: 'navigate' };
+  let fetchedRequest;
+  const networkResponse = new Response('network page');
+  const onlineResponse = await sw.respond(request, {
+    caches,
+    fetch: async value => { fetchedRequest = value; return networkResponse; },
+    scope: BASE,
+  });
+  assert.equal(onlineResponse, networkResponse);
+  assert.equal(fetchedRequest, request);
+
+  await assert.rejects(
+    sw.respond(request, { caches, fetch: async () => { throw new Error('offline'); }, scope: BASE }),
+    /folder page unavailable offline/,
+  );
+});
+
 test('respond() serves a precached media file straight from cache, no network fetch', async () => {
   const caches = fakeCaches();
   const cache = await caches.open(sw.MEDIA_CACHE_NAME);
