@@ -17,12 +17,12 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import time
 import unicodedata
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-import sys
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 

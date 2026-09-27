@@ -12,10 +12,10 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 import time
 from pathlib import Path
-import sys
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
