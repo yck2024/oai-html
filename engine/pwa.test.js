@@ -6,9 +6,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 const E = require('./ehon.js');
-const stories = require('./stories.js');
 
-const ROOT = __dirname;
+const ROOT = path.join(__dirname, '..', 'taiwan-ehon');
+const stories = require(path.join(ROOT, 'stories.js'));
+const SERIES = require(path.join(ROOT, 'series.config.js'));
 const BASE = 'https://example.test/oai-html/taiwan-ehon/';
 
 function parseHeadElements(html) {
@@ -21,8 +22,8 @@ test('manifest.webmanifest is valid, bilingual, and scoped under the storybook p
   const manifest = JSON.parse(raw); // throws on malformed JSON
   assert.ok(manifest.name.includes('えほん') && manifest.name.includes('繪本'), 'name is bilingual');
   assert.ok(manifest.short_name.length <= 12, 'short_name stays short enough for a home-screen label');
-  assert.equal(manifest.start_url, '/oai-html/taiwan-ehon/');
-  assert.equal(manifest.scope, '/oai-html/taiwan-ehon/');
+  assert.equal(manifest.start_url, SERIES.basePath);
+  assert.equal(manifest.scope, SERIES.basePath);
   assert.equal(manifest.display, 'standalone');
   assert.equal(manifest.lang, 'ja');
   assert.equal(manifest.theme_color, '#fbf1df');
@@ -53,7 +54,7 @@ test('the shelf and every generated book page expose parsed PWA document metadat
 
 test('the shell precache list covers every static app file and every book page, built from stories.js', () => {
   const shellUrls = E.shellAssetUrls(stories, BASE);
-  for (const file of ['', 'index.html', 'ehon.css', 'ehon.js', 'stories.js', 'app.js', 'offline.js', 'manifest.webmanifest']) {
+  for (const file of ['', 'index.html', 'ehon.css', 'ehon.js', 'stories.js', 'series.config.js', 'app.js', 'offline.js', 'manifest.webmanifest']) {
     assert.ok(shellUrls.includes(`${BASE}${file}`), `shell precache includes ${file || '(shelf root)'}`);
   }
   for (const icon of ['icon-192.png', 'icon-512.png', 'icon-512-maskable.png', 'apple-touch-icon.png']) {
@@ -64,12 +65,12 @@ test('the shell precache list covers every static app file and every book page, 
   }
   // Nothing hand-added beyond one page per story plus the fixed files: adding a book to
   // stories.js is the only thing that grows this list.
-  assert.equal(shellUrls.length, 12 + stories.length);
+  assert.equal(shellUrls.length, 13 + stories.length);
 });
 
 test('the offline asset list for every book is complete against its own pages and narration in stories.js', () => {
   for (const story of stories) {
-    const assets = E.bookAssetUrls(story, BASE);
+    const assets = E.bookAssetUrls(story, SERIES.languages, BASE);
     assert.equal(assets.page, `${BASE}${story.id}/`);
 
     const expectedImages = story.pages.map(page => `${BASE}${page.image}`);
@@ -78,7 +79,7 @@ test('the offline asset list for every book is complete against its own pages an
     const expectedAudio = [];
     for (const page of story.pages) {
       for (const line of page.lines) {
-        for (const lang of E.LANGUAGES) expectedAudio.push(`${BASE}audio/${story.id}/${lang}/${line.id}.mp3`);
+        for (const lang of SERIES.languages) expectedAudio.push(`${BASE}audio/${story.id}/${lang}/${line.id}.mp3`);
       }
     }
     assert.deepEqual(assets.audio, expectedAudio, `${story.id}: every sentence clip in both languages is listed`);

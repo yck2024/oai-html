@@ -1,0 +1,56 @@
+:root {
+  color-scheme: light;
+  --paper: #f1ece0;
+  --paper-bright: #faf7ef;
+  --ink: #252a3a;
+  --ink-soft: #555a70;
+  --rule: #d6d0bd;
+  --accent: #273968;
+  --accent-soft: #d7dcee;
+  --highlight: #f6ddc8;
+  --shadow: 0 12px 32px rgba(30, 32, 52, 0.18);
+  --radius: 22px;
+  --font-ja: "Hiragino Maru Gothic ProN", "Hiragino Maru Gothic Pro", "Zen Maru Gothic", "BIZ UDPGothic", "Yu Gothic", "Meiryo", system-ui, sans-serif;
+  --font-zh: "PingFang TC", "Noto Sans TC", "Noto Sans CJK TC", "Heiti TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --vermilion: #bf4522;
+}
+
+/* A low-opacity seigaiha (青海波) overlapping-wave motif, purely decorative and excluded from
+   text/contrast: fixed behind the page so it never affects layout, scroll, or reading text. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.07;
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(circle at 50% 100%, transparent 0 16px, var(--accent) 16px 18px, transparent 18px),
+    radial-gradient(circle at 0% 100%, transparent 0 16px, var(--accent) 16px 18px, transparent 18px),
+    radial-gradient(circle at 100% 100%, transparent 0 16px, var(--accent) 16px 18px, transparent 18px);
+  background-size: 36px 18px;
+  background-position: 0 0, 0 0, 0 0;
+  pointer-events: none;
+}
+
+/* A small vermilion corner accent on the shelf hero, echoing a stamped seal (印) without
+   depicting one; decorative only, never carrying information on its own. */
+.shelf-hero {
+  position: relative;
+}
+
+.shelf-hero::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  right: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--vermilion);
+  opacity: 0.14;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before { display: none; }
+}

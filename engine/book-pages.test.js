@@ -6,10 +6,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
-const stories = require('./stories.js');
-const { generate, bookTitle } = require('./generate-book-pages.js');
-
-const ROOT = __dirname;
+const ROOT = path.join(__dirname, '..', 'taiwan-ehon');
+const stories = require(path.join(ROOT, 'stories.js'));
+const SERIES = require(path.join(ROOT, 'series.config.js'));
+const { generate, bookTitle } = require(path.join(ROOT, 'generate-book-pages.js'));
 
 function bookFolders() {
   return fs.readdirSync(ROOT, { withFileTypes: true })
@@ -75,7 +75,7 @@ test('each book page exposes its shared resources and book-specific title to bro
   for (const story of stories) {
     const html = fs.readFileSync(path.join(ROOT, story.id, 'index.html'), 'utf8');
     const document = parseHtml(html);
-    const title = bookTitle(story);
+    const title = bookTitle(story, SERIES);
     assert.equal(document.baseHref, '../', `${story.id}: resource base should resolve from the app folder`);
     assert.ok(document.scripts.some(script => script.src === './stories.js'), `${story.id}: shared stories script is unavailable`);
     assert.ok(document.scripts.some(script => script.src === './app.js'), `${story.id}: shared app script is unavailable`);

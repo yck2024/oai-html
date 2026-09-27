@@ -6,7 +6,9 @@ const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
 const E = require('./ehon.js');
-const stories = require('./stories.js');
+const TAIWAN_DIR = path.join(__dirname, '..', 'taiwan-ehon');
+const stories = require(path.join(TAIWAN_DIR, 'stories.js'));
+const SERIES = require(path.join(TAIWAN_DIR, 'series.config.js'));
 const { FakeElement, READER_IDS, createLocationHistory } = require('./test-dom.js');
 
 // A minimal MediaSession/MediaMetadata double: stores whatever app.js sets so tests can
@@ -22,21 +24,30 @@ function createMediaSession() {
   };
 }
 
-function createReader({ analytics = true } = {}) {
+function createReader({ analytics = true, series = SERIES, storyList = stories } = {}) {
   const elements = new Map(READER_IDS.map(id => [`#${id}`, new FakeElement()]));
-  const modeInputs = ['ja-zh', 'zh-ja', 'ja', 'zh'].map(value => {
+  const modeInputs = Object.keys(E.buildListenModes(series.languages)).map(value => {
     const input = new FakeElement('input');
     input.value = value;
     return input;
   });
+  const documentListeners = new Map();
   const document = {
     title: '',
     visibilityState: 'visible',
     querySelector: selector => elements.get(selector) || null,
     querySelectorAll: selector => selector === 'input[name="listenMode"]' ? modeInputs : [],
     createElement: tagName => new FakeElement(tagName),
+    createTextNode: text => text,
     createDocumentFragment: () => new FakeElement('#fragment'),
-    addEventListener() {},
+    addEventListener(type, listener) {
+      const listeners = documentListeners.get(type) || [];
+      listeners.push(listener);
+      documentListeners.set(type, listeners);
+    },
+    dispatchEvent(event) {
+      for (const listener of documentListeners.get(event.type) || []) listener(event);
+    },
   };
   const stored = new Map();
   const localStorage = {
@@ -56,12 +67,13 @@ function createReader({ analytics = true } = {}) {
   }
   FakeAudio.instances = [];
   const events = [];
-  const nav = createLocationHistory('/taiwan-ehon/');
+  const nav = createLocationHistory(`/${series.folder}/`);
   const mediaSession = createMediaSession();
   const fetched = [];
   const context = {
-    window: { TaiwanEhon: E, TaiwanEhonStories: stories },
+    window: { Ehon: E, EhonStories: storyList, EhonSeriesConfig: series },
     document,
+    Event: class { constructor(type) { this.type = type; } },
     localStorage,
     Audio: FakeAudio,
     navigator: { mediaSession },
@@ -104,16 +116,16 @@ function recordedEvents(reader) {
 test('opening a shelf book sends only its fixed story id; turns and sentence taps do not track', () => {
   const reader = createReader();
   const { elements } = reader;
-  assert.deepEqual(recordedEvents(reader), [['event', 'book_open', { book_id: stories[0].id }]]);
+  assert.deepEqual(recordedEvents(reader), [['event', 'book_open', { book_id: stories[0].id, series_id: 'taiwan' }]]);
   const sentence = elements.get('#pageText').querySelector('.line');
   elements.get('#pageText').dispatch('click', { target: sentence });
   elements.get('#nextButton').dispatch('click');
   elements.get('#prevButton').dispatch('click');
   elements.get('#playButton').dispatch('click');
-  assert.deepEqual(recordedEvents(reader), [['event', 'book_open', { book_id: stories[0].id }]]);
+  assert.deepEqual(recordedEvents(reader), [['event', 'book_open', { book_id: stories[0].id, series_id: 'taiwan' }]]);
   elements.get('#closeBook').dispatch('click');
   reader.openStory(1);
-  assert.deepEqual(recordedEvents(reader).at(-1), ['event', 'book_open', { book_id: stories[1].id }]);
+  assert.deepEqual(recordedEvents(reader).at(-1), ['event', 'book_open', { book_id: stories[1].id, series_id: 'taiwan' }]);
 });
 
 test('reaching the ending sends one completion per opening, including revisiting the ending', () => {
@@ -123,24 +135,24 @@ test('reaching the ending sends one completion per opening, including revisiting
   const prev = elements.get('#prevButton');
   reader.events.length = 0;
   for (let i = 0; i < stories[0].pages.length; i++) next.dispatch('click');
-  assert.deepEqual(recordedEvents(reader), [['event', 'book_complete', { book_id: stories[0].id }]]);
+  assert.deepEqual(recordedEvents(reader), [['event', 'book_complete', { book_id: stories[0].id, series_id: 'taiwan' }]]);
   prev.dispatch('click');
   next.dispatch('click');
   next.dispatch('click');
   elements.get('#page').querySelector('.end-button.primary').dispatch('click');
   for (let i = 0; i < stories[0].pages.length; i++) next.dispatch('click');
-  assert.deepEqual(recordedEvents(reader), [['event', 'book_complete', { book_id: stories[0].id }]]);
+  assert.deepEqual(recordedEvents(reader), [['event', 'book_complete', { book_id: stories[0].id, series_id: 'taiwan' }]]);
   elements.get('#closeBook').dispatch('click');
   reader.openStory(1);
   for (let i = 0; i < stories[1].pages.length; i++) next.dispatch('click');
   assert.deepEqual(recordedEvents(reader).slice(-2), [
-    ['event', 'book_open', { book_id: stories[1].id }],
-    ['event', 'book_complete', { book_id: stories[1].id }],
+    ['event', 'book_open', { book_id: stories[1].id, series_id: 'taiwan' }],
+    ['event', 'book_complete', { book_id: stories[1].id, series_id: 'taiwan' }],
   ]);
   elements.get('#closeBook').dispatch('click');
   reader.openStory(0);
   for (let i = 0; i < stories[0].pages.length; i++) next.dispatch('click');
-  assert.deepEqual(recordedEvents(reader).at(-1), ['event', 'book_complete', { book_id: stories[0].id }]);
+  assert.deepEqual(recordedEvents(reader).at(-1), ['event', 'book_complete', { book_id: stories[0].id, series_id: 'taiwan' }]);
 });
 
 test('only real settings changes send fixed mode and on/off values', () => {
@@ -168,12 +180,12 @@ test('only real settings changes send fixed mode and on/off values', () => {
   autoTurn.checked = false;
   autoTurn.dispatch('change');
   assert.deepEqual(recordedEvents(reader), [
-    ['event', 'listen_mode_change', { listen_mode: 'zh-ja' }],
-    ['event', 'listen_mode_change', { listen_mode: 'ja' }],
-    ['event', 'zhuyin_toggle', { zhuyin: 'off' }],
-    ['event', 'zhuyin_toggle', { zhuyin: 'on' }],
-    ['event', 'auto_turn_toggle', { auto_turn: 'on' }],
-    ['event', 'auto_turn_toggle', { auto_turn: 'off' }],
+    ['event', 'listen_mode_change', { listen_mode: 'zh-ja', series_id: 'taiwan' }],
+    ['event', 'listen_mode_change', { listen_mode: 'ja', series_id: 'taiwan' }],
+    ['event', 'zhuyin_toggle', { zhuyin: 'off', series_id: 'taiwan' }],
+    ['event', 'zhuyin_toggle', { zhuyin: 'on', series_id: 'taiwan' }],
+    ['event', 'auto_turn_toggle', { auto_turn: 'on', series_id: 'taiwan' }],
+    ['event', 'auto_turn_toggle', { auto_turn: 'off', series_id: 'taiwan' }],
   ]);
 });
 
@@ -340,6 +352,115 @@ test('Media Session exposes the book\'s title and cover art, and its controls mi
   elements.get('#closeBook').dispatch('click');
   assert.equal(mediaSession.metadata, null);
   assert.equal(mediaSession.playbackState, 'none');
+});
+
+test('Taiwan shelf and reader retain their original bilingual DOM structure', () => {
+  const reader = createReader();
+  const card = reader.elements.get('#bookList').querySelector('.book-card');
+  const info = card.querySelector('.book-info');
+  const [origin, titleJa, titleZh, tagline] = info.children;
+
+  assert.deepEqual([origin.className, titleJa.className, titleZh.className, tagline.className], [
+    'book-origin', 'book-title-ja', 'book-title-zh', 'book-tagline',
+  ]);
+  assert.equal(origin.children.some(node => node instanceof FakeElement && node.lang === 'ja'), false);
+  assert.equal(tagline.children.some(node => node instanceof FakeElement && node.lang === 'ja'), false);
+  assert.equal(info.querySelector('.book-title'), null);
+  assert.equal(reader.elements.get('#readerTitle').children[0], E.plainJapanese(stories[0].title.ja));
+  assert.equal(reader.elements.get('#readerTitle').children[1].className, 'zh');
+});
+
+test('Taiwan cover and end notes retain their original unwrapped bilingual DOM structure', () => {
+  const reader = createReader();
+  const { elements } = reader;
+  elements.get('#prevButton').dispatch('click');
+  const coverNotes = elements.get('#page').querySelector('.page-note').children;
+  assert.deepEqual(coverNotes.map(node => node.lang), ['ja', 'zh-Hant-TW']);
+  assert.equal(coverNotes[1].textContent, '台灣民間故事 · 一個很會說謊的人的故事');
+  assert.equal(coverNotes.some(node => node.children.some(child => child instanceof FakeElement && child.tagName === 'SPAN')), false);
+
+  elements.get('#nextButton').dispatch('click');
+  for (let i = 0; i < stories[0].pages.length - 2; i++) elements.get('#nextButton').dispatch('click');
+  const endNotes = elements.get('#page').querySelector('.page-note').children;
+  assert.deepEqual(endNotes.map(node => node.lang), ['ja', 'zh-Hant-TW']);
+  assert.equal(endNotes.some(node => node.children.some(child => child instanceof FakeElement && child.tagName === 'SPAN')), false);
+});
+
+test('Japan story metadata follows selected languages across shelf, reader, notes, alt text, and media controls', () => {
+  const japan = {
+    ...SERIES,
+    folder: 'japan-ehon',
+    id: 'japan',
+    shelfMarker: '/japan-ehon/',
+    languages: ['ja', 'zh', 'en'],
+    defaultMode: 'ja-zh',
+    narratedOnlyToggle: true,
+    siteNameSuffix: ' · Japan Ehon',
+  };
+  const story = {
+    id: 'metadata-book',
+    title: { ja: '{桃|もも}', zh: '桃子', zhuyin: 'ㄊㄠˊ ㄗ', en: 'Peach Boy' },
+    origin: { ja: '昔話', zh: '民間故事', en: 'Folktale' },
+    tagline: { ja: '冒険', zh: '冒險', en: 'An adventure' },
+    credit: { ja: '出典', zh: '來源', en: 'Source' },
+    theme: { accent: '#273968', soft: '#d7dcee' },
+    pages: [
+      { id: 'cover', image: 'cover.webp', alt: { ja: '表紙', zh: '封面', en: 'Cover' }, lines: [] },
+      { id: 'p01', image: 'page.webp', alt: { ja: '桃', zh: '桃子', en: 'Peach' }, lines: [] },
+      { id: 'end', image: 'end.webp', alt: { ja: '終わり', zh: '結束', en: 'The end' }, lines: [] },
+    ],
+  };
+  const reader = createReader({ series: japan, storyList: [story] });
+  reader.selectMode('en-zh');
+  const { elements, document, mediaSession } = reader;
+  const card = elements.get('#bookList').querySelector('.book-card');
+  const titleLangs = card.querySelectorAll('.book-title-ja, .book-title-zh, .book-title-en');
+  assert.deepEqual(titleLangs.map(node => [node.className, node.lang]), [['book-title-zh', 'zh-Hant-TW'], ['book-title-en', 'en']]);
+  assert.deepEqual(elements.get('#readerTitle').children.map(node => node.lang), ['zh-Hant-TW', 'en']);
+  assert.equal(document.title, 'Peach Boy｜桃子 · Japan Ehon');
+  assert.equal(mediaSession.metadata.title, 'Peach Boy｜桃子');
+  assert.equal(elements.get('#pageImage').alt, '桃子 ／ Peach');
+
+  elements.get('#prevButton').dispatch('click');
+  const coverNotes = elements.get('#page').querySelector('.page-note').children;
+  assert.deepEqual(coverNotes.map(node => node.lang), ['zh-Hant-TW', 'en']);
+  assert.equal(coverNotes.map(node => node.children.map(child => typeof child === 'string' ? child : child.children.join('')).join('')).join('|'), '民間故事 ・ 冒險|Folktale ・ An adventure');
+
+  elements.get('#nextButton').dispatch('click');
+  elements.get('#nextButton').dispatch('click');
+  const endNotes = elements.get('#page').querySelector('.page-note').children;
+  assert.deepEqual(endNotes.map(node => node.lang), ['zh-Hant-TW', 'en']);
+});
+
+test('optional English metadata falls back to available languages in every visible reader label', () => {
+  const japan = {
+    ...SERIES,
+    folder: 'japan-ehon',
+    id: 'japan',
+    shelfMarker: '/japan-ehon/',
+    languages: ['ja', 'zh', 'en'],
+    defaultMode: 'ja-zh',
+    narratedOnlyToggle: true,
+    siteNameSuffix: ' · Japan Ehon',
+  };
+  const story = {
+    id: 'metadata-book',
+    title: { ja: '桃太郎', zh: '桃太郎', zhuyin: 'ㄊㄠˊ ㄊㄞˋ ㄌㄤˊ' },
+    origin: { ja: '昔話', zh: '民間故事' },
+    tagline: { ja: '冒険', zh: '冒險' },
+    credit: { ja: '出典', zh: '來源' },
+    theme: { accent: '#273968', soft: '#d7dcee' },
+    pages: [{ id: 'cover', image: 'cover.webp', alt: { ja: '表紙', zh: '封面' }, lines: [] }],
+  };
+  const reader = createReader({ series: japan, storyList: [story] });
+  reader.selectMode('en');
+  const { elements, document, mediaSession } = reader;
+  const card = elements.get('#bookList').querySelector('.book-card');
+  assert.deepEqual(card.querySelectorAll('.book-title-ja, .book-title-zh, .book-title-en').map(node => [node.className, node.lang]), [['book-title-ja', 'ja'], ['book-title-zh', 'zh-Hant-TW']]);
+  assert.deepEqual(elements.get('#readerTitle').children.map(node => node.lang), ['ja', 'zh-Hant-TW']);
+  assert.equal(document.title, '桃太郎｜桃太郎 · Japan Ehon');
+  assert.equal(mediaSession.metadata.title, '桃太郎｜桃太郎');
+  assert.equal(elements.get('#pageImage').alt, '表紙 ／ 封面');
 });
 
 test('starting to read a page warms the cache for its remaining clips and the next page\'s first line', () => {

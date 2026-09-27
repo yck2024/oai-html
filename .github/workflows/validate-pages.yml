@@ -19,8 +19,10 @@ jobs:
       - name: Validate page manifest and published page directories
         run: python .github/scripts/validate_pages.py
 
-      - name: Test taiwan-ehon storybook
+      - name: Test storybook engine and every series
         run: |
-          node --test taiwan-ehon/*.test.js
+          node engine/build.js --check
+          node engine/build-stories.js --check
+          node --test engine/*.test.js
           node --test monster-word-arena-tw/*.test.js
           node --test math-island/*.test.js math-island/poko/*.test.js math-island/dino-spirit/*.test.js
