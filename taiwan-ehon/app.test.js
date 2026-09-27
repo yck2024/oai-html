@@ -9,6 +9,19 @@ const E = require('./ehon.js');
 const stories = require('./stories.js');
 const { FakeElement, READER_IDS, createLocationHistory } = require('./test-dom.js');
 
+// A minimal MediaSession/MediaMetadata double: stores whatever app.js sets so tests can
+// assert on metadata/playbackState, and records action handlers so tests can invoke them
+// the way a lock-screen or notification control would.
+function createMediaSession() {
+  const actionHandlers = {};
+  return {
+    metadata: null,
+    playbackState: 'none',
+    setActionHandler(action, handler) { actionHandlers[action] = handler; },
+    actionHandlers,
+  };
+}
+
 function createReader({ analytics = true } = {}) {
   const elements = new Map(READER_IDS.map(id => [`#${id}`, new FakeElement()]));
   const modeInputs = ['ja-zh', 'zh-ja', 'ja', 'zh'].map(value => {
@@ -18,6 +31,7 @@ function createReader({ analytics = true } = {}) {
   });
   const document = {
     title: '',
+    visibilityState: 'visible',
     querySelector: selector => elements.get(selector) || null,
     querySelectorAll: selector => selector === 'input[name="listenMode"]' ? modeInputs : [],
     createElement: tagName => new FakeElement(tagName),
@@ -43,11 +57,16 @@ function createReader({ analytics = true } = {}) {
   FakeAudio.instances = [];
   const events = [];
   const nav = createLocationHistory('/taiwan-ehon/');
+  const mediaSession = createMediaSession();
+  const fetched = [];
   const context = {
     window: { TaiwanEhon: E, TaiwanEhonStories: stories },
     document,
     localStorage,
     Audio: FakeAudio,
+    navigator: { mediaSession },
+    MediaMetadata: class { constructor(options) { Object.assign(this, options); } },
+    fetch: url => { fetched.push(url); return Promise.resolve(); },
     setTimeout: () => 1,
     clearTimeout() {},
     location: nav.location,
@@ -64,11 +83,15 @@ function createReader({ analytics = true } = {}) {
     elements,
     modeInputs,
     events,
+    document,
+    mediaSession,
+    fetched,
     openStory(index) { elements.get('#bookList').querySelectorAll('.book-card')[index].dispatch('click'); },
     selectMode(mode) {
       for (const input of modeInputs) input.checked = input.value === mode;
       modeInputs.find(input => input.value === mode).dispatch('change');
     },
+    setHidden(hidden) { document.visibilityState = hidden ? 'hidden' : 'visible'; },
   };
 }
 
@@ -230,4 +253,106 @@ test('a picture that fails to load shows a friendly offline notice, cleared once
   assert.equal(pageArt.classList.contains('offline-missing'), true);
   pageImage.dispatch('load');
   assert.equal(pageArt.classList.contains('offline-missing'), false);
+});
+
+test('while hidden, auto-turn narration chains across languages, sentences, and pages from the ended event alone, with no timer ever firing', () => {
+  const reader = createReader();
+  const { elements, audio } = reader;
+  reader.selectMode('ja'); // one clip per line, so page-crossing arithmetic below is exact
+  const autoTurn = elements.get('#autoTurnToggle');
+  autoTurn.checked = true;
+  autoTurn.dispatch('change');
+  const pageCounter = elements.get('#pageCounter');
+
+  elements.get('#playButton').dispatch('click'); // starts reading p01 (page 2 of the book)
+  reader.setHidden(true);
+  assert.equal(pageCounter.textContent, `2 / ${stories[0].pages.length}`);
+  assert.equal(audio.played.length, 1);
+
+  audio.onended(); // p01's first line ends -> its second line starts immediately (still p01)
+  assert.equal(pageCounter.textContent, `2 / ${stories[0].pages.length}`);
+  assert.equal(audio.played.length, 2);
+
+  audio.onended(); // p01's last line ends -> auto-turns to p02 and starts reading it, with no gap
+  assert.equal(pageCounter.textContent, `3 / ${stories[0].pages.length}`);
+  assert.equal(audio.played.length, 3);
+
+  audio.onended(); // p02 line 1 -> line 2
+  audio.onended(); // p02 line 2 -> line 3
+  assert.equal(pageCounter.textContent, `3 / ${stories[0].pages.length}`);
+  assert.equal(audio.played.length, 5);
+
+  audio.onended(); // p02's last line ends -> auto-turns to p03 and starts reading it
+  assert.equal(pageCounter.textContent, `4 / ${stories[0].pages.length}`);
+  assert.equal(audio.played.length, 6);
+});
+
+test('reaching the end while hidden stops playback cleanly: no further page turn, clip, or lock-screen playing state', () => {
+  const reader = createReader();
+  const { elements, audio, mediaSession } = reader;
+  reader.selectMode('ja');
+  const autoTurn = elements.get('#autoTurnToggle');
+  autoTurn.checked = true;
+  autoTurn.dispatch('change');
+  const next = elements.get('#nextButton');
+  for (let i = 0; i < stories[0].pages.length - 2; i++) next.dispatch('click');
+  assert.equal(elements.get('#pageCounter').textContent, `${stories[0].pages.length} / ${stories[0].pages.length}`);
+
+  reader.setHidden(true);
+  elements.get('#playButton').dispatch('click'); // starts reading the ending page's first line
+  const playedAtStart = audio.played.length;
+
+  audio.onended(); // ending page's first line -> its last line, still hidden, no timer
+  audio.onended(); // ending page's last line -> nothing left to auto-turn to: stop cleanly
+
+  assert.equal(audio.played.length, playedAtStart + 1);
+  assert.equal(elements.get('#playIcon').textContent, '▶');
+  assert.equal(mediaSession.playbackState, 'none');
+});
+
+test('Media Session exposes the book\'s title and cover art, and its controls mirror the reader', () => {
+  const reader = createReader();
+  const { elements, mediaSession } = reader;
+  const story = stories[0];
+
+  assert.equal(mediaSession.metadata.title, `${story.title.zh}｜${E.plainJapanese(story.title.ja)}`);
+  // The sandboxed app.js builds this array in its own vm realm, so compare it by value
+  // (as recordedEvents() does above) rather than by reference-sensitive deepEqual.
+  assert.deepEqual(JSON.parse(JSON.stringify(mediaSession.metadata.artwork)), [
+    { src: `/taiwan-ehon/${story.pages[0].image}`, sizes: '768x512', type: 'image/webp' },
+  ]);
+  assert.equal(mediaSession.playbackState, 'none');
+
+  elements.get('#playButton').dispatch('click');
+  assert.equal(mediaSession.playbackState, 'playing');
+  mediaSession.actionHandlers.pause();
+  assert.equal(mediaSession.playbackState, 'paused');
+  assert.equal(elements.get('#playIcon').textContent, '▶');
+  mediaSession.actionHandlers.play();
+  assert.equal(mediaSession.playbackState, 'playing');
+
+  const counterBefore = elements.get('#pageCounter').textContent;
+  mediaSession.actionHandlers.nexttrack();
+  assert.notEqual(elements.get('#pageCounter').textContent, counterBefore);
+  mediaSession.actionHandlers.previoustrack();
+  assert.equal(elements.get('#pageCounter').textContent, counterBefore);
+
+  elements.get('#closeBook').dispatch('click');
+  assert.equal(mediaSession.metadata, null);
+  assert.equal(mediaSession.playbackState, 'none');
+});
+
+test('starting to read a page warms the cache for its remaining clips and the next page\'s first line', () => {
+  const reader = createReader();
+  const { elements, fetched } = reader;
+  reader.selectMode('ja');
+  elements.get('#playButton').dispatch('click');
+
+  const story = stories[0];
+  const page = story.pages[1]; // p01, the page reading starts on
+  const nextLine = story.pages[2].lines[0];
+  for (const line of page.lines) {
+    assert.ok(fetched.includes(`/taiwan-ehon/audio/${story.id}/ja/${line.id}.mp3`));
+  }
+  assert.ok(fetched.includes(`/taiwan-ehon/audio/${story.id}/ja/${nextLine.id}.mp3`));
 });

@@ -92,6 +92,18 @@
     audio = null;
   }
 
+  // A hidden/backgrounded tab can have its timers suspended (most aggressively on mobile
+  // once the screen locks), so every gap — between languages, sentences, and pages — skips
+  // the wait and chains straight from the `ended`/`onDone` event instead of via setTimeout.
+  function isHidden() {
+    return document.visibilityState === 'hidden';
+  }
+
+  function backgroundAwareWait(ms, fn) {
+    if (isHidden()) { fn(); return undefined; }
+    return setTimeout(fn, ms);
+  }
+
   const narrator = E.createNarrator(audio, {
     onStep: step => {
       highlight(step);
@@ -103,7 +115,7 @@
       speechStatus.textContent = UNAVAILABLE;
       updatePlayback();
     },
-  }, undefined, ASSET_BASE);
+  }, backgroundAwareWait, ASSET_BASE);
 
   function loadSettings() {
     const defaults = { mode: E.DEFAULT_MODE, zhuyin: true, autoTurn: false };
@@ -215,6 +227,7 @@
     zh.textContent = story.title.zh;
     readerTitle.append(zh);
     document.title = `${story.title.zh}｜${E.plainJapanese(story.title.ja)} · 台灣故事繪本`;
+    updateMediaMetadata(story);
     reader.dataset.book = story.id;
     shelf.hidden = true;
     reader.hidden = false;
@@ -232,6 +245,7 @@
     narrator.stop();
     listening = false;
     book = null;
+    clearMediaSession();
     setSettingsOpen(false);
     reader.hidden = true;
     shelf.hidden = false;
@@ -361,6 +375,71 @@
     muteIcon.textContent = muted ? '🔇' : '🔊';
     muteButton.setAttribute('aria-pressed', String(muted));
     muteButton.setAttribute('aria-label', muted ? 'おとを だす 開啟聲音' : 'おとを けす 靜音');
+    if (typeof navigator !== 'undefined' && navigator.mediaSession) {
+      navigator.mediaSession.playbackState = playing ? 'playing' : narrator.state === 'paused' ? 'paused' : 'none';
+    }
+  }
+
+  // Lock-screen/notification media controls: title and cover art per book, plus play, pause,
+  // and page-turn controls wired to the same functions the on-page buttons use. Registering
+  // this is also part of what lets iOS/Android keep narration going with the screen off.
+  function updateMediaMetadata(story) {
+    if (typeof navigator === 'undefined' || !navigator.mediaSession || typeof MediaMetadata === 'undefined') return;
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: `${story.title.zh}｜${E.plainJapanese(story.title.ja)}`,
+      artist: SHELF_DOCUMENT_TITLE,
+      artwork: [{ src: `${ASSET_BASE}${story.pages[0].image}`, sizes: '768x512', type: 'image/webp' }],
+    });
+  }
+
+  function clearMediaSession() {
+    if (typeof navigator === 'undefined' || !navigator.mediaSession) return;
+    navigator.mediaSession.metadata = null;
+    navigator.mediaSession.playbackState = 'none';
+  }
+
+  function setupMediaSessionHandlers() {
+    if (typeof navigator === 'undefined' || !navigator.mediaSession) return;
+    const actionHandlers = {
+      play: () => {
+        if (narrator.state === 'paused' && !muted) {
+          listening = queueKind === 'page';
+          narrator.resume();
+        } else if (narrator.state === 'idle') {
+          readPage();
+        }
+        updatePlayback();
+      },
+      pause: () => {
+        narrator.pause();
+        listening = false;
+        clearTimeout(turnTimer);
+        updatePlayback();
+      },
+      previoustrack: () => turn('prev'),
+      nexttrack: () => turn('next'),
+    };
+    for (const [action, handler] of Object.entries(actionHandlers)) {
+      try { navigator.mediaSession.setActionHandler(action, handler); } catch (_error) { /* action unsupported */ }
+    }
+  }
+
+  // Warms the browser/service-worker cache for clips about to be needed — the rest of the
+  // current page and the next page's first line — so a background auto-turn never stalls on
+  // a network fetch. A book already downloaded for offline reading serves these from the
+  // service worker's media cache; this only helps the first, online listen.
+  function warmClip(url) {
+    if (typeof fetch !== 'function') return;
+    try { fetch(url).catch(() => {}); } catch (_error) { /* not fetchable in this environment */ }
+  }
+
+  function warmUpcoming(queue) {
+    for (const step of queue) warmClip(E.clipPath(book.story.id, step.lang, step.lineId, ASSET_BASE));
+    if (book.isLast()) return;
+    const nextPage = book.story.pages[book.index + 1];
+    const firstLine = nextPage.lines[0];
+    if (!firstLine) return;
+    warmClip(E.clipPath(book.story.id, E.languagesFor(settings.mode)[0], firstLine.id, ASSET_BASE));
   }
 
   function readPage({ paused = false } = {}) {
@@ -369,7 +448,9 @@
     listening = !paused;
     queueKind = 'page';
     speechStatus.textContent = '';
-    narrator.play(book.story.id, E.pageQueue(book.page(), settings.mode), { paused });
+    const queue = E.pageQueue(book.page(), settings.mode);
+    narrator.play(book.story.id, queue, { paused });
+    warmUpcoming(queue);
     updatePlayback();
   }
 
@@ -383,6 +464,14 @@
     updatePlayback();
   }
 
+  // Schedules a gap the way a visible reader expects to see it (a real, cancellable pause),
+  // but skips straight to `fn` while the tab is hidden, since a backgrounded/locked-screen
+  // timer is not reliable — see `backgroundAwareWait` above for the matching in-page gaps.
+  function scheduleGap(delay, fn) {
+    if (isHidden()) { fn(); return; }
+    turnTimer = setTimeout(fn, delay);
+  }
+
   function pageFinished() {
     updatePlayback();
     if (queueKind !== 'page' || !book) return;
@@ -391,7 +480,7 @@
       return;
     }
     if (settings.autoTurn && listening && !muted) {
-      turnTimer = setTimeout(() => turn('next'), AUTO_TURN_DELAY);
+      scheduleGap(AUTO_TURN_DELAY, () => turn('next'));
     }
   }
 
@@ -404,7 +493,7 @@
       completedThisOpening = true;
       if (STORIES.includes(book.story)) track('book_complete', { book_id: book.story.id });
     }
-    if (listening && !muted) turnTimer = setTimeout(readPage, TURN_SETTLE);
+    if (listening && !muted) scheduleGap(TURN_SETTLE, readPage);
   }
 
   function turn(direction) {
@@ -536,6 +625,7 @@
   renderShelf();
   applySettings();
   updatePlayback();
+  setupMediaSessionHandlers();
   route({ push: false, send: false });
   addEventListener('popstate', () => route({ push: false, send: true }));
 })();
