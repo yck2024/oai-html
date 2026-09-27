@@ -3,6 +3,7 @@
 
   const { STICKERS, STORAGE_KEY, createRewards } = window.ArenaRewardsCore;
   const I18N = window.FriendlyArenaI18n;
+  const { bilingualNode, setBilingual } = I18N;
   const CHAMPION_IDS = ['dino', 'monster'];
 
   function deviceStorage() {
@@ -49,26 +50,6 @@
 
   function secondLabel(item) {
     return currentSecondLanguage ? item[currentSecondLanguage] : null;
-  }
-
-  // A label with an optional smaller second-language line under it, in the spirit of the game's
-  // original bilingual "Sticker book · 貼紙本" labels.
-  function bilingualNode(mainText, secondValue) {
-    if (!secondValue || secondValue === mainText) return document.createTextNode(mainText);
-    const wrap = document.createElement('span');
-    wrap.className = 'bilingual';
-    const main = document.createElement('span');
-    main.className = 'lang-main';
-    main.textContent = mainText;
-    const second = document.createElement('span');
-    second.className = 'lang-second';
-    second.textContent = secondValue;
-    wrap.append(main, second);
-    return wrap;
-  }
-
-  function setBilingual(el, mainText, secondValue) {
-    el.replaceChildren(bilingualNode(mainText, secondValue));
   }
 
   function picture(item, className) {

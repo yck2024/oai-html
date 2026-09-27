@@ -2,6 +2,7 @@
   'use strict';
 
   const I18N = window.FriendlyArenaI18n;
+  const { bilingualNode, setBilingual } = I18N;
   const PACING = window.FriendlyArenaPacing;
   const game = window.FriendlyArena.createGame();
   const stage = window.FriendlyArenaStage.createArenaStage(document);
@@ -171,26 +172,6 @@
 
   function persistSettings() {
     saveSettings({ v: 2, textLanguage, secondLanguage, secondLanguageManual, voiceOverride, voiceLanguage, speechMuted, allowedLevels });
-  }
-
-  // Builds the DOM for one label with an optional smaller second-language line under it, in the
-  // spirit of the game's original bilingual "Sticker book · 貼紙本" labels.
-  function bilingualNode(mainText, secondValue) {
-    if (!secondValue || secondValue === mainText) return document.createTextNode(mainText);
-    const wrap = document.createElement('span');
-    wrap.className = 'bilingual';
-    const main = document.createElement('span');
-    main.className = 'lang-main';
-    main.textContent = mainText;
-    const second = document.createElement('span');
-    second.className = 'lang-second';
-    second.textContent = secondValue;
-    wrap.append(main, second);
-    return wrap;
-  }
-
-  function setBilingual(el, mainText, secondValue) {
-    el.replaceChildren(bilingualNode(mainText, secondValue));
   }
 
   // A STRINGS entry's text in the current second language, or null when there is none chosen.

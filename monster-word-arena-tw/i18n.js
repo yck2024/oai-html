@@ -325,12 +325,30 @@
     }[lang];
   }
 
+  function bilingualNode(mainText, secondValue) {
+    if (!secondValue || secondValue === mainText) return document.createTextNode(mainText);
+    const wrap = document.createElement('span');
+    wrap.className = 'bilingual';
+    const main = document.createElement('span');
+    main.className = 'lang-main';
+    main.textContent = mainText;
+    const second = document.createElement('span');
+    second.className = 'lang-second';
+    second.textContent = secondValue;
+    wrap.append(main, second);
+    return wrap;
+  }
+
+  function setBilingual(el, mainText, secondValue) {
+    el.replaceChildren(bilingualNode(mainText, secondValue));
+  }
+
   const api = {
     TEXT_LANGUAGES, LANGUAGE_NAMES, DEFAULT_SECOND_LANGUAGE, TOPIC_NAMES, LEVEL_NAMES, CHAMPIONS, STRINGS,
     championReady, topicChosenMessage, levelChosenMessage, finishBody, sparMessage,
     settingsWinsSummary, settingsStickerSummary, rewardBookIntroWins, stickerStillToFind,
     costumeWinsToGo, costumeSurpriseHint, costumeRowLabel, nextSurpriseHint,
-    rewardSummaryPattern, rewardUnlockText,
+    rewardSummaryPattern, rewardUnlockText, bilingualNode, setBilingual,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof window !== 'undefined') window.FriendlyArenaI18n = api;
