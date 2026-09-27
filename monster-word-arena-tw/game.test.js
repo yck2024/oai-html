@@ -9,6 +9,7 @@ const vm = require('node:vm');
 const { GOAL, TOPICS, LEVELS, WORD_TOPICS, REACTIONS, createGame, createSpeechPlayer } = require('./game.js');
 const { EFFECTS, EFFECT_LEVEL, MUSIC_LEVEL, createSoundBoard } = require('./sounds.js');
 const { POSES, ART, TIMING, comboText } = require('./arena.js');
+const { STICKERS, COSTUMES } = require('./rewards.js');
 const prompts = require('./audio/prompts.json');
 const reactions = require('./audio/reactions.json');
 
@@ -73,6 +74,19 @@ function answerCorrectly(game) {
   return game.answer(state.question.answerId);
 }
 
+function matchesSelector(element, selector) {
+  if (selector.startsWith('#')) return element.attributes.id === selector.slice(1);
+  if (selector.startsWith('.')) return element.classList.contains(selector.slice(1));
+  const attributes = [...selector.matchAll(/\[data-([a-z-]+)="([^"]*)"\]/g)];
+  if (attributes.length && attributes.map(match => match[0]).join('') === selector) {
+    return attributes.every(([, name, value]) => {
+      const property = name.replace(/-([a-z])/g, (_match, letter) => letter.toUpperCase());
+      return element.dataset[property] === value;
+    });
+  }
+  return element.tagName.toLowerCase() === selector;
+}
+
 class FakeElement {
   constructor(tagName = 'div') {
     this.tagName = tagName.toUpperCase();
@@ -133,6 +147,27 @@ class FakeElement {
     this.children.push(...children);
   }
 
+  prepend(...children) {
+    children.forEach(child => { child.parentNode = this; });
+    this.children.unshift(...children);
+  }
+
+  insertBefore(child, before) {
+    const index = this.children.indexOf(before);
+    if (index < 0) return this.append(child);
+    child.parentNode = this;
+    this.children.splice(index, 0, child);
+    return child;
+  }
+
+  remove() {
+    if (!this.parentNode) return;
+    const siblings = this.parentNode.children;
+    const index = siblings.indexOf(this);
+    if (index >= 0) siblings.splice(index, 1);
+    this.parentNode = null;
+  }
+
   replaceChildren(...children) {
     this.children.forEach(child => { child.parentNode = null; });
     this.children = [];
@@ -153,7 +188,7 @@ class FakeElement {
     const matches = [];
     const visit = parent => parent.children.forEach(child => {
       if (!child.tagName) return;
-      if (selector === child.tagName.toLowerCase() || selector.startsWith('.') && child.classList.contains(selector.slice(1))) matches.push(child);
+      if (matchesSelector(child, selector)) matches.push(child);
       visit(child);
     });
     visit(this);
@@ -324,11 +359,8 @@ function createPageDocument() {
   const document = {
     documentElement: allElements.find(element => element.tagName === 'HTML'),
     hidden: false,
-    querySelector: selector => selector.startsWith('#')
-      ? elements.get(selector) || null
-      : selector.startsWith('.') ? allElements.find(element => element.classList.contains(selector.slice(1))) || null : null,
-    querySelectorAll: selector => selector.startsWith('.')
-      ? allElements.filter(element => element.classList.contains(selector.slice(1))) : [],
+    querySelector: selector => allElements.find(element => matchesSelector(element, selector)) || null,
+    querySelectorAll: selector => allElements.filter(element => matchesSelector(element, selector)),
     createElement: tagName => new FakeElement(tagName),
     createTextNode: text => ({ textContent: String(text) }),
   };
@@ -343,7 +375,7 @@ function createAppFixture(game, globals = {}) {
   const speechLanguageButtons = document.querySelectorAll('.speech-language');
   const effects = [];
   const sound = { board: null, ctx: null, timers: createFakeTimers() };
-  const window = { AudioContext: FakeAudioContext };
+  const window = { AudioContext: FakeAudioContext, addEventListener() {} };
   // The page's own scripts publish these modules; the fixture swaps in the test game and records sounds.
   const hooks = {
     FriendlyArena: api => ({ ...api, createGame: () => game }),
@@ -411,6 +443,9 @@ test('the shipped page markup initializes the arena and game', () => {
   assert.equal(app.levelButtons.length, LEVELS.length);
   assert.equal(app.speechLanguageButtons.length, 3);
   assert.equal(app.document.querySelectorAll('.fighter-body').length, 2);
+  for (const action of ['open', 'close', 'reset', 'confirm-reset', 'keep']) {
+    assert.ok(app.document.querySelector(`[data-reward-action="${action}"]`), `${action} reward action is in the shipped page`);
+  }
   assert.ok(app.document.querySelector('.stage-effects'));
   assert.equal(app.elements.get('#scoreStars').children.length, GOAL);
   assert.equal(app.elements.get('#rivalPower').children.length, GOAL);
@@ -501,10 +536,11 @@ test('every picture word has bundled original art sized for a phone page', () =>
   assert.ok(totalBytes < 320 * 1024, 'all pictures together stay light for a phone');
   const committed = fs.readdirSync(path.join(__dirname, 'images')).sort();
   const expectedImages = [
-    ...pictureWords.map(({ word }) => word.image.slice('./images/'.length)),
+    ...pictureWords.map(({ word }) => path.basename(word.image)),
     ...ART.map(file => path.basename(file)),
+    ...[...STICKERS, ...COSTUMES].map(item => path.basename(item.image)),
   ].sort();
-  assert.deepEqual(committed, expectedImages, 'all bundled pictures have a game consumer');
+  assert.deepEqual(committed, expectedImages, 'all word, arena, sticker, and costume art has a game consumer');
 });
 
 test('each correct answer knocks one pip off the sparring buddy with no penalty for misses', () => {
