@@ -1,9 +1,5 @@
-// Hats for the Jizo (斗笠地藏) — one story of the Japanese folktale picture books.
-// Same shape as a taiwan-ehon story, plus English (`en`) on the title, alt text, and every line.
-(function (root, story) {
-  if (typeof module === 'object' && module.exports) module.exports = story;
-  else (root.JapanEhonStories = root.JapanEhonStories || {})[story.id] = story;
-})(typeof self !== 'undefined' ? self : this, {
+// Hats for the Jizo (斗笠地藏) — a japan-ehon story; see stories/README.md.
+module.exports = {
   "id": "kasa-jizo",
   "title": {
     "ja": "{笠地蔵|かさじぞう}",
@@ -434,4 +430,4 @@
       ]
     }
   ]
-});
+};

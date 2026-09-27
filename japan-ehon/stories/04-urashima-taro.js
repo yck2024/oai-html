@@ -1,9 +1,5 @@
-// Urashima Taro (浦島太郎) — one story of the Japanese folktale picture books.
-// Same shape as a taiwan-ehon story, plus English (`en`) on the title, alt text, and every line.
-(function (root, story) {
-  if (typeof module === 'object' && module.exports) module.exports = story;
-  else (root.JapanEhonStories = root.JapanEhonStories || {})[story.id] = story;
-})(typeof self !== 'undefined' ? self : this, {
+// Urashima Taro (浦島太郎) — a japan-ehon story; see stories/README.md.
+module.exports = {
   "id": "urashima-taro",
   "title": {
     "ja": "{浦島太郎|うらしまたろう}",
@@ -443,4 +439,4 @@
       ]
     }
   ]
-});
+};
