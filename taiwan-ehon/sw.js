@@ -90,19 +90,34 @@
   async function handleMedia(request, caches, fetch) {
     const cache = await caches.open(MEDIA_CACHE_NAME);
     const cached = await cache.match(request.url);
-    if (cached) return buildRangeResponse(cached, request.headers.get('Range'));
-    const response = await fetch(request.url);
     const rangeHeader = request.headers.get('Range');
-    if (response && response.ok && rangeHeader) {
-      try {
-        await cache.put(request.url, response.clone());
-      } catch (_error) {
-        return response;
-      }
-      return buildRangeResponse(await cache.match(request.url), rangeHeader);
+
+    // A cached full response can answer iOS audio Range requests without a network round-trip.
+    // Refresh its full copy in the background when online; never put a partial 206 in CacheStorage.
+    if (cached && rangeHeader) {
+      Promise.resolve(fetch(request.url)).then(response => {
+        if (response && response.ok) return cache.put(request.url, response.clone());
+      }).catch(() => {});
+      return buildRangeResponse(cached, rangeHeader);
     }
-    if (response && response.ok) cache.put(request.url, response.clone());
-    return response;
+
+    // Prefer the current online media so same-name story fixes appear on the next visit, while
+    // retaining the cached copy as the offline fallback.
+    try {
+      const response = await fetch(request.url);
+      if (response && response.ok) {
+        try {
+          await cache.put(request.url, response.clone());
+        } catch (_error) {
+          return response;
+        }
+        return rangeHeader ? buildRangeResponse(response, rangeHeader) : response;
+      }
+      if (!cached) return response;
+    } catch (error) {
+      if (!cached) throw error;
+    }
+    return cached ? buildRangeResponse(cached, null) : undefined;
   }
 
   async function handleShell(request, caches, fetch) {

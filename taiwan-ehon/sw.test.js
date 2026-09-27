@@ -84,18 +84,27 @@ test('respond() falls back to the network for a shell asset with no cached copy 
   assert.equal(await response.text(), '<html>fresh</html>');
 });
 
-test('respond() caches a media file on first use and serves it from cache afterward', async () => {
+test('online media refreshes changed cached files, while unchanged and offline copies remain available', async () => {
   const caches = fakeCaches();
-  let fetchCount = 0;
-  const fetchImpl = async () => { fetchCount += 1; return new Response(new Uint8Array([1, 2, 3, 4]), { headers: { 'Content-Type': 'image/webp' } }); };
   const url = `${BASE}images/hu-gu-po/cover.webp`;
-  const first = await sw.respond(new Request(url), { caches, fetch: fetchImpl });
-  assert.equal(fetchCount, 1);
-  assert.equal((await first.arrayBuffer()).byteLength, 4);
+  const cache = await caches.open(sw.MEDIA_CACHE_NAME);
+  await cache.put(url, new Response(new Uint8Array([1, 2, 3, 4]), { headers: { 'Content-Type': 'image/webp' } }));
 
-  const second = await sw.respond(new Request(url), { caches, fetch: fetchImpl });
-  assert.equal(fetchCount, 1, 'the second request is served from the media cache, no new fetch');
-  assert.equal((await second.arrayBuffer()).byteLength, 4);
+  const changed = await sw.respond(new Request(url), {
+    caches,
+    fetch: async () => new Response(new Uint8Array([5, 6, 7]), { headers: { 'Content-Type': 'image/webp' } }),
+  });
+  assert.deepEqual([...new Uint8Array(await changed.arrayBuffer())], [5, 6, 7]);
+  const cachedChanged = await cache.match(url);
+  assert.deepEqual([...new Uint8Array(await cachedChanged.arrayBuffer())], [5, 6, 7]);
+
+  const unchanged = await sw.respond(new Request(url), {
+    caches,
+    fetch: async () => new Response(new Uint8Array([5, 6, 7]), { headers: { 'Content-Type': 'image/webp' } }),
+  });
+  assert.deepEqual([...new Uint8Array(await unchanged.arrayBuffer())], [5, 6, 7]);
+  const offline = await sw.respond(new Request(url), { caches, fetch: async () => { throw new Error('offline'); } });
+  assert.deepEqual([...new Uint8Array(await offline.arrayBuffer())], [5, 6, 7]);
 });
 
 test('a first Range request waits for caching and returns the fetched response if caching fails', async () => {
