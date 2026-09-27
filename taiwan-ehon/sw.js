@@ -177,11 +177,21 @@
       const url = event.request.url;
       if (!url.startsWith(scope) && requestKind(url) !== 'analytics') return;
       if (event.request.method !== 'GET') return;
-      event.respondWith(respond(event.request, {
+      let finishLifetime;
+      const lifetime = new Promise(resolve => { finishLifetime = resolve; });
+      event.waitUntil(lifetime);
+      let refreshRegistered = false;
+      const response = respond(event.request, {
         caches,
         fetch,
-        onBackground: refresh => event.waitUntil(refresh),
-      }).catch(() => fetch(event.request)));
+        onBackground: refresh => {
+          refreshRegistered = true;
+          return refresh.finally(finishLifetime);
+        },
+      }).catch(() => fetch(event.request));
+      event.respondWith(response.finally(() => {
+        if (!refreshRegistered) finishLifetime();
+      }));
     });
 
     // Lets the page ask the waiting worker to activate immediately after showing an

@@ -239,11 +239,16 @@ test('the production fetch handler keeps cached Range refreshes alive and return
     });
     const waitUntilPromises = [];
     let responsePromise;
+    let dispatching = true;
     handlers.get('fetch')({
       request: new Request(url, { headers: { Range: 'bytes=1-2' } }),
-      waitUntil: promise => waitUntilPromises.push(promise),
+      waitUntil: promise => {
+        if (!dispatching) throw new Error('waitUntil called after dispatch');
+        waitUntilPromises.push(promise);
+      },
       respondWith: promise => { responsePromise = promise; },
     });
+    dispatching = false;
 
     const response = await responsePromise;
     assert.equal(response.status, 206);
@@ -254,6 +259,22 @@ test('the production fetch handler keeps cached Range refreshes alive and return
     await Promise.all(waitUntilPromises);
     const refreshed = await cache.match(url);
     assert.deepEqual([...new Uint8Array(await refreshed.arrayBuffer())], [5, 6, 7]);
+
+    const noRefreshLifetimes = [];
+    let noRefreshResponse;
+    dispatching = true;
+    handlers.get('fetch')({
+      request: new Request(url),
+      waitUntil: promise => {
+        if (!dispatching) throw new Error('waitUntil called after dispatch');
+        noRefreshLifetimes.push(promise);
+      },
+      respondWith: promise => { noRefreshResponse = promise; },
+    });
+    dispatching = false;
+    assert.equal((await noRefreshResponse).status, 200);
+    assert.equal(noRefreshLifetimes.length, 1);
+    await noRefreshLifetimes[0];
   } finally {
     releaseFetch();
     globalThis.caches = previousCaches;
