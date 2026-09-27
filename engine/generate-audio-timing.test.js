@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const { execFileSync } = require('node:child_process');
 const test = require('node:test');
 const { generate } = require('./generate-audio-timing.js');
+const C = require('./continuous.js');
 
 // A tiny fixture independent of any real series: `exists`/`probe` are both injected, so this
 // exercises the manifest-shape logic (which clips are included, how silence/story timings are
@@ -86,4 +87,23 @@ test('defaultProbe(): reads a real duration from ffprobe, in whole milliseconds'
   const ms = defaultProbe(path.join(__dirname, 'silence', 'page.mp3'));
   assert.equal(typeof ms, 'number');
   assert.ok(ms > 0 && ms < 5000, `expected a small positive duration, got ${ms}`);
+});
+
+test('defaultProbe(): excludes the first Xing frame duration when continuous assembly strips that frame', { skip: !hasFfprobe() && 'ffprobe not found on PATH' }, () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const clip = path.join(__dirname, '..', 'taiwan-ehon', 'audio', 'bai-zei-qi', 'ja', 'p01-1.mp3');
+  const bytes = new Uint8Array(fs.readFileSync(clip));
+  const withoutId3 = C.stripId3v2(bytes);
+  const withoutVbrHeader = C.stripVbrHeaderFrame(withoutId3);
+  assert.ok(withoutVbrHeader.byteLength < withoutId3.byteLength, 'fixture must contain a Xing/Info frame removed during assembly');
+
+  const metadata = JSON.parse(execFileSync('ffprobe', [
+    '-v', 'error', '-show_entries', 'format=duration:packet=duration_time', '-of', 'json', clip,
+  ], { encoding: 'utf8' }));
+  const expectedMs = Math.round(
+    parseFloat(metadata.format.duration) * 1000 - parseFloat(metadata.packets[0].duration_time) * 1000,
+  );
+  const { defaultProbe } = require('./generate-audio-timing.js');
+  assert.equal(defaultProbe(clip), expectedMs);
 });

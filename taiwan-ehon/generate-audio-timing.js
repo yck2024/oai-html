@@ -23,9 +23,17 @@ const C = require('./continuous.js');
 
 function defaultProbe(filePath) {
   const output = execFileSync('ffprobe', [
-    '-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1', filePath,
+    '-v', 'error', '-show_entries', 'format=duration:packet=duration_time', '-of', 'json', filePath,
   ], { encoding: 'utf8' });
-  return Math.round(parseFloat(output.trim()) * 1000);
+  const probe = JSON.parse(output);
+  const durationMs = parseFloat(probe.format.duration) * 1000;
+  const bytes = new Uint8Array(fs.readFileSync(filePath));
+  const withoutId3 = C.stripId3v2(bytes);
+  const withoutVbrHeader = C.stripVbrHeaderFrame(withoutId3);
+  const removedFrameMs = withoutVbrHeader.byteLength < withoutId3.byteLength
+    ? parseFloat(probe.packets[0].duration_time) * 1000
+    : 0;
+  return Math.round(durationMs - removedFrameMs);
 }
 
 // `probe` and `exists` are injectable so tests can exercise the manifest shape — including a

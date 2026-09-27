@@ -312,6 +312,7 @@
     mapTimeToLine,
     stripId3v2,
     stripId3v1,
+    stripVbrHeaderFrame,
     stripTags,
     assembleContinuousBlob,
     createByteLoader,
