@@ -22,7 +22,15 @@ const SERIES = require('./registry.js');
 
 // Copied verbatim into every series folder. Each reads that folder's own series.config.js and
 // stories.js via __dirname/require, so the file itself never needs to differ between series.
-const RUNTIME_FILES = ['ehon.js', 'app.js', 'offline.js', 'sw.js', 'generate-book-pages.js', 'test-dom.js'];
+const RUNTIME_FILES = [
+  'ehon.js', 'app.js', 'offline.js', 'sw.js', 'generate-book-pages.js', 'test-dom.js',
+  'continuous.js', 'generate-audio-timing.js',
+];
+
+// The silent MP3s continuous.js splices between clips for screen-off listening: real binary
+// files (not UTF-8 source), so they need their own byte-for-byte sync below rather than
+// RUNTIME_FILES' text diff/copy.
+const SILENCE_FILES = ['silence/language.mp3', 'silence/sentence.mp3', 'silence/page.mp3'];
 
 function combinedCss(seriesDir) {
   const base = fs.readFileSync(path.join(ENGINE_DIR, 'ehon.css'), 'utf8');
@@ -40,6 +48,15 @@ function targetsFor(seriesFolder) {
   return targets;
 }
 
+function binaryTargetsFor(seriesFolder) {
+  const seriesDir = path.join(ROOT, seriesFolder);
+  const targets = new Map();
+  for (const file of SILENCE_FILES) {
+    targets.set(path.join(seriesDir, file), fs.readFileSync(path.join(ENGINE_DIR, file)));
+  }
+  return targets;
+}
+
 function sync({ write = true } = {}) {
   const drifted = [];
   for (const seriesFolder of SERIES) {
@@ -48,6 +65,15 @@ function sync({ write = true } = {}) {
       if (current === content) continue;
       drifted.push(path.relative(ROOT, targetPath));
       if (write) fs.writeFileSync(targetPath, content);
+    }
+    for (const [targetPath, content] of binaryTargetsFor(seriesFolder)) {
+      const current = fs.existsSync(targetPath) ? fs.readFileSync(targetPath) : null;
+      if (current && current.equals(content)) continue;
+      drifted.push(path.relative(ROOT, targetPath));
+      if (write) {
+        fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+        fs.writeFileSync(targetPath, content);
+      }
     }
   }
   return drifted;
