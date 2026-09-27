@@ -2,8 +2,8 @@
 
 const assert = require('node:assert/strict');
 const test = require('node:test');
-const sw = require('./sw.js');
-const stories = require('./stories.js');
+const sw = require('../taiwan-ehon/sw.js');
+const stories = require('../taiwan-ehon/stories.js');
 
 const BASE = 'https://example.test/oai-html/taiwan-ehon/';
 

@@ -1,0 +1,19 @@
+{
+  "name": "にほんの むかしばなし えほん ・ 日本民間故事繪本",
+  "short_name": "えほん繪本",
+  "description": "Bilingual Japanese and Taiwan Mandarin picture books of Japanese folktales for young children, with pictures on every page, 注音, and sentence-by-sentence narration.",
+  "id": "/oai-html/japan-ehon/",
+  "start_url": "/oai-html/japan-ehon/",
+  "scope": "/oai-html/japan-ehon/",
+  "display": "standalone",
+  "orientation": "any",
+  "lang": "ja",
+  "dir": "ltr",
+  "theme_color": "#f1ece0",
+  "background_color": "#f1ece0",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

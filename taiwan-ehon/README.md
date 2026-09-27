@@ -19,7 +19,53 @@ This storybook uses the existing GA4 tag (`G-QLFWNZWDSS`) for its page views and
 - `zhuyin_toggle` (`zhuyin`: `on` or `off`), when 注音 visibility changes
 - `auto_turn_toggle` (`auto_turn`: `on` or `off`), when auto-turn changes
 
-`book_id`, `listen_mode`, `zhuyin`, and `auto_turn` only appear in GA reports after registration as event-scoped custom dimensions in GA Admin → Custom definitions. That registration must be done by a GA administrator; this repository cannot do it. No story text, page-by-page or sentence-level events, timing, durations, or user identifiers beyond GA defaults are sent. Shared click and copy tracking stays off via `data-analytics-ignore`. Each book has its own path (`/taiwan-ehon/<book-id>/`) and its own GA4 page view — `page_location` is that path, `page_title` is the book's title — so which book someone opens is now visible in the URL and in page views, the same information `book_open` already reported. Page turns, sentence taps, and reading position stay out of the URL, hash, and page views entirely; only the book selection appears there. App navigation writes only shelf and book paths, never page, sentence, or query state. Referrer stays trimmed to its origin. Settings are saved locally on the device for reading, but nothing new is stored in the browser for analytics; no reading history is saved.
+Every one of those five events also carries `series_id: "taiwan"` (added when this storybook moved
+onto the shared multi-series engine — see "The shared engine" below). `book_id` itself is
+unchanged: it stays the bare story id it always was (`bai-zei-qi`, not `taiwan:bai-zei-qi`), so
+historical reports are not affected. `page_view` is unchanged and does not carry `series_id` —
+its `page_location` already identifies the series by URL.
+
+`book_id`, `listen_mode`, `zhuyin`, `auto_turn`, and `series_id` only appear in GA reports after
+registration as event-scoped custom dimensions in GA Admin → Custom definitions. That
+registration must be done by a GA administrator; this repository cannot do it — `series_id` is a
+new dimension and needs its own registration, the same as the first four already did. No story
+text, page-by-page or sentence-level events, timing, durations, or user identifiers beyond GA
+defaults are sent. Shared click and copy tracking stays off via `data-analytics-ignore`. Each
+book has its own path (`/taiwan-ehon/<book-id>/`) and its own GA4 page view — `page_location` is
+that path, `page_title` is the book's title — so which book someone opens is now visible in the
+URL and in page views, the same information `book_open` already reported. Page turns, sentence
+taps, and reading position stay out of the URL, hash, and page views entirely; only the book
+selection appears there. App navigation writes only shelf and book paths, never page, sentence,
+or query state. Referrer stays trimmed to its origin. Settings are saved locally on the device
+for reading, but nothing new is stored in the browser for analytics; no reading history is saved.
+
+## The shared engine, and why this page's URL and behavior did not change
+
+`app.js`, `ehon.js`, `offline.js`, `sw.js`, `generate-book-pages.js`, `test-dom.js`, and their
+tests are no longer written here — they are unmodified copies of `../engine/`, synced by
+`node engine/build.js` (CI runs `node engine/build.js --check` and fails if a copy has drifted
+from the engine source). `series.config.js` and `theme.css` are this folder's own: they are the
+only two files that make this page behave and look like taiwan-ehon rather than any other
+series, and every value in `series.config.js` is exactly what the pre-refactor `app.js`
+hard-coded (its `SHELF_MARKER`, `HINT`, `UNAVAILABLE`, page titles, etc.), so nothing about this
+page's rendering or behavior changed. `ehon.css` is `theme.css`'s color tokens followed by
+`engine/ehon.css`'s shared layout rules, concatenated by the same build step into one file — the
+served `ehon.css` is byte-identical to what this page shipped before the refactor.
+
+This refactor added exactly one visible-to-source-diff line to this folder's `index.html` and
+every generated `<book>/index.html`: `<script src="./series.config.js"></script>`, needed so the
+shared `app.js`/`offline.js`/`sw.js` can read this series' own identity in the browser. It adds no
+element to the rendered page, is not part of the accessibility tree, and was verified (via a
+`chrome-devtools`-captured DOM snapshot taken before and after the refactor) to produce an
+otherwise pixel-for-pixel identical shelf and reader. This series also keeps every new
+engine feature — a third (`en`) language, more than two listening-mode combinations, and the
+"show only the narrated language" toggle — turned off (see `japan-ehon/README.md` for the
+series that turns them on); `series.config.js`'s `languages: ["ja", "zh"]` and
+`narratedOnlyToggle: false` are what turns them off here.
+
+**This page's URL, and every one of its eight book URLs, will never move** without a separately
+approved migration — they are shared publicly and installed as offline PWAs on real devices.
+`engine/url-existence.test.js` fails CI if any of them stop existing.
 
 The storybook is also installable as an offline-capable app (a web manifest and service worker at `taiwan-ehon/`). The service worker caches the app shell and book pages; online picture and audio requests refresh cached media so same-name story updates appear, while offline requests fall back to the cached copy. Cached audio Range requests return immediately while a background refresh updates the full cached file. "Read offline"/"download offline" stores the chosen book's pictures and narration in the browser's on-device Cache Storage. "Remove offline copy" removes that book's pictures and narration, while the app shell remains cached. Download and reading choices stay on that device and browser profile and are not sent anywhere. GA4 requests are never cached and are skipped entirely while offline.
 

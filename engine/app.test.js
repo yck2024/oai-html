@@ -6,7 +6,9 @@ const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
 const E = require('./ehon.js');
-const stories = require('./stories.js');
+const TAIWAN_DIR = path.join(__dirname, '..', 'taiwan-ehon');
+const stories = require(path.join(TAIWAN_DIR, 'stories.js'));
+const SERIES = require(path.join(TAIWAN_DIR, 'series.config.js'));
 const { FakeElement, READER_IDS, createLocationHistory } = require('./test-dom.js');
 
 // A minimal MediaSession/MediaMetadata double: stores whatever app.js sets so tests can
@@ -60,7 +62,7 @@ function createReader({ analytics = true } = {}) {
   const mediaSession = createMediaSession();
   const fetched = [];
   const context = {
-    window: { TaiwanEhon: E, TaiwanEhonStories: stories },
+    window: { Ehon: E, EhonStories: stories, EhonSeriesConfig: SERIES },
     document,
     localStorage,
     Audio: FakeAudio,
@@ -104,16 +106,16 @@ function recordedEvents(reader) {
 test('opening a shelf book sends only its fixed story id; turns and sentence taps do not track', () => {
   const reader = createReader();
   const { elements } = reader;
-  assert.deepEqual(recordedEvents(reader), [['event', 'book_open', { book_id: stories[0].id }]]);
+  assert.deepEqual(recordedEvents(reader), [['event', 'book_open', { book_id: stories[0].id, series_id: 'taiwan' }]]);
   const sentence = elements.get('#pageText').querySelector('.line');
   elements.get('#pageText').dispatch('click', { target: sentence });
   elements.get('#nextButton').dispatch('click');
   elements.get('#prevButton').dispatch('click');
   elements.get('#playButton').dispatch('click');
-  assert.deepEqual(recordedEvents(reader), [['event', 'book_open', { book_id: stories[0].id }]]);
+  assert.deepEqual(recordedEvents(reader), [['event', 'book_open', { book_id: stories[0].id, series_id: 'taiwan' }]]);
   elements.get('#closeBook').dispatch('click');
   reader.openStory(1);
-  assert.deepEqual(recordedEvents(reader).at(-1), ['event', 'book_open', { book_id: stories[1].id }]);
+  assert.deepEqual(recordedEvents(reader).at(-1), ['event', 'book_open', { book_id: stories[1].id, series_id: 'taiwan' }]);
 });
 
 test('reaching the ending sends one completion per opening, including revisiting the ending', () => {
@@ -123,24 +125,24 @@ test('reaching the ending sends one completion per opening, including revisiting
   const prev = elements.get('#prevButton');
   reader.events.length = 0;
   for (let i = 0; i < stories[0].pages.length; i++) next.dispatch('click');
-  assert.deepEqual(recordedEvents(reader), [['event', 'book_complete', { book_id: stories[0].id }]]);
+  assert.deepEqual(recordedEvents(reader), [['event', 'book_complete', { book_id: stories[0].id, series_id: 'taiwan' }]]);
   prev.dispatch('click');
   next.dispatch('click');
   next.dispatch('click');
   elements.get('#page').querySelector('.end-button.primary').dispatch('click');
   for (let i = 0; i < stories[0].pages.length; i++) next.dispatch('click');
-  assert.deepEqual(recordedEvents(reader), [['event', 'book_complete', { book_id: stories[0].id }]]);
+  assert.deepEqual(recordedEvents(reader), [['event', 'book_complete', { book_id: stories[0].id, series_id: 'taiwan' }]]);
   elements.get('#closeBook').dispatch('click');
   reader.openStory(1);
   for (let i = 0; i < stories[1].pages.length; i++) next.dispatch('click');
   assert.deepEqual(recordedEvents(reader).slice(-2), [
-    ['event', 'book_open', { book_id: stories[1].id }],
-    ['event', 'book_complete', { book_id: stories[1].id }],
+    ['event', 'book_open', { book_id: stories[1].id, series_id: 'taiwan' }],
+    ['event', 'book_complete', { book_id: stories[1].id, series_id: 'taiwan' }],
   ]);
   elements.get('#closeBook').dispatch('click');
   reader.openStory(0);
   for (let i = 0; i < stories[0].pages.length; i++) next.dispatch('click');
-  assert.deepEqual(recordedEvents(reader).at(-1), ['event', 'book_complete', { book_id: stories[0].id }]);
+  assert.deepEqual(recordedEvents(reader).at(-1), ['event', 'book_complete', { book_id: stories[0].id, series_id: 'taiwan' }]);
 });
 
 test('only real settings changes send fixed mode and on/off values', () => {
@@ -168,12 +170,12 @@ test('only real settings changes send fixed mode and on/off values', () => {
   autoTurn.checked = false;
   autoTurn.dispatch('change');
   assert.deepEqual(recordedEvents(reader), [
-    ['event', 'listen_mode_change', { listen_mode: 'zh-ja' }],
-    ['event', 'listen_mode_change', { listen_mode: 'ja' }],
-    ['event', 'zhuyin_toggle', { zhuyin: 'off' }],
-    ['event', 'zhuyin_toggle', { zhuyin: 'on' }],
-    ['event', 'auto_turn_toggle', { auto_turn: 'on' }],
-    ['event', 'auto_turn_toggle', { auto_turn: 'off' }],
+    ['event', 'listen_mode_change', { listen_mode: 'zh-ja', series_id: 'taiwan' }],
+    ['event', 'listen_mode_change', { listen_mode: 'ja', series_id: 'taiwan' }],
+    ['event', 'zhuyin_toggle', { zhuyin: 'off', series_id: 'taiwan' }],
+    ['event', 'zhuyin_toggle', { zhuyin: 'on', series_id: 'taiwan' }],
+    ['event', 'auto_turn_toggle', { auto_turn: 'on', series_id: 'taiwan' }],
+    ['event', 'auto_turn_toggle', { auto_turn: 'off', series_id: 'taiwan' }],
   ]);
 });
 
