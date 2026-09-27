@@ -216,6 +216,51 @@ test('concurrent cached Range requests return immediately and share one refresh 
   assert.deepEqual([...new Uint8Array(await refreshed.arrayBuffer())], [5, 6, 7]);
 });
 
+test('in-flight media refreshes do not restore assets removed from the cache', async () => {
+  const caches = fakeCaches();
+  const cache = await caches.open(sw.MEDIA_CACHE_NAME);
+  const rangeUrl = `${BASE}audio/hu-gu-po/ja/p01-2.mp3`;
+  const onlineUrl = `${BASE}images/hu-gu-po/page01.webp`;
+  const original = new Response(new Uint8Array([1]), { headers: { 'Content-Type': 'application/octet-stream' } });
+  await cache.put(rangeUrl, original);
+  await cache.put(onlineUrl, original);
+
+  let releaseRangeFetch;
+  const rangeGate = new Promise(resolve => { releaseRangeFetch = resolve; });
+  const background = [];
+  const rangeResponse = await sw.respond(new Request(rangeUrl, { headers: { Range: 'bytes=0-0' } }), {
+    caches,
+    fetch: async () => {
+      await rangeGate;
+      return new Response(new Uint8Array([2]));
+    },
+    onBackground: promise => background.push(promise),
+  });
+  assert.equal(rangeResponse.status, 206);
+  await cache.delete(rangeUrl);
+  releaseRangeFetch();
+  await Promise.all(background);
+  assert.equal(await cache.match(rangeUrl), undefined, 'Range refresh must not recreate a removed asset');
+
+  let releaseOnlineFetch;
+  let onlineFetchStarted;
+  const onlineStarted = new Promise(resolve => { onlineFetchStarted = resolve; });
+  const onlineGate = new Promise(resolve => { releaseOnlineFetch = resolve; });
+  const onlineResponse = sw.respond(new Request(onlineUrl), {
+    caches,
+    fetch: async () => {
+      onlineFetchStarted();
+      await onlineGate;
+      return new Response(new Uint8Array([3]));
+    },
+  });
+  await onlineStarted;
+  await cache.delete(onlineUrl);
+  releaseOnlineFetch();
+  assert.deepEqual([...new Uint8Array(await (await onlineResponse).arrayBuffer())], [3]);
+  assert.equal(await cache.match(onlineUrl), undefined, 'online refresh must not recreate a removed asset');
+});
+
 test('the production fetch handler keeps cached Range refreshes alive and returns cached bytes immediately', async () => {
   const caches = fakeCaches();
   const url = `${BASE}audio/hu-gu-po/ja/p01-1.mp3`;

@@ -88,6 +88,11 @@
     });
   }
 
+  async function refreshCachedMedia(cache, url, response) {
+    if (!(await cache.match(url))) return;
+    await cache.put(url, response.clone());
+  }
+
   async function handleMedia(request, caches, fetch, onBackground = () => {}) {
     const cache = await caches.open(MEDIA_CACHE_NAME);
     const cached = await cache.match(request.url);
@@ -99,7 +104,7 @@
       let refresh = mediaRefreshes.get(request.url);
       if (!refresh) {
         refresh = Promise.resolve().then(() => fetch(request.url)).then(response => {
-          if (response && response.ok) return cache.put(request.url, response.clone());
+          if (response && response.ok) return refreshCachedMedia(cache, request.url, response);
         }).catch(() => {}).finally(() => {
           if (mediaRefreshes.get(request.url) === refresh) mediaRefreshes.delete(request.url);
         });
@@ -115,7 +120,8 @@
       const response = await fetch(request.url);
       if (response && response.ok) {
         try {
-          await cache.put(request.url, response.clone());
+          if (cached) await refreshCachedMedia(cache, request.url, response);
+          else await cache.put(request.url, response.clone());
         } catch (_error) {
           return response;
         }
