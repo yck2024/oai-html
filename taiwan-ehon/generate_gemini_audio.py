@@ -84,6 +84,10 @@ SPEAKERS = {
         "persona": "a brave, earnest son who grows from a young man into an old man",
         "voices": {"ja": "ja-jp-storyteller-5", "zh": "Iapetus"},
     },
+    "mother": {
+        "persona": "a warm, gentle young mother",
+        "voices": {"ja": "ja-jp-storyteller-2", "zh": "Leda"},
+    },
 }
 
 
