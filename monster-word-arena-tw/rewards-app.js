@@ -33,6 +33,7 @@
   const keepButton = action('keep');
   const resetStatus = $('#resetStatus');
   let returnFocus = null;
+  let lastRewardNote = null;
   // app.js runs before this script and already resolved the saved languages;
   // later language switches arrive through window.ArenaRewards.setLanguage.
   let currentLanguage = I18N.TEXT_LANGUAGES.includes(window.FriendlyArenaCurrentTextLanguage?.())
@@ -285,7 +286,9 @@
     render();
     const finishPanel = $('#finishPanel');
     finishPanel?.querySelector('#rewardNote')?.remove();
+    lastRewardNote = null;
     if (result.rewarded && finishPanel) {
+      lastRewardNote = { result, champion };
       const note = rewardNote(result, champion);
       const playAgain = $('#playAgainButton');
       if (playAgain && playAgain.parentNode === finishPanel) finishPanel.insertBefore(note, playAgain);
@@ -343,6 +346,8 @@
       if (I18N.TEXT_LANGUAGES.includes(lang)) currentLanguage = lang;
       currentSecondLanguage = validSecond;
       render();
+      const note = $('#finishPanel')?.querySelector('#rewardNote');
+      if (lastRewardNote && note) note.replaceWith(rewardNote(lastRewardNote.result, lastRewardNote.champion));
     },
     getSummary() {
       const state = rewards.getState();

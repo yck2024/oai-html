@@ -126,6 +126,14 @@ class FakeElement {
     for (const callback of this.listeners[type] || []) callback({ currentTarget: this, target: this, preventDefault() {}, ...properties });
   }
 
+  get id() {
+    return this.attributes.id || '';
+  }
+
+  set id(value) {
+    this.attributes.id = String(value);
+  }
+
   get className() {
     return [...this.classes].join(' ');
   }
@@ -884,6 +892,16 @@ function passGate(app) {
   app.document.querySelector('#gateSubmitButton').click();
 }
 
+test('changing the second language refreshes the visible question prompt immediately', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  app.topicTabs.find(tab => tab.dataset.topic === 'fruit').click();
+  const question = game.getState().question;
+  passGate(app);
+  app.document.querySelector('[data-second-language="ja"]').click();
+  assert.equal(app.elements.get('#questionPrompt').textContent, question.promptEn + question.promptJa);
+});
+
 test('a grown-up can change the second language or turn it off in settings', () => {
   const storage = new FakeLocalStorage();
   const app = createAppFixture(createGame(steadyRandom), { localStorage: storage });
@@ -1226,6 +1244,15 @@ test('the finish message names the actual number of power moves for the chosen l
   }
   assert.equal(app.elements.get('#finishBody').textContent, I18N.finishBody(goal, 'en') + I18N.finishBody(goal, 'zh'), 'English pairs with 繁體中文 as the default second language');
   assert.match(app.elements.get('#finishBody').textContent, new RegExp(`^${goal} power moves`));
+
+  const rewardNoteBefore = app.elements.get('#finishPanel').children.find(child => child.classList.contains('reward-note'));
+  const rewardTitle = rewardNoteBefore.textContent.includes(I18N.STRINGS.rewardNewStickerTitle.en)
+    ? I18N.STRINGS.rewardNewStickerTitle
+    : I18N.STRINGS.rewardAnotherStickerTitle;
+  passGate(app);
+  app.document.querySelector('[data-second-language="ja"]').click();
+  const rewardNote = app.elements.get('#finishPanel').children.find(child => child.classList.contains('reward-note'));
+  assert.ok(rewardNote.textContent.includes(rewardTitle.ja), 'an existing finish reward note immediately uses the new second language');
 });
 
 test('harder hides the picture and shows the written word instead, in the chosen text language', () => {

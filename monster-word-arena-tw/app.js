@@ -709,6 +709,7 @@
         secondLanguageManual = true;
         persistSettings();
         renderChrome();
+        renderQuestion(game.getState(), { speak: false });
       });
       return button;
     }));
