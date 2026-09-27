@@ -74,5 +74,5 @@ tied to a named place, and says plainly that other Amis villages tell different 
   are shown in plain daily clothing, at a respectful distance rather than close caricature.
 - Narration: build-time Gemini narration for every sentence in both languages, following the same
   per-character voice and storyteller-style convention as the launch stories.
-- These three stories are not yet registered in `stories.js` / the bookshelf — see the surrounding
-  pull request for status.
+- Registered in `stories.js` alongside 邵族白鹿傳說, 新埔顯伯公, and 大甲媽祖遶境進香 (the parallel
+  batch recommended by the same research review), after the launch pair.
