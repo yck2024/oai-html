@@ -10,13 +10,17 @@ const stories = require('./stories.js');
 const HAN = /\p{Script=Han}/u;
 const storyById = id => stories.find(story => story.id === id);
 
-test('each data-driven book has a cover, ten illustrated story pages, and an ending', () => {
-  assert.deepEqual(stories.map(story => story.id), ['bai-zei-qi', 'shooting-the-sun']);
+test('each data-driven book has a cover, numbered illustrated story pages, and an ending', () => {
+  assert.deepEqual(stories.map(story => story.id), [
+    'bai-zei-qi', 'shooting-the-sun', 'shao-white-deer', 'xinpu-shi-ye', 'dajia-mazu-pilgrimage',
+    'hu-gu-po', 'qing-mi-long-she', 'a-la-ba-nai',
+  ]);
   for (const story of stories) {
-    assert.equal(story.pages.length, 12, `${story.id} page count`);
+    const storyPages = story.pages.slice(1, -1).map(page => page.id);
     assert.equal(story.pages[0].id, 'cover');
     assert.equal(story.pages.at(-1).id, 'end');
-    assert.equal(story.pages.filter(page => /^p\d+$/.test(page.id)).length, 10);
+    assert.ok(storyPages.length >= 10, `${story.id} has at least ten story pages`);
+    assert.deepEqual(storyPages, storyPages.map((_, index) => `p${String(index + 1).padStart(2, '0')}`), `${story.id} story pages are numbered in order`);
     assert.ok(story.title.ja && story.title.zh && story.title.zhuyin);
 
     for (const page of story.pages) {

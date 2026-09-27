@@ -17,6 +17,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import time
 import unicodedata
@@ -26,6 +27,9 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT.parent / "tools"))
+from gemini_usage import append_usage
+
 AUDIO_DIR = ROOT / "audio"
 TTS_URL = "https://generativelanguage.googleapis.com/v1beta/interactions"
 TTS_MODEL = "gemini-3.8-flash-tts"
@@ -79,6 +83,26 @@ SPEAKERS = {
     "son": {
         "persona": "a brave, earnest son who grows from a young man into an old man",
         "voices": {"ja": "ja-jp-storyteller-5", "zh": "Iapetus"},
+    },
+    "mother": {
+        "persona": "a warm, gentle young mother",
+        "voices": {"ja": "ja-jp-storyteller-2", "zh": "Leda"},
+    },
+    "jie": {
+        "persona": "a clever, brave, caring elder sister, about 8 years old",
+        "voices": {"ja": "ja-jp-assistant-3", "zh": "Aoede"},
+    },
+    "di": {
+        "persona": "a curious, brave younger brother, about 5 years old",
+        "voices": {"ja": "ja-jp-assistant-7", "zh": "Fenrir"},
+    },
+    "guest": {
+        "persona": "a mysterious nighttime visitor with an odd, sweet-but-strange raspy voice, never threatening or violent",
+        "voices": {"ja": "ja-jp-storyteller-11", "zh": "Charon"},
+    },
+    "tong": {
+        "persona": "a curious, gentle village child, about 6 years old",
+        "voices": {"ja": "ja-jp-assistant-9", "zh": "Autonoe"},
     },
 }
 
@@ -135,7 +159,7 @@ def post_json(url, api_key, payload, timeout=120):
         raise RuntimeError(f"Gemini request failed ({type(error).__name__})") from None
 
 
-def request_wav(api_key, text, style, voice, locale):
+def request_wav(api_key, text, style, voice, locale, project, clip_id):
     payload = {
         "model": TTS_MODEL,
         "input": [{
@@ -150,6 +174,10 @@ def request_wav(api_key, text, style, voice, locale):
         "generation_config": {"speech_config": [{"voice": voice, "language": locale}]},
     }
     result = post_json(TTS_URL, api_key, payload)
+    modalities = [content.get("type", "unknown") for step in result.get("steps", [])
+                  for content in step.get("content", []) if content.get("type") in {"audio", "text"}]
+    append_usage(project, clip_id, TTS_MODEL, result.get("usage", {}),
+                 output_modalities=modalities or ["audio"])
     for step in result.get("steps", []):
         for content in step.get("content", []):
             if content.get("type") == "audio" and content.get("data"):
@@ -183,7 +211,7 @@ def encode_mp3(wav, output):
         encoded.replace(output)
 
 
-def transcribe(api_key, path, language):
+def transcribe(api_key, path, language, project, clip_id):
     if language == "ja":
         instruction = (
             "Transcribe this Japanese speech exactly as it is pronounced, written entirely in "
@@ -205,6 +233,8 @@ def transcribe(api_key, path, language):
         "generationConfig": {"temperature": 0},
     }
     result = post_json(CHECK_URL, api_key, payload)
+    append_usage(project, clip_id, CHECK_MODEL, result.get("usageMetadata", {}),
+                 api="generate_content", output_modalities=["text"])
     try:
         return "".join(part.get("text", "") for part in result["candidates"][0]["content"]["parts"]).strip()
     except (KeyError, IndexError):
@@ -284,7 +314,8 @@ def generate(stories, args):
     def work(clip):
         story_id, line, language = clip
         voice = SPEAKERS[line["speaker"]]["voices"][language]
-        wav = request_wav(api_key, spoken_text(line, language), style_for(line, language), voice, LANGUAGES[language]["locale"])
+        wav = request_wav(api_key, spoken_text(line, language), style_for(line, language), voice,
+                          LANGUAGES[language]["locale"], story_id, f"{language}/{line['id']}")
         encode_mp3(wav, clip_path(story_id, language, line["id"]))
         return f"{story_id}/{language}/{line['id']}.mp3"
 
@@ -317,7 +348,8 @@ def check(stories, args):
 
     def work(clip):
         story_id, line, language = clip
-        return transcribe(api_key, clip_path(story_id, language, line["id"]), language)
+        return transcribe(api_key, clip_path(story_id, language, line["id"]), language,
+                          story_id, f"{language}/{line['id']}")
 
     report = []
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
