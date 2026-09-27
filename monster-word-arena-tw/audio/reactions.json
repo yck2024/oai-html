@@ -23,5 +23,15 @@
     "en": "Hooray! You're a sparring champion! High five!",
     "zh": "耶！你是小冠軍！來擊掌！",
     "ja": "やったー！きみはチャンピオン！ハイタッチ！"
+  },
+  "reaction-break-prompt-1": {
+    "en": "Great playing! Want one more round, or a break?",
+    "zh": "玩得真棒！要再玩一次，還是休息一下？",
+    "ja": "じょうずにあそべたね！もういっかいあそぶ？それともきゅうけいする？"
+  },
+  "reaction-break-goodbye-1": {
+    "en": "Great job today! See you again soon!",
+    "zh": "今天表現得真棒！我們下次見！",
+    "ja": "きょうもよくがんばったね！またあそぼうね！"
   }
 }

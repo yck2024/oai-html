@@ -13,6 +13,7 @@
     <header class="topbar">
       <a class="pill-link" id="galleryLink" href="../index.html">← Gallery</a>
       <span class="top-label" id="topLabel">PLAY · LEARN · CHEER</span>
+      <button class="pill-button" id="settingsButton" type="button" aria-haspopup="dialog">⚙️ Grown-ups</button>
       <button class="pill-button" id="restartButton" type="button">↻ Start over</button>
     </header>
 
@@ -48,9 +49,9 @@
       </div>
     </section>
 
-    <section class="reward-bar" aria-label="Stickers and costumes 貼紙和服裝">
-      <p class="reward-summary" id="rewardSummary">📒 0 / 12 stickers · 貼紙</p>
-      <button class="pill-button sticker-book-button" type="button" data-reward-action="open" aria-haspopup="dialog">📒 Sticker book · 貼紙本</button>
+    <section class="reward-bar" aria-label="Stickers and costumes">
+      <p class="reward-summary" id="rewardSummary">📒 0 / 12 stickers</p>
+      <button class="pill-button sticker-book-button" type="button" data-reward-action="open" aria-haspopup="dialog" id="stickerBookButton">📒 Sticker book</button>
     </section>
 
     <section class="arena-layout" aria-label="Sparring word and math game" id="arenaLayoutSection">
@@ -98,6 +99,7 @@
         <div class="start-row" id="startRow">
           <button class="start-button" id="startButton" type="button">▶ Start!</button>
           <p class="start-invite" id="startInvite">Tap Start to turn on sound and hear the first question!</p>
+          <span class="point-hint point-hint--start" id="pointStart" aria-hidden="true"><span id="pointStartEmoji">🦖</span> 👉</span>
         </div>
 
         <div id="playArea">
@@ -106,7 +108,7 @@
               <span class="speech-label" id="voiceLabel">VOICE</span>
               <button class="speech-language" type="button" data-language="en" aria-pressed="false">English</button>
               <button class="speech-language" type="button" data-language="zh" aria-pressed="false">繁體中文</button>
-              <button class="speech-language" type="button" data-language="ja" aria-pressed="false">日本語</button>
+              <button class="speech-language" type="button" data-language="ja" aria-pressed="false">にほんご</button>
             </div>
             <div class="speech-playback" role="group" aria-label="Sound controls">
               <button class="speech-control" id="replayPromptButton" type="button">↻ Hear question</button>
@@ -123,8 +125,10 @@
             <p class="equation" id="equation">1 + 1 = ?</p>
             <p class="answer-hint" id="answerHint">Tap your answer</p>
             <div class="answer-options" id="answerOptions" role="group" aria-label="Choose an answer"></div>
+            <span class="point-hint point-hint--answer" id="pointAnswer" aria-hidden="true"><span id="pointAnswerEmoji">🦖</span> 👇</span>
             <p class="feedback" id="feedback" role="status" aria-live="polite" aria-atomic="true">No rush—thinking is a superpower!</p>
             <button class="next-button" id="nextButton" type="button" hidden>Next power move <span aria-hidden="true">➜</span></button>
+            <span class="point-hint point-hint--next" id="pointNext" aria-hidden="true"><span id="pointNextEmoji">🦖</span> 👉</span>
           </div>
 
           <section class="finish-panel" id="finishPanel" aria-labelledby="finishTitle" hidden>
@@ -132,6 +136,24 @@
             <h2 id="finishTitle">You’re a Sparring Champion!</h2>
             <p id="finishBody">Three power moves! Your buddy is out of power, takes a bow, and gives you a high-five.</p>
             <button class="next-button replay-button" id="playAgainButton" type="button">Play again <span aria-hidden="true">↻</span></button>
+            <div class="break-prompt" id="breakPrompt" hidden>
+              <p class="break-prompt-title" id="breakPromptTitle">Great playing!</p>
+              <p class="break-prompt-body" id="breakPromptBody">Want one more round, or a break?</p>
+              <div class="break-prompt-actions">
+                <button class="next-button break-choice" id="oneMoreRoundButton" type="button">One more round 🔁</button>
+                <button class="next-button break-choice take-break" id="takeBreakButton" type="button">Take a break 🌤️</button>
+              </div>
+            </div>
+            <span class="point-hint point-hint--finish" id="pointFinish" aria-hidden="true"><span id="pointFinishEmoji">🦖</span> 👉</span>
+            <span class="point-hint point-hint--break" id="pointBreak" aria-hidden="true"><span id="pointBreakEmoji">🦖</span> 👉</span>
+          </section>
+
+          <section class="goodbye-panel" id="goodbyePanel" aria-labelledby="goodbyeTitle" hidden>
+            <span class="party-art" aria-hidden="true"><span class="champion-art" data-character="dino" data-pose="bow"><span class="art-fallback">🦖</span></span><span class="champion-art is-mirrored" data-character="monster" data-pose="bow"><span class="art-fallback">👾</span></span></span>
+            <h2 id="goodbyeTitle">Great job today!</h2>
+            <p id="goodbyeBody">See you again soon, champion.</p>
+            <button class="next-button replay-button" id="backToPlayButton" type="button">I’m ready to play! <span aria-hidden="true">↻</span></button>
+            <span class="point-hint point-hint--goodbye" id="pointGoodbye" aria-hidden="true"><span id="pointGoodbyeEmoji">🦖</span> 👉</span>
           </section>
         </div>
       </section>
@@ -139,28 +161,61 @@
 
     <dialog class="sticker-book" id="stickerBook" aria-labelledby="stickerBookTitle">
       <div class="sticker-book-head">
-        <h2 id="stickerBookTitle">My Sticker Book · 我的貼紙本</h2>
-        <button class="pill-button" type="button" data-reward-action="close">✕ Close · 關閉</button>
+        <h2 id="stickerBookTitle">My Sticker Book</h2>
+        <button class="pill-button" type="button" data-reward-action="close" id="stickerBookCloseButton">✕ Close</button>
       </div>
-      <p class="sticker-book-intro" id="stickerBookIntro">Win a match to get your first sticker! · 贏一場就能拿到第一張貼紙！</p>
-      <ul class="sticker-grid" id="stickerGrid" aria-label="Stickers 貼紙"></ul>
-      <h3 class="costume-title">Dress-up for your champion · 小隊長換裝</h3>
+      <p class="sticker-book-intro" id="stickerBookIntro">Win a match to get your first sticker!</p>
+      <ul class="sticker-grid" id="stickerGrid" aria-label="Stickers"></ul>
+      <h3 class="costume-title" id="costumeTitle">Dress-up for your champion</h3>
       <div class="costume-rows" id="costumeRows"></div>
-      <details class="grownup-zone">
-        <summary>For grown-ups · 家長專區</summary>
-        <p class="reward-save-note" id="rewardSaveNote">Saved on this device only: the number of wins and each champion’s costume. · 只存在這台裝置：贏的次數和服裝。</p>
-        <div class="reset-actions">
-          <button class="reset-button" type="button" data-reward-action="reset">Clear sticker book · 清空貼紙本</button>
-          <button class="reset-button confirm-reset" type="button" data-reward-action="confirm-reset" hidden>Yes, clear it · 確定清空</button>
-          <button class="reset-button" type="button" data-reward-action="keep" hidden>Keep stickers · 保留貼紙</button>
+    </dialog>
+
+    <dialog class="settings-dialog" id="settingsDialog" aria-labelledby="settingsDialogTitle">
+      <div class="settings-gate" id="settingsGate">
+        <h2 id="gateTitle">Grown-ups only</h2>
+        <p id="gateBody">To keep settings for grown-ups, please solve this:</p>
+        <p class="gate-question" id="gateQuestion" aria-hidden="true">? + ? = ?</p>
+        <label class="gate-input-label" id="gateInputLabel" for="gateInput">Your answer</label>
+        <input class="gate-input" id="gateInput" type="number" inputmode="numeric" autocomplete="off">
+        <p class="gate-status" id="gateStatus" role="status" aria-live="polite"></p>
+        <div class="gate-actions">
+          <button class="pill-button" type="button" id="gateCancelButton">Cancel</button>
+          <button class="start-button gate-submit" type="button" id="gateSubmitButton">Enter</button>
         </div>
-        <p class="reset-status" id="resetStatus" role="status" aria-live="polite"></p>
-      </details>
+      </div>
+      <div class="settings-body" id="settingsBody" hidden>
+        <div class="sticker-book-head">
+          <h2 id="settingsDialogTitle">Grown-up settings</h2>
+          <button class="pill-button" type="button" id="settingsCloseButton">✕ Close</button>
+        </div>
+        <section class="settings-section">
+          <h3 id="settingsLevelLockTitle">Levels this child can pick</h3>
+          <p class="settings-hint" id="settingsLevelLockHint">Uncheck a level to hide it from the level picker. At least one stays on.</p>
+          <div class="level-lock-options" id="levelLockOptions" role="group" aria-label="Level lock"></div>
+        </section>
+        <section class="settings-section">
+          <h3 id="settingsSoundTitle">Sound</h3>
+          <button class="speech-control" type="button" id="settingsMuteButton" aria-pressed="false">🔊 Mute</button>
+        </section>
+        <section class="settings-section">
+          <h3 id="settingsRewardsTitle">Progress so far</h3>
+          <p id="settingsRewardSummary"></p>
+          <p class="reward-save-note" id="rewardSaveNote">Saved on this device only: the number of wins and each champion’s costume.</p>
+          <div class="reset-actions">
+            <button class="reset-button" type="button" data-reward-action="reset">Clear sticker book</button>
+            <button class="reset-button confirm-reset" type="button" data-reward-action="confirm-reset" hidden>Yes, clear it</button>
+            <button class="reset-button" type="button" data-reward-action="keep" hidden>Keep stickers</button>
+          </div>
+          <p class="reset-status" id="resetStatus" role="status" aria-live="polite"></p>
+        </section>
+        <p class="settings-device-note" id="settingsDeviceNote">These settings are saved on this device only.</p>
+      </div>
     </dialog>
 
     <footer id="footer">Everybody gets a cheer. Try again any time!</footer>
   </main>
   <script src="./game.js"></script>
+  <script src="./pacing.js"></script>
   <script src="./i18n.js"></script>
   <script src="./sounds.js"></script>
   <script src="./arena.js"></script>

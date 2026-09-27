@@ -7,7 +7,7 @@
   const EFFECT_LEVEL = 0.35;
   const MUSIC_LEVEL = 0.06;
   const DUCKED = { effects: 0.55, music: 0.3 };
-  const MIN_GAP = { tap: 0.07, sparkle: 0.25, whoosh: 0.25, boing: 0.3, giggle: 0.3, cheer: 1 };
+  const MIN_GAP = { tap: 0.07, sparkle: 0.25, whoosh: 0.25, boing: 0.3, giggle: 0.3, cheer: 1, chime: 0.9 };
   const EFFECTS = Object.keys(MIN_GAP);
 
   // A slow, soft pentatonic lullaby: 16 steps of melody over one bass note per bar.
@@ -159,6 +159,12 @@
           tone(out, { type: 'triangle', from, to: from * 1.25, start: t + offset, length: 0.075, peak: 0.45, attack: 0.006 });
         });
         return 0.38;
+      },
+      // A tiny, gentle two-note "ding" for Rex or Bobo pointing at what to tap next.
+      chime(out, t) {
+        tone(out, { from: 1175, start: t, length: 0.16, peak: 0.16, attack: 0.008 });
+        tone(out, { from: 1568, start: t + 0.1, length: 0.22, peak: 0.14, attack: 0.008 });
+        return 0.34;
       },
       // A little fanfare and twinkle for the win.
       cheer(out, t) {

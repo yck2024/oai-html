@@ -109,6 +109,8 @@
     praise: ['reaction-praise-1', 'reaction-praise-2'],
     'try-again': ['reaction-try-again-1', 'reaction-try-again-2'],
     finish: ['reaction-finish-1'],
+    'break-prompt': ['reaction-break-prompt-1'],
+    'break-goodbye': ['reaction-break-goodbye-1'],
   };
   const ADDITION = [
     { left: 1, right: 1 },
@@ -284,14 +286,16 @@
       return true;
     }
 
-    function restart() {
+    function restart(level = state.level) {
+      const nextLevel = LEVELS.includes(level) ? level : state.level;
       state = {
         ...state,
+        level: nextLevel,
         stars: 0,
         solved: false,
         finished: false,
         feedback: '',
-        question: questionFor(state.topic, state.level, random, state.question.key),
+        question: questionFor(state.topic, nextLevel, random, state.question.key),
       };
       return getState();
     }
