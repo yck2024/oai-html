@@ -81,6 +81,19 @@ class GeminiUsageTests(unittest.TestCase):
         input_only = usage.token_counts({"total_input_tokens": 100})
         self.assertEqual(input_only, {"input": {"text": 100}, "output": {}})
 
+    def test_generate_content_usage_without_modality_breakdown_is_unpriced(self):
+        tokens = usage.token_counts({
+            "promptTokenCount": 100,
+            "candidatesTokenCount": 4,
+        }, api="generate_content", output_modalities=["text"])
+        self.assertEqual(tokens, {
+            "input": {"unknown": 100}, "output": {"text": 4}
+        })
+        table = {"models": {"known": {
+            "input_per_million": {"text": 2}, "output_per_million": {"text": 4}
+        }}}
+        self.assertIsNone(usage.estimate_cost("known", tokens, table))
+
     def test_generate_content_usage_modalities(self):
         result = usage.token_counts({
             "promptTokenCount": 5,

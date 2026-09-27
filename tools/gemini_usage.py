@@ -43,7 +43,7 @@ def token_counts(usage, api="interactions", output_modalities=None):
             inputs[str(entry["modality"]).lower()] += int(entry["tokenCount"])
         input_total = int(usage.get("promptTokenCount", 0))
         if input_total and not inputs:
-            inputs["text"] = input_total
+            inputs["unknown"] = input_total
         output_total = int(usage.get("candidatesTokenCount", 0))
         if output_total:
             split_outputs(output_total, output_modalities, outputs)
