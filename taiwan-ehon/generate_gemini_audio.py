@@ -31,6 +31,7 @@ TTS_URL = "https://generativelanguage.googleapis.com/v1beta/interactions"
 TTS_MODEL = "gemini-3.8-flash-tts"
 CHECK_MODEL = "gemini-3.8-flash"
 CHECK_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{CHECK_MODEL}:generateContent"
+MAX_WORKERS = 4
 RUBY = re.compile(r"\{([^|{}]+)\|([^|{}]+)\}")
 
 LANGUAGES = {
@@ -227,15 +228,30 @@ def expected_reading(line, language):
 
 
 def selected(stories, args):
-    wanted = set(args.clip or [])
-    for story_id, line, language in all_clips(stories):
-        if args.story and story_id not in args.story:
-            continue
-        if args.language and language not in args.language:
-            continue
-        if wanted and line["id"] not in wanted and f"{story_id}/{line['id']}" not in wanted:
-            continue
-        yield story_id, line, language
+    clips = list(all_clips(stories))
+    requested_stories = set(args.story or [])
+    requested_clips = set(args.clip or [])
+    story_ids = {story_id for story_id, _, _ in clips}
+    line_ids = {line["id"] for _, line, _ in clips}
+    qualified_line_ids = {f"{story_id}/{line['id']}" for story_id, line, _ in clips}
+    unknown_stories = requested_stories - story_ids
+    unknown_clips = requested_clips - line_ids - qualified_line_ids
+    if unknown_stories:
+        raise SystemExit(f"Unknown story ID(s): {', '.join(sorted(unknown_stories))}")
+    if unknown_clips:
+        raise SystemExit(f"Unknown clip ID(s): {', '.join(sorted(unknown_clips))}")
+
+    matches = [
+        (story_id, line, language)
+        for story_id, line, language in clips
+        if (not requested_stories or story_id in requested_stories)
+        and (not args.language or language in args.language)
+        and (not requested_clips or line["id"] in requested_clips
+             or f"{story_id}/{line['id']}" in requested_clips)
+    ]
+    if (requested_stories or requested_clips) and not matches:
+        raise SystemExit("No clips match the requested story/clip selection")
+    yield from matches
 
 
 def api_key_or_exit():
@@ -246,10 +262,10 @@ def api_key_or_exit():
 
 
 def generate(stories, args):
-    if shutil.which("ffmpeg") is None:
-        raise SystemExit("ffmpeg is required to encode the generated WAV clips")
     clips = [clip for clip in selected(stories, args)
              if args.overwrite or not clip_path(clip[0], clip[2], clip[1]["id"]).is_file()]
+    if shutil.which("ffmpeg") is None:
+        raise SystemExit("ffmpeg is required to encode the generated WAV clips")
     print(f"{len(clips)} clips to generate with {TTS_MODEL}.")
     if not clips:
         print("All selected clips already exist.")
@@ -267,7 +283,7 @@ def generate(stories, args):
         return f"{story_id}/{language}/{line['id']}.mp3"
 
     failures = 0
-    with ThreadPoolExecutor(max_workers=args.jobs) as pool:
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
         futures = {pool.submit(work, clip): clip for clip in clips}
         for index, future in enumerate(as_completed(futures), start=1):
             story_id, line, language = futures[future]
@@ -281,7 +297,12 @@ def generate(stories, args):
 
 
 def check(stories, args):
-    clips = [clip for clip in selected(stories, args) if clip_path(clip[0], clip[2], clip[1]["id"]).is_file()]
+    clips = list(selected(stories, args))
+    missing = [clip for clip in clips if not clip_path(clip[0], clip[2], clip[1]["id"]).is_file()]
+    if missing:
+        for story_id, line, language in missing:
+            print(f"MISSING {story_id}/{language}/{line['id']}.mp3")
+        raise SystemExit(f"{len(missing)} selected clip(s) missing; transcription aborted")
     print(f"{len(clips)} clips to transcribe with {CHECK_MODEL}.")
     if not args.confirm:
         print("No API requests were made. Rerun with --confirm to authorize transcription.")
@@ -293,7 +314,7 @@ def check(stories, args):
         return transcribe(api_key, clip_path(story_id, language, line["id"]), language)
 
     report = []
-    with ThreadPoolExecutor(max_workers=args.jobs) as pool:
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
         futures = {pool.submit(work, clip): clip for clip in clips}
         for future in as_completed(futures):
             story_id, line, language = futures[future]
@@ -309,8 +330,6 @@ def check(stories, args):
     for item in report:
         mark = "ok  " if item["match"] else "DIFF"
         print(f"{mark} {item['clip']}\n     expected: {item['expected']}\n     heard:    {item['heard'].replace(chr(10), ' / ')}")
-    if args.report:
-        Path(args.report).write_text(json.dumps(report, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"{sum(item['match'] for item in report)}/{len(report)} transcripts match the text exactly; review every DIFF and the pinyin by ear or eye.")
 
 
@@ -321,8 +340,6 @@ def main():
     parser.add_argument("--story", action="append", help="Limit to this story ID (repeatable)")
     parser.add_argument("--clip", action="append", help="Limit to this line ID, e.g. p03-2 or bai-zei-qi/p03-2 (repeatable)")
     parser.add_argument("--language", action="append", choices=LANGUAGES, help="Limit to this language (repeatable)")
-    parser.add_argument("--jobs", type=int, default=4, help="Concurrent API requests (default 4)")
-    parser.add_argument("--report", help="With --check, also write the transcripts to this JSON file")
     parser.add_argument("--confirm", action="store_true", help="Authorize paid API requests")
     args = parser.parse_args()
 
