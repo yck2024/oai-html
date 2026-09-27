@@ -111,30 +111,6 @@
     return response;
   }
 
-  function folderIndexUrl(request, scope) {
-    if (request.mode !== 'navigate' || !scope) return null;
-    const url = new URL(request.url);
-    const appScope = new URL(scope);
-    if (url.origin !== appScope.origin || !url.href.startsWith(appScope.href) || !url.pathname.endsWith('/')) return null;
-    url.pathname += 'index.html';
-    url.search = '';
-    url.hash = '';
-    return url.href;
-  }
-
-  async function handleFolderNavigation(request, indexUrl, caches, fetch) {
-    try {
-      const response = await fetch(request);
-      if (response) return response;
-    } catch (_error) {
-      // Offline: use the precached page for this folder.
-    }
-    const cache = await caches.open(SHELL_CACHE_NAME);
-    const cached = await cache.match(indexUrl);
-    if (cached) return cached;
-    throw new Error(`monster-word-arena-tw: folder page unavailable offline: ${indexUrl}`);
-  }
-
   async function handleShell(request, caches, fetch) {
     const cache = await caches.open(SHELL_CACHE_NAME);
     const cached = await cache.match(request.url);
@@ -151,12 +127,10 @@
     throw new Error(`monster-word-arena-tw: shell asset unavailable offline: ${request.url}`);
   }
 
-  async function respond(request, { caches, fetch, scope }) {
+  async function respond(request, { caches, fetch }) {
     const kind = requestKind(request.url);
     if (kind === 'analytics') return fetch(request);
     if (kind === 'media') return handleMedia(request, caches, fetch);
-    const indexUrl = folderIndexUrl(request, scope);
-    if (indexUrl) return handleFolderNavigation(request, indexUrl, caches, fetch);
     return handleShell(request, caches, fetch);
   }
 
@@ -189,7 +163,7 @@
       const url = event.request.url;
       if (!url.startsWith(scope) && requestKind(url) !== 'analytics') return;
       if (event.request.method !== 'GET') return;
-      event.respondWith(respond(event.request, { caches, fetch, scope }).catch(() => fetch(event.request)));
+      event.respondWith(respond(event.request, { caches, fetch }).catch(() => fetch(event.request)));
     });
 
     // Lets the page ask the waiting worker to activate immediately after showing an

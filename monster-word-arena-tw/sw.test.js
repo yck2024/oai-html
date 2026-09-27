@@ -80,28 +80,6 @@ test('respond() serves a cached shell asset immediately (stale-while-revalidate)
   assert.equal(fetchCalled, true);
 });
 
-test('folder navigations serve the cached index.html offline and preserve the network response online', async () => {
-  const caches = fakeCaches();
-  const cache = await caches.open(sw.SHELL_CACHE_NAME);
-  await cache.put(`${BASE}nested/index.html`, new Response('cached folder page'));
-  const offlineRequest = { url: `${BASE}nested/`, mode: 'navigate' };
-  const offlineResponse = await sw.respond(offlineRequest, {
-    caches,
-    fetch: async () => { throw new Error('offline'); },
-    scope: BASE,
-  });
-  assert.equal(await offlineResponse.text(), 'cached folder page');
-
-  const onlineRequest = { url: `${BASE}nested/`, mode: 'navigate' };
-  const networkResponse = new Response('network folder page');
-  const onlineResult = await sw.respond(onlineRequest, {
-    caches,
-    fetch: async request => { assert.equal(request, onlineRequest); return networkResponse; },
-    scope: BASE,
-  });
-  assert.equal(onlineResult, networkResponse);
-});
-
 test('respond() serves a precached media file straight from cache, no network fetch', async () => {
   const caches = fakeCaches();
   const cache = await caches.open(sw.MEDIA_CACHE_NAME);
