@@ -1,4 +1,4 @@
-// The Grateful Crane ({鶴|つる}の {恩返|おんがえ}し) for the Japanese folktale picture books.
+// The Grateful Crane ({鶴|つる}の{恩返|おんがえ}し) for the Japanese folktale picture books.
 // One story object in the shared book format: Japanese marks furigana as {漢字|かんじ};
 // `zhuyin` holds one 注音 syllable per Han character of `zh`; `en` is the English text.
 (function (root, story) {
@@ -7,7 +7,7 @@
 })(typeof self !== 'undefined' ? self : this, {
   "id": "tsuru-no-ongaeshi",
   "title": {
-    "ja": "{鶴|つる}の {恩返|おんがえ}し",
+    "ja": "{鶴|つる}の{恩返|おんがえ}し",
     "zh": "白鶴報恩",
     "zhuyin": "ㄅㄞˊ ㄏㄜˋ ㄅㄠˋ ㄣ",
     "en": "The Grateful Crane"
@@ -45,7 +45,7 @@
           "id": "cover-1",
           "speaker": "narrator",
           "style": "warm, inviting storyteller opening a picture book, hushed like falling snow",
-          "ja": "にほんの むかしばなし「{鶴|つる}の {恩返|おんがえ}し」",
+          "ja": "にほんの むかしばなし「{鶴|つる}の{恩返|おんがえ}し」",
           "zh": "日本民間故事〈白鶴報恩〉",
           "zhuyin": "ㄖˋ ㄅㄣˇ ㄇㄧㄣˊ ㄐㄧㄢ ㄍㄨˋ ㄕˋ ㄅㄞˊ ㄏㄜˋ ㄅㄠˋ ㄣ",
           "en": "A Japanese folktale: The Grateful Crane"
