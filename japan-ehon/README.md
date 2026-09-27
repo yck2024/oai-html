@@ -73,7 +73,6 @@ Installing one series does not install or affect the other.
 
 ## Cross-links
 
-This shelf links to `../taiwan-ehon/` (a "台灣故事繪本" pill in the header). The empty shelf is
-intentionally omitted from the root gallery until its first stories are registered. That first
-story batch should add its entry to `pages.json` and add the reciprocal Japan link to
-`../taiwan-ehon/`; until then, the Taiwan storybook remains unchanged.
+This shelf links to `../taiwan-ehon/` (a "台灣故事繪本" pill in the header). Its root-gallery entry in
+`pages.json` is marked as coming soon while the shelf is empty. The first story batch should add the
+reciprocal Japan link to `../taiwan-ehon/`; until then, the Taiwan storybook remains unchanged.
