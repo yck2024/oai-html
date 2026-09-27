@@ -380,9 +380,8 @@
     }
   }
 
-  // Lock-screen/notification media controls: title and cover art per book, plus play, pause,
-  // and page-turn controls wired to the same functions the on-page buttons use. Registering
-  // this is also part of what lets iOS/Android keep narration going with the screen off.
+  // Lock-screen/notification metadata and media controls: title and cover art per book,
+  // plus play, pause, and page-turn controls wired to the same functions as the on-page buttons.
   function updateMediaMetadata(story) {
     if (typeof navigator === 'undefined' || !navigator.mediaSession || typeof MediaMetadata === 'undefined') return;
     navigator.mediaSession.metadata = new MediaMetadata({
