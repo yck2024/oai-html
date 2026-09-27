@@ -62,6 +62,12 @@ rt { font-weight: 500; }
   gap: 12px;
 }
 
+.shelf-top-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .pill-link {
   display: inline-flex;
   align-items: center;
@@ -122,6 +128,7 @@ rt { font-weight: 500; }
 }
 
 .book-card {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   width: 100%;
@@ -145,6 +152,22 @@ rt { font-weight: 500; }
   aspect-ratio: 3 / 2;
   object-fit: cover;
   background: var(--book-soft, var(--accent-soft));
+}
+
+.book-offline-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(61, 43, 31, 0.82);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
 }
 
 .book-info {
@@ -648,4 +671,163 @@ rt { font-weight: 500; }
 @media (prefers-reduced-motion: reduce) {
   .book-card, .line, .toggle-track, .toggle-track::after { transition: none; }
   .page.turn-next, .page.turn-prev { animation: fade-in 0.15s linear; }
+}
+
+/* ---------- Offline downloads ---------- */
+
+.offline-panel {
+  margin-top: 22px;
+  padding: 18px 20px;
+  border-radius: var(--radius);
+  background: rgba(255, 250, 242, 0.7);
+  border: 1px dashed var(--rule);
+}
+
+.offline-panel h2 { margin: 0 0 8px; font-size: 1rem; }
+
+.offline-note {
+  margin: 0 0 14px;
+  color: var(--ink-soft);
+  font-size: 0.86rem;
+  line-height: 1.7;
+}
+
+.offline-all { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+.offline-button {
+  min-height: 44px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: 2px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.offline-button.ghost { background: var(--paper-bright); color: var(--ink); }
+.offline-button:disabled { opacity: 0.55; cursor: default; }
+
+.offline-progress {
+  margin: 10px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.offline-books {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.offline-book-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: var(--paper-bright);
+  border: 1px solid var(--rule);
+}
+
+.offline-book-title { font-weight: 700; font-size: 0.92rem; }
+.offline-book-title .zh { margin-left: 0.4em; color: var(--ink-soft); font-family: var(--font-zh); }
+
+.offline-book-row .offline-button {
+  min-height: 36px;
+  padding: 6px 14px;
+  font-size: 0.84rem;
+}
+
+.offline-book-row .offline-progress { flex-basis: 100%; margin: 0; }
+
+.offline-storage {
+  margin: 14px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.76rem;
+  line-height: 1.6;
+}
+
+.setting-offline {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--rule);
+}
+
+.setting-offline-label { margin: 0 0 8px; font-weight: 800; font-size: 0.9rem; }
+
+.offline-controls { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.setting-offline .offline-progress,
+.setting-offline .offline-status { margin: 8px 0 0; font-size: 0.8rem; }
+.setting-offline .offline-status:empty { display: none; }
+
+/* A picture not yet cached for offline reading fails to load; this notice takes its place. */
+.page-art { position: relative; }
+
+.page-art.offline-missing img { visibility: hidden; }
+
+.page-art.offline-missing::after {
+  content: "📡 インターネットが ひつようです ・ 需要連上網路才能看這一頁";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  text-align: center;
+  font-weight: 700;
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--accent-soft);
+}
+
+/* ---------- Toasts (update available / install hint) ---------- */
+
+.toast {
+  position: fixed;
+  z-index: 20;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  max-width: min(92vw, 32rem);
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: var(--ink);
+  color: #fff;
+  box-shadow: var(--shadow);
+}
+
+.toast p { margin: 0; flex: 1 1 auto; font-size: 0.86rem; line-height: 1.5; min-width: 0; }
+
+.toast-action {
+  flex: 0 0 auto;
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.toast-dismiss {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  cursor: pointer;
 }

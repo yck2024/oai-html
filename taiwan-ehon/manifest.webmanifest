@@ -1,0 +1,19 @@
+{
+  "name": "台灣故事繪本｜たいわんの おはなし えほん",
+  "short_name": "繪本えほん",
+  "description": "Bilingual Japanese and Taiwan Mandarin picture books of Taiwanese stories for young children, with pictures on every page, 注音, and sentence-by-sentence narration.",
+  "id": "/oai-html/taiwan-ehon/",
+  "start_url": "/oai-html/taiwan-ehon/",
+  "scope": "/oai-html/taiwan-ehon/",
+  "display": "standalone",
+  "orientation": "any",
+  "lang": "ja",
+  "dir": "ltr",
+  "theme_color": "#fbf1df",
+  "background_color": "#fbf1df",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

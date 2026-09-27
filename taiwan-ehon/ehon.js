@@ -39,6 +39,54 @@
     return `${base}audio/${storyId}/${lang}/${lineId}.mp3`;
   }
 
+  // The static files that make up the app shell: the shelf page and its scripts/styles/icons,
+  // plus every book's own generated page (so a book opens offline once its page has been
+  // visited, even before its pictures/narration are downloaded). Built from `stories`, never
+  // hand-written, so a new book is covered as soon as it is added to stories.js.
+  const SHELL_FILES = [
+    '', 'index.html', 'ehon.css', 'ehon.js', 'stories.js', 'app.js', 'offline.js',
+    'manifest.webmanifest',
+    'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-512-maskable.png', 'icons/apple-touch-icon.png',
+  ];
+
+  function shellAssetUrls(stories, base = './') {
+    const urls = SHELL_FILES.map(name => `${base}${name}`);
+    for (const story of stories) urls.push(`${base}${story.id}/`);
+    return urls;
+  }
+
+  // Every picture and narration clip a single book needs to be fully readable offline,
+  // derived from the story's own page/line data rather than a hand-maintained list.
+  function bookAssetUrls(story, base = './') {
+    const page = `${base}${story.id}/`;
+    const images = story.pages.map(item => `${base}${item.image}`);
+    const audio = [];
+    for (const item of story.pages) {
+      for (const line of item.lines) {
+        for (const lang of LANGUAGES) audio.push(clipPath(story.id, lang, line.id, base));
+      }
+    }
+    return { page, images, audio, all: [page, ...images, ...audio] };
+  }
+
+  // Cache Storage names shared by the service worker and the offline-download UI. The shell
+  // cache is versioned so an update can clean up stale HTML/CSS/JS; the media cache is not,
+  // so a reader's downloaded pictures and narration survive app updates.
+  const CACHE_VERSION = 'v1';
+  const SHELL_CACHE_NAME = `taiwan-ehon-shell-${CACHE_VERSION}`;
+  const MEDIA_CACHE_NAME = 'taiwan-ehon-media';
+
+  function isAnalyticsUrl(url) {
+    return /^https:\/\/(www\.googletagmanager\.com|www\.google-analytics\.com|[a-z0-9-]+\.google-analytics\.com)\//.test(url);
+  }
+
+  function isMediaUrl(url) {
+    const pathname = (() => {
+      try { return new URL(url, 'https://example.invalid/').pathname; } catch (_error) { return url; }
+    })();
+    return /\/(images|audio)\//.test(pathname);
+  }
+
   // Japanese text marks furigana as {漢字|かんじ}; everything else is plain kana.
   function parseRuby(text) {
     const segments = [];
@@ -253,6 +301,13 @@
     languagesFor,
     pageQueue,
     clipPath,
+    shellAssetUrls,
+    bookAssetUrls,
+    CACHE_VERSION,
+    SHELL_CACHE_NAME,
+    MEDIA_CACHE_NAME,
+    isAnalyticsUrl,
+    isMediaUrl,
     parseRuby,
     plainJapanese,
     hanCount,
