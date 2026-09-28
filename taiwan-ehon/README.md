@@ -49,7 +49,7 @@ configuration and disabled narrated-only option are specific to this series; con
 is available through the shared engine. See [the engine guide](../engine/README.md) for runtime
 ownership and generated-file details.
 
-**This page's URL, and every one of its eight book URLs, will never move** without a separately
+**This page's URL, and every one of its book URLs (the original eight and the three added later), will never move** without a separately
 approved migration — they are shared publicly and installed as offline PWAs on real devices.
 `engine/url-existence.test.js` fails CI if any of them stop existing.
 
@@ -179,3 +179,183 @@ not a record of the old lake, whose outline changed after the hydropower works o
   per-character voice and storyteller-style convention as the launch stories.
 - Registered in `stories.js` alongside 邵族白鹿傳說, 新埔顯伯公, and 大甲媽祖遶境進香 (the parallel
   batch recommended by the same research review), after the launch pair.
+
+## The third batch: 蛇郎君, 彩虹橋, and 巴冷與百步蛇
+
+Three more books, added after the original eight. As before, each is a gentle retelling for ages
+4–7 in Japanese and Taiwan Mandarin with 注音. The research came first. Opus then drafted each
+story, and GPT-6 Sol gave it three rounds of adversarial review, covering cohesion, page
+transitions, cultural accuracy, child-appropriateness, natural Japanese and Mandarin, and 注音.
+Each opening asks a question that the ending answers. The end-page credit says which version the
+book follows and what it changes.
+
+### 蛇郎君 (she-lang-jun) — a Taiwanese Hokkien folktale
+
+The traditional tale is tale type 433D. A poor father picks flowers from a snake's garden and
+promises him a daughter. Only the kind youngest agrees. The snake turns out to be a handsome,
+gentle man. The jealous eldest sister pushes her into a well and takes her place, blaming her
+changed voice on eating too many beans. The youngest comes back as a bird whose song mocks the
+sister, then as bamboo, a chair, and a red turtle cake. In most versions the sister is killed or
+punished. This retelling keeps kindness, a kept promise, and the truth coming out, but:
+
+- The father promises only to come back with an answer, not to give away a daughter. The youngest
+  goes to answer for herself, promises to come back and help with the flowers, keeps that promise,
+  and she and the snake decide together to marry.
+- There is no well. The sister borrows the clothes and comb and pushes her away. The garden's
+  petals protect the girl by turning her into a bird, and they turn her back once her husband
+  recognises her from the bird's song about the clothes and comb.
+- There is no punishment. The sister gives back the clothes and comb and says sorry for the push.
+  The bean excuse stays: it is faithful to the tale and funny.
+
+Sources:
+
+- National Museum of Taiwan Literature, 台灣文學辭典 entry 「蛇郎君故事」 (簡齊儒), for the tale type,
+  plot, variants, and the bird's song: <https://db.nmtl.gov.tw/site2/dictionary?id=Dictionary02092>
+- Wikipedia (zh), 「蛇郎君」, for the variants: how many daughters, which sister, the bean and burnt-face
+  excuses, the snake taking human form so his wife is not afraid, and the endings. Each point cites
+  county collections: <https://zh.wikipedia.org/wiki/%E8%9B%87%E9%83%8E%E5%90%9B>
+- 鹿憶鹿, 〈民間故事中的姊妹情結－兼論蛇郎君類型的「紅龜粿」意象〉, 淡江中文學報 39 (2018), abstract:
+  <https://www.airitilibrary.com/Article/Detail/18197469-201812-201901230004-201901230004-103-134>
+- National Cultural Memory Bank, a Hakka recording of 蛇郎君 from Wanluan, Pingtung, showing that the
+  tale is told beyond Hokkien:
+  <https://tcmb.culture.tw/zh-tw/detail?indexCode=Culture_Media&id=605246>
+- For the pictures: the National Museum of Taiwan History on the side-fastening women's tunic
+  (<https://women.nmth.gov.tw/?p=1908>), and the National Cultural Memory Bank on the courtyard house
+  (<https://tcmb.culture.tw/zh-tw/detail?indexCode=Culture_Object&id=306824>).
+
+### 彩虹橋 (atayal-rainbow-bridge) — Atayal belief
+
+In Squliq Atayal the rainbow is *hongu' utux*, the bridge of the spirits. After death a person
+crosses it to the ancestral spirits, who wait at the bridgehead and welcome those who lived by
+*gaga*, the code handed down from the ancestors. The facial tattoo (*ptasan*) was the sign by which
+the ancestors recognised their people. Everyone received a forehead line in childhood. A woman
+received cheek bands after she came of age and had learned to weave, and a man received a chin
+band for recognised courage and ability. The sources link the man's tattoo to headhunting. This
+book leaves that out and describes it as courage and protecting family and village, as the
+National Museum of Taiwan History's description allows.
+
+The book tells this as Atayal belief spoken by an Atayal grandmother, not as a fairy tale. It is set
+in the present day, because tattooing was banned under Japanese rule and the last tattooed Atayal
+elders died in 2013 and 2019. So Yaki has no tattoo, but her own grandmother did, and she wove the
+old cloth that opens the story. The pointing taboo is authentic. Yaki's tattooed grandmother
+appears only in a memory picture, with forehead and cheek bands, weaving on a backstrap loom. The
+man behind her is carrying firewood, with no weapons or trophies. Yaway, Yaki, and their story are
+invented for this book. The name Lawa is avoided because an existing picture book about a rainbow
+bridge uses it.
+
+Sources:
+
+- Council of Indigenous Peoples, 「泰雅族」, on *utux*, *gaga*, *ptasan* and what it marked, the
+  ancestors checking the tattoo at death, and the diamond motif as "ancestral eyes":
+  <https://www.cip.gov.tw/zh-tw/tribe/grid-list/8C87B4AF56B788EED0636733C6861689/info.html?cumid=8F19BF08AE220D65>
+- 臺灣原住民族事典, 「刺青」 (山本芳美), on ages, patterns, the tattoo shown at the bridgehead, and the
+  Japanese-era ban: <https://aborgpedia.alcd.center/detail?cat=0&id=11627&race=0&search=%E4%BD%8F%E5%B1%8B&writer=>
+- National Museum of Taiwan History, 泰雅族紋面工具組, on the patterns and on the men's tattoo
+  marking bravery and ability: <https://collections.nmth.gov.tw/CollectionContent.aspx?a=132&RNO=2003.012.0020>
+- 族語E樂園 (ILRDF), Squliq reading 「pqzwan na hongu utux 彩虹橋的故事」, on the ancestral spirits
+  guarding the bridge: <https://web.klokah.tw/text/read.php?tid=19245>
+- Taiwan Panorama (1997), on the ancestors welcoming their descendants across the rainbow:
+  <https://www.taiwan-panorama.com/Articles/Details?Guid=34e1de9f-cb1b-44ec-9f6c-21fd5821a9eb&CatId=11>
+- 賽考利克泰雅語線上辭典 (pqwasan.org.tw), for *hongu' utux*, *gaga'*, *ptasan*, *yaki'*, and the sentence
+  「不要隨便指著彩虹橋！」: <http://tayal.pqwasan.org.tw/kmal/desktop/index.php>
+- National Museum of Taiwan History 「臺灣女人」, on women learning to weave before the tattoo and
+  marriage: <https://women.nmth.gov.tw/?p=2081>
+- 自由時報 (2024), on 柯菊蘭 (d. 2019), the last tattooed Atayal elder in Tai'an:
+  <https://art.ltn.com.tw/article/breakingnews/4788607>
+
+### 巴冷與百步蛇 (rukai-hundred-pacer-snake) — a Rukai legend from Taromak
+
+This book follows the East Rukai telling from Taromak (達魯瑪克, 大南), compiled by the late Taromak
+cultural worker 蘇金成 and reported by CNA in 2023. 巴冷, daughter of the paramount chief 朗拉目,
+meets the gentle 阿達里歐 by 小鬼湖 (Taidrengere). On the day he comes to propose, his party is
+the mountain's birds and beasts led by a great hundred-pacer: he is the snake king who guards the
+two lakes. The chief and elders cannot bring themselves to refuse, so they ask for seven-coloured
+glass beads from the sea. He brings them and takes 巴冷 into the lake, and since then people do not
+hunt or make noise around the lakes.
+
+The Council of Indigenous Peoples' children's version, 〈巴嫩與蛇郎〉, supplies the flute, the
+mother dressing her daughter in tears, the dusk farewell, and the lilies on the shore. The
+headdress disappearing into the water comes from a Rukai farewell song. The lily headdress and the
+words 「湖中的家」 are this book's own. The glass-bead quest also appears in the 2001–02 computer
+game 《巴冷公主》, and scholars note it is missing from other recorded tellings. So the book keeps
+only the Taromak account's simple bride price, with no quest, magic, or battles. Other Rukai
+communities tell different versions, one of them without a snake at all.
+
+The snake is drawn as a calm, sacred elder, never striking. The snake, sun, and pottery-jar motifs
+appear only on the chief's house, the chief wears hawk-eagle feathers, and the village is built of
+slate. Taromak's old village, Kapaliwa, had slate houses, and they have since been rebuilt there.
+
+Sources:
+
+- CNA (中央社), 「神秘小鬼湖濕地 流傳人蛇戀故事」 (2023), for the Taromak telling, 蘇金成's compilation,
+  and the taboos: <https://www.cna.com.tw/news/ahel/202301250102.aspx>
+- Taipei Times, "Rukai legend and remote location protect wetlands" (2023):
+  <https://www.taipeitimes.com/News/taiwan/archives/2023/01/30/2003793364>
+- Council of Indigenous Peoples (children's site), 「魯凱族」 with 〈巴嫩與蛇郎〉:
+  <https://www.cip.gov.tw/kids/zh-tw/menu/data-list/FF8E0A73EBC8DFA298A085F050B7C6AC-info.html?cumid=FF8E0A73EBC8DFA298A085F050B7C6AC>
+- Council of Indigenous Peoples, 「魯凱族」, on the chief-only motifs, hawk-eagle feathers, lily rules,
+  slate houses, and clothing:
+  <https://www.cip.gov.tw/zh-tw/tribe/grid-list/409F703B4E592A82D0636733C6861689/info.html?cumid=8F19BF08AE220D65>
+- 臺灣原住民族事典, 「百步蛇」, on the honorifics and the reverence and avoidance around the snake:
+  <https://aborgpedia.alcd.center/detail?id=5404&search=&cat=0&race=0&writer=>
+- 梁欣芸, 〈解讀「巴冷公主」現象〉, 東海中文學報 21 (2009), on the recorded tellings, the game, and the
+  farewell song: <https://chinese.thu.edu.tw/upload/newspaper_upload/21/21017.pdf>
+- 自由時報, on the Taromak slate houses rebuilt at Kapaliwa: <https://news.ltn.com.tw/news/local/paper/215743>
+- 臺北市原住民族事務委員會, 「建築工藝－魯凱族」, which notes that other East Rukai houses were mainly
+  wood and bamboo:
+  <https://knowlegde.gov.taipei/News_Content.aspx?n=E2774B2FD4A88AD0&sms=D8939B9274D1E899&s=69536339AB0710B9>
+
+### Review log (GPT-6 Sol, three rounds per story)
+
+- **蛇郎君.**
+  - Round 1: the father's forced promise made the daughter responsible for it; the well implied a
+    drowning; the bird was recognised by luck; and the ending lectured instead of reuniting.
+    The fixes: the father now promises only an answer, the petals turn her into a bird, the husband
+    hears the song's clue, and the book ends on an apology.
+  - Round 2: the marriage still read as payment for the flowers, the petal magic needed a reason,
+    and the apology needed to name the push. Also fixed: the Japanese wording and the 注音 for 種,
+    太太, and 家裡.
+  - Round 3: her choice to marry is now explicit, and the comb in the picture matches the text.
+- **彩虹橋.**
+  - Round 1: the book needed a personal reason to care, so it now opens with the old cloth. Also
+    fixed: the ancestors now wait at the bridgehead, not the far end; the tattoo is set up as the
+    sign of recognition before Yaway worries; the watchtower is gone; and she no longer holds the
+    cloth up to the rainbow.
+  - Round 2: gloss the rainbow as 祖靈的橋 in the story and as the spirits' bridge in the credit;
+    mention the forehead line; show the untangling; and mark the later rain.
+  - Round 3: ready.
+- **巴冷與百步蛇.**
+  - Round 1: the opening now asks why the lakes are kept quiet, and the ending answers it. Also
+    fixed: the reveal shows him in snake form; the chief and elders hesitate; the beads come "from
+    the sea"; the lilies bloom "later"; and 注音 corrected for 得, 當, and 泊.
+  - Round 2: add his change back to human form, name the lily headdress in the Japanese, shorten
+    long pages, and replace 鳥兒.
+  - Round 3: 待 (ㄉㄞ) corrected and one Japanese particle fixed.
+
+Kept on purpose against Sol's suggestions: the series-wide 注音 conventions (故事 as ㄍㄨˋ ㄕˋ, and
+full tones in 回來 and 回去). After the third round, a few wordings changed only so that the
+narration would be read correctly: 湖中的家 (so it is not heard as 狐狸), ピピピ for the bird's
+song, 「ガガ？ それって なあに？」, and a reordered Mandarin line on 巴冷's wedding day.
+
+### Production notes (third batch)
+
+- Pictures: 12 generation calls on the local gpt-image-2.5-flare, at medium quality, in 2×2
+  sheets. Nine sheets covered the three books, and three mixed sheets redrew 11 pages. Every page
+  was then compared at full size with its text and with the page before it. The redraws fixed:
+  - the Rukai chief's headdress, which was drawn as a Plains-style feather bonnet and is now a
+    headband with a few hawk-eagle feathers;
+  - young Yaki in the memory picture, who looked like Yaway;
+  - the sister returning clothes she was still wearing;
+  - lilies that appeared before the text says they bloom;
+  - a yellow bird on the 蛇郎君 cover before the bird appears in the story;
+  - the hundred-pacer on the Rukai cover, which reared up and now rests coiled.
+  Where the picture differs from the plan in a small way, the alt text describes what is actually
+  drawn. One is Yaway's loom in p08, which is a small floor frame.
+- Narration: Gemini narration for every line in both languages, using the existing narrator
+  voices, plus six new character voices (bride, sister, snake, balenge, adalio, chief) taken from
+  the voices the Taiwan and Japanese series already use. Every clip was checked by transcription,
+  and doubtful ones by a second phonetic (romaji or pinyin) pass. Clips that misread a name or a
+  word were regenerated. The ja lines use hiragana `jaTts` overrides for ヤキ, ヤワイ and ガガ,
+  and the zh lines use `zhTts` for 姊 (read as 姐, so 姊妹 is not read zǐmèi). The Latin names in
+  the Mandarin text (Yaway, Yaki, gaga, hongu' utux) are read as a Mandarin speaker would say them.
+

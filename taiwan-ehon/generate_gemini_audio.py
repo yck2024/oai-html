@@ -104,6 +104,30 @@ SPEAKERS = {
         "persona": "a curious, gentle village child, about 6 years old",
         "voices": {"ja": "ja-jp-assistant-9", "zh": "Autonoe"},
     },
+    "bride": {
+        "persona": "a kind, brave young woman who keeps her word, soft-spoken and warm",
+        "voices": {"ja": "ja-jp-storyteller-2", "zh": "Leda"},
+    },
+    "sister": {
+        "persona": "a vain, sulky elder sister who is silly rather than scary",
+        "voices": {"ja": "ja-jp-assistant-3", "zh": "Aoede"},
+    },
+    "snake": {
+        "persona": "a gentle, polite snake who becomes a kind young man, calm and never frightening",
+        "voices": {"ja": "ja-jp-storyteller-5", "zh": "Iapetus"},
+    },
+    "balenge": {
+        "persona": "a graceful, kind young Rukai woman with a clear singing voice",
+        "voices": {"ja": "ja-jp-assistant-3", "zh": "Aoede"},
+    },
+    "adalio": {
+        "persona": "a calm, dignified, gentle young man who guards a mountain lake",
+        "voices": {"ja": "ja-jp-podcaster-8", "zh": "Orus"},
+    },
+    "chief": {
+        "persona": "a dignified, caring village chief and father, serious but kind",
+        "voices": {"ja": "ja-jp-storyteller-4", "zh": "Algenib"},
+    },
 }
 
 

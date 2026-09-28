@@ -23,6 +23,7 @@ test('each data-driven book has a cover, numbered illustrated story pages, and a
   assert.deepEqual(stories.map(story => story.id), [
     'bai-zei-qi', 'shooting-the-sun', 'shao-white-deer', 'xinpu-shi-ye', 'dajia-mazu-pilgrimage',
     'hu-gu-po', 'qing-mi-long-she', 'a-la-ba-nai',
+    'she-lang-jun', 'atayal-rainbow-bridge', 'rukai-hundred-pacer-snake',
   ]);
   for (const story of stories) {
     const storyPages = story.pages.slice(1, -1).map(page => page.id);

@@ -19,6 +19,12 @@ const TAIWAN_BOOK_IDS = [
   'dajia-mazu-pilgrimage', 'hu-gu-po', 'qing-mi-long-she', 'a-la-ba-nai',
 ];
 
+// Books added after the original eight. Once published, their URLs are part of the same
+// contract, so they are listed here by hand too.
+const TAIWAN_ADDED_BOOK_IDS = [
+  'she-lang-jun', 'atayal-rainbow-bridge', 'rukai-hundred-pacer-snake',
+];
+
 test('the taiwan-ehon shelf page still exists at its original path', () => {
   assert.ok(fs.existsSync(path.join(TAIWAN_DIR, 'index.html')), 'taiwan-ehon/index.html must exist');
 });
@@ -30,9 +36,16 @@ test('every one of the eight original taiwan-ehon book pages still exists at its
   }
 });
 
-test('every book id currently in stories.js is exactly the original eight (no silent addition or removal)', () => {
+test('every added taiwan-ehon book page exists at its own path', () => {
+  for (const id of TAIWAN_ADDED_BOOK_IDS) {
+    const bookIndex = path.join(TAIWAN_DIR, id, 'index.html');
+    assert.ok(fs.existsSync(bookIndex), `taiwan-ehon/${id}/index.html must exist`);
+  }
+});
+
+test('every book id currently in stories.js is exactly the original eight plus the added books (no silent addition or removal)', () => {
   const stories = require(path.join(TAIWAN_DIR, 'stories.js'));
-  assert.deepEqual(stories.map(story => story.id), TAIWAN_BOOK_IDS);
+  assert.deepEqual(stories.map(story => story.id), [...TAIWAN_BOOK_IDS, ...TAIWAN_ADDED_BOOK_IDS]);
 });
 
 test('the taiwan-ehon PWA keeps its original manifest id, start_url, and scope', () => {
