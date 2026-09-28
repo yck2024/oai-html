@@ -69,6 +69,18 @@ class FakeElement {
   focus() {}
   scrollIntoView() {}
 
+  cloneNode(deep = false) {
+    const clone = new FakeElement(this.tagName);
+    clone.className = this.className;
+    clone.dataset = { ...this.dataset };
+    clone.attributes = { ...this.attributes };
+    clone.scrollTop = this.scrollTop;
+    if (deep) clone.append(...this.children.map(child => child instanceof FakeElement ? child.cloneNode(true) : child));
+    return clone;
+  }
+
+  removeAttribute(name) { delete this.attributes[name]; }
+
   remove() {
     if (!this.parentElement) return;
     const index = this.parentElement.children.indexOf(this);

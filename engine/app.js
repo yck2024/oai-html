@@ -10,7 +10,8 @@
   const DEFAULT_MODE = SERIES.defaultMode;
   const SETTINGS_KEY = `${SERIES.folder}-settings`;
   const AUTO_TURN_DELAY = 1500;
-  const TURN_SETTLE = 450;
+  const TURN_SETTLE = 620;
+  const REDUCED_TURN_SETTLE = 150;
   const HINT = SERIES.hint;
   const UNAVAILABLE = SERIES.unavailable;
   const PREPARING_CONTINUOUS = 'よみつづける おとを つくっています… ・ 連續播放準備中…';
@@ -111,6 +112,9 @@
   let queueKind = null; // 'page' or 'line'
   let continuousToken = 0; // bumped on every playContinuous() call so a stale build is ignored
   let turnTimer = null;
+  let animationTimer = null;
+  let turningSheet = null;
+  let pendingHighlight = null;
   let swipeStart = null;
   let swipedAt = 0;
   let lastCard = null;
@@ -205,8 +209,16 @@
   });
 
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState !== 'visible' || continuousPlayer.state === 'idle') return;
-    syncFromContinuousTime(Math.round(audio.currentTime * 1000));
+    if (isHidden()) {
+      // Background timers may be suspended indefinitely; finish any visible turn now so
+      // screen-off read-along can keep chaining from the audio ended event.
+      if (animationTimer !== null) {
+        clearTimeout(animationTimer);
+        settleTurn();
+      }
+      return;
+    }
+    if (continuousPlayer.state !== 'idle') syncFromContinuousTime(Math.round(audio.currentTime * 1000));
   });
 
   // Moves the visible page (and highlighted line) to match wherever continuous playback has
@@ -217,14 +229,11 @@
     if (!timeline || !book) return;
     const pageIndex = C.mapTimeToPage(timeline.pages, timeMs);
     if (pageIndex !== book.index) {
-      book.goTo(pageIndex);
-      renderPage(null);
-      if (book.page().id === 'end' && !completedThisOpening) {
-        completedThisOpening = true;
-        if (STORIES.includes(book.story)) track('book_complete', { book_id: book.story.id });
-      }
+      goTo(pageIndex, pageIndex > book.index ? 'next' : 'prev', { fromContinuous: true });
     }
-    highlight(C.mapTimeToLine(timeline.lines, timeMs));
+    const step = C.mapTimeToLine(timeline.lines, timeMs);
+    if (animationTimer !== null) pendingHighlight = step;
+    else highlight(step);
   }
 
   // Gathers the current book's clips for the chosen listening mode, in reading order, joins
@@ -503,6 +512,8 @@
 
   function openBook(story, index, { push = true, send = true } = {}) {
     continuousToken++;
+    clearTimeout(turnTimer);
+    cancelTurn();
     book = E.createBook(story, index);
     completedThisOpening = false;
     listening = false;
@@ -514,7 +525,7 @@
     shelf.hidden = true;
     reader.hidden = false;
     speechStatus.textContent = HINT;
-    renderPage(null);
+    renderPage();
     const path = bookPath(story.id);
     if (push && location.pathname !== path) history.pushState({ book: story.id }, '', path);
     if (send) sendPageView(path, document.title);
@@ -525,6 +536,7 @@
   function closeBook({ push = true, send = true } = {}) {
     continuousToken++;
     clearTimeout(turnTimer);
+    cancelTurn();
     narrator.stop();
     continuousPlayer.stop();
     listening = false;
@@ -639,7 +651,7 @@
     pageEl.append(actions);
   }
 
-  function renderPage(direction) {
+  function renderPage() {
     const page = book.page();
     const kind = pageKind(page);
     pageEl.dataset.kind = kind;
@@ -652,11 +664,6 @@
     prevButton.disabled = book.isFirst();
     nextButton.disabled = book.isLast();
     pageEl.scrollTop = 0;
-    pageEl.classList.remove('turn-next', 'turn-prev');
-    if (direction) {
-      void pageEl.offsetWidth; // restart the page-turn animation
-      pageEl.classList.add(`turn-${direction}`);
-    }
     updatePlayback();
   }
 
@@ -808,21 +815,60 @@
     }
   }
 
-  function goTo(index, direction) {
+  function cancelTurn() {
+    clearTimeout(animationTimer);
+    animationTimer = null;
+    turningSheet?.remove();
+    turningSheet = null;
+    pendingHighlight = null;
+    pageEl.classList.remove('turn-fade');
+  }
+
+  function settleTurn() {
+    animationTimer = null;
+    turningSheet?.remove();
+    turningSheet = null;
+    pageEl.classList.remove('turn-fade');
+    if (pendingHighlight !== null) highlight(pendingHighlight);
+    pendingHighlight = null;
+    if (book && !settings.continuous && listening && !muted) readPage();
+  }
+
+  function goTo(index, direction, { fromContinuous = false } = {}) {
+    if (!book || index < 0 || index >= book.total || index === book.index) return;
     clearTimeout(turnTimer);
-    if (!book.goTo(index)) return;
-    // While continuous playback is live, its Blob already covers the whole book: turning the
-    // page seeks within it instead of stopping/restarting anything (narrator.stop() would pause
-    // and rewind the very same shared <audio> element continuous playback is using).
+    // An interrupted turn is discarded before taking a snapshot: rapid navigation always
+    // turns the currently visible page, never stacks several animated sheets.
+    cancelTurn();
+    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const animate = !!direction && !isHidden();
+    if (animate && !reduced) {
+      turningSheet = pageEl.cloneNode(true);
+      turningSheet.removeAttribute('id');
+      for (const node of turningSheet.querySelectorAll('[id]')) node.removeAttribute('id');
+      turningSheet.classList.add('page-turn-sheet', `page-turn-${direction}`);
+      turningSheet.setAttribute('aria-hidden', 'true');
+      turningSheet.inert = true;
+      turningSheet.scrollTop = pageEl.scrollTop;
+    }
+    book.goTo(index);
+    // A live whole-book Blob keeps playing; manual turns seek it, but timeupdate-driven
+    // page following must not seek back to the beginning of the page on every tick.
     const continuousLive = settings.continuous && continuousPlayer.state !== 'idle';
-    if (continuousLive) continuousPlayer.seekToPage(index);
-    else narrator.stop();
-    renderPage(direction);
+    if (continuousLive) {
+      if (!fromContinuous) continuousPlayer.seekToPage(index);
+    } else narrator.stop();
+    renderPage();
+    if (animate) {
+      if (reduced) pageEl.classList.add('turn-fade');
+      else stage.append(turningSheet);
+      animationTimer = setTimeout(settleTurn, reduced ? REDUCED_TURN_SETTLE : TURN_SETTLE);
+    }
     if (book.page().id === 'end' && !completedThisOpening) {
       completedThisOpening = true;
       if (STORIES.includes(book.story)) track('book_complete', { book_id: book.story.id });
     }
-    if (!settings.continuous && listening && !muted) scheduleGap(TURN_SETTLE, readPage);
+    if (!animate && !settings.continuous && listening && !muted) readPage();
   }
 
   function turn(direction) {
@@ -916,7 +962,7 @@
       refreshShelfMetadata();
       if (book) {
         updateBookMetadata(book.story);
-        renderPage(null);
+        renderPage();
       }
       notifyMetadataChange();
       if (pageQueueActive) readPage({ paused: playbackState === 'paused' });
@@ -956,7 +1002,7 @@
       refreshShelfMetadata();
       if (book) {
         updateBookMetadata(book.story);
-        renderPage(null);
+        renderPage();
       }
       notifyMetadataChange();
     });
@@ -981,12 +1027,13 @@
 
   stage.addEventListener('pointerdown', event => {
     if (!event.isPrimary) return;
-    swipeStart = { x: event.clientX, y: event.clientY };
+    if (event.pointerType === 'mouse' || !book) return;
+    swipeStart = { x: event.clientX, y: event.clientY, time: event.timeStamp };
   });
 
   stage.addEventListener('pointerup', event => {
     if (!swipeStart || !event.isPrimary) return;
-    const direction = E.swipeDirection(event.clientX - swipeStart.x, event.clientY - swipeStart.y);
+    const direction = E.swipeDirection(event.clientX - swipeStart.x, event.clientY - swipeStart.y, 50, event.timeStamp - swipeStart.time);
     swipeStart = null;
     if (!direction) return;
     swipedAt = Date.now();

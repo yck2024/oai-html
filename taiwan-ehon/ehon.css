@@ -382,20 +382,58 @@ rt { font-weight: 500; }
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 12px 14px 18px;
+}
+
+/* A temporary copy of the outgoing *whole* page turns over the incoming page.
+   The original stays in normal flow, so the portrait page and wide spread use
+   precisely the same layout; only the composited sheet moves. */
+.page-turn-sheet {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  margin: 0;
+  background: var(--paper);
+  backface-visibility: hidden;
+  pointer-events: none;
+  box-shadow: 12px 8px 28px rgba(61, 43, 31, 0.28);
+  will-change: transform, opacity;
+}
+
+.page-turn-sheet::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(49, 34, 25, 0.15), transparent 30%, rgba(49, 34, 25, 0.12));
+  animation: page-shade 0.62s ease-in-out both;
+}
+
+.page-turn-next {
   transform-origin: left center;
+  animation: page-next 0.62s cubic-bezier(0.42, 0, 0.2, 1) both;
 }
 
-.page.turn-next { animation: turn-next 0.45s cubic-bezier(0.2, 0.7, 0.2, 1); }
-.page.turn-prev { animation: turn-prev 0.45s cubic-bezier(0.2, 0.7, 0.2, 1); }
-
-@keyframes turn-next {
-  from { opacity: 0; transform: translateX(34px) rotateY(-10deg); }
-  to { opacity: 1; transform: none; }
+.page-turn-prev {
+  transform-origin: right center;
+  animation: page-prev 0.62s cubic-bezier(0.42, 0, 0.2, 1) both;
 }
 
-@keyframes turn-prev {
-  from { opacity: 0; transform: translateX(-34px) rotateY(10deg); }
-  to { opacity: 1; transform: none; }
+@keyframes page-next {
+  from { transform: rotateY(0); opacity: 1; }
+  85% { opacity: 1; }
+  to { transform: rotateY(89deg); opacity: 0; }
+}
+
+@keyframes page-prev {
+  from { transform: rotateY(0); opacity: 1; }
+  85% { opacity: 1; }
+  to { transform: rotateY(-89deg); opacity: 0; }
+}
+
+@keyframes page-shade {
+  from { opacity: 0.15; }
+  55% { opacity: 0.85; }
+  to { opacity: 1; }
 }
 
 @keyframes fade-in {
@@ -661,6 +699,8 @@ rt { font-weight: 500; }
     padding: 20px 0;
   }
 
+  .page-turn-sheet { left: 0; right: 0; margin: 0 auto; }
+
   .page-art {
     grid-row: 1 / span 3;
     align-self: center;
@@ -701,7 +741,8 @@ rt { font-weight: 500; }
 
 @media (prefers-reduced-motion: reduce) {
   .book-card, .line, .toggle-track, .toggle-track::after { transition: none; }
-  .page.turn-next, .page.turn-prev { animation: fade-in 0.15s linear; }
+  .page.turn-fade { animation: fade-in 0.15s linear; }
+  .page-turn-sheet { animation: none; }
 }
 
 /* ---------- Offline downloads ---------- */

@@ -183,8 +183,10 @@
       : { text: char, ruby: '' }));
   }
 
-  function swipeDirection(dx, dy, threshold = 48) {
-    if (Math.abs(dx) < threshold || Math.abs(dx) < Math.abs(dy) * 1.3) return null;
+  function swipeDirection(dx, dy, threshold = 50, durationMs = Infinity) {
+    const distance = Math.abs(dx);
+    if (distance < threshold && !(distance >= 30 && durationMs > 0 && distance / durationMs >= 0.5)) return null;
+    if (distance < Math.abs(dy) * 1.3) return null;
     return dx < 0 ? 'next' : 'prev';
   }
 
