@@ -221,6 +221,92 @@ test('assembleContinuousBlob: reads every segment through loadBytes, in the exac
   assert.deepEqual(await orderFor('ja'), ['gap:page', 'p01-1/ja', 'gap:sentence', 'p01-2/ja', 'gap:page', 'p02-1/ja']);
 });
 
+test('assembleContinuousBlob: reports cumulative progress as each segment lands, ending at total/total', async () => {
+  const timeline = C.buildContinuousTimeline(E, STORY, MODES, 'ja-zh', 'ja-zh', TIMING);
+  const total = timeline.segments.length;
+  const progress = [];
+  const loadBytes = () => Promise.resolve(new Uint8Array([0]).buffer);
+
+  await C.assembleContinuousBlob(timeline, loadBytes, { onProgress: (done, count) => progress.push([done, count]) });
+
+  assert.equal(progress.length, total, 'one progress call per segment');
+  assert.deepEqual(progress.map(([done]) => done), Array.from({ length: total }, (_, i) => i + 1));
+  assert.ok(progress.every(([, count]) => count === total));
+  assert.deepEqual(progress.at(-1), [total, total]);
+});
+
+test('assembleContinuousBlob: fetches at most `concurrency` segments at once, but always assembles them back in timeline order', async () => {
+  const timeline = C.buildContinuousTimeline(E, STORY, MODES, 'ja-zh', 'ja-zh', TIMING);
+  const total = timeline.segments.length;
+  let inFlight = 0;
+  let maxInFlight = 0;
+  const callOrder = [];
+  let nextCallIndex = 0;
+  // Deliberately resolves out of arrival order (later-started segments finish first) so the
+  // test actually exercises "still assembles in order" rather than order falling out for free.
+  const loadBytes = segment => {
+    const callIndex = nextCallIndex++;
+    callOrder.push(segment.kind === 'clip' ? `${segment.lineId}/${segment.lang}` : `gap:${segment.which}`);
+    inFlight++;
+    maxInFlight = Math.max(maxInFlight, inFlight);
+    const delayMs = (total - callIndex) % 5; // varies so completions land out of start order
+    return new Promise(resolve => {
+      setTimeout(() => {
+        inFlight--;
+        resolve(new Uint8Array([callIndex + 1]).buffer);
+      }, delayMs);
+    });
+  };
+
+  const blob = await C.assembleContinuousBlob(timeline, loadBytes, { concurrency: 3 });
+
+  assert.ok(maxInFlight <= 3, `never more than 3 fetches in flight at once, saw ${maxInFlight}`);
+  // loadBytes is still *invoked* in strict timeline order regardless of concurrency or when
+  // each call happens to resolve — see assembleContinuousBlob's own comment on why.
+  assert.deepEqual(callOrder, timeline.segments.map(segment => (segment.kind === 'clip' ? `${segment.lineId}/${segment.lang}` : `gap:${segment.which}`)));
+  // Every segment's own byte (callIndex + 1, matching its position) lands in its own slot, so
+  // out-of-order completion never scrambles the assembled Blob.
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  assert.deepEqual([...bytes], Array.from({ length: total }, (_, i) => i + 1));
+});
+
+test('assembleContinuousBlob: a cancelled signal stops further progress and rejects instead of resolving with a partial Blob', async () => {
+  const timeline = C.buildContinuousTimeline(E, STORY, MODES, 'ja-zh', 'ja-zh', TIMING);
+  const progress = [];
+  let cancelled = false;
+  const signal = { get cancelled() { return cancelled; } };
+  let resolvedCount = 0;
+
+  const loadBytes = () => new Promise(resolve => {
+    setTimeout(() => {
+      resolvedCount++;
+      if (resolvedCount === 2) cancelled = true; // cancel partway through assembly
+      resolve(new Uint8Array([0]).buffer);
+    }, 0);
+  });
+
+  await assert.rejects(
+    C.assembleContinuousBlob(timeline, loadBytes, { concurrency: 2, onProgress: (done, total) => progress.push([done, total]), signal }),
+  );
+  assert.ok(progress.length < timeline.segments.length, 'stops reporting progress once cancelled, never reaching every segment');
+});
+
+test('assembleContinuousBlob: the first failed segment stops every other worker from starting new fetches', async () => {
+  const timeline = C.buildContinuousTimeline(E, STORY, MODES, 'ja-zh', 'ja-zh', TIMING);
+  let started = 0;
+  const loadBytes = () => {
+    started++;
+    if (started === 1) return Promise.reject(new Error('boom'));
+    return new Promise(resolve => setTimeout(() => resolve(new Uint8Array([0]).buffer), 5));
+  };
+
+  await assert.rejects(C.assembleContinuousBlob(timeline, loadBytes, { concurrency: 3 }), /boom/);
+  const startedAtFailure = started;
+  await new Promise(resolve => setTimeout(resolve, 20)); // let any still-running workers settle
+  assert.equal(started, startedAtFailure, 'no further segments are started once one has failed');
+  assert.ok(started < timeline.segments.length, 'the whole book is not fetched after a failure');
+});
+
 test('createByteLoader: fetches each clip once and memoizes each silence kind instead of refetching it for every gap', async () => {
   const timeline = C.buildContinuousTimeline(E, STORY, MODES, 'ja-zh', 'ja-zh', TIMING);
   const fetched = [];

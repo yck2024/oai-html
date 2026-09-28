@@ -152,16 +152,63 @@
     return stripVbrHeaderFrame(stripId3v1(stripId3v2(bytes)));
   }
 
-  // Builds the whole book's playback Blob in memory, one clip/silence file at a time via the
-  // injected `loadBytes(segment)` (real callers fetch each clip/silence URL; tests can inject a
-  // fixture). Nothing here writes the assembled Blob to any cache — it is played once via a
-  // temporary object URL and left to be garbage-collected, never a second stored copy of audio
-  // that is already downloaded (or downloadable) per clip.
-  async function assembleContinuousBlob(timeline, loadBytes) {
-    const parts = [];
-    for (const segment of timeline.segments) {
-      const buffer = await loadBytes(segment);
-      parts.push(stripTags(new Uint8Array(buffer)));
+  // How many clip/silence files assembleContinuousBlob fetches at once by default — enough to
+  // shorten the wait on a real network without opening so many connections that a slow link's
+  // requests start starving each other.
+  const DEFAULT_CONCURRENCY = 6;
+
+  // Builds the whole book's playback Blob in memory via the injected `loadBytes(segment)` (real
+  // callers fetch each clip/silence URL; tests can inject a fixture), fetching up to
+  // `concurrency` segments at once. A fixed pool of workers each pull the next not-yet-started
+  // segment off a shared, strictly-increasing counter — so `loadBytes` is always *invoked* in
+  // timeline order regardless of concurrency (segment 0 is requested before segment 1, before
+  // segment 2, ...) even though they may *finish* in any order — and each result is written into
+  // its own slot of the final `parts` array by index, so the assembled Blob is byte-identical to
+  // fetching everything one at a time. `onProgress(completed, total)` fires after each segment's
+  // bytes land, for a caller to show "12/73"-style feedback while the book is still loading.
+  //
+  // `signal` (an object with a `cancelled` getter, not a real AbortSignal — no request needs
+  // aborting, only the assembly itself needs to stop caring about the result) is checked before
+  // every new fetch and after every completed one; once it flips true, no worker starts further
+  // segments, no more progress fires, and the whole call rejects instead of resolving with a
+  // partial Blob. The first real `loadBytes` rejection (e.g. a 404) does the same: it stops every
+  // other worker from picking up new work (already in-flight fetches still finish, but are
+  // discarded) rather than letting them silently fetch the rest of the book after the whole
+  // build has already failed.
+  async function assembleContinuousBlob(timeline, loadBytes, { concurrency = DEFAULT_CONCURRENCY, onProgress, signal } = {}) {
+    const segments = timeline.segments;
+    const total = segments.length;
+    const parts = new Array(total);
+    let nextIndex = 0;
+    let completed = 0;
+    let failure = null;
+
+    async function worker() {
+      while (nextIndex < total) {
+        if (failure || signal?.cancelled) return;
+        const index = nextIndex++;
+        let buffer;
+        try {
+          buffer = await loadBytes(segments[index]);
+        } catch (error) {
+          if (!failure) failure = error;
+          return;
+        }
+        if (failure || signal?.cancelled) return;
+        parts[index] = stripTags(new Uint8Array(buffer));
+        completed++;
+        if (onProgress) onProgress(completed, total);
+      }
+    }
+
+    const workerCount = Math.max(1, Math.min(concurrency, total));
+    await Promise.all(Array.from({ length: workerCount }, worker));
+
+    if (failure) throw failure;
+    if (signal?.cancelled) {
+      const error = new Error('continuous build cancelled');
+      error.cancelled = true;
+      throw error;
     }
     return new Blob(parts, { type: 'audio/mpeg' });
   }
@@ -306,6 +353,7 @@
 
   return {
     SILENCE_KINDS,
+    DEFAULT_CONCURRENCY,
     silencePath,
     buildContinuousTimeline,
     mapTimeToPage,
