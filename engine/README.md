@@ -48,7 +48,10 @@ was hand-edited instead of edited here and re-synced).
 `continuous.js` builds the whole book's clips for the reader's chosen listening mode — plus
 silence clips (`silence/*.mp3`) standing in for the gaps between them — into one in-memory MP3
 Blob, so a single already-playing `<audio>` element (rather than `app.js`'s clip-by-clip
-`createNarrator`) is what has to keep going with the screen off. `generate-audio-timing.js`
+`createNarrator`) is what has to keep going with the screen off. While those clips are loading,
+the reader shows a spinner on the play button and a completed/total audio-segment count (clips
+and silence files) in the status line; the button also exposes a preparing label to assistive
+technology. `generate-audio-timing.js`
 precomputes every clip's exact duration (via ffprobe) at build time into that series' own
 `audio-timing.js`, so `continuous.js` can work out which page and line is currently sounding from
 `audio.currentTime` alone, with no re-measurement at runtime. See taiwan-ehon/README.md's
