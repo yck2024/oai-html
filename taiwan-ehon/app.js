@@ -14,6 +14,7 @@
   const HINT = SERIES.hint;
   const UNAVAILABLE = SERIES.unavailable;
   const PREPARING_CONTINUOUS = 'よみつづける おとを つくっています… ・ 連續播放準備中…';
+  const PREPARING_PLAY_LABEL = 'じゅんびちゅう 準備中';
   const TAP_TO_START = '▶ を おして はじめてね ・ 按 ▶ 開始播放';
   const SHELF_MARKER = SERIES.shelfMarker;
   const SHELF_PAGE_TITLE = SERIES.shelfPageTitle;
@@ -235,6 +236,14 @@
     continuousToken++;
   }
 
+  // "おとを じゅんびちゅう 12/73 ・ 音檔準備中 12/73": how many of the book's clips/silences have
+  // landed so far, shown in #speechStatus in place of the static PREPARING_CONTINUOUS line as
+  // soon as the first one arrives — visible progress instead of a message that never changes
+  // while assembleContinuousBlob fetches the rest of the book.
+  function continuousProgressText(done, total) {
+    return `おとを じゅんびちゅう ${done}/${total} ・ 音檔準備中 ${done}/${total}`;
+  }
+
   async function playContinuous({ paused = false } = {}) {
     const token = ++continuousToken;
     const requestedBook = book;
@@ -249,7 +258,13 @@
     const timeline = C.buildContinuousTimeline(E, requestedBook.story, LISTEN_MODES, DEFAULT_MODE, settings.mode, TIMING);
     let blob = null;
     try {
-      blob = await C.assembleContinuousBlob(timeline, C.createByteLoader(fetch, ASSET_BASE, requestedBook.story.id));
+      blob = await C.assembleContinuousBlob(timeline, C.createByteLoader(fetch, ASSET_BASE, requestedBook.story.id), {
+        onProgress: (done, total) => {
+          if (token !== continuousToken) return;
+          speechStatus.textContent = continuousProgressText(done, total);
+        },
+        signal: { get cancelled() { return token !== continuousToken; } },
+      });
     } catch (_error) {
       blob = null;
     }
@@ -659,10 +674,16 @@
   }
 
   function updatePlayback() {
-    const activeState = activeAudioPlayer().state;
+    const player = activeAudioPlayer();
+    const activeState = player.state;
     const playing = activeState === 'playing';
-    playIcon.textContent = playing ? '⏸' : '▶';
-    playButton.setAttribute('aria-label', playing ? 'とめる 暫停' : 'よむ 唸給我聽');
+    // While a whole-book Blob is still being assembled, the play button itself becomes the
+    // loading indicator (a spinner in place of ▶, via the .is-loading class in ehon.css) instead
+    // of looking like a plain, unresponsive play button — see playContinuous/continuousPlayer.loading().
+    const preparingContinuous = player === continuousPlayer && activeState === 'loading';
+    playButton.classList.toggle('is-loading', preparingContinuous);
+    playIcon.textContent = preparingContinuous ? '' : playing ? '⏸' : '▶';
+    playButton.setAttribute('aria-label', preparingContinuous ? PREPARING_PLAY_LABEL : playing ? 'とめる 暫停' : 'よむ 唸給我聽');
     muteIcon.textContent = muted ? '🔇' : '🔊';
     muteButton.setAttribute('aria-pressed', String(muted));
     muteButton.setAttribute('aria-label', muted ? 'おとを だす 開啟聲音' : 'おとを けす 靜音');

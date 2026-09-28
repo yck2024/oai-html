@@ -587,6 +587,7 @@ rt { font-weight: 500; }
 }
 
 .play-button {
+  position: relative;
   width: 62px;
   height: 62px;
   border: 0;
@@ -594,6 +595,29 @@ rt { font-weight: 500; }
   color: #fff;
   font-size: 1.5rem;
   box-shadow: 0 6px 16px rgba(160, 80, 30, 0.3);
+}
+
+/* Screen-off listening's whole-book Blob is still being fetched/assembled: the play button
+   itself becomes the loading indicator (see engine/app.js's updatePlayback) instead of sitting
+   there looking like an unresponsive ▶ while the reader waits. */
+.play-button.is-loading #playIcon { visibility: hidden; }
+
+.play-button.is-loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 #muteButton[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }

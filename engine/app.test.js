@@ -97,7 +97,11 @@ function createReader({ analytics = true, series = SERIES, storyList = stories, 
     MediaMetadata: class { constructor(options) { Object.assign(this, options); } },
     fetch: url => {
       fetched.push(url);
-      return (fetchGate || Promise.resolve()).then(() => {
+      // fetchGate is normally one shared Promise every fetch call waits on (see startBlockedBuild
+      // below); a test that needs to resolve individual fetches one at a time instead passes a
+      // function returning a fresh per-URL Promise.
+      const gate = typeof fetchGate === 'function' ? fetchGate(url) : (fetchGate || Promise.resolve());
+      return gate.then(() => {
         const ok = remainingFetchFailures === 0;
         if (!ok) remainingFetchFailures--;
         return { ok, status: ok ? 200 : 404, arrayBuffer: () => Promise.resolve(new ArrayBuffer(4)) };
@@ -748,4 +752,48 @@ test('continuous mode: muting pauses playback in place without losing position; 
   const plainReader = createReader();
   plainReader.elements.get('#playButton').dispatch('click');
   assert.equal(plainReader.audio.played[0], '/taiwan-ehon/audio/bai-zei-qi/ja/p01-1.mp3');
+});
+
+test('continuous mode: the play button spins with a "preparing" label while loading, #speechStatus reports live progress, and a second tap does not start a second build', async () => {
+  const pending = new Map(); // url -> resolve, one entry per fetch currently in flight
+  const fetchGate = url => new Promise(resolve => pending.set(url, resolve));
+  const reader = createReader({ fetchGate });
+  const { elements, fetched } = reader;
+  const playButton = elements.get('#playButton');
+
+  reader.setContinuous(true);
+  playButton.dispatch('click');
+  await flush();
+
+  assert.ok(playButton.classList.contains('is-loading'), 'the button itself shows the spinner while preparing');
+  assert.equal(elements.get('#playIcon').textContent, '', 'must not look like a plain ▶ while loading');
+  assert.equal(playButton.getAttribute('aria-label'), 'じゅんびちゅう 準備中');
+  assert.equal(elements.get('#speechStatus').textContent, 'よみつづける おとを つくっています… ・ 連續播放準備中…');
+  assert.ok(pending.size > 0 && pending.size < fetched.length + 1, 'only a bounded number of clips are in flight at once');
+
+  const fetchCountWhileLoading = fetched.length;
+  playButton.dispatch('click'); // tapping play again mid-build keeps preparing, never restarts it
+  await flush();
+  assert.equal(fetched.length, fetchCountWhileLoading, 'a second tap while loading must not start a second build');
+  assert.ok(playButton.classList.contains('is-loading'), 'still preparing after the second tap');
+
+  const progressTexts = [];
+  function respondOk() {
+    return { ok: true, status: 200, arrayBuffer: () => Promise.resolve(new ArrayBuffer(4)) };
+  }
+  while (pending.size > 0) {
+    const [url, resolve] = pending.entries().next().value;
+    pending.delete(url);
+    resolve(respondOk());
+    await flush();
+    progressTexts.push(elements.get('#speechStatus').textContent);
+  }
+
+  assert.ok(
+    progressTexts.some(text => /^おとを じゅんびちゅう \d+\/\d+ ・ 音檔準備中 \d+\/\d+$/.test(text)),
+    `expected at least one live progress update among ${JSON.stringify(progressTexts)}`,
+  );
+  assert.ok(!playButton.classList.contains('is-loading'), 'spinner clears once every clip has landed and playback starts');
+  assert.equal(elements.get('#playIcon').textContent, '⏸');
+  assert.equal(elements.get('#speechStatus').textContent, '');
 });
