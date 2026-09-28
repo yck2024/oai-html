@@ -65,9 +65,9 @@
       "id": "p01",
       "image": "images/tsuru-no-ongaeshi/p01.webp",
       "alt": {
-        "ja": "ゆきの なか、なわの わなに かかった つるを みつける おじいさん",
-        "zh": "在雪地裡，發現鶴被繩圈陷阱困住的老爺爺",
-        "en": "The old man finding a crane caught in a rope snare in the snow"
+        "ja": "まきを うった かえりみち、ゆきの なかで つるの あしに かかった なわの わなを ほどこうと する おじいさん",
+        "zh": "賣完柴回家的路上，在雪地裡想解開鶴腳上繩圈陷阱的老爺爺",
+        "en": "On his way home from selling his firewood, the old man kneels in the snow to untie a rope snare from a crane's leg"
       },
       "lines": [
         {

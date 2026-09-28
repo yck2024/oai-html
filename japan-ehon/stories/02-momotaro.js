@@ -147,9 +147,9 @@ module.exports = {
       "id": "p04",
       "image": "images/momotaro/p04.webp",
       "alt": {
-        "ja": "おおきく なって、おじいさんの まきわりを てつだう ももたろう",
-        "zh": "長大後，幫老爺爺劈柴的桃太郎",
-        "en": "Momotaro, grown up now, helping the old man split firewood"
+        "ja": "おおきく なって、まきの たばを せおって はこぶ ももたろうと、にこにこ みまもる おじいさんと おばあさん",
+        "zh": "長大後，背著一大捆柴的桃太郎，和笑咪咪看著他的老爺爺老奶奶",
+        "en": "Momotaro, grown up now, carrying a big bundle of firewood home as the old man and old woman smile"
       },
       "lines": [
         {
@@ -368,9 +368,9 @@ module.exports = {
       "id": "p10",
       "image": "images/momotaro/p10.webp",
       "alt": {
-        "ja": "ころんだ おにの おやぶんを たすけおこす ももたろう",
-        "zh": "扶跌倒的鬼老大站起來的桃太郎",
-        "en": "Momotaro helping the fallen oni chief to his feet"
+        "ja": "ころんで すわりこんだ おにの おやぶんの てを とって、たすけおこす ももたろう",
+        "zh": "拉著跌坐在地上的鬼老大的手，扶他站起來的桃太郎",
+        "en": "Momotaro taking the hand of the fallen oni chief, who sits rubbing his head, to help him to his feet"
       },
       "lines": [
         {

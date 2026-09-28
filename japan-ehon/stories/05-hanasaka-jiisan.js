@@ -314,9 +314,9 @@
       "id": "p08",
       "image": "images/hanasaka-jiisan/p08.webp",
       "alt": {
-        "ja": "はいを かごに いれた おじいさん。 かぜで とんだ はいで、かれた さくらの きに はなが さく",
-        "zh": "提著一籃灰的老爺爺，風把灰吹到枯櫻花樹上，樹開滿了花",
-        "en": "The old man with a basket of ash as the wind blows it onto a bare cherry tree, which bursts into bloom"
+        "ja": "はいの かごを かかえて あるく おじいさん。 かぜが かごの はいを かれた さくらの きへ はこび、えだに はなが さきはじめる。 おじいさんと シロは びっくり",
+        "zh": "抱著一籃灰走路的老爺爺，風把籃裡的灰吹到枯櫻花樹上，樹枝開始開花，老爺爺和小白嚇了一跳",
+        "en": "As the old man walks home hugging his basket of ash, the wind carries ash from it onto a bare cherry tree, whose branches start to bloom while he and Shiro look on in surprise"
       },
       "lines": [
         {
@@ -352,9 +352,9 @@
       "id": "p09",
       "image": "images/hanasaka-jiisan/p09.webp",
       "alt": {
-        "ja": "さくらの きの うえで はいを まく おじいさん。 えだに はなが さき、はいの かごは きの ねもとに ある。 とのさまは ほうびの ふくろを もって よろこんで いる",
-        "zh": "老爺爺在櫻花樹上撒灰，樹枝開滿櫻花，灰籃放在樹下，領主大人拿著賞賜的小袋子高興地看著",
-        "en": "The old man scattering ash from a cherry tree as its branches burst into bloom; a basket of ash sits by the trunk, and the delighted lord watches with a reward pouch, his procession behind him"
+        "ja": "かごを うでに かけて さくらの きに のぼり、はいを まく おじいさん。 えだに はなが さき、うまの うえの とのさまが ほうびの ふくろを もって よろこんで いる",
+        "zh": "手臂掛著灰籃、爬上櫻花樹撒灰的老爺爺，樹枝開滿櫻花；騎在馬上的領主大人拿著賞賜的小袋子，高興地看著",
+        "en": "The old man, up in a cherry tree with his basket of ash on his arm, scattering ash as the branches burst into bloom; the delighted lord watches from his horse holding a reward pouch, his procession behind him"
       },
       "lines": [
         {
