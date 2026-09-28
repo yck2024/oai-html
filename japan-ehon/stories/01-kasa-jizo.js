@@ -395,9 +395,9 @@ module.exports = {
       "id": "end",
       "image": "images/kasa-jizo/end.webp",
       "alt": {
-        "ja": "おしょうがつの あさ、おもちを たべる おじいさんと おばあさん。 まどの そとの みちばたには、かさを かぶった おじぞうさまたち",
-        "zh": "新年的早上，吃著麻糬的老爺爺和老奶奶，窗外路邊站著戴斗笠的地藏菩薩們",
-        "en": "On New Year's morning, the old couple eat rice cakes, while the hatted Jizo stand by the road outside the window"
+        "ja": "おしょうがつの あさ、ゆきの みちばたで、かさを かぶった むっつの おじぞうさまに てを あわせる おじいさんと おばあさん。 そばに おもちの おそなえ",
+        "zh": "新年的早上，雪地路邊的六尊地藏菩薩都戴著斗笠，老爺爺和老奶奶合掌致謝，旁邊放著麻糬供品",
+        "en": "On New Year's morning, the old couple give thanks with hands together beside six hatted Jizo at their snowy roadside, with mochi on a small tray"
       },
       "lines": [
         {
