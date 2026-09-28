@@ -276,9 +276,9 @@ hunt or make noise around the lakes.
 The Council of Indigenous Peoples' children's version, 〈巴嫩與蛇郎〉, supplies the flute, the
 mother dressing her daughter in tears, the dusk farewell, and the lilies on the shore. The
 headdress disappearing into the water comes from a Rukai farewell song. The lily headdress and the
-words 「湖中的家」 are this book's own. The glass-bead quest also appears in the 2001–02 computer
-game 《巴冷公主》, and scholars note it is missing from other recorded tellings. So the book keeps
-only the Taromak account's simple bride price, with no quest, magic, or battles. Other Rukai
+words 「湖中的家」 are this book's own. This book adapts the widely told version in which the chief
+asks for seven-coloured glass beads from the sea as the bride price; the quest also appears in the
+2001–02 computer game 《巴冷公主》 and in recorded tellings discussed by 梁欣芸 (2009). Other Rukai
 communities tell different versions, one of them without a snake at all.
 
 The snake is drawn as a calm, sacred elder, never striking. The snake, sun, and pottery-jar motifs
