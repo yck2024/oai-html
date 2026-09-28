@@ -276,10 +276,10 @@ hunt or make noise around the lakes.
 The Council of Indigenous Peoples' children's version, 〈巴嫩與蛇郎〉, supplies the flute, the
 mother dressing her daughter in tears, the dusk farewell, and the lilies on the shore. The
 headdress disappearing into the water comes from a Rukai farewell song. The lily headdress and the
-words 「湖中的家」 are this book's own. This book adapts the widely told version in which the chief
-asks for seven-coloured glass beads from the sea as the bride price; the quest also appears in the
-2001–02 computer game 《巴冷公主》 and in recorded tellings discussed by 梁欣芸 (2009). Other Rukai
-communities tell different versions, one of them without a snake at all.
+words 「湖中的家」 are this book's own. This book adapts the Taromak version reported by CNA, in
+which the chief asks for seven-coloured glass beads from the sea as the bride price. The quest also
+appears in the 2001–02 computer game 《巴冷公主》; 梁欣芸 (2009) notes that it is absent from other
+recorded tellings. Other Rukai communities tell different versions, one of them without a snake at all.
 
 The snake is drawn as a calm, sacred elder, never striking. The snake, sun, and pottery-jar motifs
 appear only on the chief's house, the chief wears hawk-eagle feathers, and the village is built of
@@ -298,8 +298,8 @@ Sources:
   <https://www.cip.gov.tw/zh-tw/tribe/grid-list/409F703B4E592A82D0636733C6861689/info.html?cumid=8F19BF08AE220D65>
 - 臺灣原住民族事典, 「百步蛇」, on the honorifics and the reverence and avoidance around the snake:
   <https://aborgpedia.alcd.center/detail?id=5404&search=&cat=0&race=0&writer=>
-- 梁欣芸, 〈解讀「巴冷公主」現象〉, 東海中文學報 21 (2009), on the recorded tellings, the game, and the
-  farewell song: <https://chinese.thu.edu.tw/upload/newspaper_upload/21/21017.pdf>
+- 梁欣芸, 〈解讀「巴冷公主」現象〉, 東海中文學報 21 (2009), on the game, the farewell song, and the
+  absence of the glass-bead quest from other recorded tellings: <https://chinese.thu.edu.tw/upload/newspaper_upload/21/21017.pdf>
 - 自由時報, on the Taromak slate houses rebuilt at Kapaliwa: <https://news.ltn.com.tw/news/local/paper/215743>
 - 臺北市原住民族事務委員會, 「建築工藝－魯凱族」, which notes that other East Rukai houses were mainly
   wood and bamboo:
