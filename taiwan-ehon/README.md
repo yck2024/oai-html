@@ -358,4 +358,3 @@ song, 「ガガ？ それって なあに？」, and a reordered Mandarin line o
   word were regenerated. The ja lines use hiragana `jaTts` overrides for ヤキ, ヤワイ and ガガ,
   and the zh lines use `zhTts` for 姊 (read as 姐, so 姊妹 is not read zǐmèi). The Latin names in
   the Mandarin text (Yaway, Yaki, gaga, hongu' utux) are read as a Mandarin speaker would say them.
-
