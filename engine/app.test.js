@@ -84,6 +84,8 @@ function createReader({ analytics = true, series = SERIES, storyList = stories, 
   const nav = createLocationHistory(`/${series.folder}/`);
   const mediaSession = createMediaSession();
   const fetched = [];
+  const timers = new Map();
+  let nextTimer = 0;
   let remainingFetchFailures = failFetches;
   // Every fetched "clip" is a distinct, tiny ArrayBuffer (its byte length encodes which URL it
   // was, so a test can tell segments apart after Blob assembly without a real MP3 on disk).
@@ -107,8 +109,8 @@ function createReader({ analytics = true, series = SERIES, storyList = stories, 
         return { ok, status: ok ? 200 : 404, arrayBuffer: () => Promise.resolve(new ArrayBuffer(4)) };
       });
     },
-    setTimeout: () => 1,
-    clearTimeout() {},
+    setTimeout: (fn, ms) => { const id = ++nextTimer; timers.set(id, { fn, ms }); return id; },
+    clearTimeout: id => timers.delete(id),
     location: nav.location,
     history: nav.history,
     addEventListener: nav.addEventListener,
@@ -133,6 +135,13 @@ function createReader({ analytics = true, series = SERIES, storyList = stories, 
     },
     setHidden(hidden) { document.visibilityState = hidden ? 'hidden' : 'visible'; },
     releaseFetch() { fetchGate?.resolve(); },
+    settleTurns() {
+      for (const [id, timer] of [...timers]) {
+        if (timer.ms !== 620 && timer.ms !== 150) continue;
+        timers.delete(id);
+        timer.fn();
+      }
+    },
     setContinuous(on) {
       const toggle = elements.get('#continuousToggle');
       toggle.checked = on;
@@ -146,6 +155,86 @@ function createReader({ analytics = true, series = SERIES, storyList = stories, 
 function recordedEvents(reader) {
   return JSON.parse(JSON.stringify(reader.events)).filter(([, name]) => name !== 'page_view');
 }
+
+test('page turns reveal the incoming page under one temporary outgoing sheet; rapid turns replace it and stop at both ends', () => {
+  const reader = createReader();
+  const { elements } = reader;
+  const stage = elements.get('#stage');
+  const next = elements.get('#nextButton');
+  const prev = elements.get('#prevButton');
+  const counter = elements.get('#pageCounter');
+  reader.settleTurns(); // the harness opens the book and turns from its cover during setup
+  assert.equal(stage.children.length, 0);
+  next.dispatch('click');
+  assert.equal(stage.children.length, 1);
+  assert.ok(stage.children[0].classList.contains('page-turn-next'));
+  assert.equal(stage.children[0].getAttribute('aria-hidden'), 'true');
+  next.dispatch('click');
+  assert.equal(stage.children.length, 1, 'the old sheet was removed before the next was created');
+  prev.dispatch('click');
+  assert.equal(stage.children.length, 1);
+  assert.ok(stage.children[0].classList.contains('page-turn-prev'));
+  reader.settleTurns();
+  assert.equal(stage.children.length, 0);
+  reader.openStory(0);
+  prev.dispatch('click');
+  assert.equal(stage.children.length, 0, 'cover cannot turn backwards');
+  for (let i = 0; i < stories[0].pages.length + 2; i++) next.dispatch('click');
+  assert.equal(counter.textContent, `${stories[0].pages.length} / ${stories[0].pages.length}`);
+  reader.settleTurns();
+  next.dispatch('click');
+  assert.equal(stage.children.length, 0, 'ending cannot turn forwards');
+});
+
+test('read-along starts the next page only after the final rapid turn settles', () => {
+  const reader = createReader();
+  const { elements, audio } = reader;
+  reader.settleTurns();
+  elements.get('#playButton').dispatch('click');
+  assert.equal(audio.played.length, 1);
+  elements.get('#nextButton').dispatch('click');
+  elements.get('#nextButton').dispatch('click');
+  assert.equal(audio.played.length, 1, 'no narration begins underneath the turning sheet');
+  reader.settleTurns();
+  assert.equal(audio.played.length, 2, 'only the destination page starts reading');
+  assert.equal(audio.played[1], `/taiwan-ehon/audio/${stories[0].id}/ja/${stories[0].pages[3].lines[0].id}.mp3`);
+  assert.equal(elements.get('#stage').children.length, 0);
+});
+
+test('backgrounding during a turn settles immediately so screen-off narration can continue', () => {
+  const reader = createReader();
+  reader.settleTurns();
+  reader.elements.get('#playButton').dispatch('click');
+  reader.elements.get('#nextButton').dispatch('click');
+  assert.equal(reader.audio.played.length, 1);
+  reader.setHidden(true);
+  reader.document.dispatchEvent({ type: 'visibilitychange' });
+  assert.equal(reader.audio.played.length, 2);
+  assert.equal(reader.elements.get('#stage').children.length, 0);
+  reader.settleTurns();
+  assert.equal(reader.audio.played.length, 2, 'stale animation timer was cancelled');
+});
+
+test('touch swipes turn in either direction, vertical gestures and sentence taps do not turn', () => {
+  const reader = createReader();
+  const { elements, audio } = reader;
+  const stage = elements.get('#stage');
+  const counter = elements.get('#pageCounter');
+  const swipe = (dx, dy, ms = 180) => {
+    stage.dispatch('pointerdown', { isPrimary: true, pointerType: 'touch', clientX: 200, clientY: 200, timeStamp: 0 });
+    stage.dispatch('pointerup', { isPrimary: true, pointerType: 'touch', clientX: 200 + dx, clientY: 200 + dy, timeStamp: ms });
+  };
+  swipe(0, 100);
+  assert.equal(counter.textContent, `2 / ${stories[0].pages.length}`);
+  swipe(-55, 3);
+  assert.equal(counter.textContent, `3 / ${stories[0].pages.length}`);
+  swipe(35, 3, 50);
+  assert.equal(counter.textContent, `2 / ${stories[0].pages.length}`);
+  const sentence = elements.get('#pageText').querySelector('.line');
+  elements.get('#pageText').dispatch('click', { target: sentence });
+  assert.equal(audio.played.length, 0, 'a synthetic click following a swipe is ignored');
+  reader.settleTurns();
+});
 
 test('opening a shelf book sends only its fixed story id; turns and sentence taps do not track', () => {
   const reader = createReader();

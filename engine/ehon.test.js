@@ -93,6 +93,11 @@ test('page navigation clamps safely and swipe gestures only turn on a horizontal
   assert.equal(E.swipeDirection(-100, 10), 'next');
   assert.equal(E.swipeDirection(100, 10), 'prev');
   assert.equal(E.swipeDirection(20, 80), null);
+  assert.equal(E.swipeDirection(-49, 2, 50, 500), null);
+  assert.equal(E.swipeDirection(-35, 3, 50, 50), 'next', 'short fast flick');
+  assert.equal(E.swipeDirection(35, 3, 50, 50), 'prev');
+  assert.equal(E.swipeDirection(-25, 0, 50, 10), null, 'tiny flick is not a turn');
+  assert.equal(E.swipeDirection(-80, 90, 50, 50), null, 'vertical scroll wins even if fast');
 });
 
 test('pausing during language and sentence gaps suspends advancement until resume', async t => {
