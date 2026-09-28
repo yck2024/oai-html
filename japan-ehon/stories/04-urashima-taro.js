@@ -89,9 +89,9 @@ module.exports = {
       "id": "p02",
       "image": "images/urashima-taro/p02.webp",
       "alt": {
-        "ja": "こどもたちが みちを あけ、うらしまたろうが うみがめを うみへ かえす",
-        "zh": "小孩們讓出一條路，浦島太郎把海龜送回海裡",
-        "en": "The children make way as Urashima Taro helps the sea turtle back into the sea"
+        "ja": "こどもたちが みちを あけ、うらしまたろうが すなはまに しゃがんで、うみがめを そっと うみへ おして かえす",
+        "zh": "小孩們讓出一條路，浦島太郎蹲在沙灘上，輕輕把海龜推回海裡",
+        "en": "The children make way as Urashima Taro crouches on the sand and gently pushes the sea turtle back into the sea"
       },
       "lines": [
         {
@@ -194,9 +194,9 @@ module.exports = {
       "id": "p05",
       "image": "images/urashima-taro/p05.webp",
       "alt": {
-        "ja": "たいや ひらめが おどる ごちそうの せきで たのしむ うらしまたろう",
-        "zh": "在鯛魚和比目魚跳舞的宴席上玩得很開心的浦島太郎",
-        "en": "Urashima Taro enjoying a feast while sea bream and flounder dance"
+        "ja": "たいや ひらめが おどる なか、ごはんや やさい、くだもの、おかしの ごちそうを おとひめさまと たのしむ うらしまたろう",
+        "zh": "鯛魚和比目魚在跳舞，浦島太郎和乙姬一起開心享用米飯、蔬菜、水果和點心",
+        "en": "Urashima Taro and Princess Otohime enjoying a feast of rice, vegetables, fruit, and sweets while sea bream and flounder dance"
       },
       "lines": [
         {

@@ -132,9 +132,9 @@
       "id": "p03",
       "image": "images/issun-boshi/p03.webp",
       "alt": {
-        "ja": "はりの かたなを こしに さした いっすんぼうしと、おわんと はしを わたす おじいさんと おばあさん",
-        "zh": "腰間插著針刀的一寸法師，和遞給他木碗和筷子的老爺爺老奶奶",
-        "en": "Issun-boshi with a needle sword at his waist, as the old couple hand him a bowl and a chopstick"
+        "ja": "おばあさんの てのひらに のった ゆびくらいの いっすんぼうしが、はりの かたなを うけとる。 おじいさんは おわんと はしを さしだす",
+        "zh": "站在老奶奶手掌上、像手指一樣小的一寸法師接過針做的刀，老爺爺拿著木碗和筷子",
+        "en": "Thumb-sized Issun-boshi standing on the old woman's palm as she hands him a needle sword, while the old man holds out a bowl and a chopstick"
       },
       "lines": [
         {

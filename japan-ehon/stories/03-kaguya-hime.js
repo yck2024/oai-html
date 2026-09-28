@@ -156,9 +156,9 @@ module.exports = {
       "id": "p04",
       "image": "images/kaguya-hime/p04.webp",
       "alt": {
-        "ja": "すだれの むこうの かぐやひめと、その まえに ならぶ ごにんの りっぱな おとこの ひと",
-        "zh": "竹簾後的輝夜姬，和排在她面前的五位貴公子",
-        "en": "Kaguya-hime behind a bamboo screen, with five finely dressed suitors lined up before her"
+        "ja": "まきあげた すだれの したに すわる かぐやひめと、その まえに ならぶ ごにんの りっぱな おとこの ひと",
+        "zh": "坐在捲起的竹簾下的輝夜姬，和跪在她面前的五位貴公子",
+        "en": "Kaguya-hime seated beneath rolled-up bamboo blinds, with five finely dressed suitors kneeling before her"
       },
       "lines": [
         {
@@ -308,9 +308,9 @@ module.exports = {
       "id": "p08",
       "image": "images/kaguya-hime/p08.webp",
       "alt": {
-        "ja": "まんげつの よる、ひかる くもに のって おりて くる つきの ひとたちと、みあげる さんにん",
-        "zh": "月圓的晚上，乘著發光的雲降下來的月亮上的人，和抬頭看的三個人",
-        "en": "On the night of the full moon, the moon people come down on a glowing cloud as the three look up"
+        "ja": "ひるの ように あかるい まんげつの よる、ひかる くもに のって おりて くる つきの ひとたち。 かぐやひめは おじいさんと おばあさんの てを にぎって、そらを みあげる",
+        "zh": "亮得像白天一樣的月圓夜，月亮上的人乘著發光的雲降下來；輝夜姬牽著老爺爺和老奶奶的手，抬頭望著天空",
+        "en": "On the full-moon night, under a sky as bright as day, the moon people come down on a glowing cloud as Kaguya-hime holds the old man's and old woman's hands and looks up"
       },
       "lines": [
         {

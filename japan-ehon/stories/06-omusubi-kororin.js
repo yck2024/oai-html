@@ -132,9 +132,9 @@
       "id": "p03",
       "image": "images/omusubi-kororin/p03.webp",
       "alt": {
-        "ja": "あなの そばに ひざを ついて みみを すませ、にっこり わらう おじいさん。 あなの おくに ちいさな ねずみたちの すがた",
-        "zh": "跪在洞口旁、豎起耳朵聽、笑咪咪的老爺爺，洞裡有小老鼠們的身影",
-        "en": "The old man kneeling by the hole, listening with a smile, as little mice appear inside the hole"
+        "ja": "あなの そばに ひざを ついて みみを すませ、にっこり わらう おじいさん。 くらい あなの おくから うたが きこえ、ちいさな ねずみの みみが のぞいて いる",
+        "zh": "跪在洞口旁、豎起耳朵聽、笑咪咪的老爺爺，歌聲從黑黑的洞裡傳出來，隱約看得到小老鼠的耳朵",
+        "en": "The old man kneeling by the hole, listening with a smile, as a song floats out of the dark hole where tiny mouse ears peek out"
       },
       "lines": [
         {

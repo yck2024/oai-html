@@ -584,9 +584,9 @@
         "id": "p04",
         "image": "images/momotaro/p04.webp",
         "alt": {
-          "ja": "おおきく なって、おじいさんの まきわりを てつだう ももたろう",
-          "zh": "長大後，幫老爺爺劈柴的桃太郎",
-          "en": "Momotaro, grown up now, helping the old man split firewood"
+          "ja": "おおきく なって、まきの たばを せおって はこぶ ももたろうと、にこにこ みまもる おじいさんと おばあさん",
+          "zh": "長大後，背著一大捆柴的桃太郎，和笑咪咪看著他的老爺爺老奶奶",
+          "en": "Momotaro, grown up now, carrying a big bundle of firewood home as the old man and old woman smile"
         },
         "lines": [
           {
@@ -805,9 +805,9 @@
         "id": "p10",
         "image": "images/momotaro/p10.webp",
         "alt": {
-          "ja": "ころんだ おにの おやぶんを たすけおこす ももたろう",
-          "zh": "扶跌倒的鬼老大站起來的桃太郎",
-          "en": "Momotaro helping the fallen oni chief to his feet"
+          "ja": "ころんで すわりこんだ おにの おやぶんの てを とって、たすけおこす ももたろう",
+          "zh": "拉著跌坐在地上的鬼老大的手，扶他站起來的桃太郎",
+          "en": "Momotaro taking the hand of the fallen oni chief, who sits rubbing his head, to help him to his feet"
         },
         "lines": [
           {
@@ -1036,9 +1036,9 @@
         "id": "p04",
         "image": "images/kaguya-hime/p04.webp",
         "alt": {
-          "ja": "すだれの むこうの かぐやひめと、その まえに ならぶ ごにんの りっぱな おとこの ひと",
-          "zh": "竹簾後的輝夜姬，和排在她面前的五位貴公子",
-          "en": "Kaguya-hime behind a bamboo screen, with five finely dressed suitors lined up before her"
+          "ja": "まきあげた すだれの したに すわる かぐやひめと、その まえに ならぶ ごにんの りっぱな おとこの ひと",
+          "zh": "坐在捲起的竹簾下的輝夜姬，和跪在她面前的五位貴公子",
+          "en": "Kaguya-hime seated beneath rolled-up bamboo blinds, with five finely dressed suitors kneeling before her"
         },
         "lines": [
           {
@@ -1188,9 +1188,9 @@
         "id": "p08",
         "image": "images/kaguya-hime/p08.webp",
         "alt": {
-          "ja": "まんげつの よる、ひかる くもに のって おりて くる つきの ひとたちと、みあげる さんにん",
-          "zh": "月圓的晚上，乘著發光的雲降下來的月亮上的人，和抬頭看的三個人",
-          "en": "On the night of the full moon, the moon people come down on a glowing cloud as the three look up"
+          "ja": "ひるの ように あかるい まんげつの よる、ひかる くもに のって おりて くる つきの ひとたち。 かぐやひめは おじいさんと おばあさんの てを にぎって、そらを みあげる",
+          "zh": "亮得像白天一樣的月圓夜，月亮上的人乘著發光的雲降下來；輝夜姬牽著老爺爺和老奶奶的手，抬頭望著天空",
+          "en": "On the full-moon night, under a sky as bright as day, the moon people come down on a glowing cloud as Kaguya-hime holds the old man's and old woman's hands and looks up"
         },
         "lines": [
           {
@@ -1401,9 +1401,9 @@
         "id": "p02",
         "image": "images/urashima-taro/p02.webp",
         "alt": {
-          "ja": "こどもたちが みちを あけ、うらしまたろうが うみがめを うみへ かえす",
-          "zh": "小孩們讓出一條路，浦島太郎把海龜送回海裡",
-          "en": "The children make way as Urashima Taro helps the sea turtle back into the sea"
+          "ja": "こどもたちが みちを あけ、うらしまたろうが すなはまに しゃがんで、うみがめを そっと うみへ おして かえす",
+          "zh": "小孩們讓出一條路，浦島太郎蹲在沙灘上，輕輕把海龜推回海裡",
+          "en": "The children make way as Urashima Taro crouches on the sand and gently pushes the sea turtle back into the sea"
         },
         "lines": [
           {
@@ -1506,9 +1506,9 @@
         "id": "p05",
         "image": "images/urashima-taro/p05.webp",
         "alt": {
-          "ja": "たいや ひらめが おどる ごちそうの せきで たのしむ うらしまたろう",
-          "zh": "在鯛魚和比目魚跳舞的宴席上玩得很開心的浦島太郎",
-          "en": "Urashima Taro enjoying a feast while sea bream and flounder dance"
+          "ja": "たいや ひらめが おどる なか、ごはんや やさい、くだもの、おかしの ごちそうを おとひめさまと たのしむ うらしまたろう",
+          "zh": "鯛魚和比目魚在跳舞，浦島太郎和乙姬一起開心享用米飯、蔬菜、水果和點心",
+          "en": "Urashima Taro and Princess Otohime enjoying a feast of rice, vegetables, fruit, and sweets while sea bream and flounder dance"
         },
         "lines": [
           {
@@ -2064,9 +2064,9 @@
         "id": "p08",
         "image": "images/hanasaka-jiisan/p08.webp",
         "alt": {
-          "ja": "はいを かごに いれた おじいさん。 かぜで とんだ はいで、かれた さくらの きに はなが さく",
-          "zh": "提著一籃灰的老爺爺，風把灰吹到枯櫻花樹上，樹開滿了花",
-          "en": "The old man with a basket of ash as the wind blows it onto a bare cherry tree, which bursts into bloom"
+          "ja": "はいの かごを かかえて あるく おじいさん。 かぜが かごの はいを かれた さくらの きへ はこび、えだに はなが さきはじめる。 おじいさんと シロは びっくり",
+          "zh": "抱著一籃灰走路的老爺爺，風把籃裡的灰吹到枯櫻花樹上，樹枝開始開花，老爺爺和小白嚇了一跳",
+          "en": "As the old man walks home hugging his basket of ash, the wind carries ash from it onto a bare cherry tree, whose branches start to bloom while he and Shiro look on in surprise"
         },
         "lines": [
           {
@@ -2102,9 +2102,9 @@
         "id": "p09",
         "image": "images/hanasaka-jiisan/p09.webp",
         "alt": {
-          "ja": "さくらの きの うえで はいを まく おじいさん。 えだに はなが さき、はいの かごは きの ねもとに ある。 とのさまは ほうびの ふくろを もって よろこんで いる",
-          "zh": "老爺爺在櫻花樹上撒灰，樹枝開滿櫻花，灰籃放在樹下，領主大人拿著賞賜的小袋子高興地看著",
-          "en": "The old man scattering ash from a cherry tree as its branches burst into bloom; a basket of ash sits by the trunk, and the delighted lord watches with a reward pouch, his procession behind him"
+          "ja": "かごを うでに かけて さくらの きに のぼり、はいを まく おじいさん。 えだに はなが さき、うまの うえの とのさまが ほうびの ふくろを もって よろこんで いる",
+          "zh": "手臂掛著灰籃、爬上櫻花樹撒灰的老爺爺，樹枝開滿櫻花；騎在馬上的領主大人拿著賞賜的小袋子，高興地看著",
+          "en": "The old man, up in a cherry tree with his basket of ash on his arm, scattering ash as the branches burst into bloom; the delighted lord watches from his horse holding a reward pouch, his procession behind him"
         },
         "lines": [
           {
@@ -2342,9 +2342,9 @@
         "id": "p03",
         "image": "images/omusubi-kororin/p03.webp",
         "alt": {
-          "ja": "あなの そばに ひざを ついて みみを すませ、にっこり わらう おじいさん。 あなの おくに ちいさな ねずみたちの すがた",
-          "zh": "跪在洞口旁、豎起耳朵聽、笑咪咪的老爺爺，洞裡有小老鼠們的身影",
-          "en": "The old man kneeling by the hole, listening with a smile, as little mice appear inside the hole"
+          "ja": "あなの そばに ひざを ついて みみを すませ、にっこり わらう おじいさん。 くらい あなの おくから うたが きこえ、ちいさな ねずみの みみが のぞいて いる",
+          "zh": "跪在洞口旁、豎起耳朵聽、笑咪咪的老爺爺，歌聲從黑黑的洞裡傳出來，隱約看得到小老鼠的耳朵",
+          "en": "The old man kneeling by the hole, listening with a smile, as a song floats out of the dark hole where tiny mouse ears peek out"
         },
         "lines": [
           {
@@ -2792,9 +2792,9 @@
         "id": "p03",
         "image": "images/issun-boshi/p03.webp",
         "alt": {
-          "ja": "はりの かたなを こしに さした いっすんぼうしと、おわんと はしを わたす おじいさんと おばあさん",
-          "zh": "腰間插著針刀的一寸法師，和遞給他木碗和筷子的老爺爺老奶奶",
-          "en": "Issun-boshi with a needle sword at his waist, as the old couple hand him a bowl and a chopstick"
+          "ja": "おばあさんの てのひらに のった ゆびくらいの いっすんぼうしが、はりの かたなを うけとる。 おじいさんは おわんと はしを さしだす",
+          "zh": "站在老奶奶手掌上、像手指一樣小的一寸法師接過針做的刀，老爺爺拿著木碗和筷子",
+          "en": "Thumb-sized Issun-boshi standing on the old woman's palm as she hands him a needle sword, while the old man holds out a bowl and a chopstick"
         },
         "lines": [
           {
@@ -3166,9 +3166,9 @@
         "id": "p01",
         "image": "images/tsuru-no-ongaeshi/p01.webp",
         "alt": {
-          "ja": "ゆきの なか、なわの わなに かかった つるを みつける おじいさん",
-          "zh": "在雪地裡，發現鶴被繩圈陷阱困住的老爺爺",
-          "en": "The old man finding a crane caught in a rope snare in the snow"
+          "ja": "まきを うった かえりみち、ゆきの なかで つるの あしに かかった なわの わなを ほどこうと する おじいさん",
+          "zh": "賣完柴回家的路上，在雪地裡想解開鶴腳上繩圈陷阱的老爺爺",
+          "en": "On his way home from selling his firewood, the old man kneels in the snow to untie a rope snare from a crane's leg"
         },
         "lines": [
           {
