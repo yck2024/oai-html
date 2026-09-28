@@ -285,6 +285,16 @@ The snake is drawn as a calm, sacred elder, never striking. The snake, sun, and 
 appear only on the chief's house, the chief wears hawk-eagle feathers, and the village is built of
 slate. Taromak's old village, Kapaliwa, had slate houses, and they have since been rebuilt there.
 
+The first page ties the snake to the ancestors and to the noble families. It says that for the
+Rukai the hundred-pacer is bound up with the ancestral spirits (祖靈), that the chief's family
+descends from a hundred-pacer egg, and that this is why its pattern is carved on the chief's house.
+The Council of Indigenous Peoples links the hundred-pacer to Rukai ancestral-spirit legends and
+reserves its motif for chiefs, and 臺灣原住民族事典 calls it nobility of the spirit world. The origin
+comes from a Rukai tradition that a chief's ancestor hatched from a hundred-pacer egg kept in an old
+jar. Liang (2009) also records a version in which a snake guards the sun's eggs from which the
+chief's ancestors hatch. These are Rukai traditions in general; the sources do not tie them to
+Taromak in particular.
+
 Sources:
 
 - CNA (中央社), 「神秘小鬼湖濕地 流傳人蛇戀故事」 (2023), for the Taromak telling, 蘇金成's compilation,
@@ -298,6 +308,9 @@ Sources:
   <https://www.cip.gov.tw/zh-tw/tribe/grid-list/409F703B4E592A82D0636733C6861689/info.html?cumid=8F19BF08AE220D65>
 - 臺灣原住民族事典, 「百步蛇」, on the honorifics and the reverence and avoidance around the snake:
   <https://aborgpedia.alcd.center/detail?id=5404&search=&cat=0&race=0&writer=>
+- 〈臺灣原住民族與蛇〉 (periodical feature, 2013), on the Rukai tradition of a hundred-pacer egg in
+  an old jar hatching the ancestor of a chief's house:
+  <https://buddhism.lib.ntu.edu.tw/FULLTEXT/JR-AN/an386156.pdf>
 - 梁欣芸, 〈解讀「巴冷公主」現象〉, 東海中文學報 21 (2009), on the game, the farewell song, and the
   absence of the glass-bead quest from other recorded tellings: <https://chinese.thu.edu.tw/upload/newspaper_upload/21/21017.pdf>
 - 自由時報, on the Taromak slate houses rebuilt at Kapaliwa: <https://news.ltn.com.tw/news/local/paper/215743>
@@ -331,6 +344,8 @@ Sources:
   - Round 2: add his change back to human form, name the lily headdress in the Japanese, shorten
     long pages, and replace 鳥兒.
   - Round 3: 待 (ㄉㄞ) corrected and one Japanese particle fixed.
+  - After review: the first page now connects the hundred-pacer to the ancestral spirits and to the
+    origin of the chief's family, as the book's title theme asks.
 
 Kept on purpose against Sol's suggestions: the series-wide 注音 conventions (故事 as ㄍㄨˋ ㄕˋ, and
 full tones in 回來 and 回去). After the third round, a few wordings changed only so that the
