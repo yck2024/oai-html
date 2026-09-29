@@ -94,11 +94,9 @@
     return null;
   }
 
-  // Every clip carries an ID3v2 tag (see taiwan-ehon/generate_gemini_audio.py) that is only
-  // meaningful at the very start of a standalone file: mid-stream, its bytes are not a valid
-  // MP3 frame and can stop some decoders from resyncing. Stripped from every clip and silence
-  // file before concatenation. A trailing ID3v1 tag (the last 128 bytes, "TAG...") is stripped
-  // for the same reason; none of today's generated clips carry one, but a future encoder might.
+  // Legacy clips may carry ID3 tags; mid-stream, their bytes aren't valid MP3 frames and can
+  // stop decoders from resyncing. Current clips are encoded tag-free; keep stripping tags for
+  // compatibility with older cached clips. A trailing ID3v1 tag ("TAG...") is also stripped.
   function stripId3v2(bytes) {
     if (bytes.length < 10 || bytes[0] !== 0x49 || bytes[1] !== 0x44 || bytes[2] !== 0x33) return bytes;
     const size = ((bytes[6] & 0x7f) << 21) | ((bytes[7] & 0x7f) << 14) | ((bytes[8] & 0x7f) << 7) | (bytes[9] & 0x7f);
@@ -114,18 +112,10 @@
     return bytes;
   }
 
-  // Every clip's first MP3 frame (right after its ID3v2 tag) is a Xing/LAME VBR header: a
-  // normal, self-contained, near-silent frame that a lone standalone file needs so a player can
-  // estimate its overall duration/seek table. Concatenated one after another, a decoder that
-  // trusts the FIRST one it sees mis-estimates the duration of (and misseeks within) the whole
-  // joined stream by whatever that one clip's own bitrate/length happened to be — confirmed with
-  // `ffprobe -count_frames` on an assembled test file: the actual decoded audio was correct and
-  // in order, but the reported duration was roughly double the real one. So every clip's own
-  // Xing/LAME frame is stripped too, leaving only real audio frames; only the very first
-  // surviving frame in the whole assembled Blob ever describes anything, and it is real audio,
-  // never a stale VBR header. Detected by the "Xing"/"Info" tag bytes a real audio frame never
-  // contains, then skipped by scanning forward for the next frame sync rather than computing an
-  // exact frame length from the MPEG bitrate table.
+  // Older VBR clips carry a Xing/LAME header frame describing *only that clip*. Strip it so
+  // the first frame of a joined Blob cannot advertise a false whole-book duration. This alone
+  // does not make VBR clips seekable; see engine/README.md for the required clip format.
+  // Scan forward to the next frame sync instead of guessing a frame length.
   function isFrameSync(bytes, index) {
     return bytes[index] === 0xff && (bytes[index + 1] & 0xe0) === 0xe0;
   }

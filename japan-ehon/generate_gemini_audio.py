@@ -257,7 +257,11 @@ def encode_mp3(wav, output):
                 ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", str(source),
                  "-af", "silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.05,"
                         "areverse,silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.12,areverse",
-                 "-ac", "1", "-codec:a", "libmp3lame", "-q:a", "6", str(encoded)],
+                 # Continuous playback concatenates these files with the silence clips. A
+                 # single 48 kbps / 24 kHz CBR stream without per-clip Xing seek headers lets
+                 # the browser seek to the correct page by byte position.
+                 "-ac", "1", "-ar", "24000", "-codec:a", "libmp3lame", "-b:a", "48k",
+                 "-write_xing", "0", "-id3v2_version", "0", "-map_metadata", "-1", str(encoded)],
                 check=True,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
