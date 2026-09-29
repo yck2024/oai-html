@@ -114,8 +114,7 @@
 
   // Older VBR clips carry a Xing/LAME header frame describing *only that clip*. Strip it so
   // the first frame of a joined Blob cannot advertise a false whole-book duration. This alone
-  // does not make VBR clips seekable: all current clips AND silence must be encoded at the same
-  // CBR bitrate (48 kbps, 24 kHz mono, without Xing) so byte/time positions remain aligned.
+  // does not make VBR clips seekable; see engine/README.md for the required clip format.
   // Scan forward to the next frame sync instead of guessing a frame length.
   function isFrameSync(bytes, index) {
     return bytes[index] === 0xff && (bytes[index + 1] & 0xe0) === 0xe0;
