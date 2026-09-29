@@ -89,10 +89,19 @@ test('defaultProbe(): reads a real duration from ffprobe, in whole milliseconds'
   assert.ok(ms > 0 && ms < 5000, `expected a small positive duration, got ${ms}`);
 });
 
-test('defaultProbe(): excludes the first Xing frame duration when continuous assembly strips that frame', { skip: !hasFfprobe() && 'ffprobe not found on PATH' }, () => {
+test('defaultProbe(): excludes the first Xing frame duration when continuous assembly strips that frame', {
+  skip: (!hasFfprobe() || require('node:child_process').spawnSync('ffmpeg', ['-version'], { stdio: 'ignore' }).status !== 0)
+    && 'ffprobe/ffmpeg not found on PATH',
+}, () => {
   const fs = require('node:fs');
   const path = require('node:path');
-  const clip = path.join(__dirname, '..', 'taiwan-ehon', 'audio', 'bai-zei-qi', 'ja', 'p01-1.mp3');
+  const os = require('node:os');
+  // Production clips are now CBR without Xing headers. Transcode one temporary legacy VBR
+  // fixture to keep testing the generator's handling of older/header-bearing inputs.
+  const source = path.join(__dirname, '..', 'taiwan-ehon', 'audio', 'bai-zei-qi', 'ja', 'p01-1.mp3');
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'ehon-vbr-'));
+  const clip = path.join(directory, 'legacy.mp3');
+  execFileSync('ffmpeg', ['-nostdin', '-loglevel', 'error', '-i', source, '-q:a', '4', clip]);
   const bytes = new Uint8Array(fs.readFileSync(clip));
   const withoutId3 = C.stripId3v2(bytes);
   const withoutVbrHeader = C.stripVbrHeaderFrame(withoutId3);
@@ -106,4 +115,5 @@ test('defaultProbe(): excludes the first Xing frame duration when continuous ass
   );
   const { defaultProbe } = require('./generate-audio-timing.js');
   assert.equal(defaultProbe(clip), expectedMs);
+  fs.rmSync(directory, { recursive: true, force: true });
 });

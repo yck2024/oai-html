@@ -54,7 +54,13 @@ and silence files) in the status line; the button also exposes a preparing label
 technology. `generate-audio-timing.js`
 precomputes every clip's exact duration (via ffprobe) at build time into that series' own
 `audio-timing.js`, so `continuous.js` can work out which page and line is currently sounding from
-`audio.currentTime` alone, with no re-measurement at runtime. See taiwan-ehon/README.md's
+`audio.currentTime` alone, with no re-measurement at runtime. **All narration and silence clips
+must use 48 kbps CBR MP3, 24 kHz mono, with no Xing/Info header** (`ffmpeg -ac 1 -ar 24000
+-c:a libmp3lame -b:a 48k -write_xing 0 -id3v2_version 0 -map_metadata -1`); otherwise the
+joined MP3 may decode in order but the browser's time-based seek lands on the wrong page.
+Both Gemini audio encoders use this format; regenerate `audio-timing.js` after any new clip.
+Already-downloaded old clips require an online refresh before offline playback can use their
+replacement bytes. See taiwan-ehon/README.md's
 "Listening with the screen off" section for the reader-facing behavior and what has and hasn't
 been verified on a real device.
 

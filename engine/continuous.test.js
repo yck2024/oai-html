@@ -345,6 +345,31 @@ test('createByteLoader: rejects non-OK silence and narration responses before re
   await readResponse({ kind: 'clip', lang: 'ja', lineId: 'p01-1' });
 });
 
+test('all deployed narration and silence frames use the same header-free 48 kbps CBR format for exact seeks', () => {
+  const files = ['japan-ehon', 'taiwan-ehon'].flatMap(folder => {
+    const root = path.join(__dirname, '..', folder, 'audio');
+    return fs.readdirSync(root).flatMap(book =>
+      fs.readdirSync(path.join(root, book)).flatMap(lang =>
+        fs.readdirSync(path.join(root, book, lang)).filter(name => name.endsWith('.mp3'))
+          .map(name => path.join(root, book, lang, name))));
+  });
+  files.push(...C.SILENCE_KINDS.map(kind => path.join(__dirname, 'silence', `${kind}.mp3`)));
+  assert.ok(files.length > 1000);
+  // MPEG-2 Layer III / 24 kHz / 48 kbps / mono: 144 bytes per 24 ms frame.
+  // Checking *all* frames catches a VBR clip even when its first frame looks CBR.
+  for (const file of files) {
+    const bytes = fs.readFileSync(file);
+    assert.equal(bytes.length % 144, 0, `${file}: non-frame bytes or wrong bitrate`);
+    for (let offset = 0; offset < bytes.length; offset += 144) {
+      assert.equal(bytes[offset], 0xff, `${file}: frame ${offset}`);
+      assert.equal(bytes[offset + 1], 0xf3, `${file}: MPEG-2 Layer III frame ${offset}`);
+      assert.equal(bytes[offset + 2], 0x64, `${file}: bitrate/sample rate/padding at ${offset}`);
+      assert.equal(bytes[offset + 3] & 0xc0, 0xc0, `${file}: mono frame ${offset}`);
+    }
+    assert.equal(C.stripTags(bytes).length, bytes.length, `${file}: ID3 or Xing header`);
+  }
+});
+
 function hasFfprobe() {
   try {
     execFileSync('ffprobe', ['-version'], { stdio: 'ignore' });
@@ -390,12 +415,21 @@ test('assembleContinuousBlob output is a single MP3 ffprobe can decode, with the
     '-v', 'error', '-show_entries', 'packet=duration_time', '-of', 'csv=p=0', tmpFile,
   ], { encoding: 'utf8' }).trim().split('\n').filter(Boolean).map(Number);
   const decodedMs = Math.round(packetDurations.reduce((sum, seconds) => sum + seconds, 0) * 1000);
+  // HTMLMediaElement seeks MP3 by its reported duration/bitrate, not by decoding every packet.
+  // A low-bitrate first silence followed by variable-bitrate speech can decode in order while
+  // advertising a duration more than twice as long; seeking to page.startMs then plays an
+  // earlier page even though audio.currentTime and the highlighted line say the right page.
+  const advertisedMs = Number(execFileSync('ffprobe', [
+    '-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1', tmpFile,
+  ], { encoding: 'utf8' }).trim()) * 1000;
   fs.rmSync(path.dirname(tmpFile), { recursive: true, force: true });
 
   // ffprobe successfully decoded real audio packets (not just read a header) covering close to
   // the manifest's own sum — decoder frame-boundary rounding, not silent truncation or garbage
   // past a bad splice point.
   assert.ok(packetDurations.length > 0);
+  assert.ok(Math.abs(advertisedMs - decodedMs) < 150,
+    `seeking uses advertised ${advertisedMs}ms but the actual stream is ${decodedMs}ms`);
   assert.ok(
     Math.abs(decodedMs - timeline.totalMs) < 500,
     `decoded duration ${decodedMs}ms should be within 500ms of the manifest's ${timeline.totalMs}ms`,

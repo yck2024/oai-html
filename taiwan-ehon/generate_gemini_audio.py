@@ -223,7 +223,10 @@ def encode_mp3(wav, output):
                 ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", str(source),
                  "-af", "silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.05,"
                         "areverse,silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.12,areverse",
-                 "-ac", "1", "-codec:a", "libmp3lame", "-q:a", "6", str(encoded)],
+                 # Match the silence clips: joining equal-bitrate, header-free MP3 frames
+                 # lets the continuous player seek accurately to every page.
+                 "-ac", "1", "-ar", "24000", "-codec:a", "libmp3lame", "-b:a", "48k",
+                 "-write_xing", "0", "-id3v2_version", "0", "-map_metadata", "-1", str(encoded)],
                 check=True,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
