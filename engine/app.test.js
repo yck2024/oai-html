@@ -26,7 +26,7 @@ function createMediaSession() {
   };
 }
 
-function createReader({ analytics = true, series = SERIES, storyList = stories, fetchGate = null, failFetches = 0 } = {}) {
+function createReader({ analytics = true, series = SERIES, storyList = stories, fetchGate = null, failFetches = 0, savedSettings = null } = {}) {
   const elements = new Map(READER_IDS.map(id => [`#${id}`, new FakeElement()]));
   const modeInputs = Object.keys(E.buildListenModes(series.languages)).map(value => {
     const input = new FakeElement('input');
@@ -52,6 +52,8 @@ function createReader({ analytics = true, series = SERIES, storyList = stories, 
     },
   };
   const stored = new Map();
+  const settingsKey = `${series.folder}-settings`;
+  if (savedSettings !== null) stored.set(settingsKey, JSON.stringify(savedSettings));
   const localStorage = {
     getItem: key => stored.get(key) ?? null,
     setItem: (key, value) => stored.set(key, value),
@@ -126,6 +128,8 @@ function createReader({ analytics = true, series = SERIES, storyList = stories, 
     modeInputs,
     events,
     document,
+    localStorage,
+    settingsKey,
     mediaSession,
     fetched,
     openStory(index) { elements.get('#bookList').querySelectorAll('.book-card')[index].dispatch('click'); },
@@ -298,6 +302,8 @@ test('only real settings changes send fixed mode and on/off values', () => {
   zhuyin.checked = true;
   zhuyin.dispatch('change');
   const autoTurn = elements.get('#autoTurnToggle');
+  autoTurn.checked = false;
+  autoTurn.dispatch('change');
   autoTurn.checked = true;
   autoTurn.dispatch('change');
   autoTurn.checked = false;
@@ -307,6 +313,7 @@ test('only real settings changes send fixed mode and on/off values', () => {
     ['event', 'listen_mode_change', { listen_mode: 'ja', series_id: 'taiwan' }],
     ['event', 'zhuyin_toggle', { zhuyin: 'off', series_id: 'taiwan' }],
     ['event', 'zhuyin_toggle', { zhuyin: 'on', series_id: 'taiwan' }],
+    ['event', 'auto_turn_toggle', { auto_turn: 'off', series_id: 'taiwan' }],
     ['event', 'auto_turn_toggle', { auto_turn: 'on', series_id: 'taiwan' }],
     ['event', 'auto_turn_toggle', { auto_turn: 'off', series_id: 'taiwan' }],
   ]);
@@ -388,6 +395,34 @@ test('a picture that fails to load shows a friendly offline notice, cleared once
   assert.equal(pageArt.classList.contains('offline-missing'), true);
   pageImage.dispatch('load');
   assert.equal(pageArt.classList.contains('offline-missing'), false);
+});
+
+test('auto-turn is enabled by default and advances after narration finishes', () => {
+  const reader = createReader();
+  const { elements, audio } = reader;
+  const toggle = elements.get('#autoTurnToggle');
+  assert.equal(toggle.checked, true);
+
+  reader.selectMode('ja');
+  reader.setHidden(true);
+  elements.get('#playButton').dispatch('click');
+  for (let i = 0; i < stories[0].pages[1].lines.length; i++) audio.onended();
+  assert.equal(elements.get('#pageCounter').textContent, `3 / ${stories[0].pages.length}`);
+});
+
+test('old saved settings migrate auto-turn on and preserve the migration marker', () => {
+  const reader = createReader({ savedSettings: { mode: 'ja-zh', zhuyin: false, autoTurn: false } });
+  assert.equal(reader.elements.get('#autoTurnToggle').checked, true);
+  assert.equal(JSON.parse(reader.localStorage.getItem(reader.settingsKey)).settingsVersion, 2);
+});
+
+test('after migration, turning auto-turn off persists across reloads', () => {
+  const reader = createReader({ savedSettings: { autoTurn: false } });
+  const toggle = reader.elements.get('#autoTurnToggle');
+  toggle.checked = false;
+  toggle.dispatch('change');
+  const reloaded = createReader({ savedSettings: JSON.parse(reader.localStorage.getItem(reader.settingsKey)) });
+  assert.equal(reloaded.elements.get('#autoTurnToggle').checked, false);
 });
 
 test('while hidden, auto-turn narration chains across languages, sentences, and pages from the ended event alone, with no timer ever firing', () => {
