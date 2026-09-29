@@ -91,6 +91,19 @@
         "Japanese"
       ],
       "status": "live"
+    },
+    {
+      "slug": "ai-gpu-server",
+      "title": "AI Servers from Zero",
+      "description": "Visual-first beginner guide to GPU servers: parameters vs tokens, HBM, PCIe, NVLink/NVSwitch, DeepSeek deployment, token economics, and real inference bottlenecks.",
+      "icon": "🧠",
+      "tags": [
+        "AI",
+        "GPU",
+        "DeepSeek",
+        "Infrastructure"
+      ],
+      "status": "live"
     }
   ]
 }
