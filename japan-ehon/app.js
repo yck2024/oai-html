@@ -295,16 +295,24 @@
   }
 
   function loadSettings() {
-    const defaults = { mode: DEFAULT_MODE, zhuyin: true, autoTurn: false, narratedOnly: false, continuous: false };
+    const defaults = { mode: DEFAULT_MODE, zhuyin: true, autoTurn: true, narratedOnly: false, continuous: false };
     try {
-      const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
-      return {
+      const stored = localStorage.getItem(SETTINGS_KEY);
+      const saved = JSON.parse(stored || '{}');
+      const migrated = stored !== null && saved.settingsVersion !== 2;
+      const loaded = {
         mode: E.isMode(LISTEN_MODES, saved.mode) ? saved.mode : defaults.mode,
         zhuyin: typeof saved.zhuyin === 'boolean' ? saved.zhuyin : defaults.zhuyin,
-        autoTurn: typeof saved.autoTurn === 'boolean' ? saved.autoTurn : defaults.autoTurn,
+        autoTurn: migrated ? true : (typeof saved.autoTurn === 'boolean' ? saved.autoTurn : defaults.autoTurn),
         narratedOnly: typeof saved.narratedOnly === 'boolean' ? saved.narratedOnly : defaults.narratedOnly,
         continuous: typeof saved.continuous === 'boolean' ? saved.continuous : defaults.continuous,
       };
+      if (migrated) {
+        try {
+          localStorage.setItem(SETTINGS_KEY, JSON.stringify({ ...loaded, settingsVersion: 2 }));
+        } catch (_error) { /* Private browsing or blocked storage: settings last for this visit only. */ }
+      }
+      return loaded;
     } catch (_error) {
       return defaults;
     }
@@ -312,7 +320,7 @@
 
   function saveSettings() {
     try {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify({ ...settings, settingsVersion: 2 }));
     } catch (_error) {
       // Private browsing or blocked storage: settings last for this visit only.
     }
