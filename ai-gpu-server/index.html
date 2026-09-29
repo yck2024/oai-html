@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="en">
+<head>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-QLFWNZWDSS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-QLFWNZWDSS', { content_group: 'oai-html' });
+</script>
+<script defer src="../assets/analytics.js"></script>
+<meta name="description" content="Visual-first beginner guide to AI GPU servers: parameters, tokens, HBM, PCIe, NVLink, NVSwitch, DeepSeek deployment, token economics, and bottlenecks.">
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Servers from Zero — Visual Guide with DeepSeek</title>
+<style>
+:root{
+  --bg:#07101b; --bg2:#0b1522; --panel:#101c2b; --panel2:#0c1724;
+  --line:#24374e; --text:#eef6ff; --muted:#9cb0c8; --cyan:#61dafb;
+  --blue:#6e8cff; --violet:#9c7cff; --green:#46d7a1; --amber:#ffcc66;
+  --red:#ff7f91; --white:#fff; --shadow:0 22px 70px rgba(0,0,0,.26);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,
+  BlinkMacSystemFont,"Segoe UI",sans-serif;background:
+  radial-gradient(circle at 15% -10%,rgba(97,218,251,.12),transparent 33%),
+  radial-gradient(circle at 95% 0%,rgba(156,124,255,.14),transparent 28%),
+  var(--bg);
+}
+a{color:var(--cyan)}
+button,input,select{font:inherit}
+.wrap{max-width:1250px;margin:auto;padding:24px}
+.hero{padding:52px 0 22px}
+.kicker{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border:1px solid var(--line);
+  border-radius:999px;color:var(--cyan);background:rgba(97,218,251,.05);font-weight:800;font-size:12px;letter-spacing:.07em}
+h1{font-size:clamp(42px,7vw,84px);line-height:.95;letter-spacing:-.055em;margin:18px 0 18px}
+h2{font-size:clamp(29px,4vw,46px);line-height:1.02;letter-spacing:-.035em;margin:0 0 9px}
+h3{margin:0 0 9px;font-size:19px}
+p{line-height:1.58}
+.lead{font-size:clamp(17px,2vw,22px);color:var(--muted);max-width:920px}
+.gradient{background:linear-gradient(90deg,var(--cyan),#c1b7ff 52%,var(--green));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.nav{display:flex;gap:8px;flex-wrap:wrap;margin:26px 0 0}
+.nav a{color:#c9d8e8;text-decoration:none;padding:9px 12px;border:1px solid var(--line);border-radius:11px;background:rgba(255,255,255,.02);font-size:13px}
+.nav a:hover{border-color:#405877}
+.section{margin:42px 0 74px}
+.sub{color:var(--muted);margin:0 0 22px;max-width:920px}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.016));
+  border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:var(--shadow);overflow:hidden}
+.grid{display:grid;gap:16px}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:920px){.g2,.g3,.g4{grid-template-columns:1fr}}
+.muted{color:var(--muted)} .tiny{font-size:12px;color:var(--muted)} .small{font-size:14px}
+.big{font-size:clamp(34px,5vw,54px);font-weight:900;letter-spacing:-.045em}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:5px 9px;margin:3px 2px;background:#0a1522;font-size:12px;color:#c9d8e8}
+.good{color:var(--green)} .warn{color:var(--amber)} .hot{color:var(--red)}
+.callout{border-left:4px solid var(--cyan);padding:14px 16px;background:#0b1725;border-radius:0 12px 12px 0;margin-top:15px}
+.formula{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#07111d;border:1px solid var(--line);border-radius:13px;padding:14px;overflow:auto}
+hr.sep{border:0;border-top:1px solid var(--line);margin:22px 0}
+
+/* layer zero */
+.twoworlds{display:grid;grid-template-columns:1fr 70px 1fr;gap:14px;align-items:center}
+@media(max-width:760px){.twoworlds{grid-template-columns:1fr}.bridge{transform:rotate(90deg);height:45px}}
+.world{min-height:200px;display:flex;flex-direction:column;justify-content:center;text-align:center}
+.world .emoji{font-size:55px}.bridge{text-align:center;font-size:35px;color:#667c98}
+.tokenline{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:14px 0}
+.tok{padding:7px 9px;border-radius:8px;border:1px solid rgba(97,218,251,.33);background:rgba(97,218,251,.07);font-size:12px}
+.knobs{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;max-width:400px;margin:14px auto}
+.knobs i{height:19px;border-radius:5px;background:linear-gradient(180deg,#314967,#17283e);border:1px solid #38526f}
+
+/* physical machine */
+.serverScene{position:relative;padding:14px 0}
+.cpu{width:120px;height:100px;border:2px solid #48607d;border-radius:16px;margin:auto;display:grid;place-items:center;background:#0b1522;font-weight:900}
+.ramrow{display:flex;gap:4px;justify-content:center;margin:8px}.ram{width:12px;height:60px;border:1px solid #3c5870;background:#153143;border-radius:3px}
+.board{min-height:330px;border:2px solid #2d455f;border-radius:22px;background:#09131f;padding:20px;position:relative}
+.pcie-track{height:8px;background:#2e4660;border-radius:99px;margin:16px auto;width:82%;position:relative}
+.pcie-track:before{content:"PCIe lanes on motherboard";position:absolute;top:12px;width:100%;text-align:center;font-size:11px;color:#8197b2}
+.cards{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:42px}
+.gpuCard{width:185px;height:88px;border:2px solid #3c536f;border-radius:10px;background:linear-gradient(145deg,#172a3d,#09121c);display:flex;align-items:center;justify-content:center;gap:12px}
+.fan{width:52px;height:52px;border:5px solid #314962;border-radius:50%;position:relative}
+.fan:before,.fan:after{content:"";position:absolute;inset:9px;border-radius:50% 12%;background:#23384f;transform:rotate(45deg)}
+.fan:after{transform:rotate(135deg)}
+.gpuChip{width:48px;height:48px;border:2px solid var(--violet);background:#191d39;border-radius:8px;display:grid;place-items:center;font-weight:800;font-size:11px}
+.hbm{display:flex;gap:3px}.hbm i{width:12px;height:28px;background:#29545a;border:1px solid var(--green);border-radius:3px}
+
+/* connection explain */
+.roadGrid{display:grid;grid-template-columns:150px 1fr;gap:10px 16px;align-items:center}
+@media(max-width:650px){.roadGrid{grid-template-columns:1fr}}
+.speedbar{height:28px;border:1px solid var(--line);background:#0a1420;border-radius:8px;overflow:hidden;position:relative}
+.speedbar span{display:block;height:100%;border-radius:8px;background:linear-gradient(90deg,var(--blue),var(--cyan))}
+.speedbar label{position:absolute;inset:0;display:flex;align-items:center;padding-left:9px;font-size:12px;font-weight:800;text-shadow:0 1px 2px #000}
+.switchDiagram{display:grid;grid-template-columns:1fr 120px 1fr;gap:10px;align-items:center;min-height:190px}
+.gpucol{display:grid;gap:8px}.miniGPU{padding:10px;border:1px solid #425b77;border-radius:10px;text-align:center;background:#101e2e}
+.sw{width:105px;height:105px;border-radius:22px;border:2px solid var(--violet);background:rgba(156,124,255,.09);display:grid;place-items:center;text-align:center;margin:auto;font-weight:900;box-shadow:0 0 40px rgba(156,124,255,.14)}
+.wires{position:relative}
+.analogy{display:grid;grid-template-columns:90px 1fr;gap:14px;align-items:center}.analogy .icon{font-size:52px;text-align:center}
+
+/* request flow */
+.flow{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap}
+.step{flex:1 1 130px;min-height:122px;padding:13px;border:1px solid var(--line);border-radius:14px;background:#0a1522;position:relative}
+.step .n{font-size:11px;color:var(--cyan);font-weight:900}.step b{display:block;margin:5px 0}.step:after{content:"→";position:absolute;right:-14px;top:43%;font-size:22px;color:#536d89;z-index:2}
+.step:last-child:after{display:none}
+@media(max-width:700px){.step:after{display:none}}
+.requestDemo{display:grid;grid-template-columns:1fr 1.3fr;gap:16px}@media(max-width:900px){.requestDemo{grid-template-columns:1fr}}
+.chat{border:1px solid var(--line);border-radius:16px;padding:14px;background:#08121d}
+.bubble{padding:11px 13px;border-radius:13px;margin:8px 0;max-width:88%;line-height:1.45}
+.user{margin-left:auto;background:#17314a;border:1px solid #28516f}.ai{background:#17213a;border:1px solid #3b4772}
+.phase{display:none}.phase.active{display:block}
+.tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}.tabs button{border:1px solid var(--line);background:#0a1421;color:#cbd8e8;padding:9px 12px;border-radius:10px;cursor:pointer}
+.tabs button.active{border-color:var(--cyan);background:rgba(97,218,251,.09);color:white}
+
+/* DeepSeek */
+.experts{display:grid;grid-template-columns:repeat(16,1fr);gap:5px;margin:16px 0}
+.experts span{aspect-ratio:1;border-radius:5px;background:#101a27;border:1px solid #28394d}
+.experts span.active{background:linear-gradient(145deg,#7456dd,#3b2b82);border-color:#a88cff;box-shadow:0 0 14px rgba(156,124,255,.25)}
+.memoryStack{height:44px;border:1px solid var(--line);background:#09131f;border-radius:10px;display:flex;overflow:hidden;margin:10px 0}
+.weights{background:linear-gradient(90deg,#5d49c7,#9276f0)}
+.free{background:#173927}.reserved{background:#73561d}
+.memoryStack span{height:100%;display:grid;place-items:center;font-size:11px;font-weight:800;overflow:hidden;white-space:nowrap}
+.gpuEight{display:grid;grid-template-columns:repeat(8,1fr);gap:7px;margin:14px 0}
+.gpuEight div{min-height:86px;border:1px solid #3b536e;border-radius:8px;background:#0b1724;display:flex;flex-direction:column;justify-content:center;text-align:center}
+@media(max-width:700px){.gpuEight{grid-template-columns:repeat(4,1fr)}}
+
+/* calculators */
+label.field{display:block;font-size:11px;color:var(--muted);font-weight:800;letter-spacing:.06em;margin:11px 0 5px}
+input[type=number],select{width:100%;background:#08131f;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:11px}
+.metric{border:1px solid var(--line);border-radius:14px;padding:14px;background:#091521}.metric .v{font-size:29px;font-weight:900}
+.eq{font-family:ui-monospace,monospace;font-size:13px;color:#bcd0e6;background:#07111d;padding:10px;border-radius:9px;margin-top:7px}
+
+/* bottlenecks */
+.bneck{display:grid;grid-template-columns:150px 1fr 100px;gap:12px;align-items:center;margin:12px 0}
+@media(max-width:650px){.bneck{grid-template-columns:1fr}.bneck .score{text-align:left}}
+.bbar{height:18px;background:#0a1420;border-radius:99px;border:1px solid var(--line);overflow:hidden}.bbar span{height:100%;display:block;background:linear-gradient(90deg,var(--green),var(--amber),var(--red))}
+.score{text-align:right;font-size:12px;color:var(--muted)}
+.scenarioButtons{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.scenarioButtons button{cursor:pointer;padding:9px 11px;border-radius:10px;border:1px solid var(--line);background:#0a1421;color:#cad8e7}.scenarioButtons button.active{border-color:var(--amber);background:rgba(255,204,102,.08)}
+
+/* glossary */
+.search{width:100%;background:#08131f;color:white;border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:14px}
+.term{cursor:pointer;min-height:150px;transition:.18s}.term:hover{transform:translateY(-2px);border-color:#3a5776}.term .what{color:#fff;font-weight:800}.term .why{color:var(--muted);font-size:13px}.term .anal{font-size:13px;color:#b8c8d9;margin-top:7px}
+details{border-top:1px solid var(--line);margin-top:14px;padding-top:12px}summary{cursor:pointer;color:#cbd9e8;font-weight:800}
+.sourceList li{margin:9px 0;color:#aebed0;line-height:1.5}
+footer{border-top:1px solid var(--line);padding:28px 0 55px;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+  <div class="kicker">BEGINNER → REAL DEPLOYMENT → BOTTLENECKS</div>
+  <h1>AI servers,<br><span class="gradient">from zero.</span></h1>
+  <p class="lead">No assumption that you already know PCIe, NVLink, NVSwitch, HBM, KV cache, or MoE. We start with what each thing <b>physically is</b>, then deploy a real open-weight model and follow one user's request through the machine.</p>
+  <nav class="nav">
+    <a href="#zero">Parameters vs tokens</a><a href="#inside">Inside a server</a><a href="#roads">PCIe / NVLink</a>
+    <a href="#request">One request</a><a href="#deepseek">DeepSeek case</a><a href="#tokens">Token math</a>
+    <a href="#bottlenecks">Bottlenecks</a><a href="#glossary">Glossary</a>
+  </nav>
+</header>
+
+<section class="section" id="zero">
+  <h2>0. First: parameters and tokens are different things</h2>
+  <p class="sub">This is the distinction that makes everything else easier.</p>
+  <div class="twoworlds">
+    <div class="card world">
+      <div class="emoji">🧠</div>
+      <div class="big">671B</div>
+      <h3>Parameters = the model</h3>
+      <p class="muted">Learned numeric “knobs” stored in GPU memory. They exist before you ask a question.</p>
+      <div class="knobs"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
+    <div class="bridge">↔</div>
+    <div class="card world">
+      <div class="emoji">💬</div>
+      <div class="big">2,000 → 300</div>
+      <h3>Tokens = the work flowing through it</h3>
+      <p class="muted">Your prompt becomes input tokens. The model then generates output tokens one by one.</p>
+      <div class="tokenline"><span class="tok">How</span><span class="tok">does</span><span class="tok">this</span><span class="tok">server</span><span class="tok">work</span><span class="tok">?</span></div>
+    </div>
+  </div>
+  <div class="callout"><b>Think of it this way:</b> parameters are the factory machinery. Tokens are items moving through the factory. “671B parameters” does <i>not</i> mean “671B tokens.”</div>
+</section>
+
+<section class="section" id="inside">
+  <h2>1. What is physically inside a GPU server?</h2>
+  <p class="sub">Before jargon, picture the parts and where the data lives.</p>
+  <div class="grid g2">
+    <div class="card">
+      <div class="board">
+        <div class="cpu">CPU<br><span class="tiny">general-purpose brain</span></div>
+        <div class="ramrow"><i class="ram"></i><i class="ram"></i><i class="ram"></i><i class="ram"></i><i class="ram"></i><i class="ram"></i><i class="ram"></i><i class="ram"></i><i class="ram"></i><i class="ram"></i><i class="ram"></i><i class="ram"></i></div>
+        <div class="tiny" style="text-align:center">SYSTEM RAM — attached to CPU</div>
+        <div class="pcie-track"></div>
+        <div class="cards">
+          <div class="gpuCard"><div class="gpuChip">GPU</div><div class="hbm"><i></i><i></i><i></i><i></i></div></div>
+          <div class="gpuCard"><div class="gpuChip">GPU</div><div class="hbm"><i></i><i></i><i></i><i></i></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="grid">
+      <div class="card"><h3>CPU</h3><p><b>Physically:</b> the normal processor. It runs Linux, networking, tokenization, the inference server, scheduling, file I/O.</p><p class="tiny">It coordinates; it is usually not where the giant model does its heavy matrix math.</p></div>
+      <div class="card"><h3>System RAM</h3><p><b>Physically:</b> DIMMs next to the CPU. Big capacity, but much farther/slower for a GPU than its local memory.</p></div>
+      <div class="card"><h3>GPU + HBM / VRAM</h3><p><b>Physically:</b> the AI compute chip plus very fast local memory. Model weights and KV cache ideally stay here.</p></div>
+    </div>
+  </div>
+  <div class="callout"><b>Important:</b> 1 TB of CPU RAM is not equivalent to 1 TB of GPU VRAM. You can sometimes offload model data to CPU RAM, but every transfer across the slower connection can hurt inference speed.</div>
+</section>
+
+<section class="section" id="roads">
+  <h2>2. PCIe, NVLink, NVSwitch: they are roads for data</h2>
+  <p class="sub">The easiest way to understand them is not as “AI technologies,” but as different roads connecting pieces of hardware.</p>
+
+  <div class="grid g3">
+    <div class="card">
+      <div class="analogy"><div class="icon">🛣️</div><div><h3>PCIe</h3><div class="muted">The standard motherboard highway.</div></div></div>
+      <p><b>PCI Express</b> connects GPUs, SSDs, network cards and CPUs. “x16” means 16 lanes. A PCIe 5.0 ×16 link carries about <b>63 GB/s in one direction</b> after encoding overhead.</p>
+      <p class="tiny">GPU peer-to-peer transfers can sometimes travel over PCIe without copying through CPU memory; topology and software support matter.</p>
+    </div>
+    <div class="card">
+      <div class="analogy"><div class="icon">🚄</div><div><h3>NVLink</h3><div class="muted">A dedicated high-speed GPU link.</div></div></div>
+      <p>NVIDIA's high-bandwidth interconnect for GPU↔GPU (and some chip-to-chip) traffic. On H200 SXM, NVIDIA specifies up to <b>900 GB/s bidirectional NVLink</b>.</p>
+      <p class="tiny">NVLink does not magically fuse eight GPU memories into one ordinary RAM stick. Software still decides how the model is sharded.</p>
+    </div>
+    <div class="card">
+      <div class="analogy"><div class="icon">🚦</div><div><h3>NVSwitch</h3><div class="muted">The switchboard connecting many NVLinks.</div></div></div>
+      <p>A high-bandwidth switch fabric. Instead of wiring only GPU A↔B, it lets many GPUs communicate through a shared high-speed fabric.</p>
+      <p class="tiny">This becomes valuable for tensor parallelism and MoE expert traffic where GPUs exchange data constantly.</p>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>Same H200 GPU: compare the “roads” around it</h3>
+    <div class="roadGrid">
+      <b>Local HBM</b><div class="speedbar"><span style="width:100%"></span><label>4.8 TB/s — GPU reading its own HBM</label></div>
+      <b>NVLink</b><div class="speedbar"><span style="width:19%"></span><label>900 GB/s bidirectional — GPU ↔ GPU</label></div>
+      <b>PCIe 5 ×16</b><div class="speedbar"><span style="width:2.65%"></span><label>~128 GB/s bidirectional (~63 GB/s each direction)</label></div>
+      <b>400 Gb network</b><div class="speedbar"><span style="width:1.05%"></span><label>50 GB/s raw line rate — server ↔ server</label></div>
+    </div>
+    <p class="tiny">Bars compare headline bandwidth scales, not application benchmarks; protocols, directionality and workload differ.</p>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>NVSwitch visually</h3>
+    <div class="switchDiagram">
+      <div class="gpucol"><div class="miniGPU">GPU 1</div><div class="miniGPU">GPU 2</div><div class="miniGPU">GPU 3</div><div class="miniGPU">GPU 4</div></div>
+      <div class="sw">NV<br>SWITCH</div>
+      <div class="gpucol"><div class="miniGPU">GPU 5</div><div class="miniGPU">GPU 6</div><div class="miniGPU">GPU 7</div><div class="miniGPU">GPU 8</div></div>
+    </div>
+    <p class="muted">Imagine every GPU frequently sending small intermediate tensors to other GPUs. NVSwitch is the high-speed junction in the middle.</p>
+  </div>
+
+  <details>
+    <summary>What is SXM, then?</summary>
+    <p class="muted"><b>PCIe card</b> and <b>SXM</b> describe packaging/form factor, not the same thing as PCIe vs NVLink. A normal workstation GPU looks like an add-in card plugged into a PCIe slot. High-end H100/H200/B200 systems often use SXM GPU modules mounted onto a special baseboard, enabling high power delivery and dense NVLink/NVSwitch connectivity.</p>
+  </details>
+</section>
+
+<section class="section" id="request">
+  <h2>3. Follow one real user request through the server</h2>
+  <p class="sub">Suppose your internal chatbot receives a prompt containing 2,000 input tokens and eventually generates 300 output tokens.</p>
+
+  <div class="flow">
+    <div class="step"><span class="n">01</span><b>HTTP request</b><span class="tiny">Text arrives over network.</span></div>
+    <div class="step"><span class="n">02</span><b>Tokenizer</b><span class="tiny">Text → integer token IDs.</span></div>
+    <div class="step"><span class="n">03</span><b>Scheduler</b><span class="tiny">vLLM groups requests.</span></div>
+    <div class="step"><span class="n">04</span><b>Prefill</b><span class="tiny">Process input prompt.</span></div>
+    <div class="step"><span class="n">05</span><b>KV cache</b><span class="tiny">Remember attention state.</span></div>
+    <div class="step"><span class="n">06</span><b>Decode loop</b><span class="tiny">Generate 1 token, repeat.</span></div>
+    <div class="step"><span class="n">07</span><b>Stream text</b><span class="tiny">Tokens → words to user.</span></div>
+  </div>
+
+  <div class="requestDemo" style="margin-top:16px">
+    <div class="chat">
+      <div class="tiny">USER</div>
+      <div class="bubble user">Please summarize our long 2,000-token document and explain the risks.</div>
+      <div class="tiny">SERVER STREAMS</div>
+      <div class="bubble ai">The main risks are… <span style="opacity:.75">▌</span></div>
+      <p class="tiny">The UI can begin displaying the answer before all 300 output tokens have been generated.</p>
+    </div>
+    <div class="card">
+      <div class="tabs">
+        <button class="phaseBtn active" data-phase="prefill">Input: Prefill</button>
+        <button class="phaseBtn" data-phase="decode">Output: Decode</button>
+      </div>
+      <div id="prefill" class="phase active">
+        <h3>2,000 input tokens → processed together</h3>
+        <p>The server pushes a block of prompt tokens through the model. GPUs can use large matrix operations efficiently, so this phase has <b>more parallelism</b>.</p>
+        <div class="formula">prompt tokens → all model layers → build KV cache → first-token logits</div>
+        <p class="muted"><b>Common pressure:</b> compute, attention work, memory capacity. Very long prompts increase work and KV-cache demand.</p>
+      </div>
+      <div id="decode" class="phase">
+        <h3>300 output tokens → 300 sequential steps</h3>
+        <p>To generate output token #2, the model needs token #1. To generate #3, it needs #2. That dependency makes generation fundamentally sequential <i>within one sequence</i>.</p>
+        <div class="formula">token 1 → token 2 → token 3 → … → token 300</div>
+        <p class="muted"><b>Common pressure:</b> reading model weights fast enough, GPU-to-GPU communication, and serving many sequences together efficiently.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="deepseek">
+  <h2>4. Concrete deployment: DeepSeek‑V3.2 on 8× H200</h2>
+  <p class="sub">We use V3.2 because there is a current public vLLM deployment recipe verified on H200. This makes the example reproducible instead of hypothetical.</p>
+
+  <div class="grid g4">
+    <div class="card"><div class="big">671B</div><p>Main-model parameters</p></div>
+    <div class="card"><div class="big">37B</div><p>Approximately activated per token</p></div>
+    <div class="card"><div class="big">256</div><p>Routed experts in config</p></div>
+    <div class="card"><div class="big">8</div><p>Experts selected per token, per routed MoE layer</p></div>
+  </div>
+
+  <div class="grid g2" style="margin-top:16px">
+    <div class="card">
+      <h3>MoE: store a huge model, use only part each token</h3>
+      <div class="experts"><span class=""></span><span class=""></span><span class="active"></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class="active"></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class="active"></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class="active"></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class="active"></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class="active"></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class="active"></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class="active"></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span></div>
+      <p><span class="pill">illustration: 128 boxes shown</span> <span class="pill">actual config: 256 routed experts</span> <span class="pill">8 chosen/token</span></p>
+      <p class="muted">Those selected experts are not necessarily on the same GPU. If experts are distributed across GPUs, token activations must be routed to the GPU that owns each expert and returned afterward. <b>This is why interconnect can become a real bottleneck.</b></p>
+    </div>
+    <div class="card">
+      <h3>Capacity: does the model fit?</h3>
+      <p>Current vLLM recipe lists the native FP8 V3.2 checkpoint at roughly <b>805 GB</b>.</p>
+      <div class="memoryStack"><span class="weights" style="width:71.4%">~805 GB model</span><span class="free" style="width:28.6%">~323 GB remainder</span></div>
+      <p>8× H200 = <b>8 × 141 GB = 1,128 GB HBM</b>.</p>
+      <div class="formula">1,128 GB − 805 GB ≈ 323 GB before runtime/cache details</div>
+      <p class="tiny">That 323 GB is not all “free KV cache”: runtime workspaces, allocator behavior and other buffers also consume memory.</p>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>What is actually placed on the eight GPUs?</h3>
+    <div class="gpuEight"><div><b>H200 1</b><span class="tiny">141 GB HBM</span><span class="tiny">experts + layers + cache</span></div><div><b>H200 2</b><span class="tiny">141 GB HBM</span><span class="tiny">experts + layers + cache</span></div><div><b>H200 3</b><span class="tiny">141 GB HBM</span><span class="tiny">experts + layers + cache</span></div><div><b>H200 4</b><span class="tiny">141 GB HBM</span><span class="tiny">experts + layers + cache</span></div><div><b>H200 5</b><span class="tiny">141 GB HBM</span><span class="tiny">experts + layers + cache</span></div><div><b>H200 6</b><span class="tiny">141 GB HBM</span><span class="tiny">experts + layers + cache</span></div><div><b>H200 7</b><span class="tiny">141 GB HBM</span><span class="tiny">experts + layers + cache</span></div><div><b>H200 8</b><span class="tiny">141 GB HBM</span><span class="tiny">experts + layers + cache</span></div></div>
+    <p class="muted">The inference engine shards weights and/or experts. The current vLLM guidance for V3.2 discusses tensor parallelism, data parallelism, and expert parallelism; for Hopper-class GPUs it specifically recommends testing DP/EP-style serving because V3.2's sparse-attention kernels can make naïve TP=8 inefficient.</p>
+    <details>
+      <summary>Advanced: TP, DP, EP in plain English</summary>
+      <p><b>TP — Tensor Parallel:</b> several GPUs cooperate on the same matrix operation. Lots of synchronization.</p>
+      <p><b>DP — Data Parallel:</b> different request batches are handled in parallel. Less cross-GPU coordination for each request, depending on model layout.</p>
+      <p><b>EP — Expert Parallel:</b> different MoE experts live on different GPUs. Tokens are dispatched to the GPUs owning the chosen experts, then results are combined.</p>
+    </details>
+  </div>
+</section>
+
+<section class="section" id="tokens">
+  <h2>5. “Per input token” vs “per output token” in real life</h2>
+  <p class="sub">There are two meanings: <b>hardware work</b> and <b>API billing</b>. They are related, but not the same.</p>
+
+  <div class="grid g2">
+    <div class="card">
+      <h3>Hardware view</h3>
+      <div class="metric"><span class="tiny">INPUT TOKEN</span><div class="v">Prefill</div><p class="small muted">Many prompt tokens can be processed in parallel. Long context increases attention/KV work.</p></div>
+      <div style="height:10px"></div>
+      <div class="metric"><span class="tiny">OUTPUT TOKEN</span><div class="v">Decode</div><p class="small muted">One new token requires another pass through the network; a single conversation generates sequentially.</p></div>
+      <div class="callout"><b>Why output often feels expensive:</b> a 300-token response means roughly 300 decode iterations, while the server has fewer opportunities for parallelism within that one user's sequence.</div>
+    </div>
+
+    <div class="card">
+      <h3>Workload calculator</h3>
+      <label class="field">INPUT TOKENS</label><input id="inTok" type="number" value="2000" min="0">
+      <label class="field">OUTPUT TOKENS</label><input id="outTok" type="number" value="300" min="0">
+      <label class="field">ASSUMED PREFILL THROUGHPUT (TOKENS/S)</label><input id="prefillRate" type="number" value="5000" min="1">
+      <label class="field">ASSUMED SINGLE-STREAM DECODE RATE (TOKENS/S)</label><input id="decodeRate" type="number" value="30" min="1">
+      <div class="grid g2" style="margin-top:12px">
+        <div class="metric"><span class="tiny">ILLUSTRATIVE PREFILL TIME</span><div class="v" id="prefillTime">0.40 s</div></div>
+        <div class="metric"><span class="tiny">ILLUSTRATIVE GENERATION TIME</span><div class="v" id="decodeTime">10.00 s</div></div>
+      </div>
+      <p class="tiny">These throughput defaults are teaching assumptions, not an H200 benchmark. Change them to measured values from your deployment.</p>
+    </div>
+  </div>
+
+  <div class="grid g2" style="margin-top:16px">
+    <div class="card">
+      <h3>Why batching changes economics</h3>
+      <p>One user at a time may leave GPU compute underused. Serving engines such as vLLM use <b>continuous batching</b>: while User A is generating, tokens from Users B/C/D can share GPU execution.</p>
+      <div class="formula">low concurrency → better individual latency, worse utilization<br>higher batching → better total tokens/s, possible latency trade-off</div>
+    </div>
+    <div class="card">
+      <h3>API billing: a separate layer</h3>
+      <p>Hosted providers usually charge by counted tokens. As of 2026‑09‑30, DeepSeek's published <b>V4.1 Flash off‑peak</b> rates are $0.15/M uncached input tokens and $0.60/M output tokens; cache-hit input is $0.003/M.</p>
+      <label class="field">CACHE-MISS INPUT TOKENS</label><input id="apiIn" type="number" value="2000" min="0">
+      <label class="field">OUTPUT TOKENS</label><input id="apiOut" type="number" value="300" min="0">
+      <div class="metric" style="margin-top:12px"><span class="tiny">OFF-PEAK EXAMPLE</span><div class="v">$<span id="apiCost">0.000480</span></div></div>
+      <p class="tiny">This is a hosted-API pricing example for the current V4.1 Flash service, not the self-hosted V3.2 hardware cost above.</p>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>Self-hosting cost per token is measured, not built into the model</h3>
+    <div class="grid g3">
+      <div><label class="field">SERVER COST / HOUR ($)</label><input id="srvCost" type="number" value="50" min="0" step=".1"></div>
+      <div><label class="field">MEASURED AGGREGATE OUTPUT TOK/S</label><input id="aggRate" type="number" value="500" min="1"></div>
+      <div class="metric"><span class="tiny">ILLUSTRATIVE $ / 1M OUTPUT TOKENS</span><div class="v">$<span id="selfCost">27.78</span></div></div>
+    </div>
+    <div class="eq">$ / 1M output tokens ≈ hourly server cost ÷ (aggregate output tok/s × 3600) × 1,000,000</div>
+    <p class="tiny">The default $50/hour and 500 tok/s are intentionally illustrative, not claims about current H200 cloud pricing or DeepSeek-V3.2 throughput. Electricity, networking, idle time, operations, capex depreciation and utilization also matter.</p>
+  </div>
+</section>
+
+<section class="section" id="bottlenecks">
+  <h2>6. What becomes the bottleneck?</h2>
+  <p class="sub">There is no single answer. Change the workload and the limiting resource moves.</p>
+
+  <div class="card">
+    <div class="scenarioButtons">
+      <button class="scBtn active" data-s="single">1 user, short prompt</button>
+      <button class="scBtn" data-s="long">1 user, huge prompt</button>
+      <button class="scBtn" data-s="many">Many concurrent users</button>
+      <button class="scBtn" data-s="pcie">Large MoE over slow links</button>
+    </div>
+    <div class="bneck"><b>VRAM capacity</b><div class="bbar"><span id="bCap" style="width:45%"></span></div><div class="score" id="sCap">medium</div></div>
+    <div class="bneck"><b>HBM bandwidth</b><div class="bbar"><span id="bMem" style="width:90%"></span></div><div class="score" id="sMem">high</div></div>
+    <div class="bneck"><b>GPU compute</b><div class="bbar"><span id="bComp" style="width:45%"></span></div><div class="score" id="sComp">medium</div></div>
+    <div class="bneck"><b>GPU↔GPU link</b><div class="bbar"><span id="bLink" style="width:65%"></span></div><div class="score" id="sLink">medium-high</div></div>
+    <div class="bneck"><b>KV cache</b><div class="bbar"><span id="bKv" style="width:25%"></span></div><div class="score" id="sKv">low</div></div>
+    <div class="callout" id="scenarioText"><b>Low-batch decode:</b> repeatedly touching model/expert weights makes memory bandwidth important. MoE also creates cross-GPU expert traffic.</div>
+  </div>
+
+  <div class="grid g3" style="margin-top:16px">
+    <div class="card"><h3>Capacity bottleneck</h3><p><b>Symptom:</b> model cannot load, or context must be tiny.</p><p class="good">Fix: more VRAM, smaller/quantized model, KV quantization/offload.</p></div>
+    <div class="card"><h3>Bandwidth bottleneck</h3><p><b>Symptom:</b> GPU compute units wait for weights/data.</p><p class="good">Fix: faster HBM, better batching/data reuse, optimized kernels.</p></div>
+    <div class="card"><h3>Interconnect bottleneck</h3><p><b>Symptom:</b> GPUs wait on other GPUs.</p><p class="good">Fix: NVLink/NVSwitch, better parallel layout, reduce communication.</p></div>
+    <div class="card"><h3>Compute bottleneck</h3><p><b>Symptom:</b> tensor cores saturated.</p><p class="good">Fix: lower precision, better kernels, more GPUs / more compute.</p></div>
+    <div class="card"><h3>KV-cache bottleneck</h3><p><b>Symptom:</b> long context or concurrency runs out of VRAM.</p><p class="good">Fix: FP8 KV cache, prefix caching, shorter contexts, more memory.</p></div>
+    <div class="card"><h3>Scheduler bottleneck</h3><p><b>Symptom:</b> poor throughput or long queues despite hardware.</p><p class="good">Fix: batching/scheduler tuning and workload-aware serving.</p></div>
+  </div>
+</section>
+
+<section class="section">
+  <h2>7. One subtle but important point: “8 GPUs” can mean two very different things</h2>
+  <div class="grid g2">
+    <div class="card">
+      <h3>Case A — one giant model spans 8 GPUs</h3>
+      <p>The GPUs must communicate during a request.</p>
+      <div class="formula">GPU 1 ⇄ GPU 2 ⇄ … ⇄ GPU 8</div>
+      <p class="warn"><b>Interconnect matters a lot.</b> Tensor/expert parallelism can exchange data repeatedly.</p>
+    </div>
+    <div class="card">
+      <h3>Case B — 8 independent model replicas</h3>
+      <p>Each GPU/server can serve different users with little coordination.</p>
+      <div class="formula">User A → GPU 1<br>User B → GPU 2<br>User C → GPU 3 …</div>
+      <p class="good"><b>Interconnect matters less</b> for the model's forward pass; capacity per replica becomes the issue.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="glossary">
+  <h2>8. Beginner glossary — “what is it physically?”</h2>
+  <p class="sub">Search a term. Each card gives the physical meaning, why it matters, and an analogy.</p>
+  <input id="termSearch" class="search" placeholder="Search: NVLink, token, KV cache, HBM, batch...">
+  <div id="terms" class="grid g3">
+    <div class="card term" data-term="gpu graphics processing unit"><h3>GPU</h3><div class="what">A massively parallel processor.</div><div class="why">Runs the matrix operations used by neural networks.</div><div class="anal">Analogy: thousands of specialized workers doing similar math together.</div></div>
+    <div class="card term" data-term="cpu central processing unit"><h3>CPU</h3><div class="what">The server's general-purpose processor.</div><div class="why">Runs OS, network, tokenizer, scheduler, storage and orchestration.</div><div class="anal">Analogy: the operations manager.</div></div>
+    <div class="card term" data-term="vram hbm gpu memory"><h3>VRAM / HBM</h3><div class="what">Memory physically close to the GPU.</div><div class="why">Holds weights, activations and KV cache at very high bandwidth.</div><div class="anal">Analogy: the GPU's workbench — nearby tools are fastest to reach.</div></div>
+    <div class="card term" data-term="ram system memory cpu"><h3>System RAM</h3><div class="what">Memory attached to the CPU.</div><div class="why">Large but far slower for GPU access than local HBM.</div><div class="anal">Analogy: warehouse across town, not the workbench.</div></div>
+    <div class="card term" data-term="pcie pci express lanes x16 bus"><h3>PCIe</h3><div class="what">A standard high-speed computer I/O bus.</div><div class="why">Connects CPU, GPU, SSD and NIC; may carry GPU peer traffic.</div><div class="anal">Analogy: the motherboard's highway system.</div></div>
+    <div class="card term" data-term="nvlink nvidia link gpu interconnect"><h3>NVLink</h3><div class="what">NVIDIA high-bandwidth interconnect.</div><div class="why">Lets cooperating GPUs exchange tensors far faster than ordinary host I/O paths.</div><div class="anal">Analogy: an express train between factories.</div></div>
+    <div class="card term" data-term="nvswitch switch fabric gpu"><h3>NVSwitch</h3><div class="what">A switching fabric connecting multiple NVLink GPUs.</div><div class="why">Enables dense many-to-many GPU communication.</div><div class="anal">Analogy: the central train interchange.</div></div>
+    <div class="card term" data-term="parameter weights billions b"><h3>Parameter</h3><div class="what">A learned numeric value in the neural network.</div><div class="why">Total parameters strongly affect model storage.</div><div class="anal">Analogy: one adjustable knob in a giant learned machine.</div></div>
+    <div class="card term" data-term="token input output tokenizer"><h3>Token</h3><div class="what">A small unit of text represented as an integer ID.</div><div class="why">Prompts and outputs are measured and processed in tokens.</div><div class="anal">Analogy: pieces on a conveyor belt.</div></div>
+    <div class="card term" data-term="inference serve serving"><h3>Inference</h3><div class="what">Running a trained model to produce outputs.</div><div class="why">This is what a production chatbot server does.</div><div class="anal">Analogy: operating the factory, not building it.</div></div>
+    <div class="card term" data-term="prefill input prompt"><h3>Prefill</h3><div class="what">Processing the input prompt before generation.</div><div class="why">Creates attention state/KV cache and the first output distribution.</div><div class="anal">Analogy: reading all the case files before answering.</div></div>
+    <div class="card term" data-term="decode output generation autoregressive"><h3>Decode</h3><div class="what">Autoregressively generating new tokens.</div><div class="why">Each next token depends on what came before.</div><div class="anal">Analogy: writing a sentence word-piece by word-piece.</div></div>
+    <div class="card term" data-term="kv cache key value attention context"><h3>KV cache</h3><div class="what">Stored attention keys/values from earlier tokens.</div><div class="why">Avoids recomputing the entire past on every output step, but consumes VRAM.</div><div class="anal">Analogy: notes kept open on the desk while continuing a conversation.</div></div>
+    <div class="card term" data-term="quantization fp8 fp16 int8 int4 precision"><h3>Quantization</h3><div class="what">Representing numbers with fewer bits.</div><div class="why">Cuts weight/cache memory and often improves speed, with possible accuracy trade-offs.</div><div class="anal">Analogy: storing measurements with fewer decimal places.</div></div>
+    <div class="card term" data-term="moe mixture experts routed expert"><h3>MoE</h3><div class="what">Mixture of Experts: many expert sub-networks, only some selected per token.</div><div class="why">Huge total capacity without executing every expert for every token.</div><div class="anal">Analogy: a hospital routes each case to selected specialists.</div></div>
+    <div class="card term" data-term="batch batching continuous batch concurrency"><h3>Batching</h3><div class="what">Executing work for multiple tokens/requests together.</div><div class="why">Improves GPU utilization and total throughput.</div><div class="anal">Analogy: a bus carries many passengers per trip.</div></div>
+    <div class="card term" data-term="latency ttft time first token"><h3>TTFT / latency</h3><div class="what">Time until the user sees the first generated token.</div><div class="why">Determines how responsive the app feels.</div><div class="anal">Analogy: time until a restaurant serves the first dish.</div></div>
+    <div class="card term" data-term="throughput tokens second tps"><h3>Throughput</h3><div class="what">Total work completed per unit time.</div><div class="why">Matters for serving many users economically.</div><div class="anal">Analogy: meals served per hour, not one diner's wait time.</div></div>
+  </div>
+</section>
+
+<section class="section">
+  <h2>9. The mental model to keep</h2>
+  <div class="card">
+    <div class="flow">
+      <div class="step"><span class="n">A</span><b>Model</b><span class="tiny">How many weights must be stored?</span></div>
+      <div class="step"><span class="n">B</span><b>VRAM</b><span class="tiny">Can weights + cache fit?</span></div>
+      <div class="step"><span class="n">C</span><b>HBM</b><span class="tiny">Can each GPU feed itself fast enough?</span></div>
+      <div class="step"><span class="n">D</span><b>Interconnect</b><span class="tiny">Can GPUs cooperate fast enough?</span></div>
+      <div class="step"><span class="n">E</span><b>Serving</b><span class="tiny">Can scheduler batch users efficiently?</span></div>
+      <div class="step"><span class="n">F</span><b>Cooling / power</b><span class="tiny">Can performance be sustained?</span></div>
+    </div>
+    <div class="callout"><b>Never accept “supports 600B inference” by itself.</b> Ask: precision? actual checkpoint size? GPU VRAM? context? concurrency? parallel strategy? TTFT? aggregate tokens/s? fully in VRAM or CPU offload?</div>
+  </div>
+</section>
+
+<section class="section">
+  <h2>Sources & verification</h2>
+  <p class="sub">Technical facts on this page were checked against primary/official documentation on 2026‑09‑30.</p>
+  <div class="card">
+    <ul class="sourceList">
+      <li><a href="https://huggingface.co/deepseek-ai/DeepSeek-V3.2" target="_blank" rel="noreferrer">DeepSeek‑V3.2 official model card</a> — architecture/model release.</li>
+      <li><a href="https://huggingface.co/deepseek-ai/DeepSeek-V3.2/blob/main/inference/config_671B_v3.2.json" target="_blank" rel="noreferrer">DeepSeek‑V3.2 official inference config</a> — 61 layers, 256 routed experts, 8 activated experts, FP8 configuration.</li>
+      <li><a href="https://recipes.vllm.ai/deepseek-ai/DeepSeek-V3.2" target="_blank" rel="noreferrer">vLLM DeepSeek‑V3.2 recipe</a> — current deployment guidance, checkpoint sizes and H200 verification.</li>
+      <li><a href="https://www.nvidia.com/en-us/data-center/h200/" target="_blank" rel="noreferrer">NVIDIA H200</a> — 141 GB HBM3e, 4.8 TB/s memory bandwidth, NVLink specifications.</li>
+      <li><a href="https://docs.nvidia.com/dgx/dgxh100-user-guide/introduction-to-dgxh100.html" target="_blank" rel="noreferrer">NVIDIA DGX H100/H200 guide</a> — 8× H200 = 1,128 GB total GPU memory; NVSwitch and networking.</li>
+      <li><a href="https://pcisig.com/sites/default/files/files/PCIe_Specification_Webinar_Rev%206_FINAL_0.pdf" target="_blank" rel="noreferrer">PCI-SIG specification webinar</a> — PCIe 5.0 ×16 bandwidth.</li>
+      <li><a href="https://docs.vllm.ai/en/stable/configuration/optimization/" target="_blank" rel="noreferrer">vLLM optimization docs</a> — KV cache and serving memory utilization.</li>
+      <li><a href="https://docs.vllm.ai/en/latest/features/quantization/quantized_kvcache/" target="_blank" rel="noreferrer">vLLM FP8 KV cache docs</a> — KV-cache quantization and memory savings.</li>
+      <li><a href="https://api-docs.deepseek.com/quick_start/pricing/" target="_blank" rel="noreferrer">DeepSeek API pricing</a> — current hosted API token pricing.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  Visual-first AI server primer • V2 • Research checked 2026‑09‑30<br>
+  Figures labeled “illustrative” are teaching examples rather than measured hardware benchmarks.
+</footer>
+</div>
+
+<script>
+document.querySelectorAll('.phaseBtn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.phaseBtn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.phase').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.phase).classList.add('active');
+  });
+});
+
+function workload(){
+  const i=+document.getElementById('inTok').value||0;
+  const o=+document.getElementById('outTok').value||0;
+  const p=Math.max(1,+document.getElementById('prefillRate').value||1);
+  const d=Math.max(1,+document.getElementById('decodeRate').value||1);
+  document.getElementById('prefillTime').textContent=(i/p).toFixed(2)+' s';
+  document.getElementById('decodeTime').textContent=(o/d).toFixed(2)+' s';
+}
+['inTok','outTok','prefillRate','decodeRate'].forEach(id=>document.getElementById(id).addEventListener('input',workload));
+
+function apiCalc(){
+  const i=+document.getElementById('apiIn').value||0;
+  const o=+document.getElementById('apiOut').value||0;
+  const cost=i/1e6*0.15 + o/1e6*0.60;
+  document.getElementById('apiCost').textContent=cost.toFixed(6);
+}
+['apiIn','apiOut'].forEach(id=>document.getElementById(id).addEventListener('input',apiCalc));
+
+function selfCalc(){
+  const c=+document.getElementById('srvCost').value||0;
+  const r=Math.max(1,+document.getElementById('aggRate').value||1);
+  document.getElementById('selfCost').textContent=(c/(r*3600)*1e6).toFixed(2);
+}
+['srvCost','aggRate'].forEach(id=>document.getElementById(id).addEventListener('input',selfCalc));
+
+const scenarios={
+  single:{vals:[45,90,45,65,25],labels:['medium','high','medium','medium-high','low'],
+    text:'<b>Low-batch decode:</b> repeatedly touching model/expert weights makes memory bandwidth important. MoE also creates cross-GPU expert traffic.'},
+  long:{vals:[70,65,90,55,88],labels:['high','medium-high','high','medium','high'],
+    text:'<b>Huge prompt:</b> prefill and attention work grow, and the long sequence consumes more KV cache. Compute and memory capacity move upward.'},
+  many:{vals:[88,90,92,82,95],labels:['high','high','very high','high','very high'],
+    text:'<b>Many users:</b> batching improves utilization but aggregate KV cache, memory bandwidth, compute and scheduling pressure all rise.'},
+  pcie:{vals:[65,70,60,100,50],labels:['medium-high','high','medium-high','critical','medium'],
+    text:'<b>Large MoE over slower links:</b> expert routing can force frequent cross-GPU transfers. GPUs may spend time waiting on communication.'}
+};
+const barIds=['bCap','bMem','bComp','bLink','bKv'], scoreIds=['sCap','sMem','sComp','sLink','sKv'];
+document.querySelectorAll('.scBtn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.scBtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+    const s=scenarios[btn.dataset.s];
+    s.vals.forEach((v,i)=>document.getElementById(barIds[i]).style.width=v+'%');
+    s.labels.forEach((v,i)=>document.getElementById(scoreIds[i]).textContent=v);
+    document.getElementById('scenarioText').innerHTML=s.text;
+  });
+});
+
+document.getElementById('termSearch').addEventListener('input',e=>{
+  const q=e.target.value.toLowerCase().trim();
+  document.querySelectorAll('.term').forEach(t=>{
+    t.style.display=(!q || (t.dataset.term+' '+t.textContent).toLowerCase().includes(q))?'block':'none';
+  });
+});
+
+workload();apiCalc();selfCalc();
+</script>
+</body>
+</html>
