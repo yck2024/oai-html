@@ -199,6 +199,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 55px;color:var(--muted);f
           <div class="gpuCard"><div class="gpuChip">GPU</div><div class="hbm"><i></i><i></i><i></i><i></i></div></div>
         </div>
       </div>
+      <p class="tiny">Schematic only: the H200 SXM modules in the eight-GPU case below mount on an HGX baseboard, not as the pictured PCIe add-in cards.</p>
     </div>
     <div class="grid">
       <div class="card"><h3>CPU</h3><p><b>Physically:</b> the normal processor. It runs Linux, networking, tokenization, the inference server, scheduling, file I/O.</p><p class="tiny">It coordinates; it is usually not where the giant model does its heavy matrix math.</p></div>
@@ -216,7 +217,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 55px;color:var(--muted);f
   <div class="grid g3">
     <div class="card">
       <div class="analogy"><div class="icon">🛣️</div><div><h3>PCIe</h3><div class="muted">The standard motherboard highway.</div></div></div>
-      <p><b>PCI Express</b> connects GPUs, SSDs, network cards and CPUs. “x16” means 16 lanes. A PCIe 5.0 ×16 link carries about <b>63 GB/s in one direction</b> after encoding overhead.</p>
+      <p><b>PCI Express</b> connects GPUs, SSDs, network cards and CPUs. “x16” means 16 lanes. A PCIe 5.0 ×16 link carries about <b>63 GB/s in each direction</b> after encoding overhead (before other protocol overhead).</p>
       <p class="tiny">GPU peer-to-peer transfers can sometimes travel over PCIe without copying through CPU memory; topology and software support matter.</p>
     </div>
     <div class="card">
@@ -235,11 +236,11 @@ footer{border-top:1px solid var(--line);padding:28px 0 55px;color:var(--muted);f
     <h3>Same H200 GPU: compare the “roads” around it</h3>
     <div class="roadGrid">
       <b>Local HBM</b><div class="speedbar"><span style="width:100%"></span><label>4.8 TB/s — GPU reading its own HBM</label></div>
-      <b>NVLink</b><div class="speedbar"><span style="width:19%"></span><label>900 GB/s bidirectional — GPU ↔ GPU</label></div>
-      <b>PCIe 5 ×16</b><div class="speedbar"><span style="width:2.65%"></span><label>~128 GB/s bidirectional (~63 GB/s each direction)</label></div>
-      <b>400 Gb network</b><div class="speedbar"><span style="width:1.05%"></span><label>50 GB/s raw line rate — server ↔ server</label></div>
+      <b>NVLink</b><div class="speedbar"><span style="width:9.4%"></span><label>~450 GB/s one way (~900 GB/s aggregate both ways)</label></div>
+      <b>PCIe 5 ×16</b><div class="speedbar"><span style="width:1.31%"></span><label>~63 GB/s one way (~126 GB/s both ways)</label></div>
+      <b>400 Gb network</b><div class="speedbar"><span style="width:1.04%"></span><label>50 GB/s raw line rate — server ↔ server</label></div>
     </div>
-    <p class="tiny">Bars compare headline bandwidth scales, not application benchmarks; protocols, directionality and workload differ.</p>
+    <p class="tiny">Bar widths use one-direction headline rates (NVLink half its 900 GB/s aggregate, assuming symmetric traffic). HBM is local memory, not a link; these are theoretical scales, not application benchmarks. The 400 Gb network is an example port, not every server's speed.</p>
   </div>
 
   <div class="card" style="margin-top:16px">
@@ -282,28 +283,29 @@ footer{border-top:1px solid var(--line);padding:28px 0 55px;color:var(--muted);f
     </div>
     <div class="card">
       <div class="tabs">
-        <button class="phaseBtn active" data-phase="prefill">Input: Prefill</button>
-        <button class="phaseBtn" data-phase="decode">Output: Decode</button>
+        <button class="phaseBtn active" data-phase="prefill" data-analytics-event="phase_select" data-analytics-label="prefill">Input: Prefill</button>
+        <button class="phaseBtn" data-phase="decode" data-analytics-event="phase_select" data-analytics-label="decode">Output: Decode</button>
       </div>
       <div id="prefill" class="phase active">
         <h3>2,000 input tokens → processed together</h3>
         <p>The server pushes a block of prompt tokens through the model. GPUs can use large matrix operations efficiently, so this phase has <b>more parallelism</b>.</p>
         <div class="formula">prompt tokens → all model layers → build KV cache → first-token logits</div>
-        <p class="muted"><b>Common pressure:</b> compute, attention work, memory capacity. Very long prompts increase work and KV-cache demand.</p>
+        <p class="muted"><b>Common pressure:</b> often compute for large prompt batches; attention work and memory capacity also matter. Very long prompts increase work and KV-cache demand.</p>
       </div>
       <div id="decode" class="phase">
         <h3>300 output tokens → 300 sequential steps</h3>
         <p>To generate output token #2, the model needs token #1. To generate #3, it needs #2. That dependency makes generation fundamentally sequential <i>within one sequence</i>.</p>
         <div class="formula">token 1 → token 2 → token 3 → … → token 300</div>
-        <p class="muted"><b>Common pressure:</b> reading model weights fast enough, GPU-to-GPU communication, and serving many sequences together efficiently.</p>
+        <p class="muted"><b>Common pressure:</b> often HBM bandwidth at low batch sizes (repeated weight reads), plus GPU-to-GPU communication; batching can shift the limit toward compute.</p>
       </div>
     </div>
   </div>
+  <div class="callout"><b>KV-cache scale (illustrative, not DeepSeek):</b> a 32-layer model with 8 KV heads × 128 values/head, at 2 bytes/value, stores 2 × 32 × 8 × 128 × 2 = 128 KiB per token (keys + values). A 2,000-token prompt takes about 250 MiB per request; each decoded token adds more. DeepSeek's MLA compresses its KV representation, so do not use this number to size V3.2.</div>
 </section>
 
 <section class="section" id="deepseek">
   <h2>4. Concrete deployment: DeepSeek‑V3.2 on 8× H200</h2>
-  <p class="sub">We use V3.2 because there is a current public vLLM deployment recipe verified on H200. This makes the example reproducible instead of hypothetical.</p>
+  <p class="sub">We use V3.2 because vLLM publishes an H100/H200 deployment recipe. Its V3-derived MoE uses 671B total parameters, about 37B active per token; V3.2 adds sparse attention on top of MLA (compressed attention state). The paper describes 128K context; the checkpoint config sets a 163,840-position limit. Actual serving limits depend on engine settings and memory.</p>
 
   <div class="grid g4">
     <div class="card"><div class="big">671B</div><p>Main-model parameters</p></div>
@@ -321,11 +323,11 @@ footer{border-top:1px solid var(--line);padding:28px 0 55px;color:var(--muted);f
     </div>
     <div class="card">
       <h3>Capacity: does the model fit?</h3>
-      <p>Current vLLM recipe lists the native FP8 V3.2 checkpoint at roughly <b>805 GB</b>.</p>
-      <div class="memoryStack"><span class="weights" style="width:71.4%">~805 GB model</span><span class="free" style="width:28.6%">~323 GB remainder</span></div>
-      <p>8× H200 = <b>8 × 141 GB = 1,128 GB HBM</b>.</p>
-      <div class="formula">1,128 GB − 805 GB ≈ 323 GB before runtime/cache details</div>
-      <p class="tiny">That 323 GB is not all “free KV cache”: runtime workspaces, allocator behavior and other buffers also consume memory.</p>
+      <p>As of 2026‑09‑30, the official V3.2 repository's native FP8 checkpoint files total about <b>690 GB on disk</b> (including scales and non-FP8 tensors). FP8 reduces weight storage versus BF16; it does not make every tensor 8-bit.</p>
+      <div class="memoryStack"><span class="weights" style="width:61.2%">~690 GB files</span><span class="free" style="width:38.8%">~438 GB difference</span></div>
+      <p>8× H200 SXM = <b>8 × 141 GB = 1,128 GB HBM</b>.</p>
+      <div class="formula">1,128 GB − ~690 GB ≈ 438 GB (rough capacity comparison only)</div>
+      <p class="tiny">Disk file size is not exact loaded VRAM usage. Each GPU must fit its own shard, KV cache, activations, runtime workspaces and buffers; 438 GB is not a guaranteed cache budget.</p>
     </div>
   </div>
 
@@ -336,8 +338,9 @@ footer{border-top:1px solid var(--line);padding:28px 0 55px;color:var(--muted);f
     <details>
       <summary>Advanced: TP, DP, EP in plain English</summary>
       <p><b>TP — Tensor Parallel:</b> several GPUs cooperate on the same matrix operation. Lots of synchronization.</p>
-      <p><b>DP — Data Parallel:</b> different request batches are handled in parallel. Less cross-GPU coordination for each request, depending on model layout.</p>
-      <p><b>EP — Expert Parallel:</b> different MoE experts live on different GPUs. Tokens are dispatched to the GPUs owning the chosen experts, then results are combined.</p>
+      <p><b>DP — Data Parallel:</b> different request batches run on separate groups, with the replicated parts on each group. Full replicas require one model copy per group; EP can distribute experts across DP ranks instead.</p>
+      <p><b>EP — Expert Parallel:</b> different MoE experts live on different GPUs. Tokens are dispatched to their experts, then results are combined.</p>
+      <p><b>PP — Pipeline Parallel:</b> different layers live on different GPUs, passing activations between stages. More stages may add latency unless requests overlap.</p>
     </details>
   </div>
 </section>
@@ -373,11 +376,12 @@ footer{border-top:1px solid var(--line);padding:28px 0 55px;color:var(--muted);f
     <div class="card">
       <h3>Why batching changes economics</h3>
       <p>One user at a time may leave GPU compute underused. Serving engines such as vLLM use <b>continuous batching</b>: while User A is generating, tokens from Users B/C/D can share GPU execution.</p>
-      <div class="formula">low concurrency → better individual latency, worse utilization<br>higher batching → better total tokens/s, possible latency trade-off</div>
+      <div class="formula">low concurrency → often lower individual latency, worse utilization<br>higher batching → often better total tokens/s, possible latency trade-off</div>
+      <p class="tiny">A request can wait for a batch or share compute with others, raising time to first token or time between tokens even while total throughput improves.</p>
     </div>
     <div class="card">
       <h3>API billing: a separate layer</h3>
-      <p>Hosted providers usually charge by counted tokens. As of 2026‑09‑30, DeepSeek's published <b>V4.1 Flash off‑peak</b> rates are $0.15/M uncached input tokens and $0.60/M output tokens; cache-hit input is $0.003/M.</p>
+      <p>Hosted providers usually charge by counted tokens. As of 2026‑09‑30, DeepSeek's published <b>V4.1 Flash off‑peak</b> rates are $0.15/M uncached input tokens and $0.60/M output tokens; cache-hit input is $0.003/M. Peak rates are double; check the live pricing page before budgeting.</p>
       <label class="field">CACHE-MISS INPUT TOKENS</label><input id="apiIn" type="number" value="2000" min="0">
       <label class="field">OUTPUT TOKENS</label><input id="apiOut" type="number" value="300" min="0">
       <div class="metric" style="margin-top:12px"><span class="tiny">OFF-PEAK EXAMPLE</span><div class="v">$<span id="apiCost">0.000480</span></div></div>
@@ -403,10 +407,10 @@ footer{border-top:1px solid var(--line);padding:28px 0 55px;color:var(--muted);f
 
   <div class="card">
     <div class="scenarioButtons">
-      <button class="scBtn active" data-s="single">1 user, short prompt</button>
-      <button class="scBtn" data-s="long">1 user, huge prompt</button>
-      <button class="scBtn" data-s="many">Many concurrent users</button>
-      <button class="scBtn" data-s="pcie">Large MoE over slow links</button>
+      <button class="scBtn active" data-s="single" data-analytics-event="scenario_select" data-analytics-label="single">1 user, short prompt</button>
+      <button class="scBtn" data-s="long" data-analytics-event="scenario_select" data-analytics-label="long">1 user, huge prompt</button>
+      <button class="scBtn" data-s="many" data-analytics-event="scenario_select" data-analytics-label="many">Many concurrent users</button>
+      <button class="scBtn" data-s="pcie" data-analytics-event="scenario_select" data-analytics-label="pcie">Large MoE over slow links</button>
     </div>
     <div class="bneck"><b>VRAM capacity</b><div class="bbar"><span id="bCap" style="width:45%"></span></div><div class="score" id="sCap">medium</div></div>
     <div class="bneck"><b>HBM bandwidth</b><div class="bbar"><span id="bMem" style="width:90%"></span></div><div class="score" id="sMem">high</div></div>
@@ -414,6 +418,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 55px;color:var(--muted);f
     <div class="bneck"><b>GPU↔GPU link</b><div class="bbar"><span id="bLink" style="width:65%"></span></div><div class="score" id="sLink">medium-high</div></div>
     <div class="bneck"><b>KV cache</b><div class="bbar"><span id="bKv" style="width:25%"></span></div><div class="score" id="sKv">low</div></div>
     <div class="callout" id="scenarioText"><b>Low-batch decode:</b> repeatedly touching model/expert weights makes memory bandwidth important. MoE also creates cross-GPU expert traffic.</div>
+    <p class="tiny">Bars are qualitative teaching illustrations, not benchmark measurements or universal rankings.</p>
   </div>
 
   <div class="grid g3" style="margin-top:16px">
@@ -421,7 +426,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 55px;color:var(--muted);f
     <div class="card"><h3>Bandwidth bottleneck</h3><p><b>Symptom:</b> GPU compute units wait for weights/data.</p><p class="good">Fix: faster HBM, better batching/data reuse, optimized kernels.</p></div>
     <div class="card"><h3>Interconnect bottleneck</h3><p><b>Symptom:</b> GPUs wait on other GPUs.</p><p class="good">Fix: NVLink/NVSwitch, better parallel layout, reduce communication.</p></div>
     <div class="card"><h3>Compute bottleneck</h3><p><b>Symptom:</b> tensor cores saturated.</p><p class="good">Fix: lower precision, better kernels, more GPUs / more compute.</p></div>
-    <div class="card"><h3>KV-cache bottleneck</h3><p><b>Symptom:</b> long context or concurrency runs out of VRAM.</p><p class="good">Fix: FP8 KV cache, prefix caching, shorter contexts, more memory.</p></div>
+    <div class="card"><h3>KV-cache bottleneck</h3><p><b>Symptom:</b> long context or concurrency runs out of VRAM.</p><p class="good">Fix: FP8 KV cache, shorter contexts, more memory; prefix caching can share repeated prefixes across requests.</p></div>
     <div class="card"><h3>Scheduler bottleneck</h3><p><b>Symptom:</b> poor throughput or long queues despite hardware.</p><p class="good">Fix: batching/scheduler tuning and workload-aware serving.</p></div>
   </div>
 </section>
@@ -436,8 +441,8 @@ footer{border-top:1px solid var(--line);padding:28px 0 55px;color:var(--muted);f
       <p class="warn"><b>Interconnect matters a lot.</b> Tensor/expert parallelism can exchange data repeatedly.</p>
     </div>
     <div class="card">
-      <h3>Case B — 8 independent model replicas</h3>
-      <p>Each GPU/server can serve different users with little coordination.</p>
+      <h3>Case B — 8 independent model replicas (if each fits)</h3>
+      <p>Each GPU/server can serve different users with little coordination. V3.2's native checkpoint does <b>not</b> fit on one 141 GB H200; this case needs a smaller model, or eight groups of enough GPUs each.</p>
       <div class="formula">User A → GPU 1<br>User B → GPU 2<br>User C → GPU 3 …</div>
       <p class="good"><b>Interconnect matters less</b> for the model's forward pass; capacity per replica becomes the issue.</p>
     </div>
@@ -487,18 +492,21 @@ footer{border-top:1px solid var(--line);padding:28px 0 55px;color:var(--muted);f
 
 <section class="section">
   <h2>Sources & verification</h2>
-  <p class="sub">Technical facts on this page were checked against primary/official documentation on 2026‑09‑30.</p>
+  <p class="sub">Technical facts checked against primary/official documentation (accessed 2026‑09‑30). Prices and deployment recipes may change; check their live pages.</p>
   <div class="card">
     <ul class="sourceList">
-      <li><a href="https://huggingface.co/deepseek-ai/DeepSeek-V3.2" target="_blank" rel="noreferrer">DeepSeek‑V3.2 official model card</a> — architecture/model release.</li>
-      <li><a href="https://huggingface.co/deepseek-ai/DeepSeek-V3.2/blob/main/inference/config_671B_v3.2.json" target="_blank" rel="noreferrer">DeepSeek‑V3.2 official inference config</a> — 61 layers, 256 routed experts, 8 activated experts, FP8 configuration.</li>
-      <li><a href="https://recipes.vllm.ai/deepseek-ai/DeepSeek-V3.2" target="_blank" rel="noreferrer">vLLM DeepSeek‑V3.2 recipe</a> — current deployment guidance, checkpoint sizes and H200 verification.</li>
-      <li><a href="https://www.nvidia.com/en-us/data-center/h200/" target="_blank" rel="noreferrer">NVIDIA H200</a> — 141 GB HBM3e, 4.8 TB/s memory bandwidth, NVLink specifications.</li>
-      <li><a href="https://docs.nvidia.com/dgx/dgxh100-user-guide/introduction-to-dgxh100.html" target="_blank" rel="noreferrer">NVIDIA DGX H100/H200 guide</a> — 8× H200 = 1,128 GB total GPU memory; NVSwitch and networking.</li>
-      <li><a href="https://pcisig.com/sites/default/files/files/PCIe_Specification_Webinar_Rev%206_FINAL_0.pdf" target="_blank" rel="noreferrer">PCI-SIG specification webinar</a> — PCIe 5.0 ×16 bandwidth.</li>
-      <li><a href="https://docs.vllm.ai/en/stable/configuration/optimization/" target="_blank" rel="noreferrer">vLLM optimization docs</a> — KV cache and serving memory utilization.</li>
-      <li><a href="https://docs.vllm.ai/en/latest/features/quantization/quantized_kvcache/" target="_blank" rel="noreferrer">vLLM FP8 KV cache docs</a> — KV-cache quantization and memory savings.</li>
-      <li><a href="https://api-docs.deepseek.com/quick_start/pricing/" target="_blank" rel="noreferrer">DeepSeek API pricing</a> — current hosted API token pricing.</li>
+      <li><a href="https://arxiv.org/html/2412.19437" target="_blank" rel="noreferrer">DeepSeek‑V3 technical report</a> — 671B total / 37B active, MLA and MoE (accessed 2026‑09‑30).</li>
+      <li><a href="https://arxiv.org/html/2512.02556" target="_blank" rel="noreferrer">DeepSeek‑V3.2 paper</a> — sparse attention and 128K context (accessed 2026‑09‑30).</li>
+      <li><a href="https://huggingface.co/deepseek-ai/DeepSeek-V3.2" target="_blank" rel="noreferrer">DeepSeek‑V3.2 official model card</a> — model release (accessed 2026‑09‑30).</li>
+      <li><a href="https://huggingface.co/deepseek-ai/DeepSeek-V3.2/blob/main/config.json" target="_blank" rel="noreferrer">DeepSeek‑V3.2 checkpoint config</a> and <a href="https://huggingface.co/deepseek-ai/DeepSeek-V3.2/blob/main/inference/config_671B_v3.2.json" target="_blank" rel="noreferrer">inference config</a> — 61 layers, 256 routed / 8 selected experts, FP8, 163,840 positions (accessed 2026‑09‑30).</li>
+      <li><a href="https://huggingface.co/api/models/deepseek-ai/DeepSeek-V3.2?blobs=true" target="_blank" rel="noreferrer">Official checkpoint file metadata</a> — sum of 163 safetensors shard sizes ≈ 690 GB on disk, not a VRAM measurement (accessed 2026‑09‑30).</li>
+      <li><a href="https://recipes.vllm.ai/deepseek-ai/DeepSeek-V3.2" target="_blank" rel="noreferrer">vLLM DeepSeek‑V3.2 recipe</a> — H100/H200 deployment, TP versus DP/EP guidance (accessed 2026‑09‑30).</li>
+      <li><a href="https://www.nvidia.com/en-us/data-center/h200/" target="_blank" rel="noreferrer">NVIDIA H200 specifications</a> and <a href="https://www.nvidia.com/en-us/data-center/h100/" target="_blank" rel="noreferrer">H100 specifications</a> — HBM capacity/bandwidth, NVLink and PCIe (accessed 2026‑09‑30).</li>
+      <li><a href="https://docs.nvidia.com/dgx/dgxh100-user-guide/introduction-to-dgxh100.html" target="_blank" rel="noreferrer">NVIDIA DGX H100/H200 guide</a> — 8× H200 = 1,128 GB aggregate GPU memory; NVSwitch topology and 400 Gb ports (accessed 2026‑09‑30).</li>
+      <li><a href="https://pcisig.com/PCIExpress/Specs/Base/_5.0_1.0" target="_blank" rel="noreferrer">PCI-SIG PCI Express 5.0 base specification</a> and <a href="https://pcisig.com/what-bit-rates-does-pcie-50-specification-support-and-how-does-it-compare-prior-pcie-generations" target="_blank" rel="noreferrer">PCI-SIG bit-rate FAQ</a> — 32 GT/s/lane/direction; ×16 × 128/130 encoding ≈ 63 GB/s/direction (accessed 2026‑09‑30).</li>
+      <li><a href="https://developer.nvidia.com/blog/mastering-llm-techniques-inference-optimization/" target="_blank" rel="noreferrer">NVIDIA inference optimization guide</a> and <a href="https://docs.vllm.ai/en/stable/configuration/optimization/" target="_blank" rel="noreferrer">vLLM optimization docs</a> — prefill/decode behavior, batching and cache pressure (accessed 2026‑09‑30).</li>
+      <li><a href="https://docs.vllm.ai/en/latest/features/quantization/quantized_kvcache/" target="_blank" rel="noreferrer">vLLM FP8 KV cache docs</a> — KV-cache precision trade-offs (accessed 2026‑09‑30).</li>
+      <li><a href="https://api-docs.deepseek.com/quick_start/pricing/" target="_blank" rel="noreferrer">DeepSeek API pricing</a> — V4.1 Flash off-peak/peak rates (accessed 2026‑09‑30).</li>
     </ul>
   </div>
 </section>
