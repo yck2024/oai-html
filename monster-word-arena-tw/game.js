@@ -59,13 +59,61 @@
     alsoAccepted: { mouth: ['tooth'] },
   };
 
-  // Which part a tap lands on, or null when it lands on no part (the clothes, the empty background). x and y are
-  // fractions of the picture; size ({ width, height } in CSS pixels) lets a small picture keep every region at least
-  // minRadiusPx wide. Where regions overlap, the nearest normalized region wins.
-  function diagramPartAt(x, y, size = null) {
+  // The animals topic's picture questions: one plain farm background with no animals in it, plus the eight animal
+  // icons the topic already uses, placed at known spots. Each row is [id, centreX, centreY, size]: the animal's icon
+  // is drawn centred there, `size` being its width as a fraction of the picture's width. Every animal's tap region
+  // comes from its row (a circle a little bigger than the icon), so the taps and the pictures cannot drift apart.
+  const FARM_SCENE = {
+    image: './images/scene-farm.webp',
+    width: 800,
+    height: 800,
+    layout: [
+      ['bird', 0.62, 0.27, 0.15],
+      ['rabbit', 0.17, 0.48, 0.18],
+      ['cat', 0.5, 0.47, 0.18],
+      ['monkey', 0.83, 0.49, 0.19],
+      ['dog', 0.29, 0.65, 0.21],
+      ['pig', 0.69, 0.65, 0.21],
+      ['elephant', 0.47, 0.85, 0.27],
+      ['fish', 0.83, 0.81, 0.17],
+    ],
+  };
+
+  // A scene in the same shape as the character diagram (image, size, minimum radius, parts made of tap regions, and
+  // the parts that also count for another), so one engine answers taps on both. `items` say where to draw each icon.
+  function sceneDiagram({ image, width, height, layout }) {
+    const parts = {};
+    layout.forEach(([id, x, y, size]) => {
+      const rx = size * 0.52;
+      parts[id] = { regions: [[x, y, rx, (rx * width) / height]] };
+    });
+    return {
+      image,
+      width,
+      height,
+      minRadiusPx: 24,
+      items: layout.map(([id, x, y, size]) => ({ id, x, y, size })),
+      parts,
+      alsoAccepted: {},
+    };
+  }
+
+  // The topics that are asked on one picture, each with its own tap regions. Every other topic offers icon choices.
+  const DIAGRAMS = {
+    face: FACE_DIAGRAM,
+    animals: sceneDiagram(FARM_SCENE),
+  };
+
+  // Which part a tap lands on, or null when it lands on no part (the clothes, the empty background, the bare
+  // meadow). x and y are fractions of the picture; size ({ width, height } in CSS pixels) lets a small picture keep
+  // every region at least minRadiusPx wide. Where regions overlap, the nearest normalized region wins. `topic` picks
+  // the picture: the character (face) unless another is named.
+  function diagramPartAt(x, y, size = null, topic = 'face') {
+    const diagram = DIAGRAMS[topic];
+    if (!diagram) return null;
     let best = null;
-    Object.entries(FACE_DIAGRAM.parts).forEach(([id, part]) => {
-      const minRadius = part.minRadiusPx || FACE_DIAGRAM.minRadiusPx;
+    Object.entries(diagram.parts).forEach(([id, part]) => {
+      const minRadius = part.minRadiusPx || diagram.minRadiusPx;
       const minX = size ? minRadius / size.width : 0;
       const minY = size ? minRadius / size.height : 0;
       part.regions.forEach(([cx, cy, rx, ry]) => {
@@ -312,13 +360,14 @@
 
   // The prompt is written above the choices, and the answer's picture only ever appears on a choice: Easy and
   // Harder show pictures alone (the word is in the question), Super adds the word back because the question is heard.
-  // A question on the character: every part is a choice (the tap regions), the same prompt and narration as the
-  // icon question, and the right answer is the named part (plus any part that counts as inside it).
+  // A question on its topic's picture (the character, or the farm): every part or animal is a choice (the tap regions),
+  // the same prompt and narration as the icon question, and the right answer is the named one (plus any part that
+  // counts as inside it).
   function diagramQuestion(question, target, words) {
     return {
       ...question,
       format: 'diagram',
-      acceptedIds: [target.id, ...(FACE_DIAGRAM.alsoAccepted[target.id] || [])],
+      acceptedIds: [target.id, ...(DIAGRAMS[question.topic].alsoAccepted[target.id] || [])],
       wordLabels: false,
       options: words.map(({ promptEn: _prompt, ...option }) => option),
     };
@@ -341,7 +390,7 @@
       answerId: target.id,
       options: shuffled([target, ...others], random).map(({ promptEn: _prompt, ...option }) => option),
     };
-    if (topic !== 'face') return question;
+    if (!DIAGRAMS[topic]) return question;
     return diagramQuestion(question, target, words);
   }
 
@@ -507,7 +556,7 @@
     return { play, stop };
   }
 
-  const api = { GOAL_BY_LEVEL, HEARTS_BY_LEVEL, CHOICE_COUNT, TOPICS, LEVELS, WORD_TOPICS, REACTIONS, FACE_DIAGRAM, diagramPartAt, createGame, createSpeechPlayer };
+  const api = { GOAL_BY_LEVEL, HEARTS_BY_LEVEL, CHOICE_COUNT, TOPICS, LEVELS, WORD_TOPICS, REACTIONS, FACE_DIAGRAM, FARM_SCENE, DIAGRAMS, diagramPartAt, createGame, createSpeechPlayer };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof window !== 'undefined') window.FriendlyArena = api;
 })();

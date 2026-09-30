@@ -98,6 +98,7 @@
     // The face topic's picture of a child: the hint under the question and the picture's accessible name.
     diagramHint: { en: 'Tap it on the picture', zh: '在圖上點一點', ja: 'えの　なかで　たっぷしてね' },
     diagramGroupLabel: { en: 'Picture of a child. Tap the part you hear.', zh: '小朋友的圖。點一點你聽到的身體部位。', ja: 'こどもの　え。きいた　ところを　たっぷしてね。' },
+    farmGroupLabel: { en: 'Picture of a farm. Tap the animal you hear.', zh: '農場的圖。點一點你聽到的動物。', ja: 'のうじょうの　え。きいた　どうぶつを　たっぷしてね。' },
     answerGroupLabelWord: { en: 'Choose a word', zh: '選一個詞', ja: 'ことばを　えらんでね' },
     answerGroupLabelNumber: { en: 'Choose a number', zh: '選一個數字', ja: 'かずを　えらんでね' },
     answerGroupLabelPicture: { en: 'Choose a picture', zh: '選一張圖', ja: 'えを　えらんでね' },
