@@ -3214,9 +3214,12 @@ test('every new body part has a region, a three-language label, an icon and a sp
     assert.equal(word.image, `./images/face-${id}.webp`);
     assert.ok(fs.existsSync(path.join(__dirname, word.image)), `${id} has its picture-choice icon`);
     assert.equal(word.promptEn, undefined);
-    assert.ok(prompts[`face-${id}`], `${id} has a prompt`);
-    assert.ok(prompts[`face-${id}`].en.includes(word.en), `${id} English prompt says the word`);
-    assert.ok(prompts[`face-${id}`].zh.includes(word.zh), `${id} Mandarin prompt says the word`);
+    for (const language of ['en', 'zh', 'ja']) {
+      const audioPath = path.join(__dirname, 'audio', language, `face-${id}.mp3`);
+      assert.ok(fs.statSync(audioPath).size > 1024, `${id} has a bundled ${language} MP3 prompt`);
+    }
+    const level = FACE_LEVEL_IDS.harder.includes(id) ? 'harder' : 'super';
+    assert.equal(diagramGame(id, level).getState().question.audioId, `face-${id}`, `${id} question selects its prompt audio`);
     const { regions } = FACE_DIAGRAM.parts[id];
     regions.forEach(([cx, cy, rx, ry], index) => {
       assert.ok(cx - rx >= -0.001 && cx + rx <= 1.001 && cy - ry >= 0 && cy + ry <= 1.001, `${id} region ${index + 1} stays on the picture`);
