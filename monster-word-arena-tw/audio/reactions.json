@@ -53,5 +53,15 @@
     "en": "Great win! That is all the stickers for today. Come back tomorrow for more!",
     "zh": "你贏了！今天的貼紙都拿完了，明天再來拿更多！",
     "ja": "やったね！きょうのシールは、ぜんぶもらったよ。あしたもまたきてね！"
+  },
+  "reaction-last-heart": {
+    "en": "Careful! Only one heart left.",
+    "zh": "小心喔！只剩一顆愛心了。",
+    "ja": "きをつけてね！ハートは、あとひとつだよ。"
+  },
+  "reaction-round-lost": {
+    "en": "Oh no, no hearts left! Let's try again, and listen closely.",
+    "zh": "哎呀，愛心用完了！我們再試一次，這次要仔細聽喔。",
+    "ja": "あれれ、ハートがなくなっちゃった！もういちど、よくきいてやってみよう。"
   }
 }
