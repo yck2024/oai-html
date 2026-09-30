@@ -3245,6 +3245,11 @@ test('regions at the body\'s edges fit the parts they name, not the clothes arou
   assert.equal(at(0.5, 0.48), 'neck', 'the strip above the collar is the neck');
   assert.equal(at(0.4, 0.74), 'legs', 'the leg under the shorts is the leg');
   assert.equal(at(0.4, 0.86), 'knees', 'the leg just above the foot is the knee');
+  // Japanese legs are ふともも (the thigh): the legs' regions are the upper leg, above the knees' and on the shorts.
+  FACE_DIAGRAM.parts.legs.regions.forEach(([, cy], index) => {
+    const [, kneeY] = FACE_DIAGRAM.parts.knees.regions[index];
+    assert.ok(cy < kneeY - 0.05 && cy >= 0.7 && cy < 0.8, `legs region ${index + 1} is centred on the upper leg`);
+  });
   assert.equal(at(0.35, 0.375), 'cheeks', 'the blush is the cheek');
   assert.equal(at(0.5, 0.22), 'head', 'the forehead is the head, not the hair');
   assert.equal(at(0.5, 0.15), 'hair', 'the fringe stays the hair');
