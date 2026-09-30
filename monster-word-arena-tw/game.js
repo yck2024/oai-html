@@ -314,15 +314,6 @@
 
   // The prompt is written above the choices, and the answer's picture only ever appears on a choice: Easy and
   // Harder show pictures alone (the word is in the question), Super adds the word back because the question is heard.
-  // Face questions alternate between the picture of the character and the usual picture choices, so the same kind
-  // never comes up twice in a row; the first kind is a coin flip.
-  function faceFormat(random, recentKinds) {
-    const latest = recentKinds[recentKinds.length - 1];
-    if (latest === 'diagram') return 'icons';
-    if (latest === 'icons') return 'diagram';
-    return random() < 0.5 ? 'diagram' : 'icons';
-  }
-
   // A question on the character: every part is a choice (the tap regions), the same prompt and narration as the
   // icon question, and the right answer is the named part (plus any part that counts as inside it).
   function diagramQuestion(question, target, words) {
@@ -335,7 +326,7 @@
     };
   }
 
-  function wordQuestion(topic, level, random, previousKey, recentKinds = []) {
+  function wordQuestion(topic, level, random, previousKey) {
     const { words, promptZh, promptEn, promptJa } = WORD_TOPICS[topic];
     const target = pickFresh(words, random, previousKey, word => `${topic}-${word.id}`);
     const others = shuffled(words.filter(word => word !== target), random).slice(0, CHOICE_COUNT[level] - 1);
@@ -353,12 +344,12 @@
       options: shuffled([target, ...others], random).map(({ promptEn: _prompt, ...option }) => option),
     };
     if (topic !== 'face') return question;
-    return faceFormat(random, recentKinds) === 'diagram' ? diagramQuestion(question, target, words) : { ...question, format: 'icons' };
+    return diagramQuestion(question, target, words);
   }
 
   function questionFor(topic, level, random, previousKey, recentOps) {
     if (topic === 'math') return mathQuestion(level, random, previousKey, recentOps);
-    if (WORD_TOPICS[topic]) return wordQuestion(topic, level, random, previousKey, recentOps);
+    if (WORD_TOPICS[topic]) return wordQuestion(topic, level, random, previousKey);
     throw new Error(`Unknown topic: ${topic}`);
   }
 
@@ -370,8 +361,7 @@
     // topic's picture and icon questions keep taking turns.
     function drawQuestion(topic, level, previousKey, recentOps = []) {
       const question = questionFor(topic, level, random, previousKey, recentOps);
-      const kind = question.op || question.format;
-      return { question, recentOps: kind ? [...recentOps, kind].slice(-2) : [] };
+      return { question, recentOps: question.op ? [...recentOps, question.op].slice(-2) : [] };
     }
 
     let state = {

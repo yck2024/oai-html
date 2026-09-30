@@ -70,10 +70,8 @@ print(json.dumps({'scripts': parser.sources, 'roots': parser.roots}))
 `], { cwd: __dirname, encoding: 'utf8' }));
 const PAGE_SCRIPTS = PAGE.scripts;
 
-// The face topic alternates a picture of the character with icon choices; tests about icon choices want the latter.
-function drawIconQuestion(game, topic) {
+function drawWordQuestion(game, topic) {
   game.chooseTopic(topic);
-  if (game.getState().question.format === 'diagram') game.chooseTopic(topic);
   return game.getState().question;
 }
 
@@ -628,11 +626,11 @@ test('a word question never shows its answer\'s picture, and only Super adds wor
     for (const level of LEVELS) {
       game.chooseLevel(level);
       for (const topic of WORD_TOPIC_IDS) {
-        const question = drawIconQuestion(game, topic);
+        const question = drawWordQuestion(game, topic);
         assert.equal(question.picture, '', `${level} ${topic} shows no picture with the question`);
         assert.equal(question.pictureImage, undefined);
         assert.equal(question.pictureSwatch, undefined);
-        assert.equal(question.wordLabels, level === 'super', `${level} ${topic} labels its choices only at super`);
+        assert.equal(question.wordLabels, topic === 'face' ? false : level === 'super', `${level} ${topic} labels its choices correctly`);
         assert.ok(question.options.every(option => option.icon || option.swatch), 'every choice has a picture or swatch to show');
       }
     }
@@ -1565,12 +1563,9 @@ test('word choices are picture-only where the question shows the word, keep an a
   const game = createGame(steadyRandom);
   const app = createAppFixture(game);
   const questionPicture = app.elements.get('#questionPicture');
-  app.topicTabs.find(tab => tab.dataset.topic === 'face').click();
-  // Face questions alternate; this test is about the icon choices.
-  if (game.getState().question.format === 'diagram') app.topicTabs.find(tab => tab.dataset.topic === 'face').click();
+  app.topicTabs.find(tab => tab.dataset.topic === 'family').click();
 
   const { question } = game.getState();
-  assert.equal(question.format, 'icons');
   assert.equal(questionPicture.hidden, true, 'the easy question shows no picture, only the written prompt');
   assert.equal(questionPicture.children.length, 0);
   assert.equal(app.elements.get('#questionPrompt').hidden, false);
@@ -1605,8 +1600,13 @@ test('picture-only choices apply at easy and harder for every word topic, and su
     app.levelButtons.find(button => button.dataset.level === level).click();
     for (const topic of WORD_TOPIC_IDS) {
       app.topicTabs.find(tab => tab.dataset.topic === topic).click();
-      if (game.getState().question.format === 'diagram') app.topicTabs.find(tab => tab.dataset.topic === topic).click();
       const { question } = game.getState();
+      if (topic === 'face') {
+        assert.equal(question.format, 'diagram', `${level} face uses the character diagram`);
+        assert.equal(app.elements.get('#faceDiagram').hidden, false);
+        assert.equal(app.answerOptions.children.length, 0);
+        continue;
+      }
       for (const button of app.answerOptions.children) {
         const option = question.options.find(choice => choice.id === button.dataset.choice);
         const word = topic === 'colors' && level === 'super' ? option.en.toLowerCase() : option.en;
@@ -3041,8 +3041,7 @@ test('effects and music duck under narration without touching the speech clip', 
 
 // ---- Face topic: the picture of the character ----
 
-// A face game whose current question is a picture of the character asking for `target` (the coin flip and the
-// alternation are steered by drawing questions until one fits).
+// A face game whose current question is a picture of the character asking for `target`.
 function diagramGame(target, level = 'easy') {
   for (let seed = 1; seed < 400; seed += 1) {
     const game = createGame(seededRandom(seed));
@@ -3063,21 +3062,34 @@ function centreOf(part, index = 0) {
   return [cx, cy];
 }
 
-test('face questions alternate between the picture of the character and the icon choices', () => {
-  const game = createGame(seededRandom(5));
-  game.chooseLevel('super');
-  game.chooseTopic('face');
-  const kinds = [game.getState().question.format];
-  for (let draw = 0; draw < GOAL_BY_LEVEL.super - 1; draw += 1) {
-    assert.equal(game.answer(game.getState().question.answerId), 'correct');
-    game.nextQuestion();
-    kinds.push(game.getState().question.format);
+test('every face question at every level uses the character diagram', () => {
+  for (const level of LEVELS) {
+    const game = createGame(seededRandom(5));
+    game.chooseLevel(level);
+    game.chooseTopic('face');
+    for (let draw = 0; draw < GOAL_BY_LEVEL[level]; draw += 1) {
+      assert.equal(game.getState().question.format, 'diagram', `${level} question ${draw + 1}`);
+      assert.equal(game.answer(game.getState().question.answerId), draw + 1 === GOAL_BY_LEVEL[level] ? 'finished' : 'correct');
+      if (draw + 1 < GOAL_BY_LEVEL[level]) game.nextQuestion();
+    }
   }
-  assert.ok(kinds.every(kind => kind === 'diagram' || kind === 'icons'));
-  kinds.slice(1).forEach((kind, index) => assert.notEqual(kind, kinds[index], 'the same kind never comes up twice in a row'));
   const other = createGame(seededRandom(5));
   other.chooseTopic('colors');
   assert.equal(other.getState().question.format, undefined, 'only the face topic has a picture of the character');
+});
+
+test('a failed diagram image falls back to picture choices for the face question', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  app.topicTabs.find(tab => tab.dataset.topic === 'face').click();
+  assert.equal(app.elements.get('#faceDiagram').hidden, false);
+
+  app.elements.get('#diagramArt').dispatch('error');
+
+  assert.equal(app.elements.get('#faceDiagram').hidden, true);
+  assert.equal(app.answerOptions.hidden, false);
+  assert.equal(app.answerOptions.children.length, WORD_TOPICS.face.words.length);
+  assert.equal(game.getState().question.format, 'diagram', 'the fallback is a rendering path, not an alternating question format');
 });
 
 test('a picture question offers every body part as a tap region and shows no label with the question', () => {
