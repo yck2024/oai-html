@@ -2440,6 +2440,9 @@ test('Start over or changing level after a miss immediately shows the loss witho
     assert.equal(game.getState().level, 'easy');
     assert.equal(app.elements.get('#lostPanel').hidden, false, 'the lost-match card appears immediately');
     assert.equal(app.elements.get('#questionPanel').hidden, true);
+    const heartPips = app.elements.get('#heartPips').children;
+    assert.ok(heartPips.every(pip => pip.classList.contains('spent')), `${abandon}: all header hearts show empty after the match is lost`);
+    assert.equal(app.elements.get('#heartMeter').attributes['aria-label'], I18N.heartsAria(0, HEARTS_BY_LEVEL.easy, 'en'));
     assert.ok(app.topicTabs.every(tab => tab.disabled) && app.levelButtons.every(button => !button.disabled));
     app.elements.get('#tryAgainButton').click();
     assert.equal(game.getState().hearts, HEARTS_BY_LEVEL.easy);
