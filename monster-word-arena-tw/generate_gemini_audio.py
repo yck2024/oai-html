@@ -64,11 +64,15 @@ LANGUAGES = {
 # Taiwan Mandarin family term and gives the intended jiějie pronunciation.
 # 貓 was read with a rising máo; the 猫 form keeps the dictionary's level māo.
 # Japanese くち and パイナップル were misread; kanji spellings keep them clear.
+# Likewise くび was heard as お月さま, ふともも as ふたもも and かた stayed ambiguous, so those three use kanji.
 PRONUNCIATION_OVERRIDES = {
     ("zh", "family-sister"): "誰是姐姐？",
     ("zh", "animals-cat"): "小猫在哪裡？",
     ("ja", "face-mouth"): "お口を見つけてね！",
     ("ja", "fruit-pineapple"): "パイナップルを見つけてね！",
+    ("ja", "face-neck"): "首を見つけてね！",
+    ("ja", "face-shoulders"): "肩を見つけてね！",
+    ("ja", "face-legs"): "太ももを見つけてね！",
 }
 
 
