@@ -250,14 +250,15 @@
     if (heartPips.children.length !== state.maxHearts) {
       heartPips.replaceChildren(...Array.from({ length: state.maxHearts }, () => document.createElement('span')));
     }
+    const hearts = state.lost ? 0 : state.hearts;
     [...heartPips.children].forEach((pip, index) => {
-      const spent = index >= state.hearts;
+      const spent = index >= hearts;
       pip.textContent = spent ? '♡' : '♥';
       pip.classList.toggle('spent', spent);
-      pip.classList.toggle('just-lost', state.heartLost && index === state.hearts);
+      pip.classList.toggle('just-lost', !state.lost && state.heartLost && index === hearts);
     });
-    heartPips.classList.toggle('last-heart', state.hearts === 1);
-    heartMeter.setAttribute('aria-label', I18N.heartsAria(state.hearts, state.maxHearts, textLanguage));
+    heartPips.classList.toggle('last-heart', hearts === 1);
+    heartMeter.setAttribute('aria-label', I18N.heartsAria(hearts, state.maxHearts, textLanguage));
   }
 
   // A small "♥ −1" floats up beside the hearts each time a wrong tap takes one.
