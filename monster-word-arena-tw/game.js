@@ -5,8 +5,10 @@
   const GOAL_BY_LEVEL = { easy: 3, harder: 5, super: 10 };
   const CHOICE_COUNT = { easy: 3, harder: 4, super: 4 };
   const TOPICS = ['math', 'colors', 'face', 'family', 'animals', 'fruit', 'vegetables', 'flowers', 'vehicles', 'weather'];
-  // Easy shows a picture with three choices. Harder hides the picture and shows the written word instead, with four choices.
-  // Super is listening-only (no picture, no written word) with four choices; it falls back to the written word if sound is off.
+  // Word questions never show the answer's picture next to the answer's picture. Easy shows only the written prompt
+  // and offers three picture-only choices. Harder shows the written word and four picture-only choices.
+  // Super is listening-only (no picture, no written word) with four picture-and-word choices; it falls back to the
+  // written word if sound is off.
   const LEVELS = ['easy', 'harder', 'super'];
   const COLORS = [
     { id: 'red', zh: '紅色', en: 'RED', ja: 'あかいろ', icon: '🔴', swatch: '#f76f68' },
@@ -108,42 +110,53 @@
   const REACTIONS = {
     praise: ['reaction-praise-1', 'reaction-praise-2'],
     'try-again': ['reaction-try-again-1', 'reaction-try-again-2'],
+    // Spoken after a win that earned no sticker today: which way to go for the next one.
+    'cap-harder-or-language': ['reaction-cap-harder-or-language'],
+    'cap-harder': ['reaction-cap-harder'],
+    'cap-language': ['reaction-cap-language'],
+    'cap-tomorrow': ['reaction-cap-tomorrow'],
     finish: ['reaction-finish-1'],
     'break-prompt': ['reaction-break-prompt-1'],
     'break-goodbye': ['reaction-break-goodbye-1'],
   };
-  const ADDITION = [
-    { left: 1, right: 1 },
-    { left: 1, right: 2 },
-    { left: 2, right: 2 },
-    { left: 2, right: 1 },
-    { left: 3, right: 1 },
-  ];
-  const HARDER_ADDITION = [
-    { left: 3, right: 3 },
-    { left: 4, right: 2 },
-    { left: 5, right: 2 },
-    { left: 3, right: 4 },
-    { left: 4, right: 4 },
-    { left: 5, right: 3 },
-    { left: 6, right: 3 },
-    { left: 4, right: 5 },
-    { left: 5, right: 5 },
-    { left: 6, right: 4 },
-  ];
+  const EGG = '🥚';
+  // The biggest answer any math question or choice can show.
+  const MAX_ANSWER = 10;
   const COUNTING = [5, 6, 7, 8, 9, 10];
-  const sumProblem = sum => ({ ...sum, key: `math-${sum.left}-${sum.right}`, audioId: `math-${sum.left}-${sum.right}` });
+  // Sums and take-aways are generated from a rule, so the pools stay large and every entry has a narration clip.
+  function additions(keep) {
+    const found = [];
+    for (let left = 1; left <= 9; left += 1) {
+      for (let right = 1; right <= 9; right += 1) if (keep(left, right)) found.push({ left, right });
+    }
+    return found;
+  }
+  function takeAways(keep) {
+    const found = [];
+    for (let from = 1; from <= MAX_ANSWER; from += 1) {
+      for (let take = 1; take <= from; take += 1) if (keep(from, take)) found.push({ from, take });
+    }
+    return found;
+  }
+  // Easy stays within five (answers 0-5); take-aways may remove every egg, so 0 is a real answer.
+  const EASY_ADDITION = additions((left, right) => left + right <= 5);
+  const EASY_TAKE_AWAY = takeAways(from => from >= 2 && from <= 5);
+  // Harder stays within ten. Addition leans on a left number that is not far below the right one.
+  const HARDER_ADDITION = additions((left, right) => left + right >= 5 && left + right <= 10 && left >= right - 1);
+  const HARDER_TAKE_AWAY = takeAways((from, take) => (from >= 6 && take <= 5 && take < from) || (take === from && (from === 7 || from === 10)));
+  const sumProblem = ({ left, right }) => ({ op: 'add', left, right, answer: left + right, key: `math-${left}-${right}`, audioId: `math-${left}-${right}` });
+  const takeAwayProblem = ({ from, take }) => ({ op: 'take', from, take, answer: from - take, key: `math-take-${from}-${take}`, audioId: `math-take-${from}-${take}` });
   const MATH_PROBLEMS = {
-    easy: ADDITION.map(sumProblem),
+    easy: [...EASY_ADDITION.map(sumProblem), ...EASY_TAKE_AWAY.map(takeAwayProblem)],
     // Every counting question shares one spoken prompt, so the clip never gives the answer away.
     harder: [
-      ...COUNTING.map(count => ({ count, key: `math-count-${count}`, audioId: 'math-count' })),
+      ...COUNTING.map(count => ({ op: 'count', count, answer: count, key: `math-count-${count}`, audioId: 'math-count' })),
       ...HARDER_ADDITION.map(sumProblem),
+      ...HARDER_TAKE_AWAY.map(takeAwayProblem),
     ],
     // Super math keeps the equation on screen (no picture): the challenge is the sum, not reading it.
-    super: HARDER_ADDITION.map(sumProblem),
+    super: [...HARDER_ADDITION.map(sumProblem), ...HARDER_TAKE_AWAY.map(takeAwayProblem)],
   };
-  const EGG = '🥚';
 
   function shuffled(items, random) {
     const result = [...items];
@@ -168,40 +181,77 @@
     return groups.join(' ');
   }
 
-  function numberOptions(answer, level, random) {
-    if (level === 'easy') return [answer - 1, answer, answer + 1];
+  function wrongOperationResult(problem) {
+    if (problem.op === 'add') return Math.abs(problem.left - problem.right);
+    if (problem.op === 'take') return problem.from + problem.take;
+    return null;
+  }
+
+  // Easy offers the answer and its closest neighbours (never below 0). Harder and Super mix nearby numbers with,
+  // half the time, the number a wrong operation would give (for example the sum on a take-away question).
+  function numberOptions(problem, level, random) {
+    const { answer } = problem;
+    const others = CHOICE_COUNT[level] - 1;
+    const inRange = value => value >= 0 && value <= MAX_ANSWER && value !== answer;
+    if (level === 'easy') {
+      const neighbours = [];
+      for (let distance = 1; neighbours.length < others; distance += 1) {
+        [answer - distance, answer + distance].filter(inRange).forEach(value => {
+          if (neighbours.length < others) neighbours.push(value);
+        });
+      }
+      return [answer, ...neighbours];
+    }
+    const mixedUp = wrongOperationResult(problem);
+    const chosen = [];
+    if (mixedUp !== null && inRange(mixedUp) && random() < 0.5) chosen.push(mixedUp);
     let nearby = [];
-    for (let distance = 2; nearby.length < CHOICE_COUNT[level] - 1; distance += 1) {
+    for (let distance = 2; nearby.length < others; distance += 1) {
       nearby = [];
-      for (let value = Math.max(1, answer - distance); value <= Math.min(10, answer + distance); value += 1) {
-        if (value !== answer) nearby.push(value);
+      for (let value = answer - distance; value <= answer + distance; value += 1) {
+        if (inRange(value) && !chosen.includes(value)) nearby.push(value);
       }
     }
-    return [answer, ...shuffled(nearby, random).slice(0, CHOICE_COUNT[level] - 1)];
+    return [answer, ...chosen, ...shuffled(nearby, random).slice(0, others - chosen.length)];
+  }
+
+  function mathPrompts(problem) {
+    if (problem.op === 'count') return { promptZh: '數一數，有幾顆蛋？', promptEn: 'How many eggs? Let’s count!', promptJa: 'たまごはいくつあるかな？かぞえてみよう！' };
+    if (problem.op === 'take') return { promptZh: '還剩下多少？', promptEn: 'How many are left?', promptJa: 'のこりはいくつかな？' };
+    return { promptZh: '加起來有多少？', promptEn: 'How many altogether?', promptJa: 'ぜんぶでいくつかな？' };
+  }
+
+  function mathPicture(problem, level) {
+    // Super keeps the equation but drops the countable egg picture, so it stays a sum, not a count.
+    if (level === 'super') return { picture: '', takeAway: null };
+    if (problem.op === 'count') return { picture: eggs(problem.count), takeAway: null };
+    // Take-aways show every egg, with the ones being removed marked so the rest can still be counted.
+    if (problem.op === 'take') return { picture: eggs(problem.from), takeAway: { total: problem.from, taken: problem.take } };
+    return { picture: `${EGG.repeat(problem.left)}  +  ${EGG.repeat(problem.right)}`, takeAway: null };
   }
 
   function mathQuestion(level, random, previousKey) {
     const problem = pickFresh(MATH_PROBLEMS[level], random, previousKey, item => item.key);
-    const counting = problem.count !== undefined;
-    const answer = counting ? problem.count : problem.left + problem.right;
+    const equation = { add: `${problem.left} + ${problem.right} = ?`, take: `${problem.from} − ${problem.take} = ?`, count: '' }[problem.op];
+    const { picture, takeAway } = mathPicture(problem, level);
     return {
       topic: 'math',
       key: problem.key,
       audioId: problem.audioId,
-      promptZh: counting ? '數一數，有幾顆蛋？' : '加起來有多少？',
-      promptEn: counting ? 'How many eggs? Let’s count!' : 'How many altogether?',
-      promptJa: counting ? 'たまごはいくつあるかな？かぞえてみよう！' : 'ぜんぶでいくつかな？',
-      display: counting ? '' : `${problem.left} + ${problem.right} = ?`,
-      // Super keeps the equation but drops the countable egg picture, so it stays a sum, not a count.
-      picture: level === 'super' ? '' : (counting ? eggs(problem.count) : `${EGG.repeat(problem.left)}  +  ${EGG.repeat(problem.right)}`),
+      ...mathPrompts(problem),
+      display: equation,
+      picture,
+      takeAway,
       dense: level === 'harder',
-      answerId: String(answer),
-      options: shuffled(numberOptions(answer, level, random).map(value => ({
+      answerId: String(problem.answer),
+      options: shuffled(numberOptions(problem, level, random).map(value => ({
         id: String(value), zh: String(value), en: String(value), ja: String(value), icon: '⭐',
       })), random),
     };
   }
 
+  // The prompt is written above the choices, and the answer's picture only ever appears on a choice: Easy and
+  // Harder show pictures alone (the word is in the question), Super adds the word back because the question is heard.
   function wordQuestion(topic, level, random, previousKey) {
     const { words, promptZh, promptEn, promptJa } = WORD_TOPICS[topic];
     const target = pickFresh(words, random, previousKey, word => `${topic}-${word.id}`);
@@ -214,9 +264,8 @@
       promptEn: target.promptEn || promptEn(target),
       promptJa: promptJa(target),
       display: '',
-      picture: target.icon,
-      pictureImage: target.image,
-      pictureSwatch: target.swatch,
+      picture: '',
+      wordLabels: level === 'super',
       answerId: target.id,
       options: shuffled([target, ...others], random).map(({ promptEn: _prompt, ...option }) => option),
     };
@@ -228,15 +277,17 @@
     throw new Error(`Unknown topic: ${topic}`);
   }
 
+  // A question that has not been answered yet: not solved, not missed, no star lost.
+  const OPEN_QUESTION = { solved: false, missed: false, missedChoice: '', starLost: false, feedback: '' };
+
   function createGame(random = Math.random) {
     let state = {
       topic: 'math',
       level: 'easy',
       champion: 'dino',
       stars: 0,
-      solved: false,
       finished: false,
-      feedback: '',
+      ...OPEN_QUESTION,
       question: questionFor('math', 'easy', random),
     };
 
@@ -251,13 +302,13 @@
 
     function chooseTopic(topic) {
       if (state.finished || !TOPICS.includes(topic)) return false;
-      state = { ...state, topic, solved: false, feedback: '', question: questionFor(topic, state.level, random, state.question.key) };
+      state = { ...state, topic, ...OPEN_QUESTION, question: questionFor(topic, state.level, random, state.question.key) };
       return true;
     }
 
     function chooseLevel(level) {
       if (state.finished || level === state.level || !LEVELS.includes(level)) return false;
-      state = { ...state, level, stars: 0, solved: false, feedback: '', question: questionFor(state.topic, level, random, state.question.key) };
+      state = { ...state, level, stars: 0, ...OPEN_QUESTION, question: questionFor(state.topic, level, random, state.question.key) };
       return true;
     }
 
@@ -267,12 +318,16 @@
       return true;
     }
 
+    // The first tap settles the question. A wrong tap ends it (no second try on the same question) and takes one
+    // star from the current match, never below zero; collected stickers are never touched. Guessing at random
+    // therefore loses ground on average at every level, while a player who knows most answers still moves ahead.
     function answer(optionId) {
-      if (state.finished || state.solved) return 'ignored';
+      if (state.finished || state.solved || state.missed) return 'ignored';
       if (!state.question.options.some(option => option.id === String(optionId))) return 'ignored';
       if (String(optionId) !== state.question.answerId) {
-        state = { ...state, feedback: 'try-again' };
-        return 'try-again';
+        const stars = Math.max(0, state.stars - 1);
+        state = { ...state, stars, missed: true, missedChoice: String(optionId), starLost: stars < state.stars, feedback: 'missed' };
+        return 'missed';
       }
       const stars = state.stars + 1;
       const finished = stars >= GOAL_BY_LEVEL[state.level];
@@ -280,9 +335,10 @@
       return finished ? 'finished' : 'correct';
     }
 
+    // After a right answer, or after a miss has been shown, a fresh question (never the same one) takes over.
     function nextQuestion() {
-      if (!state.solved || state.finished) return false;
-      state = { ...state, solved: false, feedback: '', question: questionFor(state.topic, state.level, random, state.question.key) };
+      if (!(state.solved || state.missed) || state.finished) return false;
+      state = { ...state, ...OPEN_QUESTION, question: questionFor(state.topic, state.level, random, state.question.key) };
       return true;
     }
 
@@ -292,9 +348,8 @@
         ...state,
         level: nextLevel,
         stars: 0,
-        solved: false,
         finished: false,
-        feedback: '',
+        ...OPEN_QUESTION,
         question: questionFor(state.topic, nextLevel, random, state.question.key),
       };
       return getState();

@@ -185,6 +185,8 @@
 
   function playCurrentQuestion() {
     const state = game.getState();
+    // While a missed question waits to be replaced, its narration (and the reaction) is left alone.
+    if (state.missed) return;
     reactionPlaying = false;
     if (!speechEnabled || speechMuted || state.finished) {
       speechPlayer.stop();
@@ -243,6 +245,8 @@
     [...scoreStars.children].forEach((star, index) => {
       star.textContent = index < state.stars ? '★' : '☆';
       star.classList.toggle('earned', index < state.stars);
+      // The star a wrong tap just took back gives a small shake before the next question arrives.
+      star.classList.toggle('just-lost', state.starLost && index === state.stars);
     });
     scoreCount.textContent = `${state.stars} / ${state.goal}`;
     [...rivalPower.children].forEach((pip, index) => {
@@ -295,16 +299,22 @@
     button.className = 'answer-option';
     button.dataset.choice = option.id;
     button.addEventListener('click', () => chooseAnswer(button, option.id));
+    // Where the question already shows the word, a choice is only a picture (or colour), so it cannot be
+    // matched by comparing letters. The word stays as the button's accessible name for screen readers.
+    const pictureOnly = question.topic !== 'math' && !question.wordLabels;
 
     if (question.topic === 'colors') {
       const swatch = document.createElement('span');
-      swatch.className = 'color-swatch';
+      swatch.className = pictureOnly ? 'color-swatch answer-swatch' : 'color-swatch';
       swatch.style.backgroundColor = option.swatch;
       swatch.setAttribute('aria-hidden', 'true');
-      const label = document.createElement('span');
-      label.className = 'color-label';
-      label.textContent = textLanguage === 'en' ? option.en.toLowerCase() : option[textLanguage];
-      button.append(swatch, label);
+      button.append(swatch);
+      if (!pictureOnly) {
+        const label = document.createElement('span');
+        label.className = 'color-label';
+        label.textContent = textLanguage === 'en' ? option.en.toLowerCase() : option[textLanguage];
+        button.append(label);
+      }
     } else if (question.topic === 'math') {
       const number = document.createElement('span');
       number.className = 'number-choice';
@@ -315,12 +325,32 @@
       icon.className = 'answer-icon';
       showArt(icon, option.image, option.icon, wordLabel(option));
       icon.setAttribute('aria-hidden', 'true');
-      const label = document.createElement('span');
-      label.className = 'answer-label';
-      label.textContent = option[textLanguage];
-      button.append(icon, label);
+      button.append(icon);
+      if (!pictureOnly) {
+        const label = document.createElement('span');
+        label.className = 'answer-label';
+        label.textContent = option[textLanguage];
+        button.append(label);
+      }
+    }
+    if (pictureOnly) {
+      button.classList.add('picture-only');
+      button.setAttribute('aria-label', option[textLanguage]);
     }
     return button;
+  }
+
+  // A take-away picture shows every egg; the ones being taken away are faded and crossed out, so the eggs
+  // that are left can still be counted. Eggs sit in groups of five, like the plain counting pictures.
+  function takeAwayEggs(total, taken) {
+    return Array.from({ length: total }, (_unused, index) => {
+      const egg = document.createElement('span');
+      egg.className = 'egg';
+      egg.classList.toggle('egg-taken', index >= total - taken);
+      egg.classList.toggle('egg-group-end', (index + 1) % 5 === 0 && index + 1 < total);
+      egg.textContent = '🥚';
+      return egg;
+    });
   }
 
   function capitalize(value) {
@@ -331,11 +361,32 @@
     return question.options.find(option => option.id === question.answerId);
   }
 
+  // A missed question stays on screen, with its right choice marked, until the pause is over.
+  const MISS_PAUSE_MS = { withSound: 3400, quiet: 2000 };
+  let missTimer = null;
+
+  function cancelMissTimer() {
+    if (missTimer === null) return;
+    clearTimeout(missTimer);
+    missTimer = null;
+  }
+
+  function markMiss(state) {
+    [...answerOptions.children].forEach(choice => {
+      choice.disabled = true;
+      choice.classList.toggle('right-answer', choice.dataset.choice === state.question.answerId);
+      choice.classList.toggle('wrong-answer', choice.dataset.choice === state.missedChoice);
+    });
+  }
+
+  function missFeedback(state) {
+    return (state.starLost ? I18N.STRINGS.feedbackMiss : I18N.STRINGS.feedbackMissNoStar)[textLanguage];
+  }
+
   function renderQuestion(state, { speak = true } = {}) {
     const question = state.question;
     const isWordTopic = question.topic !== 'math';
     const target = isWordTopic ? currentTarget(question) : null;
-    const showPicture = !isWordTopic || state.level === 'easy';
     const showWord = isWordTopic && (state.level === 'harder' || (state.level === 'super' && soundIsOff()));
     const showGenericPrompt = isWordTopic && state.level === 'super' && !soundIsOff();
     const hideSentence = isWordTopic && state.level !== 'easy';
@@ -348,31 +399,27 @@
     questionWord.textContent = showWord && target ? target[textLanguage] : '';
     questionWord.hidden = !questionWord.textContent;
 
-    if (!showPicture) {
-      questionPicture.hidden = true;
-      questionPicture.replaceChildren();
-    } else if (question.pictureSwatch) {
-      const swatch = document.createElement('span');
-      swatch.className = 'color-swatch question-swatch';
-      swatch.style.backgroundColor = question.pictureSwatch;
-      questionPicture.replaceChildren(swatch);
-      questionPicture.hidden = false;
-    } else if (question.pictureImage) {
-      showArt(questionPicture, question.pictureImage, question.picture, target ? wordLabel(target) : '');
+    // Only math shows a picture with its question. A word question never shows the answer's own picture.
+    if (question.takeAway) {
+      questionPicture.replaceChildren(...takeAwayEggs(question.takeAway.total, question.takeAway.taken));
       questionPicture.hidden = false;
     } else {
       questionPicture.textContent = question.picture;
       questionPicture.hidden = !question.picture;
     }
     questionPicture.classList.toggle('dense-picture', Boolean(question.dense));
+    questionPicture.classList.toggle('take-away-picture', Boolean(question.takeAway));
 
     equation.textContent = question.display;
     equation.hidden = !question.display;
     answerOptions.replaceChildren(...question.options.map(option => makeAnswerButton(option, question)));
     answerOptions.classList.toggle('four-choices', question.options.length === 4);
-    answerOptions.setAttribute('aria-label', question.topic === 'math' ? I18N.STRINGS.answerGroupLabelNumber[textLanguage] : I18N.STRINGS.answerGroupLabelWord[textLanguage]);
-    feedback.textContent = state.feedback === 'try-again' ? I18N.STRINGS.feedbackRetry[textLanguage] : I18N.STRINGS.feedbackDefault[textLanguage];
-    feedback.classList.toggle('retry', state.feedback === 'try-again');
+    const groupLabel = question.topic === 'math' ? 'answerGroupLabelNumber' : question.wordLabels ? 'answerGroupLabelWord' : 'answerGroupLabelPicture';
+    answerOptions.setAttribute('aria-label', I18N.STRINGS[groupLabel][textLanguage]);
+    if (state.missed) markMiss(state);
+    else cancelMissTimer();
+    feedback.textContent = state.missed ? missFeedback(state) : I18N.STRINGS.feedbackDefault[textLanguage];
+    feedback.classList.toggle('retry', state.missed);
     nextButton.hidden = !state.solved || state.finished;
     questionPanel.hidden = state.finished;
     finishPanel.hidden = !state.finished;
@@ -407,21 +454,30 @@
     sounds.play('tap');
     answerOptions.querySelectorAll('button').forEach(choice => choice.classList.remove('wrong-answer', 'right-answer'));
 
-    if (result === 'try-again') {
-      button.classList.add('wrong-answer');
-      feedback.textContent = I18N.STRINGS.feedbackRetry[textLanguage];
+    if (result === 'missed') {
+      markMiss(state);
+      feedback.textContent = missFeedback(state);
       feedback.classList.add('retry');
+      renderScore(state);
       stage.block();
       arenaMessage.textContent = I18N.STRINGS.blockMessage[textLanguage];
       playReaction('try-again');
       sounds.play('boing', { delay: 0.04 });
-      setPointer('answer');
+      setPointer(null);
+      cancelMissTimer();
+      missTimer = setTimeout(loadNextQuestion, soundIsOff() ? MISS_PAUSE_MS.quiet : MISS_PAUSE_MS.withSound);
       return;
     }
 
+    // A win pays a sticker only while today's cap for this language and level has room; a capped win still
+    // celebrates and then says (and shows) where the next sticker can come from.
+    const reward = state.finished
+      ? window.ArenaRewards?.recordWin(state.champion, { language: textLanguage, level: state.level, allowedLevels })
+      : null;
     // A soft "one more round or a break?" nudge after 2 or 3 wins in a row: no timer, nothing lost either way.
     const nudge = state.finished && breakPacer.recordWin();
-    playReaction(nudge ? 'break-prompt' : state.finished ? 'finish' : 'praise');
+    const capReaction = reward?.capped ? `cap-${reward.advice}` : null;
+    playReaction(capReaction || (nudge ? 'break-prompt' : state.finished ? 'finish' : 'praise'));
     button.classList.add('right-answer');
     sounds.play('sparkle', { delay: 0.03 });
     answerOptions.querySelectorAll('button').forEach(choice => { choice.disabled = true; });
@@ -434,7 +490,6 @@
       finishPanel.hidden = false;
       goodbyePanel.hidden = true;
       setBilingual(document.querySelector('#finishBody'), I18N.finishBody(state.goal, textLanguage), secondLanguage && I18N.finishBody(state.goal, secondLanguage));
-      window.ArenaRewards?.recordWin(state.champion);
       [...topicTabsContainer.children, ...levelChoiceContainer.querySelectorAll('.level-option')].forEach(button => { button.disabled = true; });
       if (nudge) {
         playAgainButton.hidden = true;
@@ -604,7 +659,7 @@
       button.addEventListener('click', () => {
         if (!game.chooseLevel(level)) return;
         stage.settle();
-        arenaMessage.textContent = I18N.levelChosenMessage(level, textLanguage);
+        arenaMessage.textContent = I18N.levelChosenMessage(level, textLanguage, game.getState().topic);
         renderQuestion(game.getState());
         if (speechEnabled) setPointer('answer');
       });
@@ -881,14 +936,21 @@
     renderSpeechControls();
   }
 
-  nextButton.addEventListener('click', () => {
-    game.nextQuestion();
-    sounds.play('tap');
+  // Moves on after a right answer (the Next button) or after a missed question's pause; a wrong or repeated
+  // call finds nothing to move past and does nothing.
+  function loadNextQuestion() {
+    missTimer = null;
+    if (!game.nextQuestion()) return;
     stage.settle();
     arenaMessage.textContent = I18N.STRINGS.yourTurnMessage[textLanguage];
     renderQuestion(game.getState());
     answerOptions.querySelector('button')?.focus();
     setPointer('answer');
+  }
+
+  nextButton.addEventListener('click', () => {
+    sounds.play('tap');
+    loadNextQuestion();
   });
 
   function restart() {

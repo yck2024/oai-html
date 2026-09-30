@@ -33,5 +33,25 @@
     "en": "Great job today! See you again soon!",
     "zh": "今天表現得真棒！我們下次見！",
     "ja": "きょうもよくがんばったね！またあそぼうね！"
+  },
+  "reaction-cap-harder-or-language": {
+    "en": "Great win! To earn your next sticker, try a harder level or another language.",
+    "zh": "你贏了！想拿下一張貼紙，請試試更難的難度，或換一種語言。",
+    "ja": "やったね！つぎのシールは、もっとむずかしいレベルか、ほかのげんごでもらえるよ。"
+  },
+  "reaction-cap-harder": {
+    "en": "Great win! To earn your next sticker, try a harder level.",
+    "zh": "你贏了！想拿下一張貼紙，請試試更難的難度。",
+    "ja": "やったね！つぎのシールは、もっとむずかしいレベルでもらえるよ。"
+  },
+  "reaction-cap-language": {
+    "en": "Great win! To earn your next sticker, try another language.",
+    "zh": "你贏了！想拿下一張貼紙，請換一種語言試試。",
+    "ja": "やったね！つぎのシールは、ほかのげんごでもらえるよ。"
+  },
+  "reaction-cap-tomorrow": {
+    "en": "Great win! That is all the stickers for today. Come back tomorrow for more!",
+    "zh": "你贏了！今天的貼紙都拿完了，明天再來拿更多！",
+    "ja": "やったね！きょうのシールは、ぜんぶもらったよ。あしたもまたきてね！"
   }
 }

@@ -54,6 +54,20 @@ test('the precache manifest is generated from images/ and audio/ on disk, never 
   assert.deepEqual(MANIFEST.AUDIO, fresh.AUDIO, 'precache-manifest.js audio matches a fresh scan of audio/ — run node generate-precache-manifest.js if this fails');
 });
 
+test('the precache manifest lists every narration clip the game can speak, in all three languages', () => {
+  const clips = [...Object.keys(require('./audio/prompts.json')), ...Object.keys(require('./audio/reactions.json'))];
+  for (const id of clips) {
+    for (const language of ['en', 'zh', 'ja']) {
+      assert.ok(MANIFEST.AUDIO.includes(`audio/${language}/${id}.mp3`), `${language}/${id}.mp3 is precached for offline play`);
+    }
+  }
+});
+
+test('the shell cache version moved on from the earlier release, so returning players fetch the new game files', () => {
+  assert.notEqual(PWA.CACHE_VERSION, 'v1', 'v1 shipped the earlier rules; a new version replaces its cached shell');
+  assert.equal(PWA.SHELL_CACHE_NAME, `monster-word-arena-shell-${PWA.CACHE_VERSION}`);
+});
+
 test('the shell precache list covers every static app file', () => {
   const shellUrls = PWA.shellAssetUrls(BASE);
   for (const file of PWA.SHELL_FILES) {

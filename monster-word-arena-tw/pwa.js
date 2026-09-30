@@ -31,7 +31,7 @@
     return [...manifest.IMAGES, ...manifest.AUDIO].map(name => `${base}${name}`);
   }
 
-  const CACHE_VERSION = 'v1';
+  const CACHE_VERSION = 'v2';
   const SHELL_CACHE_NAME = `monster-word-arena-shell-${CACHE_VERSION}`;
 
   function isAnalyticsUrl(url) {

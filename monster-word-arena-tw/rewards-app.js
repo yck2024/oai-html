@@ -233,7 +233,25 @@
     }
   }
 
+  // The friendly line for a win that earned no sticker today, pointing to where the next one can come from.
+  function capNote(result) {
+    const note = document.createElement('div');
+    note.className = 'reward-note cap-note';
+    note.id = 'rewardNote';
+    note.setAttribute('role', 'status');
+    const mark = document.createElement('span');
+    mark.className = 'reward-sticker';
+    mark.setAttribute('aria-hidden', 'true');
+    mark.textContent = '🌱';
+    const text = document.createElement('p');
+    text.className = 'reward-text';
+    setBilingual(text, I18N.capNote(result.advice, currentLanguage), currentSecondLanguage && I18N.capNote(result.advice, currentSecondLanguage));
+    note.append(mark, text);
+    return note;
+  }
+
   function rewardNote(result, champion) {
+    if (result.capped) return capNote(result);
     const note = document.createElement('div');
     note.className = 'reward-note';
     note.id = 'rewardNote';
@@ -262,13 +280,14 @@
     return note;
   }
 
-  function recordWin(champion) {
-    const result = rewards.recordWin(champion);
+  // context: { language, level, allowedLevels } of the match just won, for the daily sticker cap.
+  function recordWin(champion, context) {
+    const result = rewards.recordWin(champion, context);
     render();
     const finishPanel = $('#finishPanel');
     finishPanel?.querySelector('#rewardNote')?.remove();
     lastRewardNote = null;
-    if (result.rewarded && finishPanel) {
+    if ((result.rewarded || result.capped) && finishPanel) {
       lastRewardNote = { result, champion };
       const note = rewardNote(result, champion);
       const playAgain = $('#playAgainButton');
