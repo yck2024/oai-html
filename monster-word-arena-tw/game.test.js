@@ -745,12 +745,17 @@ test('the last heart ends the match: the miss is shown, then nothing but Try aga
     assert.equal(state.finished, false, 'a lost match is not a win, so no sticker can be earned from it');
     assert.equal(state.hearts, 0);
     assert.equal(state.missed, true, 'the last miss still shows the right choice');
+    assert.equal(game.chooseLevel(level === 'easy' ? 'harder' : 'easy'), true, 'a level choice during the miss delay advances to the loss card');
+    assert.equal(game.getState().hearts, 0, 'the level choice does not refill hearts');
+    assert.equal(game.getState().level, level, 'the lost match keeps its level until Try again');
     assert.equal(game.nextQuestion(), false, 'no new question until the child tries again');
     assert.equal(game.answer(state.question.answerId), 'ignored');
     assert.equal(game.chooseTopic('colors'), false, 'a lost match cannot be dodged by switching topic');
-    assert.equal(game.chooseLevel(level === 'easy' ? 'harder' : 'easy'), false, 'or level');
+    assert.equal(game.chooseLevel(level === 'easy' ? 'harder' : 'easy'), true, 'level choices after a loss leave the match unchanged');
     assert.equal(game.chooseChampion('monster'), false);
-    state = game.restart();
+    assert.equal(game.restart().hearts, 0, 'Start over cannot bypass the lost-match card');
+    assert.equal(game.getState().level, level);
+    state = game.tryAgain();
     assert.equal(state.lost, false);
     assert.equal(state.hearts, HEARTS_BY_LEVEL[level], 'Try again refills every heart');
     assert.equal(state.stars, 0, 'and starts the match over');
@@ -770,7 +775,7 @@ test('abandoning a match after a miss loses it without restoring hearts; a clean
     assert.equal(game.getState().lost, true, `${action} ends the match`);
     assert.equal(game.getState().hearts, 2, `${action} cannot refill spent hearts`);
     assert.equal(game.getState().level, 'easy', 'the abandoned match keeps its level');
-    const fresh = game.restart();
+    const fresh = game.tryAgain();
     assert.equal(fresh.lost, false, 'Try again starts a fresh match after the loss');
     assert.equal(fresh.hearts, HEARTS_BY_LEVEL.easy);
   }
@@ -2457,7 +2462,8 @@ test('the miss that takes the last heart says so, then Try again brings the hear
   assert.match(app.played[app.played.length - 1], /^\.\/audio\/ja\/reaction-round-lost\.mp3$/);
   assert.equal(el('#lostPanel').hidden, true, 'the right choice is shown first');
   assert.equal(el('#questionPanel').hidden, false);
-  assert.ok(app.topicTabs.every(tab => tab.disabled) && app.levelButtons.every(button => button.disabled), 'the topic and level cannot be switched to dodge the loss');
+  assert.ok(app.topicTabs.every(tab => tab.disabled), 'topics cannot be switched to dodge the loss');
+  assert.ok(app.levelButtons.every(button => !button.disabled), 'a level choice during the miss delay can bring up the loss card');
   app.clock.tick(2000);
   assert.equal(el('#lostPanel').hidden, true, 'the pause lasts long enough to see the right choice');
   app.clock.tick(2000);
@@ -2480,19 +2486,28 @@ test('the miss that takes the last heart says so, then Try again brings the hear
   assert.equal(game.getState().stars, 1, 'the match plays on normally');
 });
 
-test('starting over while the last miss is still showing cancels the lost-match panel', () => {
-  const game = createGame(seededRandom(42));
-  const app = createAppFixture(game);
-  for (let miss = 0; miss < HEARTS_BY_LEVEL.easy; miss += 1) {
-    clickAnswer(app, game, false);
-    if (miss < HEARTS_BY_LEVEL.easy - 1) app.clock.tick(MISS_PAUSE_TICK);
+test('Start over or changing level during the last-heart delay shows the loss card before Try again', () => {
+  for (const action of ['restart', 'level']) {
+    const game = createGame(seededRandom(42));
+    const app = createAppFixture(game);
+    for (let miss = 0; miss < HEARTS_BY_LEVEL.easy; miss += 1) {
+      clickAnswer(app, game, false);
+      if (miss < HEARTS_BY_LEVEL.easy - 1) app.clock.tick(MISS_PAUSE_TICK);
+    }
+    assert.equal(game.getState().lost, true);
+    if (action === 'restart') app.elements.get('#restartButton').click();
+    else app.levelButtons.find(button => button.dataset.level === 'harder').click();
+    assert.equal(game.getState().lost, true);
+    assert.equal(game.getState().hearts, 0, `${action} cannot refill hearts`);
+    assert.equal(app.elements.get('#lostPanel').hidden, false, `${action} shows the lost-match card immediately`);
+    assert.equal(app.elements.get('#questionPanel').hidden, true);
+    app.clock.tick(MISS_PAUSE_TICK);
+    assert.equal(app.elements.get('#lostPanel').hidden, false, 'the prior miss timer cannot hide the loss card');
+    app.elements.get('#tryAgainButton').click();
+    assert.equal(game.getState().lost, false);
+    assert.equal(game.getState().hearts, HEARTS_BY_LEVEL.easy, 'Try again is the fresh-match path');
+    assert.equal(app.elements.get('#lostPanel').hidden, true);
   }
-  assert.equal(game.getState().lost, true);
-  app.elements.get('#restartButton').click();
-  assert.equal(game.getState().lost, false);
-  app.clock.tick(MISS_PAUSE_TICK);
-  assert.equal(app.elements.get('#lostPanel').hidden, true, 'the cancelled pause never shows the panel');
-  assert.equal(app.elements.get('#questionPanel').hidden, false);
 });
 
 test('a reaction never outlives the moment it belongs to', () => {

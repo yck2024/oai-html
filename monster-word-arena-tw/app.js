@@ -498,7 +498,7 @@
       renderScore(state);
       flashHeartLoss();
       // With no hearts left there is no dodging the loss by switching topic or level; Try again is the way on.
-      if (state.lost) [...topicTabsContainer.children, ...levelChoiceContainer.querySelectorAll('.level-option')].forEach(button => { button.disabled = true; });
+      if (state.lost) [...topicTabsContainer.children].forEach(button => { button.disabled = true; });
       stage.block();
       arenaMessage.textContent = (state.lost ? I18N.STRINGS.lostMessage : I18N.STRINGS.blockMessage)[textLanguage];
       playReaction(state.lost ? 'round-lost' : state.hearts === 1 ? 'last-heart' : 'try-again');
@@ -1016,11 +1016,11 @@
     loadNextQuestion();
   });
 
-  function restart() {
+  function restart(tryAgain = false) {
     const level = PACING.resolveAllowedLevel(game.getState().level, allowedLevels);
     cancelMissTimer();
     lostPanelShown = false;
-    const state = game.restart(level);
+    const state = tryAgain === true ? game.tryAgain() : game.restart(level);
     sounds.play('tap');
     if (state.lost) {
       renderQuestion(state, { speak: false });
@@ -1040,7 +1040,7 @@
 
   document.querySelector('#restartButton').addEventListener('click', restart);
   playAgainButton.addEventListener('click', restart);
-  tryAgainButton.addEventListener('click', restart);
+  tryAgainButton.addEventListener('click', () => restart(true));
   oneMoreRoundButton.addEventListener('click', restart);
   takeBreakButton.addEventListener('click', () => {
     finishPanel.hidden = true;

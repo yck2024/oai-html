@@ -342,7 +342,8 @@
     }
 
     function chooseLevel(level) {
-      if (over() || level === state.level || !LEVELS.includes(level)) return false;
+      if (state.finished || level === state.level || !LEVELS.includes(level)) return false;
+      if (state.lost) return true;
       if (abandonCurrentMatch()) return true;
       state = { ...state, level, stars: 0, hearts: HEARTS_BY_LEVEL[level], ...OPEN_QUESTION, ...drawQuestion(state.topic, level, state.question.key, state.recentOps) };
       return true;
@@ -381,9 +382,7 @@
       return true;
     }
 
-    // Starting over during a match with a spent heart loses that match; a new match can start only after it is over.
-    function restart(level = state.level) {
-      if (abandonCurrentMatch()) return getState();
+    function startFresh(level = state.level) {
       const nextLevel = LEVELS.includes(level) ? level : state.level;
       state = {
         ...state,
@@ -398,7 +397,17 @@
       return getState();
     }
 
-    return { getState, chooseTopic, chooseLevel, chooseChampion, answer, nextQuestion, restart };
+    // Starting over during a match with a spent heart loses that match; a lost match waits for its card's Try again.
+    function restart(level = state.level) {
+      if (state.lost || abandonCurrentMatch()) return getState();
+      return startFresh(level);
+    }
+
+    function tryAgain() {
+      return over() ? startFresh() : getState();
+    }
+
+    return { getState, chooseTopic, chooseLevel, chooseChampion, answer, nextQuestion, restart, tryAgain };
   }
 
   function createSpeechPlayer(audio, onUnavailable = () => {}) {
