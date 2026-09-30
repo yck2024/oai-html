@@ -342,8 +342,12 @@
     }
 
     function chooseLevel(level) {
-      if (state.finished || level === state.level || !LEVELS.includes(level)) return false;
-      if (state.lost) return true;
+      if (!LEVELS.includes(level)) return false;
+      if (over()) {
+        startFresh(level);
+        return true;
+      }
+      if (level === state.level) return false;
       if (abandonCurrentMatch()) return true;
       state = { ...state, level, stars: 0, hearts: HEARTS_BY_LEVEL[level], ...OPEN_QUESTION, ...drawQuestion(state.topic, level, state.question.key, state.recentOps) };
       return true;

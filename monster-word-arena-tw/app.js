@@ -470,7 +470,7 @@
       const selected = button.dataset.level === state.level;
       button.classList.toggle('is-active', selected);
       button.setAttribute('aria-pressed', String(selected));
-      button.disabled = state.finished || state.lost;
+      button.disabled = false;
     });
     renderScore(state);
     if (speak) playCurrentQuestion();
@@ -530,7 +530,7 @@
       finishPanel.hidden = false;
       goodbyePanel.hidden = true;
       setBilingual(document.querySelector('#finishBody'), I18N.finishBody(state.goal, textLanguage), secondLanguage && I18N.finishBody(state.goal, secondLanguage));
-      [...topicTabsContainer.children, ...levelChoiceContainer.querySelectorAll('.level-option')].forEach(button => { button.disabled = true; });
+      [...topicTabsContainer.children].forEach(button => { button.disabled = true; });
       if (nudge) {
         playAgainButton.hidden = true;
         breakPrompt.hidden = false;
@@ -699,8 +699,19 @@
       name.dataset.role = 'name';
       button.append(emoji, document.createTextNode(' '), name);
       button.addEventListener('click', () => {
+        const before = game.getState();
+        if (before.lost && !lostPanelShown) {
+          showLostPanel();
+          return;
+        }
         if (!game.chooseLevel(level)) return;
-        stage.settle();
+        const startsFreshMatch = before.finished || before.lost;
+        if (startsFreshMatch) {
+          lostPanelShown = false;
+          finishPanel.hidden = true;
+          goodbyePanel.hidden = true;
+          stage.startMatch();
+        } else stage.settle();
         arenaMessage.textContent = I18N.levelChosenMessage(level, textLanguage, game.getState().topic);
         const state = game.getState();
         renderQuestion(state, { speak: !state.lost });
@@ -756,6 +767,7 @@
     });
     renderLevelLockOptions();
     const state = game.getState();
+    if (state.finished || state.lost) return;
     const resolved = PACING.resolveAllowedLevel(state.level, allowedLevels);
     if (resolved !== state.level && game.chooseLevel(resolved)) {
       stage.settle();

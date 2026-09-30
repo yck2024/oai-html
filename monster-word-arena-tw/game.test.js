@@ -745,13 +745,9 @@ test('the last heart ends the match: the miss is shown, then nothing but Try aga
     assert.equal(state.finished, false, 'a lost match is not a win, so no sticker can be earned from it');
     assert.equal(state.hearts, 0);
     assert.equal(state.missed, true, 'the last miss still shows the right choice');
-    assert.equal(game.chooseLevel(level === 'easy' ? 'harder' : 'easy'), true, 'a level choice during the miss delay advances to the loss card');
-    assert.equal(game.getState().hearts, 0, 'the level choice does not refill hearts');
-    assert.equal(game.getState().level, level, 'the lost match keeps its level until Try again');
     assert.equal(game.nextQuestion(), false, 'no new question until the child tries again');
     assert.equal(game.answer(state.question.answerId), 'ignored');
     assert.equal(game.chooseTopic('colors'), false, 'a lost match cannot be dodged by switching topic');
-    assert.equal(game.chooseLevel(level === 'easy' ? 'harder' : 'easy'), true, 'level choices after a loss leave the match unchanged');
     assert.equal(game.chooseChampion('monster'), false);
     assert.equal(game.restart().hearts, 0, 'Start over cannot bypass the lost-match card');
     assert.equal(game.getState().level, level);
@@ -761,6 +757,26 @@ test('the last heart ends the match: the miss is shown, then nothing but Try aga
     assert.equal(state.stars, 0, 'and starts the match over');
     assert.equal(state.missed, false);
     assert.equal(state.level, level);
+  }
+});
+
+test('level choice after a loss starts a fresh match at the selected level', () => {
+  for (const level of LEVELS) {
+    const game = createGame(seededRandom(34));
+    for (let miss = 0; miss < HEARTS_BY_LEVEL.easy; miss += 1) {
+      game.answer(wrongOption(game).id);
+      if (miss < HEARTS_BY_LEVEL.easy - 1) game.nextQuestion();
+    }
+    assert.equal(game.getState().lost, true);
+    const previousKey = game.getState().question.key;
+    assert.equal(game.chooseLevel(level), true);
+    const state = game.getState();
+    assert.equal(state.lost, false);
+    assert.equal(state.level, level);
+    assert.equal(state.hearts, HEARTS_BY_LEVEL[level]);
+    assert.equal(state.stars, 0);
+    assert.equal(state.missed, false);
+    assert.notEqual(state.question.key, previousKey);
   }
 });
 
@@ -1807,7 +1823,9 @@ test('the level starts easy, and switching levels starts a fresh match at the ne
     answerCorrectly(game);
   }
   assert.equal(game.getState().finished, true);
-  assert.equal(game.chooseLevel('easy'), false, 'the finish screen keeps its level');
+  assert.equal(game.chooseLevel('easy'), true, 'choosing a level after a win starts another match');
+  assert.equal(game.getState().level, 'easy');
+  assert.equal(game.getState().hearts, HEARTS_BY_LEVEL.easy);
 });
 
 test('switching down to a lower-goal level while stars are ahead of it resets the match instead of auto-finishing', () => {
@@ -1881,10 +1899,12 @@ test('the level buttons switch choices and goal markers, and color choices are s
     app.answerOptions.children.find(button => button.dataset.choice === answerId).click();
     if (star < GOAL_BY_LEVEL.easy) app.nextButton.click();
   }
-  assert.ok(app.levelButtons.every(button => button.disabled), 'the level cannot change on the finish screen');
-  app.elements.get('#playAgainButton').click();
-  assert.ok(app.levelButtons.every(button => !button.disabled));
-  assert.equal(game.getState().level, 'easy');
+  assert.ok(app.levelButtons.every(button => !button.disabled), 'the next match level can be chosen on the finish screen');
+  app.levelButtons.find(button => button.dataset.level === 'harder').click();
+  assert.equal(game.getState().level, 'harder');
+  assert.equal(game.getState().hearts, HEARTS_BY_LEVEL.harder);
+  assert.equal(app.elements.get('#finishPanel').hidden, true);
+  assert.equal(app.elements.get('#questionPanel').hidden, false);
 });
 
 test('the finish message names the actual number of power moves for the chosen level, not just three', () => {
@@ -2417,7 +2437,7 @@ test('Start over or changing level after a miss immediately shows the loss witho
     assert.equal(game.getState().level, 'easy');
     assert.equal(app.elements.get('#lostPanel').hidden, false, 'the lost-match card appears immediately');
     assert.equal(app.elements.get('#questionPanel').hidden, true);
-    assert.ok(app.topicTabs.every(tab => tab.disabled) && app.levelButtons.every(button => button.disabled));
+    assert.ok(app.topicTabs.every(tab => tab.disabled) && app.levelButtons.every(button => !button.disabled));
     app.elements.get('#tryAgainButton').click();
     assert.equal(game.getState().hearts, HEARTS_BY_LEVEL.easy);
     assert.equal(game.getState().lost, false);
@@ -2484,6 +2504,29 @@ test('the miss that takes the last heart says so, then Try again brings the hear
   assert.ok(app.topicTabs.every(tab => !tab.disabled));
   clickAnswer(app, game, true);
   assert.equal(game.getState().stars, 1, 'the match plays on normally');
+});
+
+test('choosing a level from the lost-match card starts a fresh match at that level', () => {
+  for (const level of ['easy', 'harder']) {
+    const game = createGame(seededRandom(44));
+    const app = createAppFixture(game);
+    for (let miss = 0; miss < HEARTS_BY_LEVEL.easy; miss += 1) {
+      clickAnswer(app, game, false);
+      if (miss < HEARTS_BY_LEVEL.easy - 1) app.clock.tick(MISS_PAUSE_TICK);
+    }
+    app.clock.tick(MISS_PAUSE_TICK);
+    assert.equal(app.elements.get('#lostPanel').hidden, false);
+    assert.ok(app.levelButtons.every(button => !button.disabled));
+    const previousKey = game.getState().question.key;
+    app.levelButtons.find(button => button.dataset.level === level).click();
+    assert.equal(game.getState().lost, false);
+    assert.equal(game.getState().level, level);
+    assert.equal(game.getState().hearts, HEARTS_BY_LEVEL[level]);
+    assert.equal(game.getState().stars, 0);
+    assert.notEqual(game.getState().question.key, previousKey);
+    assert.equal(app.elements.get('#lostPanel').hidden, true);
+    assert.equal(app.elements.get('#questionPanel').hidden, false);
+  }
 });
 
 test('Start over or changing level during the last-heart delay shows the loss card before Try again', () => {
