@@ -234,14 +234,17 @@
 
   // The word said alone (never a sentence) for the answered question: in the narration voice, then, after a
   // right answer and only when a grown-up turned it on, in the second spoken language. `done` runs when it ends.
-  function echoSteps(state, { second = false, done = null } = {}) {
+  function echoSteps(state, { second = false, started = null, done = null } = {}) {
     const audioId = state.question.wordAudioId;
     if (!audioId) return [];
     const languages = [voiceLanguage, ...(second && echoLanguage ? [echoLanguage] : [])];
     return languages.map((language, index) => ({
       audioId,
       language,
-      onStart: () => setEchoPulse(true),
+      onStart: () => {
+        setEchoPulse(true);
+        started?.();
+      },
       onEnd: () => {
         setEchoPulse(false);
         if (index === languages.length - 1) done?.();
@@ -249,14 +252,9 @@
     }));
   }
 
-  // A miss keeps its pause for the clips to finish: the wait starts over when the word has been said.
-  function echoDone() {
-    if (missTimer !== null) armMissFallback(game.getState());
-  }
-
   // Reactions share the question's audio element, so a new clip always cuts off the last one. After an answer the
-  // word is echoed right behind the reaction, in the same queue; the next question (or a tap) cuts what is left.
-  function playReaction(type, { echo = null, onEchoDone = null } = {}) {
+  // word is echoed right behind the reaction, in the same queue; a miss waits for that word before moving on.
+  function playReaction(type, { echo = null, onEchoStart = null, onEchoDone = null } = {}) {
     if (!speechEnabled || speechMuted) {
       speechPlayer.stop();
       return;
@@ -268,7 +266,7 @@
     speechStatus.textContent = '';
     speechPlayer.playSequence([
       { audioId: variants[turn % variants.length], language: voiceLanguage },
-      ...(echo ? echoSteps(game.getState(), { ...echo, done: onEchoDone || echoDone }) : []),
+      ...(echo ? echoSteps(game.getState(), { ...echo, started: onEchoStart, done: onEchoDone }) : []),
     ]);
   }
 
@@ -283,11 +281,45 @@
   }
 
   let pendingFinish = null;
+  let answerEchoStarted = false;
+  let answerEchoFinished = true;
+  let pendingNext = false;
+  let pendingSecondChance = false;
+
+  function startAnswerEcho(state) {
+    answerEchoStarted = true;
+    if (state.solved && pendingNext) {
+      pendingNext = false;
+      loadNextQuestion();
+    }
+  }
+
+  function completeAnswerEcho(state) {
+    answerEchoFinished = true;
+    if (state.missed) {
+      if (!pendingSecondChance) armMissFallback(state);
+      else {
+        pendingSecondChance = false;
+        continueAfterSecondChance(state);
+      }
+    } else if (state.solved) {
+      pendingFinish?.();
+      if (pendingNext) {
+        pendingNext = false;
+        loadNextQuestion();
+      }
+    }
+  }
+
   echoButton.addEventListener('click', () => {
     const state = game.getState();
     if (!(state.solved || state.missed) || soundIsOff()) return;
     reactionPlaying = false;
-    speechPlayer.playSequence(echoSteps(state, { second: state.solved, done: pendingFinish || echoDone }));
+    if (state.missed) {
+      answerEchoFinished = false;
+      cancelMissTimer();
+    }
+    speechPlayer.playSequence(echoSteps(state, { second: state.solved, started: () => startAnswerEcho(state), done: () => completeAnswerEcho(state) }));
   });
 
   function renderSpeechControls() {
@@ -740,17 +772,25 @@
   }
 
   // After a miss the child taps the right item to go on. Any other tap changes nothing and costs nothing.
-  function secondChance(optionId, state) {
-    const accepted = state.question.acceptedIds || [state.question.answerId];
-    if (!accepted.includes(String(optionId))) return;
-    sounds.play('tap');
-    cancelMissTimer();
+  function continueAfterSecondChance(state) {
     if (state.lost) {
       speechPlayer.cancelQueued();
       showLostPanel();
       return;
     }
     loadNextQuestion();
+  }
+
+  function secondChance(optionId, state) {
+    const accepted = state.question.acceptedIds || [state.question.answerId];
+    if (!accepted.includes(String(optionId))) return;
+    sounds.play('tap');
+    cancelMissTimer();
+    if (!answerEchoFinished) {
+      pendingSecondChance = true;
+      return;
+    }
+    continueAfterSecondChance(state);
   }
 
   function chooseAnswer(button, optionId) {
@@ -775,11 +815,19 @@
       if (state.lost) [...topicTabsContainer.children].forEach(button => { button.disabled = true; });
       stage.block();
       arenaMessage.textContent = (state.lost ? I18N.STRINGS.lostMessage : I18N.STRINGS.blockMessage)[textLanguage];
-      playReaction(state.lost ? 'round-lost' : state.hearts === 1 ? 'last-heart' : 'try-again', { echo: { second: false } });
+      answerEchoStarted = false;
+      answerEchoFinished = !state.question.wordAudioId || soundIsOff();
+      pendingSecondChance = false;
+      playReaction(state.lost ? 'round-lost' : state.hearts === 1 ? 'last-heart' : 'try-again', {
+        echo: { second: false },
+        onEchoStart: () => startAnswerEcho(state),
+        onEchoDone: () => completeAnswerEcho(state),
+      });
       renderEchoButton(state);
       sounds.play('boing', { delay: 0.04 });
       setPointer(null);
-      armMissFallback(state);
+      if (answerEchoFinished) armMissFallback(state);
+      else cancelMissTimer();
       return;
     }
 
@@ -795,13 +843,17 @@
     choiceButtons().forEach(choice => { choice.disabled = true; });
     markDiagram(state);
     const finalWordEcho = state.finished && state.question.wordAudioId && !soundIsOff();
+    answerEchoStarted = false;
+    answerEchoFinished = !state.question.wordAudioId || soundIsOff();
+    pendingNext = false;
     pendingFinish = finalWordEcho ? () => {
       pendingFinish = null;
       showFinishPanel(state, nudge);
     } : null;
     playReaction(capReaction || (nudge ? 'break-prompt' : state.finished ? 'finish' : 'praise'), {
       echo: { second: true },
-      onEchoDone: pendingFinish,
+      onEchoStart: () => startAnswerEcho(state),
+      onEchoDone: () => completeAnswerEcho(state),
     });
     renderEchoButton(state);
     sounds.play('sparkle', { delay: 0.03 });
@@ -1326,6 +1378,11 @@
 
   nextButton.addEventListener('click', () => {
     sounds.play('tap');
+    const state = game.getState();
+    if (state.solved && state.question.wordAudioId && !soundIsOff() && !answerEchoStarted) {
+      pendingNext = true;
+      return;
+    }
     loadNextQuestion();
   });
 

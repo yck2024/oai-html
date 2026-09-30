@@ -981,6 +981,7 @@ test('a wrong tap shows the right choice, plays the try-again reaction and the r
   app.clock.tick(3500);
   assert.equal(game.getState().question.key, first.key, 'the right choice stays up until it is tapped');
   rightButton().click();
+  endSpeech(app);
   assert.equal(game.getState().stars, 0, 'tapping the right choice afterwards earns nothing');
   const second = game.getState().question;
   assert.notEqual(second.key, first.key, 'a fresh question, never the same one');
@@ -2498,6 +2499,7 @@ test('the miss that takes the last heart says so, then Try again brings the hear
   const pageShell = app.document.querySelector('.page-shell');
   const el = id => app.elements.get(id);
   app.textLanguageButtons.find(button => button.dataset.textLanguage === 'ja').click();
+  app.topicTabs.find(tab => tab.dataset.topic === 'colors').click();
   assert.equal(el('#heartPips').children.length, HEARTS_BY_LEVEL.easy);
   assert.equal(el('#heartPips').children.filter(pip => pip.classList.contains('spent')).length, 0, 'every heart starts full');
   assert.equal(el('#heartMeter').attributes['aria-label'], I18N.heartsAria(3, 3, 'ja'));
@@ -2509,11 +2511,15 @@ test('the miss that takes the last heart says so, then Try again brings the hear
   assert.ok(el('#heartFloat').classList.contains('is-showing'), 'and a small "-1" floats up beside the hearts');
   assert.equal(el('#heartMeter').attributes['aria-label'], I18N.heartsAria(2, 3, 'ja'));
   assert.match(app.played[app.played.length - 1], /^\.\/audio\/ja\/reaction-try-again-1\.mp3$/);
+  endSpeech(app);
+  endSpeech(app);
   app.clock.tick(MISS_PAUSE_TICK);
 
   clickAnswer(app, game, false);
   assert.ok(el('#heartPips').classList.contains('last-heart'), 'the one heart left beats to warn');
   assert.equal(el('#feedback').textContent, `${I18N.STRINGS.feedbackMissNoStar.ja} ${I18N.heartsLeft(1, 'ja')}`);
+  endSpeech(app);
+  endSpeech(app);
   app.clock.tick(MISS_PAUSE_TICK);
 
   clickAnswer(app, game, false);
@@ -2529,7 +2535,11 @@ test('the miss that takes the last heart says so, then Try again brings the hear
   app.clock.tick(5000);
   assert.equal(el('#lostPanel').hidden, true, 'the right choice stays up until it is tapped, long enough to find it');
   clickAnswer(app, game, true);
-  assert.equal(el('#lostPanel').hidden, false, 'tapping it lets the lost-match panel take over');
+  assert.equal(el('#lostPanel').hidden, true, 'the second-chance tap waits for the word echo');
+  endSpeech(app);
+  assert.equal(el('#lostPanel').hidden, true, 'the echo has started');
+  endSpeech(app);
+  assert.equal(el('#lostPanel').hidden, false, 'the lost-match panel takes over after the word');
   assert.equal(el('#questionPanel').hidden, true);
   assert.equal(el('#finishPanel').hidden, true, 'a lost match is never shown as a win');
   assert.equal(pageShell.dataset.pointer, 'lost');
@@ -3604,15 +3614,41 @@ test('the final correct word echoes with replay before the win screen appears', 
   assert.equal(el('#finishPanel').hidden, false, 'the win screen appears as soon as the echo ends');
 });
 
-test('tapping Next right away cuts the echo short instead of making the child wait', () => {
+test('Next tapped before the echo starts waits for its start, then cuts it short', () => {
   const { game, app } = wordQuestionApp('fruit');
+  const answeredKey = game.getState().question.key;
   clickAnswer(app, game, true);
   app.nextButton.click();
-  const question = game.getState().question;
-  assert.match(app.played.at(-1), new RegExp(`/${question.audioId}\\.mp3$`), 'the next question is read at once');
+  assert.equal(game.getState().question.key, answeredKey, 'Next waits while the reaction is playing');
   endSpeech(app);
-  assert.match(app.played.at(-1), new RegExp(`/${question.audioId}\\.mp3$`), 'the cut-off word never plays over the new question');
+  const question = game.getState().question;
+  assert.notEqual(question.key, answeredKey, 'the next question loads when the word echo starts');
+  assert.match(app.played.at(-1), new RegExp(`/${question.audioId}\\.mp3$`), 'the next question is read at once');
   assert.equal(app.elements.get('#echoButton').hidden, true);
+});
+
+test('Next can cut a correct-answer echo short after the word starts', () => {
+  const { game, app } = wordQuestionApp('fruit');
+  const answeredKey = game.getState().question.key;
+  clickAnswer(app, game, true);
+  endSpeech(app);
+  assert.equal(game.getState().question.key, answeredKey);
+  assert.match(app.played.at(-1), /^\.\/audio\/en\/word-fruit-/);
+  app.nextButton.click();
+  assert.notEqual(game.getState().question.key, answeredKey);
+});
+
+test('a second-chance tap during the miss reaction waits for the full word echo', () => {
+  const { game, app } = wordQuestionApp('animals');
+  const question = game.getState().question;
+  clickAnswer(app, game, false);
+  answerButtons(app).find(button => button.dataset.choice === question.answerId).click();
+  assert.equal(game.getState().question.key, question.key, 'the tap does not skip the reaction or word');
+  endSpeech(app);
+  assert.equal(game.getState().question.key, question.key, 'the word has started but has not finished');
+  assert.equal(app.played.at(-1), `./audio/en/${question.wordAudioId}.mp3`);
+  endSpeech(app);
+  assert.notEqual(game.getState().question.key, question.key, 'the next question loads after the full word');
 });
 
 test('a miss echoes the right word after the reaction, keeps the heart lost, and waits for a tap on the right item', () => {
@@ -3637,6 +3673,7 @@ test('a miss echoes the right word after the reaction, keeps the heart lost, and
   endSpeech(app);
   const again = game.getState().question;
   answerButtons(app).find(button => button.dataset.choice === again.answerId).click();
+  endSpeech(app);
   assert.notEqual(game.getState().question.key, again.key);
   assert.equal(game.getState().hearts, HEARTS_BY_LEVEL.easy - 2, 'the second-chance tap costs nothing and gives nothing');
   assert.equal(game.getState().stars, 0);

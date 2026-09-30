@@ -591,8 +591,8 @@
         return;
       }
       current = step;
-      step.onStart?.();
       fallbackTimer = setTimeout(advance, CLIP_FALLBACK_MS);
+      step.onStart?.();
     }
 
     // Clips one after another on the same element: [{ audioId, language, onStart, onEnd }]. Any later play, stop or
