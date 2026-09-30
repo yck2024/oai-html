@@ -284,6 +284,16 @@ h1 { margin: 4px 0 4px; color: #41405e; font-size: clamp(31px, 5vw, 46px); line-
 .diagram-word { margin: 6px auto 0; display: inline-block; padding: 4px 16px; border: 3px solid #fff; border-radius: 14px; background: #e2f8e8; box-shadow: 0 3px 0 #abd9b5; color: #3c6e52; font-size: clamp(20px, 5vw, 28px); font-weight: 1000; line-height: 1.2; }
 .feedback { min-height: 34px; display: grid; place-items: center; margin: 7px 0 0; color: #718877; font-size: 12px; font-weight: 900; line-height: 1.4; }
 .feedback.retry { color: #936955; }
+/* The item that was named pulses while its word is said again (is-echoing), and after a miss until it is tapped
+   (second-chance). The glow stays without motion, so the cue still shows when animations are reduced. */
+.answer-option.is-echoing, .answer-option.second-chance { border-color: #64bd8c; background: #e2f8e8; box-shadow: 0 3px 0 #abd9b5, 0 0 0 5px rgba(100, 189, 140, .45); animation: word-pulse .9s ease-in-out infinite; }
+.answer-option.second-chance { cursor: pointer; }
+.diagram-ring.is-echoing, .diagram-ring.second-chance { box-shadow: 0 0 0 3px #fff, 0 0 0 9px rgba(100, 189, 140, .5); animation: word-pulse .9s ease-in-out infinite; }
+@keyframes word-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+/* A small control after an answer, to hear the word again. */
+.echo-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; margin: 4px auto 0; border: 2px solid #c9e6d3; border-radius: 999px; padding: 4px 14px; background: #f2fbf5; color: #3c6e52; font-size: 14px; font-weight: 950; cursor: pointer; touch-action: manipulation; }
+.echo-button[hidden] { display: none; }
+.echo-button:hover { border-color: #64bd8c; }
 .next-button { width: 100%; min-height: 51px; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px; border: 0; border-radius: 15px; padding: 9px 12px; background: #7c72c3; color: #fff; box-shadow: 0 4px 0 #655ba6; font-size: 14px; font-weight: 1000; cursor: pointer; touch-action: manipulation; }
 .next-button:hover { transform: translateY(-1px); background: #6f65b5; }
 .next-button:active { transform: translateY(2px); box-shadow: 0 2px 0 #655ba6; }

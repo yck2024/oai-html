@@ -381,6 +381,8 @@
       topic,
       key: `${topic}-${target.id}`,
       audioId: `${topic}-${target.id}`,
+      // The word said alone (audio/words.json), for the echo after an answer.
+      wordAudioId: `word-${topic}-${target.id}`,
       promptZh: promptZh(target),
       promptEn: target.promptEn || promptEn(target),
       promptJa: promptJa(target),
@@ -521,18 +523,33 @@
     return { getState, chooseTopic, chooseLevel, chooseChampion, answer, nextQuestion, restart, tryAgain };
   }
 
+  // A clip that never reports its end (a stalled load) must not hold up the clips queued behind it.
+  const CLIP_FALLBACK_MS = 6000;
+
   function createSpeechPlayer(audio, onUnavailable = () => {}) {
     let attempt = 0;
+    // Clips waiting for the one playing to end, and the step (with its onStart and onEnd hooks) that is playing.
+    let queued = [];
+    let current = null;
+    let fallbackTimer = null;
+
+    function clearFallback() {
+      if (fallbackTimer === null) return;
+      clearTimeout(fallbackTimer);
+      fallbackTimer = null;
+    }
 
     function stop() {
       attempt += 1;
+      queued = [];
+      current = null;
+      clearFallback();
       if (!audio) return;
       audio.pause();
       audio.currentTime = 0;
     }
 
-    function play(audioId, language) {
-      stop();
+    function start(audioId, language) {
       if (!audio || !audioId || !['en', 'zh', 'ja'].includes(language)) {
         onUnavailable();
         return false;
@@ -544,7 +561,9 @@
       try {
         const playback = audio.play();
         playback?.catch(() => {
-          if (currentAttempt === attempt) onUnavailable();
+          if (currentAttempt !== attempt) return;
+          onUnavailable();
+          abandonSequence();
         });
         return true;
       } catch (_error) {
@@ -553,7 +572,58 @@
       }
     }
 
-    return { play, stop };
+    function play(audioId, language) {
+      stop();
+      return start(audioId, language);
+    }
+
+    // The playing step is over (its clip ended, failed, or ran out its fallback): tell it, then start the next.
+    function advance() {
+      clearFallback();
+      const finished = current;
+      current = null;
+      finished?.onEnd?.();
+      const step = queued.shift();
+      if (!step) return;
+      if (!start(step.audioId, step.language)) {
+        abandonSequence();
+        return;
+      }
+      current = step;
+      step.onStart?.();
+      fallbackTimer = setTimeout(advance, CLIP_FALLBACK_MS);
+    }
+
+    function abandonSequence() {
+      clearFallback();
+      queued = [];
+      const finished = current;
+      current = null;
+      finished?.onEnd?.();
+    }
+
+    // Clips one after another on the same element: [{ audioId, language, onStart, onEnd }]. Any later play, stop or
+    // sequence cuts the rest off, so a new question never has to wait for a word still being echoed.
+    function playSequence(steps) {
+      stop();
+      queued = steps.filter(Boolean);
+      if (!queued.length) return false;
+      advance();
+      return current !== null;
+    }
+
+    // Keeps the clip that is playing but drops whatever was waiting behind it.
+    function cancelQueued() {
+      queued = [];
+    }
+
+    if (audio?.addEventListener) {
+      ['ended', 'error'].forEach(type => audio.addEventListener(type, () => {
+        if (current) advance();
+      }));
+    }
+
+    return { play, stop, playSequence, cancelQueued };
   }
 
   const api = { GOAL_BY_LEVEL, HEARTS_BY_LEVEL, CHOICE_COUNT, TOPICS, LEVELS, WORD_TOPICS, REACTIONS, FACE_DIAGRAM, FARM_SCENE, DIAGRAMS, diagramPartAt, createGame, createSpeechPlayer };

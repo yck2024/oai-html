@@ -1,0 +1,332 @@
+{
+  "word-colors-red": {
+    "en": "red",
+    "zh": "紅色",
+    "ja": "あかいろ"
+  },
+  "word-colors-yellow": {
+    "en": "yellow",
+    "zh": "黃色",
+    "ja": "きいろ"
+  },
+  "word-colors-green": {
+    "en": "green",
+    "zh": "綠色",
+    "ja": "みどりいろ"
+  },
+  "word-colors-blue": {
+    "en": "blue",
+    "zh": "藍色",
+    "ja": "あおいろ"
+  },
+  "word-colors-orange": {
+    "en": "orange",
+    "zh": "橘色",
+    "ja": "オレンジいろ"
+  },
+  "word-colors-purple": {
+    "en": "purple",
+    "zh": "紫色",
+    "ja": "むらさきいろ"
+  },
+  "word-colors-pink": {
+    "en": "pink",
+    "zh": "粉紅色",
+    "ja": "ピンクいろ"
+  },
+  "word-colors-brown": {
+    "en": "brown",
+    "zh": "咖啡色",
+    "ja": "ちゃいろ"
+  },
+  "word-face-eyes": {
+    "en": "eyes",
+    "zh": "眼睛",
+    "ja": "目"
+  },
+  "word-face-nose": {
+    "en": "nose",
+    "zh": "鼻子",
+    "ja": "鼻"
+  },
+  "word-face-ears": {
+    "en": "ears",
+    "zh": "耳朵",
+    "ja": "みみ"
+  },
+  "word-face-mouth": {
+    "en": "mouth",
+    "zh": "嘴巴",
+    "ja": "口"
+  },
+  "word-face-tooth": {
+    "en": "tooth",
+    "zh": "牙齒",
+    "ja": "歯"
+  },
+  "word-face-hair": {
+    "en": "hair",
+    "zh": "頭髮",
+    "ja": "かみのけ"
+  },
+  "word-face-hands": {
+    "en": "hands",
+    "zh": "手",
+    "ja": "おてて"
+  },
+  "word-face-feet": {
+    "en": "feet",
+    "zh": "腳",
+    "ja": "あし"
+  },
+  "word-family-dad": {
+    "en": "Dad",
+    "zh": "爸爸",
+    "ja": "おとうさん"
+  },
+  "word-family-mom": {
+    "en": "Mom",
+    "zh": "媽媽",
+    "ja": "おかあさん"
+  },
+  "word-family-brother": {
+    "en": "older brother",
+    "zh": "哥哥",
+    "ja": "お兄さん"
+  },
+  "word-family-sister": {
+    "en": "older sister",
+    "zh": "姊姊",
+    "ja": "おねえさん"
+  },
+  "word-family-grandpa": {
+    "en": "Grandpa",
+    "zh": "爺爺",
+    "ja": "おじいちゃん"
+  },
+  "word-family-grandma": {
+    "en": "Grandma",
+    "zh": "奶奶",
+    "ja": "おばあちゃん"
+  },
+  "word-family-baby": {
+    "en": "baby",
+    "zh": "寶寶",
+    "ja": "あかちゃん"
+  },
+  "word-animals-dog": {
+    "en": "dog",
+    "zh": "小狗",
+    "ja": "いぬ"
+  },
+  "word-animals-cat": {
+    "en": "cat",
+    "zh": "小貓",
+    "ja": "ねこ"
+  },
+  "word-animals-rabbit": {
+    "en": "rabbit",
+    "zh": "兔子",
+    "ja": "うさぎ"
+  },
+  "word-animals-bird": {
+    "en": "bird",
+    "zh": "小鳥",
+    "ja": "ことり"
+  },
+  "word-animals-fish": {
+    "en": "fish",
+    "zh": "小魚",
+    "ja": "おさかな"
+  },
+  "word-animals-elephant": {
+    "en": "elephant",
+    "zh": "大象",
+    "ja": "ぞうさん"
+  },
+  "word-animals-pig": {
+    "en": "pig",
+    "zh": "小豬",
+    "ja": "ぶたさん"
+  },
+  "word-animals-monkey": {
+    "en": "monkey",
+    "zh": "猴子",
+    "ja": "おさるさん"
+  },
+  "word-fruit-apple": {
+    "en": "apple",
+    "zh": "蘋果",
+    "ja": "りんご"
+  },
+  "word-fruit-banana": {
+    "en": "banana",
+    "zh": "香蕉",
+    "ja": "バナナ"
+  },
+  "word-fruit-grapes": {
+    "en": "grapes",
+    "zh": "葡萄",
+    "ja": "ぶどう"
+  },
+  "word-fruit-strawberry": {
+    "en": "strawberry",
+    "zh": "草莓",
+    "ja": "いちご"
+  },
+  "word-fruit-watermelon": {
+    "en": "watermelon",
+    "zh": "西瓜",
+    "ja": "すいか"
+  },
+  "word-fruit-pineapple": {
+    "en": "pineapple",
+    "zh": "鳳梨",
+    "ja": "パイナップル"
+  },
+  "word-fruit-mango": {
+    "en": "mango",
+    "zh": "芒果",
+    "ja": "マンゴー"
+  },
+  "word-fruit-cherries": {
+    "en": "cherries",
+    "zh": "櫻桃",
+    "ja": "さくらんぼ"
+  },
+  "word-vegetables-carrot": {
+    "en": "carrot",
+    "zh": "紅蘿蔔",
+    "ja": "にんじん"
+  },
+  "word-vegetables-tomato": {
+    "en": "tomato",
+    "zh": "番茄",
+    "ja": "とまと"
+  },
+  "word-vegetables-corn": {
+    "en": "corn",
+    "zh": "玉米",
+    "ja": "とうもろこし"
+  },
+  "word-vegetables-potato": {
+    "en": "potato",
+    "zh": "馬鈴薯",
+    "ja": "じゃがいも"
+  },
+  "word-vegetables-cabbage": {
+    "en": "cabbage",
+    "zh": "高麗菜",
+    "ja": "キャベツ"
+  },
+  "word-vegetables-broccoli": {
+    "en": "broccoli",
+    "zh": "青花菜",
+    "ja": "ブロッコリー"
+  },
+  "word-vegetables-eggplant": {
+    "en": "eggplant",
+    "zh": "茄子",
+    "ja": "なす"
+  },
+  "word-vegetables-pumpkin": {
+    "en": "pumpkin",
+    "zh": "南瓜",
+    "ja": "かぼちゃ"
+  },
+  "word-flowers-sunflower": {
+    "en": "sunflower",
+    "zh": "向日葵",
+    "ja": "ひまわり"
+  },
+  "word-flowers-tulip": {
+    "en": "tulip",
+    "zh": "鬱金香",
+    "ja": "チューリップ"
+  },
+  "word-flowers-cherryblossom": {
+    "en": "cherry blossom",
+    "zh": "櫻花",
+    "ja": "さくら"
+  },
+  "word-flowers-morningglory": {
+    "en": "morning glory",
+    "zh": "牽牛花",
+    "ja": "あさがお"
+  },
+  "word-flowers-rose": {
+    "en": "rose",
+    "zh": "玫瑰",
+    "ja": "ばら"
+  },
+  "word-flowers-daisy": {
+    "en": "daisy",
+    "zh": "雛菊",
+    "ja": "ひなぎく"
+  },
+  "word-vehicles-car": {
+    "en": "car",
+    "zh": "汽車",
+    "ja": "くるま"
+  },
+  "word-vehicles-bus": {
+    "en": "bus",
+    "zh": "公車",
+    "ja": "バス"
+  },
+  "word-vehicles-train": {
+    "en": "train",
+    "zh": "火車",
+    "ja": "でんしゃ"
+  },
+  "word-vehicles-airplane": {
+    "en": "airplane",
+    "zh": "飛機",
+    "ja": "ひこうき"
+  },
+  "word-vehicles-bicycle": {
+    "en": "bicycle",
+    "zh": "腳踏車",
+    "ja": "じてんしゃ"
+  },
+  "word-vehicles-firetruck": {
+    "en": "fire truck",
+    "zh": "消防車",
+    "ja": "しょうぼうしゃ"
+  },
+  "word-weather-sunny": {
+    "en": "sunny day",
+    "zh": "晴天",
+    "ja": "はれ"
+  },
+  "word-weather-rainy": {
+    "en": "rainy day",
+    "zh": "雨天",
+    "ja": "あめ"
+  },
+  "word-weather-cloudy": {
+    "en": "cloudy day",
+    "zh": "陰天",
+    "ja": "くもり"
+  },
+  "word-weather-snowy": {
+    "en": "snowy day",
+    "zh": "下雪",
+    "ja": "ゆき"
+  },
+  "word-weather-windy": {
+    "en": "windy day",
+    "zh": "颳風",
+    "ja": "かぜ"
+  },
+  "word-weather-rainbow": {
+    "en": "rainbow",
+    "zh": "彩虹",
+    "ja": "にじ"
+  },
+  "word-weather-thunder": {
+    "en": "thunder",
+    "zh": "打雷",
+    "ja": "かみなり"
+  }
+}
