@@ -2533,9 +2533,10 @@ test('the miss that takes the last heart says so, then Try again brings the hear
   assert.ok(app.topicTabs.every(tab => tab.disabled), 'topics cannot be switched to dodge the loss');
   assert.ok(app.levelButtons.every(button => !button.disabled), 'a level choice during the miss delay can bring up the loss card');
   app.clock.tick(5000);
-  assert.equal(el('#lostPanel').hidden, true, 'the right choice stays up until it is tapped, long enough to find it');
+  assert.equal(el('#lostPanel').hidden, true, 'the loss panel waits for the final word echo');
   clickAnswer(app, game, true);
-  assert.equal(el('#lostPanel').hidden, true, 'the second-chance tap waits for the word echo');
+  assert.equal(el('#lostPanel').hidden, true, 'the lost match has no second-chance tap');
+  assert.ok(app.answerOptions.children.every(button => button.disabled));
   endSpeech(app);
   assert.equal(el('#lostPanel').hidden, true, 'the echo has started');
   endSpeech(app);
@@ -3679,22 +3680,29 @@ test('a miss echoes the right word after the reaction, keeps the heart lost, and
   assert.equal(game.getState().stars, 0);
 });
 
-test('the last-heart miss still says the word, and tapping the right item brings up the lost panel', () => {
+test('the last-heart miss shows the loss panel as soon as its word echo ends', () => {
   const game = createGame(seededRandom(5));
   const app = createAppFixture(game);
   app.startButton.click();
   app.topicTabs.find(tab => tab.dataset.topic === 'colors').click();
   const el = id => app.elements.get(id);
   for (let miss = 0; miss < HEARTS_BY_LEVEL.easy; miss += 1) {
-    if (miss > 0) app.answerOptions.children.find(button => button.dataset.choice === game.getState().question.answerId).click();
     clickAnswer(app, game, false);
+    if (miss < HEARTS_BY_LEVEL.easy - 1) {
+      endSpeech(app);
+      endSpeech(app);
+      app.answerOptions.children.find(button => button.dataset.choice === game.getState().question.answerId).click();
+    }
   }
   assert.equal(game.getState().lost, true);
+  assert.equal(el('#lostPanel').hidden, true, 'the loss panel waits while the reaction is playing');
+  assert.ok(app.answerOptions.children.every(button => button.disabled), 'the last-heart miss has no second-chance tap');
   endSpeech(app);
+  assert.equal(el('#lostPanel').hidden, true, 'the loss panel still waits while the word plays');
   assert.match(app.played.at(-1), /^\.\/audio\/en\/word-colors-/);
-  assert.equal(el('#lostPanel').hidden, true);
-  app.answerOptions.children.find(button => button.dataset.choice === game.getState().question.answerId).click();
-  assert.equal(el('#lostPanel').hidden, false);
+  endSpeech(app);
+  assert.equal(el('#lostPanel').hidden, false, 'the loss panel appears immediately after the word ends');
+  assert.equal(el('#questionPanel').hidden, true);
 });
 
 test('a body picture question gets the same echo and second chance, on the part ringed', () => {

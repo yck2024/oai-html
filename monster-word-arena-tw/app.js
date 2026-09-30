@@ -297,7 +297,8 @@
   function completeAnswerEcho(state) {
     answerEchoFinished = true;
     if (state.missed) {
-      if (!pendingSecondChance) armMissFallback(state);
+      if (state.lost) showLostPanel();
+      else if (!pendingSecondChance) armMissFallback(state);
       else {
         pendingSecondChance = false;
         continueAfterSecondChance(state);
@@ -595,9 +596,9 @@
     const accepted = state.question.acceptedIds || [state.question.answerId];
     choiceButtons().forEach(choice => {
       const right = choice.dataset.choice === state.question.answerId;
-      choice.disabled = !accepted.includes(choice.dataset.choice);
+      choice.disabled = state.lost || !accepted.includes(choice.dataset.choice);
       choice.classList.toggle('right-answer', right);
-      choice.classList.toggle('second-chance', right);
+      choice.classList.toggle('second-chance', right && !state.lost);
       choice.classList.toggle('wrong-answer', choice.dataset.choice === state.missedChoice);
     });
     markDiagram(state);
@@ -622,7 +623,7 @@
     const { parts } = diagramOf(question);
     const rings = [];
     if (state.missed && parts[state.missedChoice]) rings.push(...parts[state.missedChoice].regions.map(region => diagramRing(region, 'wrong-ring')));
-    if (state.solved || state.missed) rings.push(...parts[question.answerId].regions.map(region => diagramRing(region, state.missed ? 'right-ring second-chance' : 'right-ring')));
+    if (state.solved || state.missed) rings.push(...parts[question.answerId].regions.map(region => diagramRing(region, state.missed && !state.lost ? 'right-ring second-chance' : 'right-ring')));
     diagramMarks.replaceChildren(...rings);
     const target = currentTarget(question);
     diagramWord.textContent = (state.solved || state.missed) && target ? target[textLanguage] : '';
@@ -782,6 +783,7 @@
   }
 
   function secondChance(optionId, state) {
+    if (state.lost) return;
     const accepted = state.question.acceptedIds || [state.question.answerId];
     if (!accepted.includes(String(optionId))) return;
     sounds.play('tap');
@@ -815,8 +817,9 @@
       if (state.lost) [...topicTabsContainer.children].forEach(button => { button.disabled = true; });
       stage.block();
       arenaMessage.textContent = (state.lost ? I18N.STRINGS.lostMessage : I18N.STRINGS.blockMessage)[textLanguage];
+      const echoExpected = Boolean(state.question.wordAudioId) && !soundIsOff();
       answerEchoStarted = false;
-      answerEchoFinished = !state.question.wordAudioId || soundIsOff();
+      answerEchoFinished = !echoExpected;
       pendingSecondChance = false;
       playReaction(state.lost ? 'round-lost' : state.hearts === 1 ? 'last-heart' : 'try-again', {
         echo: { second: false },
@@ -826,8 +829,10 @@
       renderEchoButton(state);
       sounds.play('boing', { delay: 0.04 });
       setPointer(null);
-      if (answerEchoFinished) armMissFallback(state);
-      else cancelMissTimer();
+      if (answerEchoFinished) {
+        if (state.lost && echoExpected) showLostPanel();
+        else armMissFallback(state);
+      } else cancelMissTimer();
       return;
     }
 
