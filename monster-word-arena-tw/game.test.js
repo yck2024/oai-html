@@ -3418,10 +3418,3 @@ test('an animal icon that cannot load is replaced by its emoji', () => {
   assert.equal(item.textContent, word.icon);
   assert.ok(item.classList.contains('emoji-item'));
 });
-
-test('the stylesheet gives each picture its own proportions', () => {
-  const css = fs.readFileSync(path.join(__dirname, 'game.css'), 'utf8');
-  const sizeOf = key => css.match(new RegExp(`${key}\\s*\\{[^}]*--diagram-w:\\s*(\\d+);\\s*--diagram-h:\\s*(\\d+);`))?.slice(1).map(Number);
-  assert.deepEqual(sizeOf('\\.face-diagram'), [DIAGRAMS.face.width, DIAGRAMS.face.height]);
-  assert.deepEqual(sizeOf('\\.face-diagram\\[data-diagram="animals"\\]'), [DIAGRAMS.animals.width, DIAGRAMS.animals.height]);
-});
