@@ -30,6 +30,11 @@
   const nextButton = document.querySelector('#nextButton');
   const questionPanel = document.querySelector('#questionPanel');
   const finishPanel = document.querySelector('#finishPanel');
+  const lostPanel = document.querySelector('#lostPanel');
+  const tryAgainButton = document.querySelector('#tryAgainButton');
+  const heartMeter = document.querySelector('#heartMeter');
+  const heartPips = document.querySelector('#heartPips');
+  const heartFloat = document.querySelector('#heartFloat');
   const arenaMessage = document.querySelector('#arenaMessage');
   const scoreStars = document.querySelector('#scoreStars');
   const scoreCount = document.querySelector('#scoreCount');
@@ -56,7 +61,7 @@
   const goodbyePanel = document.querySelector('#goodbyePanel');
   const goodbyeBody = document.querySelector('#goodbyeBody');
   const backToPlayButton = document.querySelector('#backToPlayButton');
-  const pointerEmojis = ['pointStartEmoji', 'pointAnswerEmoji', 'pointNextEmoji', 'pointFinishEmoji', 'pointBreakEmoji', 'pointGoodbyeEmoji']
+  const pointerEmojis = ['pointStartEmoji', 'pointAnswerEmoji', 'pointNextEmoji', 'pointFinishEmoji', 'pointLostEmoji', 'pointBreakEmoji', 'pointGoodbyeEmoji']
     .map(id => document.querySelector(`#${id}`)).filter(Boolean);
 
   // Grown-up settings: a header icon, gated by a simple math check, away from the main play path.
@@ -240,7 +245,33 @@
     rivalPower.classList.toggle('compact', compact);
   }
 
+  // Hearts are the match's lives: a full heart is red, a spent one is hollow, and the last one beats to warn.
+  function renderHearts(state) {
+    if (heartPips.children.length !== state.maxHearts) {
+      heartPips.replaceChildren(...Array.from({ length: state.maxHearts }, () => document.createElement('span')));
+    }
+    [...heartPips.children].forEach((pip, index) => {
+      const spent = index >= state.hearts;
+      pip.textContent = spent ? '♡' : '♥';
+      pip.classList.toggle('spent', spent);
+      pip.classList.toggle('just-lost', state.heartLost && index === state.hearts);
+    });
+    heartPips.classList.toggle('last-heart', state.hearts === 1);
+    heartMeter.setAttribute('aria-label', I18N.heartsAria(state.hearts, state.maxHearts, textLanguage));
+  }
+
+  // A small "♥ −1" floats up beside the hearts each time a wrong tap takes one.
+  let heartFloatTimer = null;
+  function flashHeartLoss() {
+    heartFloat.classList.remove('is-showing');
+    void heartFloat.offsetWidth;
+    heartFloat.classList.add('is-showing');
+    clearTimeout(heartFloatTimer);
+    heartFloatTimer = setTimeout(() => heartFloat.classList.remove('is-showing'), 1400);
+  }
+
   function renderScore(state) {
+    renderHearts(state);
     renderGoalMarkers(state.goal);
     [...scoreStars.children].forEach((star, index) => {
       star.textContent = index < state.stars ? '★' : '☆';
@@ -364,6 +395,8 @@
   // A missed question stays on screen, with its right choice marked, until the pause is over.
   const MISS_PAUSE_MS = { withSound: 3400, quiet: 2000 };
   let missTimer = null;
+  // Once the last heart is gone and the miss has been shown, the lost-match panel takes the question's place.
+  let lostPanelShown = false;
 
   function cancelMissTimer() {
     if (missTimer === null) return;
@@ -379,8 +412,11 @@
     });
   }
 
+  // What a wrong tap cost, in words: the heart (and star) that went, then how many hearts remain.
   function missFeedback(state) {
-    return (state.starLost ? I18N.STRINGS.feedbackMiss : I18N.STRINGS.feedbackMissNoStar)[textLanguage];
+    if (state.lost) return I18N.STRINGS.feedbackLost[textLanguage];
+    const cost = (state.starLost ? I18N.STRINGS.feedbackMiss : I18N.STRINGS.feedbackMissNoStar)[textLanguage];
+    return `${cost} ${I18N.heartsLeft(state.hearts, textLanguage)}`;
   }
 
   function renderQuestion(state, { speak = true } = {}) {
@@ -421,19 +457,20 @@
     feedback.textContent = state.missed ? missFeedback(state) : I18N.STRINGS.feedbackDefault[textLanguage];
     feedback.classList.toggle('retry', state.missed);
     nextButton.hidden = !state.solved || state.finished;
-    questionPanel.hidden = state.finished;
+    questionPanel.hidden = state.finished || lostPanelShown;
     finishPanel.hidden = !state.finished;
+    lostPanel.hidden = !lostPanelShown;
     [...topicTabsContainer.children].forEach(tab => {
       const selected = tab.dataset.topic === state.topic;
       tab.classList.toggle('is-active', selected);
       tab.setAttribute('aria-pressed', String(selected));
-      tab.disabled = state.finished;
+      tab.disabled = state.finished || state.lost;
     });
     [...levelChoiceContainer.querySelectorAll('.level-option')].forEach(button => {
       const selected = button.dataset.level === state.level;
       button.classList.toggle('is-active', selected);
       button.setAttribute('aria-pressed', String(selected));
-      button.disabled = state.finished;
+      button.disabled = state.finished || state.lost;
     });
     renderScore(state);
     if (speak) playCurrentQuestion();
@@ -454,18 +491,21 @@
     sounds.play('tap');
     answerOptions.querySelectorAll('button').forEach(choice => choice.classList.remove('wrong-answer', 'right-answer'));
 
-    if (result === 'missed') {
+    if (result === 'missed' || result === 'lost') {
       markMiss(state);
       feedback.textContent = missFeedback(state);
       feedback.classList.add('retry');
       renderScore(state);
+      flashHeartLoss();
+      // With no hearts left there is no dodging the loss by switching topic or level; Try again is the way on.
+      if (state.lost) [...topicTabsContainer.children, ...levelChoiceContainer.querySelectorAll('.level-option')].forEach(button => { button.disabled = true; });
       stage.block();
-      arenaMessage.textContent = I18N.STRINGS.blockMessage[textLanguage];
-      playReaction('try-again');
+      arenaMessage.textContent = (state.lost ? I18N.STRINGS.lostMessage : I18N.STRINGS.blockMessage)[textLanguage];
+      playReaction(state.lost ? 'round-lost' : state.hearts === 1 ? 'last-heart' : 'try-again');
       sounds.play('boing', { delay: 0.04 });
       setPointer(null);
       cancelMissTimer();
-      missTimer = setTimeout(loadNextQuestion, soundIsOff() ? MISS_PAUSE_MS.quiet : MISS_PAUSE_MS.withSound);
+      missTimer = setTimeout(state.lost ? showLostPanel : loadNextQuestion, soundIsOff() ? MISS_PAUSE_MS.quiet : MISS_PAUSE_MS.withSound);
       return;
     }
 
@@ -866,6 +906,10 @@
     document.querySelector('#heroSide').textContent = S.heroSide[textLanguage];
     document.querySelector('#buddySide').textContent = S.buddySide[textLanguage];
     document.querySelector('#teamStarsLabel').textContent = S.teamStars[textLanguage];
+    document.querySelector('#heartsLabel').textContent = S.heartsLabel[textLanguage];
+    setBilingual(document.querySelector('#lostTitle'), S.lostHeading[textLanguage], secondOf(S.lostHeading));
+    setBilingual(document.querySelector('#lostBody'), S.lostBody[textLanguage], secondOf(S.lostBody));
+    tryAgainButton.replaceChildren(bilingualNode(`${S.tryAgainButton[textLanguage]} `, secondOf(S.tryAgainButton) && `${secondOf(S.tryAgainButton)} `), (() => { const s = document.createElement('span'); s.setAttribute('aria-hidden', 'true'); s.textContent = '↻'; return s; })());
     document.querySelector('#challengeKicker').textContent = S.challengeKicker[textLanguage];
     document.querySelector('#challengeHeading').textContent = S.challengeHeading[textLanguage];
     topicTabsContainer.setAttribute('aria-label', S.topicTabsLabel[textLanguage]);
@@ -948,6 +992,19 @@
     setPointer('answer');
   }
 
+  // After the last heart's miss has been shown: hearts come back with Try again, which starts the match over.
+  function showLostPanel() {
+    missTimer = null;
+    if (!game.getState().lost) return;
+    lostPanelShown = true;
+    questionPanel.hidden = true;
+    finishPanel.hidden = true;
+    goodbyePanel.hidden = true;
+    lostPanel.hidden = false;
+    setPointer('lost');
+    tryAgainButton.focus();
+  }
+
   nextButton.addEventListener('click', () => {
     sounds.play('tap');
     loadNextQuestion();
@@ -955,6 +1012,8 @@
 
   function restart() {
     const level = PACING.resolveAllowedLevel(game.getState().level, allowedLevels);
+    cancelMissTimer();
+    lostPanelShown = false;
     const state = game.restart(level);
     sounds.play('tap');
     stage.startMatch();
@@ -970,6 +1029,7 @@
 
   document.querySelector('#restartButton').addEventListener('click', restart);
   playAgainButton.addEventListener('click', restart);
+  tryAgainButton.addEventListener('click', restart);
   oneMoreRoundButton.addEventListener('click', restart);
   takeBreakButton.addEventListener('click', () => {
     finishPanel.hidden = true;

@@ -63,7 +63,7 @@
 
     <section class="arena-layout" aria-label="Sparring word and math game" id="arenaLayoutSection">
       <section class="arena-card" aria-label="The sparring arena">
-        <div class="arena-heading"><span id="arenaHeading">THE SPARRING ARENA</span><span class="heart-dots" aria-hidden="true">♥ ♥ ♥</span></div>
+        <div class="arena-heading"><span id="arenaHeading">THE SPARRING ARENA</span><span class="heart-meter" id="heartMeter" role="img" aria-label="3 of 3 hearts left"><span class="hearts-label" id="heartsLabel">HEARTS</span><span class="heart-pips" id="heartPips" aria-hidden="true"></span><span class="heart-float" id="heartFloat" aria-hidden="true">♥ −1</span></span></div>
         <div class="arena-stage" id="arenaStage">
           <div class="stage-bunting" aria-hidden="true"></div>
           <div class="stage-rainbow" aria-hidden="true"></div>
@@ -147,6 +147,14 @@
             </div>
             <span class="point-hint point-hint--finish" id="pointFinish" aria-hidden="true"><span id="pointFinishEmoji">🦖</span> 👉</span>
             <span class="point-hint point-hint--break" id="pointBreak" aria-hidden="true"><span id="pointBreakEmoji">🦖</span> 👉</span>
+          </section>
+
+          <section class="lost-panel" id="lostPanel" aria-labelledby="lostTitle" hidden>
+            <span class="party-art" aria-hidden="true"><span class="champion-art" data-character="dino" data-pose="ready"><span class="art-fallback">🦖</span></span><span class="lost-hearts">♡ ♡ ♡</span><span class="champion-art is-mirrored" data-character="monster" data-pose="giggle"><span class="art-fallback">👾</span></span></span>
+            <h2 id="lostTitle">Out of hearts!</h2>
+            <p id="lostBody">No worries! Your hearts come back when you try again. Listen closely this time!</p>
+            <button class="next-button replay-button" id="tryAgainButton" type="button">Try again <span aria-hidden="true">↻</span></button>
+            <span class="point-hint point-hint--lost" id="pointLost" aria-hidden="true"><span id="pointLostEmoji">🦖</span> 👉</span>
           </section>
 
           <section class="goodbye-panel" id="goodbyePanel" aria-labelledby="goodbyeTitle" hidden>

@@ -99,17 +99,33 @@
     answerGroupLabelNumber: { en: 'Choose a number', zh: '選一個數字', ja: 'かずを　えらんでね' },
     answerGroupLabelPicture: { en: 'Choose a picture', zh: '選一張圖', ja: 'えを　えらんでね' },
     feedbackDefault: { en: 'No rush—thinking is a superpower!', zh: '慢慢想，你最棒！', ja: 'あわてなくて　いいよ、かんがえるのが　とくいだね！' },
-    // A wrong tap ends the question: the right choice is shown, then a new question follows.
+    // A wrong tap ends the question: the right choice is shown, a heart floats away (and a star hops back when there
+    // is one to lose), then a new question follows. The last heart ends the match.
     feedbackMiss: {
-      en: 'Oops! This one was right. A star hops back—here’s a new question!',
-      zh: '哎呀！正確答案是這個。星星跳回去了，來一題新的！',
-      ja: 'おしい！こたえは　これだよ。ほしが　ひとつ　もどるよ、あたらしい　もんだいだよ！',
+      en: 'Oops! This one was right. A heart floats away and a star hops back.',
+      zh: '哎呀！正確答案是這個。一顆愛心飛走了，星星也跳回去了。',
+      ja: 'おしい！こたえは　これだよ。はーとが　ひとつ　とんでいって、ほしも　ひとつ　もどるよ。',
     },
     feedbackMissNoStar: {
-      en: 'Oops! This one was right. Here’s a new question!',
-      zh: '哎呀！正確答案是這個。來一題新的！',
-      ja: 'おしい！こたえは　これだよ。あたらしい　もんだいだよ！',
+      en: 'Oops! This one was right. A heart floats away.',
+      zh: '哎呀！正確答案是這個。一顆愛心飛走了。',
+      ja: 'おしい！こたえは　これだよ。はーとが　ひとつ　とんでいくよ。',
     },
+    feedbackLost: {
+      en: 'Oops! This one was right. That was the last heart.',
+      zh: '哎呀！正確答案是這個。愛心用完了。',
+      ja: 'おしい！こたえは　これだよ。はーとが　なくなったよ。',
+    },
+    heartsLabel: { en: 'HEARTS', zh: '愛心', ja: 'はーと' },
+    // A wrong tap costs a heart, so a match cannot be won by tapping at random; the last heart ends it.
+    lostHeading: { en: 'Out of hearts!', zh: '愛心用完了！', ja: 'はーとが　なくなっちゃった！' },
+    lostBody: {
+      en: 'No worries! Your hearts come back when you try again. Listen closely this time!',
+      zh: '沒關係！再試一次，愛心就會回來。這次仔細聽喔！',
+      ja: 'だいじょうぶ！もういちど　あそぶと、はーとが　もどるよ。こんどは　よく　きいてね！',
+    },
+    tryAgainButton: { en: 'Try again', zh: '再試一次', ja: 'もういちど' },
+    lostMessage: { en: 'Out of hearts! Let’s try the match again!', zh: '愛心用完了！我們再來一場！', ja: 'はーとが　なくなったよ！もういちど　やってみよう！' },
     // Shown (and spoken) after a win that earned no sticker because today's cap for this language and level is used up.
     capNoteHarderOrLanguage: {
       en: 'Great win! To earn your next sticker, try a harder level or another language.',
@@ -376,6 +392,16 @@
     return STRINGS[CAP_NOTES[advice] || CAP_NOTES.tomorrow][lang];
   }
 
+  // How many hearts are left after a miss, in the child's language.
+  function heartsLeft(hearts, lang) {
+    if (hearts === 1) return { en: 'Only 1 heart left!', zh: '只剩最後 1 顆愛心！', ja: 'はーとは　あと　ひとつ！' }[lang];
+    return { en: `${hearts} hearts left.`, zh: `還剩 ${hearts} 顆愛心。`, ja: `はーとは　あと　${hearts}こ。` }[lang];
+  }
+
+  function heartsAria(hearts, max, lang) {
+    return { en: `${hearts} of ${max} hearts left`, zh: `剩下 ${hearts} / ${max} 顆愛心`, ja: `はーとは　${hearts} / ${max}こ` }[lang];
+  }
+
   function bilingualNode(mainText, secondValue) {
     if (!secondValue || secondValue === mainText) return document.createTextNode(mainText);
     const wrap = document.createElement('span');
@@ -396,7 +422,7 @@
 
   const api = {
     TEXT_LANGUAGES, LANGUAGE_NAMES, DEFAULT_SECOND_LANGUAGE, TOPIC_NAMES, LEVEL_NAMES, CHAMPIONS, STRINGS,
-    championReady, topicChosenMessage, levelChosenMessage, finishBody, sparMessage, capNote,
+    championReady, topicChosenMessage, levelChosenMessage, finishBody, sparMessage, capNote, heartsLeft, heartsAria,
     settingsWinsSummary, settingsStickerSummary, rewardBookIntroWins, stickerStillToFind,
     costumeWinsToGo, costumeSurpriseHint, costumeRowLabel, nextSurpriseHint,
     rewardSummaryPattern, rewardUnlockText, bilingualNode, setBilingual,

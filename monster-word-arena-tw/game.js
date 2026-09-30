@@ -3,6 +3,9 @@
 
   // Stars needed to win a match, and answer-choice count, at each level.
   const GOAL_BY_LEVEL = { easy: 3, harder: 5, super: 10 };
+  // Hearts are the match's lives: every wrong tap costs one, and a match with none left is lost. Random tapping
+  // therefore cannot carry a player through a match, while a player who mostly knows the answers rarely runs out.
+  const HEARTS_BY_LEVEL = { easy: 3, harder: 4, super: 5 };
   const CHOICE_COUNT = { easy: 3, harder: 4, super: 4 };
   const TOPICS = ['math', 'colors', 'face', 'family', 'animals', 'fruit', 'vegetables', 'flowers', 'vehicles', 'weather'];
   // Word questions never show the answer's picture next to the answer's picture. Easy shows only the written prompt
@@ -110,6 +113,9 @@
   const REACTIONS = {
     praise: ['reaction-praise-1', 'reaction-praise-2'],
     'try-again': ['reaction-try-again-1', 'reaction-try-again-2'],
+    // Spoken instead of try-again when a wrong tap takes the second-to-last heart, and when it takes the last.
+    'last-heart': ['reaction-last-heart'],
+    'round-lost': ['reaction-round-lost'],
     // Spoken after a win that earned no sticker today: which way to go for the next one.
     'cap-harder-or-language': ['reaction-cap-harder-or-language'],
     'cap-harder': ['reaction-cap-harder'],
@@ -230,12 +236,23 @@
     return { picture: `${EGG.repeat(problem.left)}  +  ${EGG.repeat(problem.right)}`, takeAway: null };
   }
 
-  function mathQuestion(level, random, previousKey) {
-    const problem = pickFresh(MATH_PROBLEMS[level], random, previousKey, item => item.key);
+  // Plus and minus take turns often enough that both are always in view: the same operation is never asked three
+  // times in a row (counting questions on Harder count as neither and reset the run).
+  function balancedPool(level, recentOps) {
+    const pool = MATH_PROBLEMS[level];
+    const [older, latest] = recentOps.slice(-2);
+    if (!latest || older !== latest || !['add', 'take'].includes(latest)) return pool;
+    const other = pool.filter(problem => problem.op !== latest);
+    return other.length ? other : pool;
+  }
+
+  function mathQuestion(level, random, previousKey, recentOps = []) {
+    const problem = pickFresh(balancedPool(level, recentOps), random, previousKey, item => item.key);
     const equation = { add: `${problem.left} + ${problem.right} = ?`, take: `${problem.from} − ${problem.take} = ?`, count: '' }[problem.op];
     const { picture, takeAway } = mathPicture(problem, level);
     return {
       topic: 'math',
+      op: problem.op,
       key: problem.key,
       audioId: problem.audioId,
       ...mathPrompts(problem),
@@ -271,63 +288,78 @@
     };
   }
 
-  function questionFor(topic, level, random, previousKey) {
-    if (topic === 'math') return mathQuestion(level, random, previousKey);
+  function questionFor(topic, level, random, previousKey, recentOps) {
+    if (topic === 'math') return mathQuestion(level, random, previousKey, recentOps);
     if (WORD_TOPICS[topic]) return wordQuestion(topic, level, random, previousKey);
     throw new Error(`Unknown topic: ${topic}`);
   }
 
-  // A question that has not been answered yet: not solved, not missed, no star lost.
-  const OPEN_QUESTION = { solved: false, missed: false, missedChoice: '', starLost: false, feedback: '' };
+  // A question that has not been answered yet: not solved, not missed, no star or heart lost.
+  const OPEN_QUESTION = { solved: false, missed: false, missedChoice: '', starLost: false, heartLost: false, feedback: '' };
 
   function createGame(random = Math.random) {
+    // The next question, plus the run of recent operations it extends (math only) so plus and minus keep taking turns.
+    function drawQuestion(topic, level, previousKey, recentOps = []) {
+      const question = questionFor(topic, level, random, previousKey, recentOps);
+      return { question, recentOps: question.op ? [...recentOps, question.op].slice(-2) : [] };
+    }
+
     let state = {
       topic: 'math',
       level: 'easy',
       champion: 'dino',
       stars: 0,
+      hearts: HEARTS_BY_LEVEL.easy,
       finished: false,
+      lost: false,
       ...OPEN_QUESTION,
-      question: questionFor('math', 'easy', random),
+      ...drawQuestion('math', 'easy'),
     };
 
     function getState() {
       return {
         ...state,
         goal: GOAL_BY_LEVEL[state.level],
+        maxHearts: HEARTS_BY_LEVEL[state.level],
         rivalPower: GOAL_BY_LEVEL[state.level] - state.stars,
         question: { ...state.question, options: state.question.options.map(option => ({ ...option })) },
       };
     }
 
+    // A match that is over (won or lost) waits for Play again or Try again before anything else changes.
+    const over = () => state.finished || state.lost;
+
     function chooseTopic(topic) {
-      if (state.finished || !TOPICS.includes(topic)) return false;
-      state = { ...state, topic, ...OPEN_QUESTION, question: questionFor(topic, state.level, random, state.question.key) };
+      if (over() || !TOPICS.includes(topic)) return false;
+      state = { ...state, topic, ...OPEN_QUESTION, ...drawQuestion(topic, state.level, state.question.key, state.topic === topic ? state.recentOps : []) };
       return true;
     }
 
     function chooseLevel(level) {
-      if (state.finished || level === state.level || !LEVELS.includes(level)) return false;
-      state = { ...state, level, stars: 0, ...OPEN_QUESTION, question: questionFor(state.topic, level, random, state.question.key) };
+      if (over() || level === state.level || !LEVELS.includes(level)) return false;
+      state = { ...state, level, stars: 0, hearts: HEARTS_BY_LEVEL[level], ...OPEN_QUESTION, ...drawQuestion(state.topic, level, state.question.key, state.recentOps) };
       return true;
     }
 
     function chooseChampion(champion) {
-      if (state.finished || !['dino', 'monster'].includes(champion)) return false;
+      if (over() || !['dino', 'monster'].includes(champion)) return false;
       state = { ...state, champion };
       return true;
     }
 
-    // The first tap settles the question. A wrong tap ends it (no second try on the same question) and takes one
-    // star from the current match, never below zero; collected stickers are never touched. Guessing at random
-    // therefore loses ground on average at every level, while a player who knows most answers still moves ahead.
+    // The first tap settles the question. A wrong tap ends it (no second try on the same question), takes one heart
+    // and one star from the current match (never below zero), and the match is lost once the last heart is gone.
+    // Collected stickers are never touched. Guessing at random therefore loses ground at every level, while a player
+    // who knows most answers still moves ahead.
     function answer(optionId) {
-      if (state.finished || state.solved || state.missed) return 'ignored';
+      if (over() || state.solved || state.missed) return 'ignored';
       if (!state.question.options.some(option => option.id === String(optionId))) return 'ignored';
       if (String(optionId) !== state.question.answerId) {
         const stars = Math.max(0, state.stars - 1);
-        state = { ...state, stars, missed: true, missedChoice: String(optionId), starLost: stars < state.stars, feedback: 'missed' };
-        return 'missed';
+        const hearts = Math.max(0, state.hearts - 1);
+        const lost = hearts === 0;
+        state = { ...state, stars, hearts, lost, missed: true, missedChoice: String(optionId), starLost: stars < state.stars, heartLost: true, feedback: 'missed' };
+        return lost ? 'lost' : 'missed';
       }
       const stars = state.stars + 1;
       const finished = stars >= GOAL_BY_LEVEL[state.level];
@@ -337,20 +369,23 @@
 
     // After a right answer, or after a miss has been shown, a fresh question (never the same one) takes over.
     function nextQuestion() {
-      if (!(state.solved || state.missed) || state.finished) return false;
-      state = { ...state, ...OPEN_QUESTION, question: questionFor(state.topic, state.level, random, state.question.key) };
+      if (!(state.solved || state.missed) || over()) return false;
+      state = { ...state, ...OPEN_QUESTION, ...drawQuestion(state.topic, state.level, state.question.key, state.recentOps) };
       return true;
     }
 
+    // Starting again, whether after a win, a lost match, or by choice, refills the hearts and clears the stars.
     function restart(level = state.level) {
       const nextLevel = LEVELS.includes(level) ? level : state.level;
       state = {
         ...state,
         level: nextLevel,
         stars: 0,
+        hearts: HEARTS_BY_LEVEL[nextLevel],
         finished: false,
+        lost: false,
         ...OPEN_QUESTION,
-        question: questionFor(state.topic, nextLevel, random, state.question.key),
+        ...drawQuestion(state.topic, nextLevel, state.question.key, state.recentOps),
       };
       return getState();
     }
@@ -393,7 +428,7 @@
     return { play, stop };
   }
 
-  const api = { GOAL_BY_LEVEL, CHOICE_COUNT, TOPICS, LEVELS, WORD_TOPICS, REACTIONS, createGame, createSpeechPlayer };
+  const api = { GOAL_BY_LEVEL, HEARTS_BY_LEVEL, CHOICE_COUNT, TOPICS, LEVELS, WORD_TOPICS, REACTIONS, createGame, createSpeechPlayer };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof window !== 'undefined') window.FriendlyArena = api;
 })();

@@ -215,8 +215,10 @@
     "audio/en/reaction-cap-language.mp3",
     "audio/en/reaction-cap-tomorrow.mp3",
     "audio/en/reaction-finish-1.mp3",
+    "audio/en/reaction-last-heart.mp3",
     "audio/en/reaction-praise-1.mp3",
     "audio/en/reaction-praise-2.mp3",
+    "audio/en/reaction-round-lost.mp3",
     "audio/en/reaction-try-again-1.mp3",
     "audio/en/reaction-try-again-2.mp3",
     "audio/en/vegetables-broccoli.mp3",
@@ -365,8 +367,10 @@
     "audio/ja/reaction-cap-language.mp3",
     "audio/ja/reaction-cap-tomorrow.mp3",
     "audio/ja/reaction-finish-1.mp3",
+    "audio/ja/reaction-last-heart.mp3",
     "audio/ja/reaction-praise-1.mp3",
     "audio/ja/reaction-praise-2.mp3",
+    "audio/ja/reaction-round-lost.mp3",
     "audio/ja/reaction-try-again-1.mp3",
     "audio/ja/reaction-try-again-2.mp3",
     "audio/ja/vegetables-broccoli.mp3",
@@ -515,8 +519,10 @@
     "audio/zh/reaction-cap-language.mp3",
     "audio/zh/reaction-cap-tomorrow.mp3",
     "audio/zh/reaction-finish-1.mp3",
+    "audio/zh/reaction-last-heart.mp3",
     "audio/zh/reaction-praise-1.mp3",
     "audio/zh/reaction-praise-2.mp3",
+    "audio/zh/reaction-round-lost.mp3",
     "audio/zh/reaction-try-again-1.mp3",
     "audio/zh/reaction-try-again-2.mp3",
     "audio/zh/vegetables-broccoli.mp3",
@@ -541,5 +547,5 @@
     "audio/zh/weather-thunder.mp3",
     "audio/zh/weather-windy.mp3"
   ],
-  "MEDIA_VERSION": "573ac4bf1a40"
+  "MEDIA_VERSION": "fc43a1f6c8a6"
 }));

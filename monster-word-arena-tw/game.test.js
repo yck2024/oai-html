@@ -6,7 +6,7 @@ const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 const test = require('node:test');
 const vm = require('node:vm');
-const { GOAL_BY_LEVEL, CHOICE_COUNT, TOPICS, LEVELS, WORD_TOPICS, REACTIONS, createGame, createSpeechPlayer } = require('./game.js');
+const { GOAL_BY_LEVEL, HEARTS_BY_LEVEL, CHOICE_COUNT, TOPICS, LEVELS, WORD_TOPICS, REACTIONS, createGame, createSpeechPlayer } = require('./game.js');
 const { EFFECTS, EFFECT_LEVEL, MUSIC_LEVEL, createSoundBoard } = require('./sounds.js');
 const { POSES, ART, TIMING, comboText } = require('./arena.js');
 const { STORAGE_KEY, STICKERS, COSTUMES } = require('./rewards.js');
@@ -672,93 +672,236 @@ function wrongOption(game) {
   return question.options.find(option => option.id !== question.answerId);
 }
 
-test('a wrong answer ends the question, takes one star back (never below zero), and a fresh question follows', () => {
+test('a wrong answer ends the question, takes a heart and a star back (never below zero), and a fresh question follows', () => {
   const game = createGame(steadyRandom);
   const first = game.getState().question;
+  assert.equal(game.getState().hearts, HEARTS_BY_LEVEL.easy);
   assert.equal(game.answer(wrongOption(game).id), 'missed');
   let state = game.getState();
   assert.equal(state.stars, 0, 'no star to lose yet, so it stays at zero');
   assert.equal(state.starLost, false);
+  assert.equal(state.hearts, HEARTS_BY_LEVEL.easy - 1, 'but a wrong tap always costs a heart');
+  assert.equal(state.heartLost, true);
   assert.equal(state.missed, true);
   assert.equal(state.solved, false);
   assert.equal(state.feedback, 'missed');
   assert.equal(game.answer(first.answerId), 'ignored', 'the ended question cannot be answered again, even correctly');
-  assert.equal(game.answer(wrongOption(game).id), 'ignored', 'and a second tap cannot take another star');
+  assert.equal(game.answer(wrongOption(game).id), 'ignored', 'and a second tap cannot take another star or heart');
+  assert.equal(game.getState().hearts, HEARTS_BY_LEVEL.easy - 1);
   assert.equal(game.nextQuestion(), true);
   state = game.getState();
   assert.notEqual(state.question.key, first.key, 'a fresh question, never the same one');
   assert.equal(state.missed, false);
+  assert.equal(state.heartLost, false, 'the flag belongs to the miss only');
+  assert.equal(state.hearts, HEARTS_BY_LEVEL.easy - 1, 'a lost heart stays lost for the rest of the match');
   assert.equal(answerCorrectly(game), 'correct');
   assert.equal(game.getState().stars, 1);
+  assert.equal(game.getState().hearts, HEARTS_BY_LEVEL.easy - 1, 'a right answer never buys a heart back');
 
   game.nextQuestion();
   assert.equal(game.answer(wrongOption(game).id), 'missed');
   state = game.getState();
   assert.equal(state.stars, 0, 'a miss takes one star from the current match');
   assert.equal(state.starLost, true);
+  assert.equal(state.hearts, HEARTS_BY_LEVEL.easy - 2);
   assert.equal(state.rivalPower, GOAL_BY_LEVEL.easy, 'the buddy is back to full power');
   game.nextQuestion();
   assert.equal(game.getState().starLost, false, 'the flag belongs to the miss only');
 });
 
-// Expected number of answers to win a match when each answer is right with probability p: the star count is a
-// walk that goes up on a right answer and down (never below zero) on a miss, and the match ends at the goal.
-function expectedQuestionsToWin(goal, p) {
-  const rows = Array.from({ length: goal }, () => Array(goal + 1).fill(0));
-  for (let star = 0; star < goal; star += 1) {
-    rows[star][star] += 1;
-    if (star + 1 < goal) rows[star][star + 1] -= p;
-    rows[star][Math.max(star - 1, 0)] -= 1 - p;
-    rows[star][goal] = 1;
+test('every level starts a match with its hearts, and each wrong tap takes exactly one', () => {
+  assert.deepEqual(HEARTS_BY_LEVEL, { easy: 3, harder: 4, super: 5 });
+  for (const level of LEVELS) {
+    const game = createGame(seededRandom(30));
+    game.chooseLevel(level);
+    assert.equal(game.getState().hearts, HEARTS_BY_LEVEL[level], `${level} starts with full hearts`);
+    assert.equal(game.getState().maxHearts, HEARTS_BY_LEVEL[level]);
+    for (let spent = 1; spent < HEARTS_BY_LEVEL[level]; spent += 1) {
+      assert.equal(game.answer(wrongOption(game).id), 'missed');
+      assert.equal(game.getState().hearts, HEARTS_BY_LEVEL[level] - spent);
+      game.nextQuestion();
+    }
+    assert.equal(game.getState().hearts, 1, `${level}: one heart left`);
   }
-  for (let pivot = 0; pivot < goal; pivot += 1) {
-    const best = rows.reduce((found, row, index) => (index >= pivot && Math.abs(row[pivot]) > Math.abs(rows[found][pivot]) ? index : found), pivot);
-    [rows[pivot], rows[best]] = [rows[best], rows[pivot]];
-    for (let index = 0; index < goal; index += 1) {
-      if (index === pivot) continue;
-      const factor = rows[index][pivot] / rows[pivot][pivot];
-      for (let column = pivot; column <= goal; column += 1) rows[index][column] -= factor * rows[pivot][column];
+});
+
+test('the last heart ends the match: the miss is shown, then nothing but Try again works, and hearts come back', () => {
+  for (const level of LEVELS) {
+    const game = createGame(seededRandom(31));
+    game.chooseLevel(level);
+    answerCorrectly(game);
+    game.nextQuestion();
+    let result;
+    for (let miss = 0; miss < HEARTS_BY_LEVEL[level]; miss += 1) {
+      result = game.answer(wrongOption(game).id);
+      if (miss < HEARTS_BY_LEVEL[level] - 1) {
+        assert.equal(result, 'missed');
+        game.nextQuestion();
+      }
+    }
+    assert.equal(result, 'lost', `${level}: the last wrong tap loses the match`);
+    let state = game.getState();
+    assert.equal(state.lost, true);
+    assert.equal(state.finished, false, 'a lost match is not a win, so no sticker can be earned from it');
+    assert.equal(state.hearts, 0);
+    assert.equal(state.missed, true, 'the last miss still shows the right choice');
+    assert.equal(game.nextQuestion(), false, 'no new question until the child tries again');
+    assert.equal(game.answer(state.question.answerId), 'ignored');
+    assert.equal(game.chooseTopic('colors'), false, 'a lost match cannot be dodged by switching topic');
+    assert.equal(game.chooseLevel(level === 'easy' ? 'harder' : 'easy'), false, 'or level');
+    assert.equal(game.chooseChampion('monster'), false);
+    state = game.restart();
+    assert.equal(state.lost, false);
+    assert.equal(state.hearts, HEARTS_BY_LEVEL[level], 'Try again refills every heart');
+    assert.equal(state.stars, 0, 'and starts the match over');
+    assert.equal(state.missed, false);
+    assert.equal(state.level, level);
+  }
+});
+
+test('a heart never buys itself back inside a match: switching topic keeps hearts, and a new level or restart refills them', () => {
+  const game = createGame(seededRandom(32));
+  game.answer(wrongOption(game).id);
+  game.nextQuestion();
+  assert.equal(game.getState().hearts, 2);
+  game.chooseTopic('colors');
+  assert.equal(game.getState().hearts, 2, 'changing topic is not a way to get hearts back');
+  game.chooseTopic('math');
+  assert.equal(game.getState().hearts, 2);
+  game.chooseLevel('harder');
+  assert.equal(game.getState().hearts, HEARTS_BY_LEVEL.harder, 'a new level is a new match with its own hearts');
+  game.answer(wrongOption(game).id);
+  game.restart();
+  assert.equal(game.getState().hearts, HEARTS_BY_LEVEL.harder);
+});
+
+test('tapping every choice in turn cannot win a question: the first tap settles it', () => {
+  for (const topic of ['math', 'colors', 'animals']) {
+    for (const level of LEVELS) {
+      const game = createGame(seededRandom(33));
+      game.chooseTopic(topic);
+      game.chooseLevel(level);
+      const { options, answerId } = game.getState().question;
+      // The child taps the wrong choices first and the right one last, exactly the pattern a guesser would use.
+      const inTurn = [...options.filter(option => option.id !== answerId), ...options.filter(option => option.id === answerId)];
+      const results = inTurn.map(option => game.answer(option.id));
+      assert.deepEqual(results, ['missed', ...Array(inTurn.length - 1).fill('ignored')], `${topic} ${level}: only the first tap counts`);
+      assert.equal(game.getState().stars, 0, 'the right choice tapped last earns nothing');
+      assert.equal(game.getState().solved, false);
+      assert.equal(game.getState().hearts, HEARTS_BY_LEVEL[level] - 1, 'and the guesser paid a heart');
     }
   }
-  return rows[0][goal] / rows[0][0];
+});
+
+// The chance of winning one match, and the answers a match takes, when each answer is right with probability p.
+// A match is the walk over (stars, hearts): a right answer adds a star, a miss takes a heart and a star (never below
+// zero), the goal wins, and running out of hearts loses. Solved by iterating the value equations until they settle.
+function matchModel(goal, hearts, p) {
+  const win = {};
+  const answers = {};
+  const at = (table, stars, left) => table[`${stars},${left}`] || 0;
+  for (let stars = 0; stars <= goal; stars += 1) win[`${stars},0`] = stars >= goal ? 1 : 0;
+  for (let stars = 0; stars < goal; stars += 1) for (let left = 1; left <= hearts; left += 1) win[`${stars},${left}`] = 0;
+  for (let stars = 0; stars <= goal; stars += 1) for (let left = 1; left <= hearts; left += 1) if (stars >= goal) win[`${stars},${left}`] = 1;
+  for (let round = 0; round < 4000; round += 1) {
+    for (let stars = 0; stars < goal; stars += 1) {
+      for (let left = 1; left <= hearts; left += 1) {
+        win[`${stars},${left}`] = p * at(win, stars + 1, left) + (1 - p) * at(win, Math.max(0, stars - 1), left - 1);
+        answers[`${stars},${left}`] = 1 + p * at(answers, stars + 1, left) + (1 - p) * at(answers, Math.max(0, stars - 1), left - 1);
+      }
+    }
+  }
+  return { win: win[`0,${hearts}`], answers: answers[`0,${hearts}`] };
 }
 
-test('tapping at random cannot win a match on average at any level, while a player who mostly knows the answers wins at a steady pace', () => {
+test('tapping at random cannot win a match at any level, while a player who mostly knows the answers keeps winning', () => {
+  const winsAtLeast = { easy: [0.9, 0.7], harder: [0.85, 0.6], super: [0.7, 0.3] };
   for (const level of LEVELS) {
     const goal = GOAL_BY_LEVEL[level];
-    const guess = 1 / CHOICE_COUNT[level];
-    assert.ok(2 * guess - 1 < 0, `${level}: a random tap loses more stars than it wins on average`);
-    assert.ok(expectedQuestionsToWin(goal, guess) >= 8 * goal, `${level}: random tapping needs at least 8 times the perfect number of answers`);
-    assert.ok(expectedQuestionsToWin(goal, 0.9) <= 1.4 * goal, `${level}: a 90% player is nearly at the perfect pace`);
-    assert.ok(expectedQuestionsToWin(goal, 0.8) <= 1.75 * goal, `${level}: an 80% player wins in under twice the perfect number of answers`);
-    assert.ok(expectedQuestionsToWin(goal, 0.7) <= 2.5 * goal, `${level}: even a 70% player keeps winning at a steady pace`);
+    const hearts = HEARTS_BY_LEVEL[level];
+    const guess = matchModel(goal, hearts, 1 / CHOICE_COUNT[level]);
+    assert.ok(guess.win <= { easy: 0.13, harder: 0.01, super: 0.001 }[level], `${level}: random tapping wins ${(guess.win * 100).toFixed(2)}% of matches`);
+    assert.ok(guess.answers / guess.win >= 8 * goal, `${level}: a random tapper needs at least 8 times the perfect number of answers per win`);
+    assert.ok(matchModel(goal, hearts, 0.9).win >= 0.95, `${level}: a 90% player nearly always wins`);
+    assert.ok(matchModel(goal, hearts, 0.8).win >= winsAtLeast[level][0], `${level}: an 80% player usually wins`);
+    assert.ok(matchModel(goal, hearts, 0.7).win >= winsAtLeast[level][1], `${level}: even a 70% player keeps winning matches`);
   }
-  assert.ok(Math.abs(expectedQuestionsToWin(3, 1 / 3) - 33) < 1e-6, 'the model matches a hand calculation');
+  assert.ok(Math.abs(matchModel(3, 3, 1).win - 1) < 1e-9 && Math.abs(matchModel(3, 3, 1).answers - 3) < 1e-9, 'a perfect player wins in exactly the goal');
+  assert.ok(Math.abs(matchModel(1, 2, 0.5).win - 0.75) < 1e-9, 'the model matches a hand calculation: one star, two hearts, a coin flip');
 
   // The real game, driven by a seeded player, agrees with the model.
-  function winsPerAnswer(level, accuracy, answers, seed) {
+  function winRate(level, accuracy, matches, seed) {
     const player = seededRandom(seed);
     const game = createGame(seededRandom(seed + 1));
     game.chooseLevel(level);
     let wins = 0;
-    for (let count = 0; count < answers; count += 1) {
-      const { question } = game.getState();
-      const pick = accuracy === 'random'
-        ? question.options[Math.floor(player() * question.options.length)].id
-        : player() < accuracy ? question.answerId : wrongOption(game).id;
-      if (game.answer(pick) === 'finished') {
-        wins += 1;
-        game.restart();
-      } else game.nextQuestion();
+    for (let played = 0; played < matches; played += 1) {
+      for (let result = ''; result !== 'finished' && result !== 'lost'; ) {
+        const { question } = game.getState();
+        const pick = accuracy === 'random'
+          ? question.options[Math.floor(player() * question.options.length)].id
+          : player() < accuracy ? question.answerId : wrongOption(game).id;
+        result = game.answer(pick);
+        if (result === 'finished') wins += 1;
+        if (result === 'correct' || result === 'missed') game.nextQuestion();
+      }
+      game.restart();
     }
-    return wins / answers;
+    return wins / matches;
   }
   for (const level of LEVELS) {
     const goal = GOAL_BY_LEVEL[level];
-    const random = winsPerAnswer(level, 'random', 30000, 5);
-    assert.ok(random <= 1 / (8 * goal), `${level}: random tapping wins a match at most once per ${8 * goal} answers (saw ${random})`);
-    const skilled = winsPerAnswer(level, 0.8, 30000, 6);
-    assert.ok(Math.abs(1 / skilled - expectedQuestionsToWin(goal, 0.8)) < 0.4, `${level}: an 80% player wins about every ${expectedQuestionsToWin(goal, 0.8).toFixed(1)} answers (saw ${(1 / skilled).toFixed(1)})`);
+    const hearts = HEARTS_BY_LEVEL[level];
+    const random = winRate(level, 'random', 20000, 5);
+    assert.ok(Math.abs(random - matchModel(goal, hearts, 1 / CHOICE_COUNT[level]).win) < 0.01, `${level}: random tapping wins about ${(matchModel(goal, hearts, 1 / CHOICE_COUNT[level]).win * 100).toFixed(1)}% of matches (saw ${(random * 100).toFixed(1)}%)`);
+    const skilled = winRate(level, 0.8, 6000, 6);
+    assert.ok(Math.abs(skilled - matchModel(goal, hearts, 0.8).win) < 0.03, `${level}: an 80% player wins about ${(matchModel(goal, hearts, 0.8).win * 100).toFixed(0)}% of matches (saw ${(skilled * 100).toFixed(0)}%)`);
+  }
+});
+
+test('plus and minus both show up at every math level: never three of one kind in a row, and minus is a fair share', () => {
+  for (const level of LEVELS) {
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+      const game = createGame(seededRandom(seed));
+      game.chooseLevel(level);
+      const ops = [];
+      for (let count = 0; count < 400; count += 1) {
+        const { question } = game.getState();
+        ops.push(/−/.test(question.display) ? 'take' : /\+/.test(question.display) ? 'add' : 'count');
+        // Keep the run going whatever happens: right answers, and misses that are refilled with Try again.
+        if (game.answer(question.answerId) === 'finished') game.restart();
+        else game.nextQuestion();
+      }
+      for (let index = 2; index < ops.length; index += 1) {
+        assert.ok(!(ops[index] === ops[index - 1] && ops[index] === ops[index - 2] && ops[index] !== 'count'), `${level} seed ${seed}: three ${ops[index]} questions in a row at ${index}`);
+      }
+      if (level !== 'harder') {
+        for (let index = 0; index + 2 < ops.length; index += 1) {
+          const window = ops.slice(index, index + 3);
+          assert.ok(window.includes('take') && window.includes('add'), `${level} seed ${seed}: any three questions in a row include a take-away and a sum (${window})`);
+        }
+      }
+      const takeShare = ops.filter(op => op === 'take').length / ops.length;
+      assert.ok(takeShare >= 0.35 && takeShare <= 0.65, `${level} seed ${seed}: take-aways are ${(takeShare * 100).toFixed(0)}% of the questions`);
+    }
+  }
+});
+
+test('the first questions of a fresh match already include a take-away at every level', () => {
+  for (const level of LEVELS) {
+    let withTake = 0;
+    for (let seed = 1; seed <= 200; seed += 1) {
+      const game = createGame(seededRandom(seed));
+      game.chooseLevel(level);
+      let seen = false;
+      for (let count = 0; count < 3; count += 1) {
+        seen = seen || /−/.test(game.getState().question.display);
+        game.answer(game.getState().question.answerId);
+        game.nextQuestion();
+      }
+      if (seen) withTake += 1;
+    }
+    assert.ok(withTake >= (level === 'harder' ? 190 : 200), `${level}: a take-away shows up within the first three questions (${withTake}/200 matches)`);
   }
 });
 
@@ -776,7 +919,7 @@ test('a wrong tap shows the right choice, locks the buttons, plays the try-again
   assert.ok(wrongButton.classList.contains('wrong-answer'));
   assert.ok(rightButton().classList.contains('right-answer'), 'the right choice is shown');
   assert.ok(app.answerOptions.children.every(button => button.disabled), 'no second tap on the same question');
-  assert.equal(app.elements.get('#feedback').textContent, I18N.STRINGS.feedbackMissNoStar.en, 'no star to lose yet, so the message does not mention one');
+  assert.equal(app.elements.get('#feedback').textContent, `${I18N.STRINGS.feedbackMissNoStar.en} ${I18N.heartsLeft(HEARTS_BY_LEVEL.easy - 1, 'en')}`, 'no star to lose yet, so the message names the heart that floated away and how many are left');
   assert.ok(app.elements.get('#feedback').classList.contains('retry'));
   assert.equal(app.nextButton.hidden, true, 'there is no Next button: the game moves on by itself');
   assert.equal(pageShell.dataset.pointer, '', 'nobody points at the locked buttons');
@@ -802,7 +945,8 @@ test('a wrong tap shows the right choice, locks the buttons, plays the try-again
   app.nextButton.click();
   app.answerOptions.children.find(button => button.dataset.choice !== game.getState().question.answerId).click();
   assert.equal(game.getState().stars, 0);
-  assert.equal(app.elements.get('#feedback').textContent, I18N.STRINGS.feedbackMiss.en);
+  assert.equal(app.elements.get('#feedback').textContent, `${I18N.STRINGS.feedbackMiss.en} ${I18N.heartsLeft(1, 'en')}`);
+  assert.match(app.played[app.played.length - 1], /^\.\/audio\/en\/reaction-last-heart\.mp3$/, 'the miss that leaves one heart says so out loud');
   assert.equal(app.elements.get('#scoreCount').textContent, `0 / ${GOAL_BY_LEVEL.easy}`);
   assert.equal(app.elements.get('#scoreStars').children.filter(star => star.classList.contains('earned')).length, 0);
   assert.equal(app.elements.get('#rivalPower').children.filter(pip => pip.classList.contains('spent')).length, 0, 'the buddy is back at full power');
@@ -825,7 +969,7 @@ test('a missed question waits a shorter moment when the sound is off, and its mi
   assert.equal(game.getState().missed, true);
   assert.ok(app.answerOptions.children.every(button => button.disabled), 'the rebuilt choices stay locked');
   assert.ok(app.answerOptions.children.some(button => button.classList.contains('right-answer')));
-  assert.equal(app.elements.get('#feedback').textContent, I18N.STRINGS.feedbackMissNoStar.ja);
+  assert.equal(app.elements.get('#feedback').textContent, `${I18N.STRINGS.feedbackMissNoStar.ja} ${I18N.heartsLeft(1, 'ja')}`);
   assert.doesNotMatch(app.played[app.played.length - 1], /math-|colors-/, 'changing language mid-miss does not replay the ended question');
   app.clock.tick(MISS_PAUSE_TICK);
   assert.notEqual(game.getState().question.key, missedKey);
@@ -861,6 +1005,7 @@ test('a miss at every level ends its question and is safe for each topic', () =>
     app.levelButtons.find(button => button.dataset.level === level).click();
     for (const topic of TOPICS) {
       app.topicTabs.find(tab => tab.dataset.topic === topic).click();
+      app.elements.get('#restartButton').click();
       clickAnswer(app, game, true);
       app.nextButton.click();
       const before = game.getState();
@@ -1152,7 +1297,7 @@ test('every math and vocabulary prompt has bundled English, Taiwan Mandarin, and
 test('every spoken reaction has bundled English, Taiwan Mandarin, and Japanese audio', () => {
   const reactionIds = Object.values(REACTIONS).flat();
   assert.deepEqual(Object.keys(REACTIONS), [
-    'praise', 'try-again', 'cap-harder-or-language', 'cap-harder', 'cap-language', 'cap-tomorrow', 'finish', 'break-prompt', 'break-goodbye',
+    'praise', 'try-again', 'last-heart', 'round-lost', 'cap-harder-or-language', 'cap-harder', 'cap-language', 'cap-tomorrow', 'finish', 'break-prompt', 'break-goodbye',
   ]);
   assert.deepEqual([...reactionIds].sort(), Object.keys(reactions).sort());
   for (const variants of Object.values(REACTIONS)) assert.ok(variants.length >= 1 && variants.length <= 3);
@@ -2101,6 +2246,8 @@ test('every Japanese UI string is written entirely in hiragana, with no katakana
   for (const topic of WORD_TOPIC_IDS) {
     for (const word of WORD_TOPICS[topic].words) checkJa(`${topic}-${word.id}.ja`, word.ja);
   }
+  for (const hearts of [1, 2, 3, 4, 5]) checkJa(`heartsLeft(${hearts})`, I18N.heartsLeft(hearts, 'ja'));
+  checkJa('heartsAria', I18N.heartsAria(2, 3, 'ja'));
   checkJa('arena comboText', comboText(4, 'ja'));
   for (const sticker of STICKERS) checkJa(`STICKERS.${sticker.id}.ja`, sticker.ja);
   for (const costume of COSTUMES) checkJa(`COSTUMES.${costume.id}.ja`, costume.ja);
@@ -2212,6 +2359,8 @@ test('reactions stay silent before Start, then follow the chosen voice', () => {
   app.nextButton.click();
   app.textLanguageButtons.find(button => button.dataset.textLanguage === 'zh').click();
   assert.equal(app.startRow.hidden, true, 'a language choice turns on the questions and cheers together');
+  app.elements.get('#restartButton').click();
+  assert.equal(game.getState().hearts, HEARTS_BY_LEVEL.easy, 'starting over brings the hearts back');
   clickAnswer(app, game, false);
   app.clock.tick(MISS_PAUSE_TICK);
   clickAnswer(app, game, false);
@@ -2219,18 +2368,89 @@ test('reactions stay silent before Start, then follow the chosen voice', () => {
   clickAnswer(app, game, true);
   app.nextButton.click();
   clickAnswer(app, game, true);
-  assert.equal(game.getState().stars, 2, 'two misses (one star, then none to lose) and three right answers leave two stars');
+  assert.equal(game.getState().stars, 2, 'two misses (no star to lose) and two right answers leave two stars');
   const questionId = /\/(math-[\w-]+)\.mp3$/;
   assert.deepEqual(app.played.map(src => src.replace(questionId, '/<question>.mp3')), [
     './audio/zh/<question>.mp3',
+    './audio/zh/<question>.mp3',
     './audio/zh/reaction-try-again-1.mp3',
     './audio/zh/<question>.mp3',
-    './audio/zh/reaction-try-again-2.mp3',
+    './audio/zh/reaction-last-heart.mp3',
     './audio/zh/<question>.mp3',
     './audio/zh/reaction-praise-1.mp3',
     './audio/zh/<question>.mp3',
     './audio/zh/reaction-praise-2.mp3',
   ]);
+});
+
+test('the miss that takes the last heart says so, then Try again brings the hearts and the questions back', () => {
+  const game = createGame(seededRandom(41));
+  const app = createAppFixture(game);
+  const pageShell = app.document.querySelector('.page-shell');
+  const el = id => app.elements.get(id);
+  app.textLanguageButtons.find(button => button.dataset.textLanguage === 'ja').click();
+  assert.equal(el('#heartPips').children.length, HEARTS_BY_LEVEL.easy);
+  assert.equal(el('#heartPips').children.filter(pip => pip.classList.contains('spent')).length, 0, 'every heart starts full');
+  assert.equal(el('#heartMeter').attributes['aria-label'], I18N.heartsAria(3, 3, 'ja'));
+  assert.equal(el('#heartsLabel').textContent, I18N.STRINGS.heartsLabel.ja);
+
+  clickAnswer(app, game, false);
+  assert.equal(el('#heartPips').children.filter(pip => pip.classList.contains('spent')).length, 1, 'the wrong tap shows one hollow heart');
+  assert.ok(el('#heartPips').children[2].classList.contains('just-lost'), 'the heart that went gets a shake');
+  assert.ok(el('#heartFloat').classList.contains('is-showing'), 'and a small "-1" floats up beside the hearts');
+  assert.equal(el('#heartMeter').attributes['aria-label'], I18N.heartsAria(2, 3, 'ja'));
+  assert.match(app.played[app.played.length - 1], /^\.\/audio\/ja\/reaction-try-again-1\.mp3$/);
+  app.clock.tick(MISS_PAUSE_TICK);
+
+  clickAnswer(app, game, false);
+  assert.ok(el('#heartPips').classList.contains('last-heart'), 'the one heart left beats to warn');
+  assert.equal(el('#feedback').textContent, `${I18N.STRINGS.feedbackMissNoStar.ja} ${I18N.heartsLeft(1, 'ja')}`);
+  app.clock.tick(MISS_PAUSE_TICK);
+
+  clickAnswer(app, game, false);
+  assert.equal(game.getState().lost, true);
+  assert.equal(el('#heartPips').children.filter(pip => pip.classList.contains('spent')).length, 3, 'every heart is hollow');
+  assert.equal(el('#feedback').textContent, I18N.STRINGS.feedbackLost.ja);
+  assert.equal(el('#arenaMessage').textContent, I18N.STRINGS.lostMessage.ja);
+  assert.match(app.played[app.played.length - 1], /^\.\/audio\/ja\/reaction-round-lost\.mp3$/);
+  assert.equal(el('#lostPanel').hidden, true, 'the right choice is shown first');
+  assert.equal(el('#questionPanel').hidden, false);
+  assert.ok(app.topicTabs.every(tab => tab.disabled) && app.levelButtons.every(button => button.disabled), 'the topic and level cannot be switched to dodge the loss');
+  app.clock.tick(2000);
+  assert.equal(el('#lostPanel').hidden, true, 'the pause lasts long enough to see the right choice');
+  app.clock.tick(2000);
+  assert.equal(el('#lostPanel').hidden, false, 'then the lost-match panel takes over');
+  assert.equal(el('#questionPanel').hidden, true);
+  assert.equal(el('#finishPanel').hidden, true, 'a lost match is never shown as a win');
+  assert.equal(pageShell.dataset.pointer, 'lost');
+  assert.ok(el('#lostTitle').textContent.startsWith(I18N.STRINGS.lostHeading.ja), 'the panel speaks the chosen language first');
+  assert.equal(game.getState().lost, true, 'no new question while the panel waits');
+
+  el('#tryAgainButton').click();
+  assert.equal(game.getState().lost, false);
+  assert.equal(game.getState().hearts, HEARTS_BY_LEVEL.easy);
+  assert.equal(game.getState().stars, 0);
+  assert.equal(el('#lostPanel').hidden, true);
+  assert.equal(el('#questionPanel').hidden, false);
+  assert.equal(el('#heartPips').children.filter(pip => pip.classList.contains('spent')).length, 0, 'all the hearts are back');
+  assert.ok(app.topicTabs.every(tab => !tab.disabled));
+  clickAnswer(app, game, true);
+  assert.equal(game.getState().stars, 1, 'the match plays on normally');
+});
+
+test('starting over while the last miss is still showing cancels the lost-match panel', () => {
+  const game = createGame(seededRandom(42));
+  const app = createAppFixture(game);
+  for (let miss = 0; miss < HEARTS_BY_LEVEL.easy; miss += 1) {
+    clickAnswer(app, game, false);
+    if (miss < HEARTS_BY_LEVEL.easy - 1) app.clock.tick(MISS_PAUSE_TICK);
+  }
+  assert.equal(game.getState().lost, true);
+  app.elements.get('#restartButton').click();
+  assert.equal(game.getState().lost, false);
+  app.clock.tick(MISS_PAUSE_TICK);
+  assert.equal(app.elements.get('#lostPanel').hidden, true, 'the cancelled pause never shows the panel');
+  assert.equal(app.elements.get('#questionPanel').hidden, false);
 });
 
 test('a reaction never outlives the moment it belongs to', () => {
