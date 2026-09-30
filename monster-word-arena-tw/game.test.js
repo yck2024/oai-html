@@ -3216,7 +3216,12 @@ test('every new body part has a region, a three-language label, an icon and a sp
     assert.equal(word.promptEn, undefined);
     for (const language of ['en', 'zh', 'ja']) {
       const audioPath = path.join(__dirname, 'audio', language, `face-${id}.mp3`);
-      assert.ok(fs.statSync(audioPath).size > 1024, `${id} has a bundled ${language} MP3 prompt`);
+      const audio = fs.readFileSync(audioPath);
+      assert.ok(audio.length > 1024, `${id} has a bundled ${language} MP3 prompt`);
+      assert.ok(
+        audio.subarray(0, 3).equals(Buffer.from('ID3')) || (audio[0] === 0xff && (audio[1] & 0xe0) === 0xe0),
+        `${id} ${language} prompt starts with an MP3 header`,
+      );
     }
     const level = FACE_LEVEL_IDS.harder.includes(id) ? 'harder' : 'super';
     assert.equal(diagramGame(id, level).getState().question.audioId, `face-${id}`, `${id} question selects its prompt audio`);
