@@ -6,7 +6,7 @@ const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 const test = require('node:test');
 const vm = require('node:vm');
-const { GOAL_BY_LEVEL, HEARTS_BY_LEVEL, CHOICE_COUNT, TOPICS, LEVELS, WORD_TOPICS, REACTIONS, FACE_DIAGRAM, DIAGRAMS, diagramPartAt, createGame, createSpeechPlayer } = require('./game.js');
+const { GOAL_BY_LEVEL, HEARTS_BY_LEVEL, CHOICE_COUNT, TOPICS, LEVELS, WORD_TOPICS, REACTIONS, FACE_DIAGRAM, FACE_LEVEL_IDS, DIAGRAMS, diagramPartAt, createGame, createSpeechPlayer } = require('./game.js');
 const { EFFECTS, EFFECT_LEVEL, MUSIC_LEVEL, createSoundBoard } = require('./sounds.js');
 const { POSES, ART, TIMING, comboText } = require('./arena.js');
 const { STORAGE_KEY, STICKERS, COSTUMES } = require('./rewards.js');
@@ -14,6 +14,7 @@ const I18N = require('./i18n.js');
 const prompts = require('./audio/prompts.json');
 const reactions = require('./audio/reactions.json');
 const words = require('./audio/words.json');
+const precacheManifest = require('./precache-manifest.js');
 
 const steadyRandom = () => 0.3;
 const WORD_TOPIC_IDS = ['colors', 'face', 'family', 'animals', 'fruit', 'vegetables', 'flowers', 'vehicles', 'weather'];
@@ -589,7 +590,7 @@ test('easy sums and take-aways stay within five and offer three distinct choices
 test('word challenges use bilingual Taiwan Traditional Chinese and hiragana Japanese vocabulary', () => {
   const expected = {
     colors: ['紅色', '黃色', '綠色', '藍色', '橘色', '紫色', '粉紅色', '咖啡色'],
-    face: ['眼睛', '鼻子', '耳朵', '嘴巴', '牙齒', '頭髮', '手', '腳'],
+    face: ['眼睛', '鼻子', '耳朵', '嘴巴', '牙齒', '頭髮', '手', '腳', '頭', '臉頰', '脖子', '肩膀', '手臂', '肚子', '腿', '膝蓋', '手指', '腳趾'],
     family: ['爸爸', '媽媽', '哥哥', '姊姊', '爺爺', '奶奶', '寶寶'],
     animals: ['小狗', '小貓', '兔子', '小鳥', '小魚', '大象', '小豬', '猴子'],
     fruit: ['蘋果', '香蕉', '葡萄', '草莓', '西瓜', '鳳梨', '芒果', '櫻桃'],
@@ -645,7 +646,7 @@ test('a word question never shows its answer\'s picture, and only Super adds wor
 
 test('every picture word has bundled original art sized for a phone page', () => {
   const pictureWords = WORD_TOPIC_IDS.filter(topic => topic !== 'colors').flatMap(topic => WORD_TOPICS[topic].words.map(word => ({ topic, word })));
-  assert.equal(pictureWords.length, 58);
+  assert.equal(pictureWords.length, 68);
   assert.equal(new Set(pictureWords.map(({ word }) => word.image)).size, pictureWords.length, 'every word has its own picture');
   let totalBytes = 0;
   for (const { topic, word } of pictureWords) {
@@ -1066,12 +1067,16 @@ test('a miss at every level ends its question and is safe for each topic', () =>
       app.levelButtons.find(button => button.dataset.level === level).click();
       app.topicTabs.find(tab => tab.dataset.topic === topic).click();
       clickAnswer(app, game, true);
+      endSpeech(app);
+      endSpeech(app);
       app.nextButton.click();
       const before = game.getState();
       clickAnswer(app, game, false);
       assert.equal(game.getState().stars, before.stars - 1, `${level} ${topic}: the miss takes one star`);
       assert.ok(answerButtons(app).some(button => button.classList.contains('right-answer')));
-      app.clock.tick(MISS_PAUSE_TICK);
+      endSpeech(app);
+      endSpeech(app);
+      clickAnswer(app, game, true);
       assert.notEqual(game.getState().question.key, before.question.key);
     }
   }
@@ -1419,6 +1424,9 @@ print(json.dumps({
     'ja/word-flowers-rose': '薔薇',
     'ja/face-mouth': 'お口を見つけてね！',
     'ja/fruit-pineapple': 'パイナップルを見つけてね！',
+    'ja/face-neck': '首を見つけてね！',
+    'ja/face-shoulders': '肩を見つけてね！',
+    'ja/face-legs': '太ももを見つけてね！',
   };
   assert.deepEqual(Object.fromEntries(generated.overrides.map(([language, audioId, text]) => [`${language}/${audioId}`, text])), overrides);
   const audioText = new Map(generated.clips.map(([language, audioId, text]) => [`${language}/${audioId}`, text]));
@@ -1800,14 +1808,14 @@ test('word questions offer three choices on easy, four on harder and super, all 
       const targets = new Set();
       for (let draw = 0; draw < 60; draw += 1) {
         const question = game.getState().question;
-        // A picture of the character offers every part at once; the choices are its tap regions.
-        assert.equal(question.options.length, question.format === 'diagram' ? WORD_TOPICS[topic].words.length : CHOICE_COUNT[level]);
+        // A picture of the character offers the level's parts at once; the choices are its tap regions.
+        assert.equal(question.options.length, topic === 'face' ? FACE_LEVEL_IDS[level].length : topic === 'animals' ? WORD_TOPICS.animals.words.length : CHOICE_COUNT[level]);
         assert.equal(new Set(question.options.map(option => option.id)).size, question.options.length);
         assert.ok(question.options.some(option => option.id === question.answerId));
         targets.add(question.answerId);
         game.chooseTopic(topic);
       }
-      assert.equal(targets.size, WORD_TOPICS[topic].words.length, `${topic} ${level} asks about every word`);
+      assert.equal(targets.size, topic === 'face' ? FACE_LEVEL_IDS[level].length : WORD_TOPICS[topic].words.length, `${topic} ${level} asks about every word in its pool`);
     }
   }
 });
@@ -2582,30 +2590,6 @@ test('choosing a level from the lost-match card starts a fresh match at that lev
   }
 });
 
-test('Start over or changing level during the last-heart delay shows the loss card before Try again', () => {
-  for (const action of ['restart', 'level']) {
-    const game = createGame(seededRandom(42));
-    const app = createAppFixture(game);
-    for (let miss = 0; miss < HEARTS_BY_LEVEL.easy; miss += 1) {
-      clickAnswer(app, game, false);
-      if (miss < HEARTS_BY_LEVEL.easy - 1) app.clock.tick(MISS_PAUSE_TICK);
-    }
-    assert.equal(game.getState().lost, true);
-    if (action === 'restart') app.elements.get('#restartButton').click();
-    else app.levelButtons.find(button => button.dataset.level === 'harder').click();
-    assert.equal(game.getState().lost, true);
-    assert.equal(game.getState().hearts, 0, `${action} cannot refill hearts`);
-    assert.equal(app.elements.get('#lostPanel').hidden, false, `${action} shows the lost-match card immediately`);
-    assert.equal(app.elements.get('#questionPanel').hidden, true);
-    app.clock.tick(MISS_PAUSE_TICK);
-    assert.equal(app.elements.get('#lostPanel').hidden, false, 'the prior miss timer cannot hide the loss card');
-    app.elements.get('#tryAgainButton').click();
-    assert.equal(game.getState().lost, false);
-    assert.equal(game.getState().hearts, HEARTS_BY_LEVEL.easy, 'Try again is the fresh-match path');
-    assert.equal(app.elements.get('#lostPanel').hidden, true);
-  }
-});
-
 test('a reaction never outlives the moment it belongs to', () => {
   const game = createGame(steadyRandom);
   const app = createAppFixture(game);
@@ -2620,6 +2604,8 @@ test('a reaction never outlives the moment it belongs to', () => {
   app.nextButton.click();
   clickAnswer(app, game, false);
   assert.match(last(), /ja\/reaction-try-again-1/);
+  endSpeech(app);
+  endSpeech(app);
   const pausesBeforeChampion = app.audioState.pauses;
   app.championCards.find(card => card.dataset.champion === 'monster').click();
   assert.ok(app.audioState.pauses > pausesBeforeChampion, 'switching champion stops the reaction');
@@ -2633,12 +2619,14 @@ test('a reaction never outlives the moment it belongs to', () => {
 
   clickAnswer(app, game, true);
   assert.match(last(), /reaction-praise/);
+  endSpeech(app);
+  endSpeech(app);
   app.nextButton.click();
   clickAnswer(app, game, false);
-  app.clock.tick(MISS_PAUSE_TICK);
-  app.nextButton.click();
+  endSpeech(app);
+  endSpeech(app);
+  clickAnswer(app, game, true);
   clickAnswer(app, game, false);
-  app.clock.tick(MISS_PAUSE_TICK);
   assert.equal(game.getState().lost, true);
   app.elements.get('#tryAgainButton').click();
   assert.match(last(), /^\.\/audio\/ja\/colors-/, 'Try again replaces the reaction with the fresh question');
@@ -3118,14 +3106,15 @@ test('a failed diagram image falls back to picture choices for the face question
 
   assert.equal(app.elements.get('#faceDiagram').hidden, true);
   assert.equal(app.answerOptions.hidden, false);
-  assert.equal(app.answerOptions.children.length, WORD_TOPICS.face.words.length);
+  assert.equal(app.answerOptions.children.length, CHOICE_COUNT.easy, 'the fallback offers the usual few picture choices');
+  assert.ok([...app.answerOptions.children].some(button => button.dataset.choice === game.getState().question.answerId), 'the right part is among them');
   assert.equal(game.getState().question.format, 'diagram', 'the fallback is a rendering path, not an alternating question format');
 });
 
-test('a picture question offers every body part as a tap region and shows no label with the question', () => {
+test('a picture question offers the level\'s body parts as tap regions and shows no label with the question', () => {
   for (const level of LEVELS) {
     const question = diagramGame('eyes', level).getState().question;
-    assert.deepEqual(question.options.map(option => option.id).sort(), WORD_TOPICS.face.words.map(word => word.id).sort());
+    assert.deepEqual(question.options.map(option => option.id).sort(), [...FACE_LEVEL_IDS[level]].sort());
     assert.equal(question.wordLabels, false, 'no word is written on the picture during the question');
     assert.deepEqual(Object.keys(FACE_DIAGRAM.parts).sort(), WORD_TOPICS.face.words.map(word => word.id).sort(), 'every part has a region');
   }
@@ -3174,18 +3163,18 @@ test('paired parts: either eye, ear, hand or foot counts as the part', () => {
 });
 
 test('a tap that lands on no part is not an answer, and a small picture keeps every region finger-sized', () => {
-  assert.equal(diagramPartAt(0.5, 0.65), null, 'the clothes');
+  assert.equal(diagramPartAt(0.5, 0.65, null, 'face', FACE_LEVEL_IDS.easy), null, 'the clothes, while no part of the body is asked about there');
   assert.equal(diagramPartAt(0.02, 0.02), null, 'the empty background');
   // Shown small, a region grows to the minimum radius around its centre, never past it.
   const [cx, cy] = centreOf('nose');
   const small = { width: 190, height: 260 };
   const noseWidth = FACE_DIAGRAM.parts.nose.regions[0][2] * small.width;
   assert.ok(noseWidth < FACE_DIAGRAM.minRadiusPx, 'the nose region alone would be too small for a finger at this size');
-  assert.equal(diagramPartAt(cx, cy, small), 'nose', 'the nose centre stays the nose despite the overlapping tooth hit region');
-  assert.equal(diagramPartAt(...centreOf('tooth'), small), 'tooth', 'the tooth centre stays the tooth at this size');
-  assert.equal(diagramPartAt(0.5011, 0.43, small), 'mouth', 'the mouth remains distinct below the teeth');
-  assert.equal(diagramPartAt(cx + 10 / small.width, cy - 4 / small.height, small), 'nose', 'a tap beyond the drawn region still counts, up to the minimum');
-  assert.notEqual(diagramPartAt(cx + 60 / small.width, cy, small), 'nose', 'well outside the nose it is not the nose');
+  assert.equal(diagramPartAt(cx, cy, small, 'face', FACE_LEVEL_IDS.easy), 'nose', 'the nose centre stays the nose despite the overlapping tooth hit region');
+  assert.equal(diagramPartAt(...centreOf('tooth'), small, 'face', FACE_LEVEL_IDS.easy), 'tooth', 'the tooth centre stays the tooth at this size');
+  assert.equal(diagramPartAt(0.5011, 0.43, small, 'face', FACE_LEVEL_IDS.easy), 'mouth', 'the mouth remains distinct below the teeth');
+  assert.equal(diagramPartAt(cx + 10 / small.width, cy - 4 / small.height, small, 'face', FACE_LEVEL_IDS.easy), 'nose', 'a tap beyond the drawn region still counts, up to the minimum');
+  assert.notEqual(diagramPartAt(cx + 60 / small.width, cy, small, 'face', FACE_LEVEL_IDS.easy), 'nose', 'well outside the nose it is not the nose');
 });
 
 test('the teeth count as the mouth, but the mouth is not a tooth', () => {
@@ -3450,6 +3439,211 @@ test('an animal icon that cannot load is replaced by its emoji', () => {
   assert.ok(item.classList.contains('emoji-item'));
 });
 
+// ---- A bigger body: ten more parts, and a pool for each level ----
+
+const ORIGINAL_FACE_PARTS = ['eyes', 'nose', 'ears', 'mouth', 'tooth', 'hair', 'hands', 'feet'];
+const HARDER_EXTRA_PARTS = ['head', 'cheeks', 'arms', 'legs', 'tummy'];
+const SUPER_EXTRA_PARTS = ['neck', 'shoulders', 'knees', 'fingers', 'toes'];
+const ALL_FACE_PARTS = [...ORIGINAL_FACE_PARTS, ...HARDER_EXTRA_PARTS, ...SUPER_EXTRA_PARTS];
+const SMALL_PICTURE = { width: 190, height: 260 };
+
+test('the body topic has eighteen parts and each level asks about its own pool: easy the original eight, harder thirteen, super all', () => {
+  assert.deepEqual(WORD_TOPICS.face.words.map(word => word.id).sort(), [...ALL_FACE_PARTS].sort());
+  assert.deepEqual(FACE_LEVEL_IDS.easy, ORIGINAL_FACE_PARTS);
+  assert.deepEqual(FACE_LEVEL_IDS.harder, [...ORIGINAL_FACE_PARTS, ...HARDER_EXTRA_PARTS]);
+  assert.deepEqual([...FACE_LEVEL_IDS.super].sort(), [...ALL_FACE_PARTS].sort());
+  for (const level of LEVELS) {
+    const pool = new Set(FACE_LEVEL_IDS[level]);
+    for (const seed of [1, 2, 3]) {
+      const game = createGame(seededRandom(seed));
+      game.chooseLevel(level);
+      game.chooseTopic('face');
+      const asked = new Set();
+      for (let draw = 0; draw < 150; draw += 1) {
+        const { question } = game.getState();
+        assert.ok(pool.has(question.answerId), `${level} asks only about its own pool (${question.answerId})`);
+        assert.deepEqual(question.options.map(option => option.id).sort(), [...pool].sort(), `${level} offers exactly its pool as tap regions`);
+        assert.ok(question.acceptedIds.every(id => pool.has(id)), `${level} accepts only parts from its pool`);
+        assert.ok(question.fallbackOptions.every(option => pool.has(option.id)), `${level} picture fallback stays inside the pool`);
+        asked.add(question.answerId);
+        game.chooseTopic('face');
+      }
+      if (seed === 1) assert.equal(asked.size, pool.size, `${level} asks about every part of its pool`);
+    }
+  }
+});
+
+test('every new body part has a region, a three-language label, an icon and a spoken prompt', () => {
+  for (const id of [...HARDER_EXTRA_PARTS, ...SUPER_EXTRA_PARTS]) {
+    const word = WORD_TOPICS.face.words.find(part => part.id === id);
+    assert.ok(word.zh && word.en && word.ja && word.icon, `${id} has labels and an emoji fallback`);
+    assert.equal(word.image, `./images/face-${id}.webp`);
+    assert.ok(fs.existsSync(path.join(__dirname, word.image)), `${id} has its picture-choice icon`);
+    assert.equal(word.promptEn, undefined);
+    for (const language of ['en', 'zh', 'ja']) {
+      const audioPath = path.join(__dirname, 'audio', language, `face-${id}.mp3`);
+      const audio = fs.readFileSync(audioPath);
+      assert.ok(audio.length > 1024, `${id} has a bundled ${language} MP3 prompt`);
+      assert.ok(
+        audio.subarray(0, 3).equals(Buffer.from('ID3')) || (audio[0] === 0xff && (audio[1] & 0xe0) === 0xe0),
+        `${id} ${language} prompt starts with an MP3 header`,
+      );
+    }
+    const level = FACE_LEVEL_IDS.harder.includes(id) ? 'harder' : 'super';
+    assert.equal(diagramGame(id, level).getState().question.audioId, `face-${id}`, `${id} question selects its prompt audio`);
+    const { regions } = FACE_DIAGRAM.parts[id];
+    regions.forEach(([cx, cy, rx, ry], index) => {
+      assert.ok(cx - rx >= -0.001 && cx + rx <= 1.001 && cy - ry >= 0 && cy + ry <= 1.001, `${id} region ${index + 1} stays on the picture`);
+    });
+  }
+});
+
+test('every part\'s regions answer for that part, on a big picture and on a small one, and no part swallows another', () => {
+  for (const part of ALL_FACE_PARTS) {
+    FACE_DIAGRAM.parts[part].regions.forEach(([cx, cy], index) => {
+      assert.equal(diagramPartAt(cx, cy, null, 'face', FACE_LEVEL_IDS.super), part, `${part}: region ${index + 1} is the part`);
+      assert.equal(diagramPartAt(cx, cy, SMALL_PICTURE, 'face', FACE_LEVEL_IDS.super), part, `${part}: region ${index + 1} is the part on a small picture`);
+    });
+  }
+  ['head', 'neck', 'tummy'].forEach(part => assert.equal(FACE_DIAGRAM.parts[part].regions.length, 1, `${part} is a single part`));
+  ['cheeks', 'shoulders', 'arms', 'legs', 'knees', 'toes'].forEach(part => assert.equal(FACE_DIAGRAM.parts[part].regions.length, 2, `${part} come in a pair`));
+  assert.equal(FACE_DIAGRAM.parts.fingers.regions.length, 4, 'each hand has outer fingers and a raised finger');
+  assert.equal(FACE_DIAGRAM.parts.fingers.rings.length, 2, 'but one ring per hand');
+});
+
+test('regions at the body\'s edges fit the parts they name, not the clothes around them', () => {
+  const at = (x, y, level = 'super') => diagramPartAt(x, y, null, 'face', FACE_LEVEL_IDS[level]);
+  assert.equal(at(0.3, 0.6), 'arms', 'the sleeve and upper arm are the arm');
+  assert.equal(at(0.34, 0.505), 'shoulders', 'the top of the sleeve is the shoulder');
+  assert.equal(at(0.5, 0.65), 'tummy', 'the middle of the shirt is the tummy');
+  assert.equal(at(0.5, 0.48), 'neck', 'the strip above the collar is the neck');
+  assert.equal(at(0.4, 0.74), 'legs', 'the leg under the shorts is the leg');
+  assert.equal(at(0.4, 0.86), 'knees', 'the leg just above the foot is the knee');
+  // Japanese legs are ふともも (the thigh): the legs' regions are the upper leg, above the knees' and on the shorts.
+  FACE_DIAGRAM.parts.legs.regions.forEach(([, cy], index) => {
+    const [, kneeY] = FACE_DIAGRAM.parts.knees.regions[index];
+    assert.ok(cy < kneeY - 0.05 && cy >= 0.7 && cy < 0.8, `legs region ${index + 1} is centred on the upper leg`);
+  });
+  assert.equal(at(0.35, 0.375), 'cheeks', 'the blush is the cheek');
+  assert.equal(at(0.5, 0.22), 'head', 'the forehead is the head, not the hair');
+  assert.equal(at(0.5, 0.15), 'hair', 'the fringe stays the hair');
+  assert.equal(at(0.36, 0.313), 'eyes', 'an eye stays an eye');
+  assert.equal(at(0.03, 0.575), 'fingers', 'the tips are fingers');
+  assert.equal(at(0.125, 0.52), 'fingers', 'the raised finger is a finger');
+  assert.equal(at(0.875, 0.52), 'fingers', 'on the other hand too');
+  assert.equal(at(0.12, 0.6), 'hands', 'the palm is the hand');
+  assert.equal(at(0.31, 0.968), 'toes', 'the tip of the foot is the toes');
+  assert.equal(at(0.34, 0.915), 'feet', 'the top of the foot is the foot');
+  assert.equal(at(0.5, 0.75, 'super'), null, 'between the legs is nothing');
+});
+
+test('a level never lets a part it does not ask about take a tap', () => {
+  const at = (x, y, level) => diagramPartAt(x, y, null, 'face', FACE_LEVEL_IDS[level]);
+  const [fingersX, fingersY] = centreOf('fingers');
+  const [toesX, toesY] = centreOf('toes');
+  for (const level of ['easy', 'harder']) {
+    assert.equal(at(fingersX, fingersY, level), 'hands', `${level}: the fingers are still the hands`);
+    assert.equal(at(toesX, toesY, level), 'feet', `${level}: the toes are still the feet`);
+  }
+  assert.equal(at(...centreOf('fingers'), 'super'), 'fingers');
+  assert.equal(at(...centreOf('toes'), 'super'), 'toes');
+  assert.equal(at(...centreOf('arms'), 'easy'), null, 'the arm is not a part on easy');
+  assert.equal(at(...centreOf('arms'), 'harder'), 'arms');
+  assert.equal(at(...centreOf('tummy'), 'easy'), null);
+  assert.equal(at(...centreOf('tummy'), 'harder'), 'tummy');
+  assert.equal(at(...centreOf('neck'), 'harder'), null, 'the neck is a Super part');
+  assert.equal(at(...centreOf('shoulders'), 'harder'), null, 'the shoulders are a Super part');
+});
+
+test('a part inside another counts for it, but not the other way round', () => {
+  const accepted = (part, level) => diagramGame(part, level).getState().question.acceptedIds;
+  assert.deepEqual(accepted('hands', 'super'), ['hands', 'fingers']);
+  assert.deepEqual(accepted('hands', 'harder'), ['hands'], 'no fingers to accept when the level does not ask about them');
+  assert.deepEqual(accepted('feet', 'super'), ['feet', 'toes']);
+  assert.deepEqual(accepted('legs', 'super'), ['legs', 'knees']);
+  assert.deepEqual(accepted('legs', 'harder'), ['legs']);
+  assert.deepEqual(accepted('arms', 'super'), ['arms', 'shoulders']);
+  assert.deepEqual(accepted('head', 'harder'), ['head', 'hair', 'eyes', 'nose', 'mouth', 'tooth', 'ears', 'cheeks']);
+  assert.deepEqual(accepted('head', 'super'), ['head', 'hair', 'eyes', 'nose', 'mouth', 'tooth', 'ears', 'cheeks']);
+  assert.deepEqual(accepted('knees', 'super'), ['knees']);
+  assert.deepEqual(accepted('toes', 'super'), ['toes']);
+  assert.deepEqual(accepted('cheeks', 'super'), ['cheeks']);
+  assert.equal(diagramGame('head', 'harder').answer('eyes'), 'correct', 'any part of the face is the head');
+  assert.equal(diagramGame('knees', 'super').answer('legs'), 'missed', 'asked for the knees, the leg is not enough');
+  assert.equal(diagramGame('legs', 'super').answer('knees'), 'correct');
+  assert.equal(diagramGame('eyes', 'harder').answer('head'), 'missed', 'asked for the eyes, the head is not');
+});
+
+test('the bigger body is answered by tapping the picture, and the keyboard buttons follow the level\'s pool', () => {
+  const stageBox = { left: 10, top: 20, width: 280, height: 384 };
+  const tapPart = (app, part, index = 0) => {
+    const stage = app.elements.get('#diagramStage');
+    stage.getBoundingClientRect = () => stageBox;
+    const [cx, cy] = centreOf(part, index);
+    stage.dispatch('click', { target: stage, clientX: stageBox.left + cx * stageBox.width, clientY: stageBox.top + cy * stageBox.height });
+  };
+  const faceApp = (target, level) => {
+    const game = diagramGame(target, level);
+    const app = createAppFixture(game);
+    app.startButton.click();
+    app.levelButtons.find(button => button.dataset.level === level).click();
+    app.topicTabs.find(tab => tab.dataset.topic === 'face').click();
+    for (let redraw = 0; redraw < 400 && game.getState().question.answerId !== target; redraw += 1) app.topicTabs.find(tab => tab.dataset.topic === 'face').click();
+    assert.equal(game.getState().question.answerId, target);
+    return { app, game };
+  };
+  for (const level of LEVELS) {
+    const { app } = faceApp('eyes', level);
+    assert.equal(app.elements.get('#diagramSpots').children.length, FACE_LEVEL_IDS[level].length, `${level}: one keyboard button per part it asks about`);
+  }
+
+  const toes = faceApp('toes', 'super');
+  tapPart(toes.app, 'toes', 1);
+  assert.equal(toes.game.getState().solved, true, 'the toes are right when asked for');
+  assert.equal(toes.app.elements.get('#diagramMarks').children.length, 2, 'both toes are ringed');
+
+  const head = faceApp('head', 'harder');
+  tapPart(head.app, 'head');
+  assert.equal(head.game.getState().solved, true);
+  assert.equal(head.app.elements.get('#diagramMarks').children.length, 1, 'the head has one ring, drawn around the whole head');
+  assert.equal(head.app.elements.get('#diagramMarks').children[0].style.width, `${FACE_DIAGRAM.parts.head.rings[0][2] * 200}%`);
+
+  // The arm is not a part on Easy: a tap there is not an answer and costs nothing.
+  const easy = faceApp('hands', 'easy');
+  tapPart(easy.app, 'arms');
+  assert.equal(easy.game.getState().hearts, HEARTS_BY_LEVEL.easy);
+  assert.equal(easy.game.getState().missed, false);
+  assert.equal(easy.game.getState().solved, false);
+  tapPart(easy.app, 'fingers');
+  assert.equal(easy.game.getState().solved, true, 'on Easy the fingers are simply the hands');
+
+  // A wrong part still costs a heart.
+  const wrong = faceApp('knees', 'super');
+  tapPart(wrong.app, 'tummy');
+  assert.equal(wrong.game.getState().missed, true);
+  assert.equal(wrong.game.getState().missedChoice, 'tummy');
+  assert.equal(wrong.game.getState().hearts, HEARTS_BY_LEVEL.super - 1);
+});
+
+test('when the picture fails, the bigger body falls back to a few picture choices with the new icons', () => {
+  const game = diagramGame('knees', 'super');
+  const app = createAppFixture(game);
+  app.startButton.click();
+  app.levelButtons.find(button => button.dataset.level === 'super').click();
+  app.topicTabs.find(tab => tab.dataset.topic === 'face').click();
+  app.elements.get('#diagramArt').dispatch('error');
+  assert.equal(app.elements.get('#faceDiagram').hidden, true);
+  assert.equal(app.answerOptions.children.length, CHOICE_COUNT.super, 'four choices, not eighteen');
+  const { question } = game.getState();
+  assert.ok([...app.answerOptions.children].some(button => button.dataset.choice === question.answerId));
+  for (const button of app.answerOptions.children) {
+    const option = question.options.find(choice => choice.id === button.dataset.choice);
+    assert.ok(option.image.endsWith(`face-${option.id}.webp`));
+  }
+  clickAnswer(app, game);
+  assert.equal(game.getState().solved, true);
+});
+
 // ---- Hear it again: the word echo, the second-chance tap, and the two-language echo ----
 
 function wordQuestionApp(topic = 'animals', options = {}) {
@@ -3464,14 +3658,15 @@ function clipsPlayedSince(app, index) {
   return app.played.slice(index).map(src => src.replace('./audio/', '').replace('.mp3', ''));
 }
 
-test('every word topic has a word-only clip in all three languages, and word questions name it', () => {
+test('each bundled word-only clip covers a word in all three languages, and word questions name it', () => {
   const expected = WORD_TOPIC_IDS.flatMap(topic => WORD_TOPICS[topic].words.map(word => `word-${topic}-${word.id}`));
-  assert.equal(expected.length, 66);
-  assert.deepEqual(Object.keys(words).sort(), expected.sort(), 'words.json has exactly one entry per word');
+  assert.equal(expected.length, 76);
+  assert.deepEqual(Object.keys(words).sort(), expected.sort(), 'words.json has one entry per supported word-only clip');
   for (const [audioId, translations] of Object.entries(words)) {
     for (const language of ['en', 'zh', 'ja']) {
       assert.ok(translations[language], `${audioId} has ${language} text`);
       assert.ok(fs.existsSync(path.join(__dirname, 'audio', language, `${audioId}.mp3`)), `${audioId} has a bundled ${language} clip`);
+      assert.ok(precacheManifest.AUDIO.includes(`audio/${language}/${audioId}.mp3`), `${audioId} is precached in ${language}`);
     }
     assert.doesNotMatch(translations.en, /[?!.]/, 'a word clip is the word alone, never a sentence');
   }
@@ -3481,6 +3676,13 @@ test('every word topic has a word-only clip in all three languages, and word que
     const { question } = game.getState();
     assert.equal(question.wordAudioId, `word-${topic}-${question.answerId}`);
     assert.ok(words[question.wordAudioId]);
+  }
+  for (const id of ALL_FACE_PARTS) {
+    for (const level of LEVELS.filter(candidate => FACE_LEVEL_IDS[candidate].includes(id))) {
+      const { question } = diagramGame(id, level).getState();
+      assert.equal(question.wordAudioId, `word-face-${id}`);
+      assert.ok(words[question.wordAudioId]);
+    }
   }
   game.chooseTopic('math');
   assert.equal(game.getState().question.wordAudioId, undefined, 'math has no word to echo');
@@ -3596,6 +3798,8 @@ test('the final correct word echoes with replay before the win screen appears', 
   const el = id => app.elements.get(id);
   for (let star = 1; star < GOAL_BY_LEVEL.easy; star += 1) {
     clickAnswer(app, game, true);
+    endSpeech(app);
+    endSpeech(app);
     app.nextButton.click();
   }
   const question = game.getState().question;
@@ -3613,6 +3817,23 @@ test('the final correct word echoes with replay before the win screen appears', 
   endSpeech(app);
   assert.equal(el('#questionPanel').hidden, true);
   assert.equal(el('#finishPanel').hidden, false, 'the win screen appears as soon as the echo ends');
+});
+
+test('muting during either part of the final winning echo still shows the finish screen', () => {
+  for (const phase of ['reaction', 'word']) {
+    const { game, app } = wordQuestionApp('animals');
+    for (let star = 1; star < GOAL_BY_LEVEL.easy; star += 1) {
+      clickAnswer(app, game, true);
+      endSpeech(app);
+      app.nextButton.click();
+    }
+    clickAnswer(app, game, true);
+    assert.equal(game.getState().finished, true);
+    if (phase === 'word') endSpeech(app);
+    app.muteButton.click();
+    assert.equal(app.elements.get('#finishPanel').hidden, false, `${phase}: muting completes the pending finish transition`);
+    assert.equal(app.elements.get('#questionPanel').hidden, true);
+  }
 });
 
 test('Next tapped before the echo starts waits for its start, then cuts it short', () => {
@@ -3742,6 +3963,27 @@ test('the last-heart miss shows the loss panel as soon as its word echo ends', (
   assert.equal(el('#questionPanel').hidden, true);
 });
 
+test('every accepted diagram alternative is marked and pulses as a second chance', () => {
+  const game = diagramGame('mouth');
+  const app = createAppFixture(game);
+  app.startButton.click();
+  const question = game.getState().question;
+  const alternative = question.acceptedIds.find(id => id !== question.answerId);
+  const spot = id => app.elements.get('#diagramSpots').children.find(button => button.dataset.choice === id);
+  const wrong = question.options.find(option => !question.acceptedIds.includes(option.id));
+  spot(wrong.id).click();
+  assert.equal(game.getState().missed, true);
+  assert.equal(spot(alternative).disabled, false);
+  assert.ok(spot(alternative).classList.contains('right-answer'));
+  assert.ok(spot(alternative).classList.contains('second-chance'));
+  assert.ok(app.elements.get('#diagramMarks').children.some(ring => ring.classList.contains('second-chance')));
+  spot(alternative).click();
+  assert.equal(game.getState().question.key, question.key, 'the alternative tap waits for the full word echo');
+  endSpeech(app);
+  endSpeech(app);
+  assert.notEqual(game.getState().question.key, question.key);
+});
+
 test('a body picture question gets the same echo and second chance, on the part ringed', () => {
   const game = diagramGame('nose');
   const app = createAppFixture(game);
@@ -3756,6 +3998,7 @@ test('a body picture question gets the same echo and second chance, on the part 
   endSpeech(app);
   assert.equal(app.played.at(-1), `./audio/en/${question.wordAudioId}.mp3`);
   assert.ok(ring().classList.contains('is-echoing'));
+  endSpeech(app);
   spot('eyes').click();
   assert.equal(game.getState().question.key, question.key, 'a wrong part is ignored');
   spot('nose').click();

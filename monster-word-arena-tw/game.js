@@ -33,7 +33,28 @@
     { id: 'hair', zh: '頭髮', en: 'hair', ja: 'かみのけ', icon: '💇', image: './images/face-hair.webp' },
     { id: 'hands', zh: '手', en: 'hands', ja: 'おてて', icon: '👐', image: './images/face-hands.webp' },
     { id: 'feet', zh: '腳', en: 'feet', ja: 'あし', icon: '🦶', image: './images/face-feet.webp' },
+    // The ten parts added for the bigger body: each has a spoken prompt, a picture-choice icon and a tap region.
+    // Japanese legs are ふともも because あし already names the feet.
+    { id: 'head', zh: '頭', en: 'head', ja: 'あたま', icon: '🧒', image: './images/face-head.webp' },
+    { id: 'cheeks', zh: '臉頰', en: 'cheeks', ja: 'ほっぺ', icon: '☺️', image: './images/face-cheeks.webp' },
+    { id: 'neck', zh: '脖子', en: 'neck', ja: 'くび', icon: '🧣', image: './images/face-neck.webp' },
+    { id: 'shoulders', zh: '肩膀', en: 'shoulders', ja: 'かた', icon: '🤷', image: './images/face-shoulders.webp' },
+    { id: 'arms', zh: '手臂', en: 'arms', ja: 'うで', icon: '💪', image: './images/face-arms.webp' },
+    { id: 'tummy', zh: '肚子', en: 'tummy', ja: 'おなか', icon: '👕', image: './images/face-tummy.webp' },
+    { id: 'legs', zh: '腿', en: 'legs', ja: 'ふともも', icon: '🦵', image: './images/face-legs.webp' },
+    { id: 'knees', zh: '膝蓋', en: 'knees', ja: 'ひざ', icon: '🩹', image: './images/face-knees.webp' },
+    { id: 'fingers', zh: '手指', en: 'fingers', ja: 'ゆび', icon: '☝️', image: './images/face-fingers.webp' },
+    { id: 'toes', zh: '腳趾', en: 'toes', ja: 'あしのゆび', icon: '🦶', image: './images/face-toes.webp' },
   ];
+  // Which body parts each level asks about: Easy the original eight, Harder five more that are easy to find on the
+  // character, and Super all eighteen, including the ones that are small or sit under clothes.
+  const EASY_FACE_IDS = ['eyes', 'nose', 'ears', 'mouth', 'tooth', 'hair', 'hands', 'feet'];
+  const FACE_LEVEL_IDS = {
+    easy: EASY_FACE_IDS,
+    harder: [...EASY_FACE_IDS, 'head', 'cheeks', 'arms', 'legs', 'tummy'],
+    super: FACE_PARTS.map(part => part.id),
+  };
+  const facePool = level => FACE_PARTS.filter(part => FACE_LEVEL_IDS[level].includes(part.id));
   // The face topic's picture questions: one whole character (face and body) showing every part in FACE_PARTS, with no
   // labels. The child hears a part's name and taps it on the picture. A part is one or more tap regions (a pair, like
   // the two eyes, has two and either counts); each region is an ellipse [centreX, centreY, radiusX, radiusY] given as
@@ -45,6 +66,10 @@
     // Fewest CSS pixels a region is ever allowed to reach from its centre, however small the picture is shown.
     minRadiusPx: 24,
     parts: {
+      // The head is the face skin around the features (hair, eyes and the rest win where they are). A part may give
+      // rings: the ellipses drawn round it after an answer, where its tap regions would not show it well; the ring
+      // for the head goes round the whole head, hair included.
+      head: { regions: [[0.49, 0.3, 0.25, 0.17]], rings: [[0.49, 0.245, 0.385, 0.235]] },
       hair: { regions: [[0.4925, 0.1424, 0.3541, 0.133]] },
       eyes: { regions: [[0.3691, 0.313, 0.0912, 0.0626], [0.632, 0.3067, 0.0912, 0.0626]] },
       nose: { regions: [[0.5032, 0.3443, 0.0745, 0.045]] },
@@ -54,9 +79,33 @@
       ears: { regions: [[0.2049, 0.3498, 0.0912, 0.0704], [0.7929, 0.3419, 0.0912, 0.0704]] },
       hands: { regions: [[0.0955, 0.5689, 0.118, 0.0861], [0.9056, 0.5689, 0.118, 0.0861]] },
       feet: { regions: [[0.3423, 0.9249, 0.1288, 0.0665], [0.6588, 0.9288, 0.1288, 0.0626]] },
+      cheeks: { regions: [[0.347, 0.377, 0.065, 0.04], [0.655, 0.372, 0.065, 0.04]] },
+      // The neck is the thin strip between the chin and the shirt collar.
+      neck: { regions: [[0.497, 0.487, 0.085, 0.03]] },
+      // Shoulders and knees sit under the clothes: the regions cover the sleeve tops and the leg just below the shorts.
+      shoulders: { regions: [[0.335, 0.53, 0.075, 0.045], [0.665, 0.53, 0.075, 0.045]] },
+      arms: { regions: [[0.235, 0.575, 0.085, 0.05], [0.765, 0.575, 0.085, 0.05]] },
+      tummy: { regions: [[0.5, 0.615, 0.16, 0.075]] },
+      legs: { regions: [[0.4, 0.775, 0.075, 0.075], [0.6, 0.775, 0.075, 0.075]] },
+      knees: { regions: [[0.4, 0.85, 0.065, 0.04], [0.6, 0.85, 0.065, 0.04]] },
+      // Each hand has its outer fingers and the raised finger above the palm; the palm stays the hand.
+      fingers: {
+        regions: [[0.055, 0.575, 0.055, 0.07], [0.125, 0.535, 0.035, 0.04], [0.945, 0.575, 0.055, 0.07], [0.875, 0.535, 0.035, 0.04]],
+        rings: [[0.08, 0.565, 0.075, 0.07], [0.92, 0.565, 0.075, 0.07]],
+      },
+      toes: { regions: [[0.307, 0.965, 0.07, 0.035], [0.693, 0.965, 0.07, 0.035]] },
     },
-    // Teeth are part of the mouth: tapping them when asked for the mouth is right. Asked for a tooth, the mouth is not.
-    alsoAccepted: { mouth: ['tooth'] },
+    // A part that lies inside another counts for it: tapping the teeth when asked for the mouth is right, and so is
+    // a finger for the hands, a toe for the feet, a knee for the legs, a shoulder for the arms, and any part of the
+    // face or hair for the head. The reverse is not: asked for a tooth, the mouth is not right.
+    alsoAccepted: {
+      mouth: ['tooth'],
+      hands: ['fingers'],
+      feet: ['toes'],
+      legs: ['knees'],
+      arms: ['shoulders'],
+      head: ['hair', 'eyes', 'nose', 'mouth', 'tooth', 'ears', 'cheeks'],
+    },
   };
 
   // The animals topic's picture questions: one plain farm background with no animals in it, plus the eight animal
@@ -107,12 +156,13 @@
   // Which part a tap lands on, or null when it lands on no part (the clothes, the empty background, the bare
   // meadow). x and y are fractions of the picture; size ({ width, height } in CSS pixels) lets a small picture keep
   // every region at least minRadiusPx wide. Where regions overlap, the nearest normalized region wins. `topic` picks
-  // the picture: the character (face) unless another is named.
-  function diagramPartAt(x, y, size = null, topic = 'face') {
+  // the picture; `ids` limits taps to parts asked about by this question.
+  function diagramPartAt(x, y, size = null, topic = 'face', ids = null) {
     const diagram = DIAGRAMS[topic];
     if (!diagram) return null;
     let best = null;
     Object.entries(diagram.parts).forEach(([id, part]) => {
+      if (ids && !ids.includes(id)) return;
       const minRadius = part.minRadiusPx || diagram.minRadiusPx;
       const minX = size ? minRadius / size.width : 0;
       const minY = size ? minRadius / size.height : 0;
@@ -360,21 +410,24 @@
 
   // The prompt is written above the choices, and the answer's picture only ever appears on a choice: Easy and
   // Harder show pictures alone (the word is in the question), Super adds the word back because the question is heard.
-  // A question on its topic's picture (the character, or the farm): every part or animal is a choice (the tap regions),
-  // the same prompt and narration as the icon question, and the right answer is the named one (plus any part that
-  // counts as inside it).
+  // A question on its topic's picture uses active parts as tap regions, with the same prompt and narration as the
+  // icon question. Parts inside the named target also count, but only when active at this level. If the picture fails,
+  // the usual few picture choices (fallbackOptions) stand in.
   function diagramQuestion(question, target, words) {
+    const ids = words.map(word => word.id);
     return {
       ...question,
       format: 'diagram',
-      acceptedIds: [target.id, ...(DIAGRAMS[question.topic].alsoAccepted[target.id] || [])],
+      acceptedIds: [target.id, ...(DIAGRAMS[question.topic].alsoAccepted[target.id] || []).filter(id => ids.includes(id))],
       wordLabels: false,
+      fallbackOptions: question.topic === 'face' ? question.options : undefined,
       options: words.map(({ promptEn: _prompt, ...option }) => option),
     };
   }
 
   function wordQuestion(topic, level, random, previousKey) {
-    const { words, promptZh, promptEn, promptJa } = WORD_TOPICS[topic];
+    const { promptZh, promptEn, promptJa } = WORD_TOPICS[topic];
+    const words = topic === 'face' ? facePool(level) : WORD_TOPICS[topic].words;
     const target = pickFresh(words, random, previousKey, word => `${topic}-${word.id}`);
     const others = shuffled(words.filter(word => word !== target), random).slice(0, CHOICE_COUNT[level] - 1);
     const question = {
@@ -619,7 +672,7 @@
     return { play, stop, playSequence, cancelQueued };
   }
 
-  const api = { GOAL_BY_LEVEL, HEARTS_BY_LEVEL, CHOICE_COUNT, TOPICS, LEVELS, WORD_TOPICS, REACTIONS, FACE_DIAGRAM, FARM_SCENE, DIAGRAMS, diagramPartAt, createGame, createSpeechPlayer };
+  const api = { GOAL_BY_LEVEL, HEARTS_BY_LEVEL, CHOICE_COUNT, TOPICS, LEVELS, WORD_TOPICS, REACTIONS, FACE_DIAGRAM, FACE_LEVEL_IDS, FARM_SCENE, DIAGRAMS, diagramPartAt, createGame, createSpeechPlayer };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof window !== 'undefined') window.FriendlyArena = api;
 })();

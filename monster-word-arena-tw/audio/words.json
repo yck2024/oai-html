@@ -79,6 +79,56 @@
     "zh": "腳",
     "ja": "あし"
   },
+  "word-face-head": {
+    "en": "head",
+    "zh": "頭",
+    "ja": "あたま"
+  },
+  "word-face-cheeks": {
+    "en": "cheeks",
+    "zh": "臉頰",
+    "ja": "ほっぺ"
+  },
+  "word-face-neck": {
+    "en": "neck",
+    "zh": "脖子",
+    "ja": "くび"
+  },
+  "word-face-shoulders": {
+    "en": "shoulders",
+    "zh": "肩膀",
+    "ja": "かた"
+  },
+  "word-face-arms": {
+    "en": "arms",
+    "zh": "手臂",
+    "ja": "うで"
+  },
+  "word-face-tummy": {
+    "en": "tummy",
+    "zh": "肚子",
+    "ja": "おなか"
+  },
+  "word-face-legs": {
+    "en": "legs",
+    "zh": "腿",
+    "ja": "ふともも"
+  },
+  "word-face-knees": {
+    "en": "knees",
+    "zh": "膝蓋",
+    "ja": "ひざ"
+  },
+  "word-face-fingers": {
+    "en": "fingers",
+    "zh": "手指",
+    "ja": "ゆび"
+  },
+  "word-face-toes": {
+    "en": "toes",
+    "zh": "腳趾",
+    "ja": "あしのゆび"
+  },
   "word-family-dad": {
     "en": "Dad",
     "zh": "爸爸",
