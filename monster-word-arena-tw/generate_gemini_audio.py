@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the game's local prompt and reaction MP3s with the Gemini 3.8 Flash TTS API.
+"""Build the game's local prompt, reaction, and word MP3s with the Gemini 3.8 Flash TTS API.
 
 The static game never calls Gemini. Run on a development machine with ffmpeg
 and GEMINI_JOHN_API_KEY available in the environment. The credential is sent
@@ -25,6 +25,8 @@ from gemini_usage import append_usage
 
 PROMPTS = ROOT / "audio" / "prompts.json"
 REACTIONS = ROOT / "audio" / "reactions.json"
+# Each word said alone (audio/words.json), for the echo after an answer; ids are "word-<topic>-<word>".
+WORDS = ROOT / "audio" / "words.json"
 AUDIO_DIR = ROOT / "audio"
 API_URL = "https://generativelanguage.googleapis.com/v1beta/interactions"
 MODEL = "gemini-3.8-flash-tts"
@@ -65,9 +67,17 @@ LANGUAGES = {
 # 貓 was read with a rising máo; the 猫 form keeps the dictionary's level māo.
 # Japanese くち and パイナップル were misread; kanji spellings keep them clear.
 # Likewise くび was heard as お月さま, ふともも as ふたもも and かた stayed ambiguous, so those three use kanji.
+# Single-word ja clips: transcription heard ゆき as ゆうき and ばら/はれ with a stretched vowel or as あれ; the
+# kanji spellings below (and 歯！, the closest to a plain は) transcribed back as the right word.
 PRONUNCIATION_OVERRIDES = {
     ("zh", "family-sister"): "誰是姐姐？",
     ("zh", "animals-cat"): "小猫在哪裡？",
+    ("zh", "word-family-sister"): "姐姐",
+    ("zh", "word-animals-cat"): "小猫",
+    ("ja", "word-face-tooth"): "歯！",
+    ("ja", "word-weather-snowy"): "雪",
+    ("ja", "word-weather-sunny"): "晴れ！",
+    ("ja", "word-flowers-rose"): "薔薇",
     ("ja", "face-mouth"): "お口を見つけてね！",
     ("ja", "fruit-pineapple"): "パイナップルを見つけてね！",
     ("ja", "face-neck"): "首を見つけてね！",
@@ -144,7 +154,7 @@ def encode_mp3(wav, output):
 
 def load_clip_texts():
     clips = {}
-    for manifest in (PROMPTS, REACTIONS):
+    for manifest in (PROMPTS, REACTIONS, WORDS):
         entries = json.loads(manifest.read_text(encoding="utf-8"))
         duplicated = clips.keys() & entries.keys()
         if duplicated:
@@ -171,9 +181,9 @@ def selected_clips(prompts, languages, clip_ids, overwrite):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate bundled Gemini TTS prompt and reaction clips in English, Taiwan Mandarin, and Japanese.")
+    parser = argparse.ArgumentParser(description="Generate bundled Gemini TTS prompt, reaction, and word clips in English, Taiwan Mandarin, and Japanese.")
     parser.add_argument("--overwrite", action="store_true", help="Regenerate selected existing clips")
-    parser.add_argument("--clip", action="append", help="Generate only this prompt or reaction ID (repeatable)")
+    parser.add_argument("--clip", action="append", help="Generate only this prompt, reaction, or word ID (repeatable)")
     parser.add_argument("--language", action="append", choices=LANGUAGES, help="Limit generation to this language (repeatable)")
     parser.add_argument("--confirm", action="store_true", help="Authorize paid API requests")
     args = parser.parse_args()

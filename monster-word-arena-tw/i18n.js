@@ -106,20 +106,22 @@
     // A wrong tap ends the question: the right choice is shown, a heart floats away (and a star hops back when there
     // is one to lose), then a new question follows. The last heart ends the match.
     feedbackMiss: {
-      en: 'Oops! This one was right. A heart floats away and a star hops back.',
-      zh: '哎呀！正確答案是這個。一顆愛心飛走了，星星也跳回去了。',
-      ja: 'おしい！こたえは　これだよ。はーとが　ひとつ　とんでいって、ほしも　ひとつ　もどるよ。',
+      en: 'Oops! This one was right. A heart floats away and a star hops back. Tap it to go on.',
+      zh: '哎呀！正確答案是這個。一顆愛心飛走了，星星也跳回去了。點一下它，繼續玩。',
+      ja: 'おしい！こたえは　これだよ。はーとが　ひとつ　とんでいって、ほしも　ひとつ　もどるよ。これを　たっぷして　つづけよう。',
     },
     feedbackMissNoStar: {
-      en: 'Oops! This one was right. A heart floats away.',
-      zh: '哎呀！正確答案是這個。一顆愛心飛走了。',
-      ja: 'おしい！こたえは　これだよ。はーとが　ひとつ　とんでいくよ。',
+      en: 'Oops! This one was right. A heart floats away. Tap it to go on.',
+      zh: '哎呀！正確答案是這個。一顆愛心飛走了。點一下它，繼續玩。',
+      ja: 'おしい！こたえは　これだよ。はーとが　ひとつ　とんでいくよ。これを　たっぷして　つづけよう。',
     },
     feedbackLost: {
       en: 'Oops! This one was right. That was the last heart.',
       zh: '哎呀！正確答案是這個。愛心用完了。',
       ja: 'おしい！こたえは　これだよ。はーとが　なくなったよ。',
     },
+    // The small button after an answer that says the word again, and its accessible name.
+    echoReplayLabel: { en: 'Hear the word again', zh: '再聽一次這個詞', ja: 'ことばを　もういちど　きく' },
     heartsLabel: { en: 'HEARTS', zh: '愛心', ja: 'はーと' },
     // A wrong tap costs a heart, so a match cannot be won by tapping at random; the last heart ends it.
     lostHeading: { en: 'Out of hearts!', zh: '愛心用完了！', ja: 'はーとが　なくなっちゃった！' },
@@ -200,6 +202,13 @@
       ja: 'だいじな　ことばの　したに、ちいさく　にばんめの　げんごを　みせるよ。けすと　げんごは　ひとつだけに　なるよ。',
     },
     settingsSecondLanguageOff: { en: 'Off', zh: '關閉', ja: 'けす' },
+    // Off by default: after a right answer, also say the word in one more language (the same word clips).
+    settingsEchoTitle: { en: 'Say the word aloud in a second language', zh: '用第二種語言唸出這個詞', ja: 'ことばを　もうひとつの　げんごでも　いう' },
+    settingsEchoHint: {
+      en: 'Spoken, not written: after a right answer, the game also says the word aloud in this language, after saying it in the narration language. Off by default.',
+      zh: '只是唸出來，不是寫出來：答對之後，遊戲會先用朗讀語音說一次這個詞，再用這個語言說一次。預設關閉。',
+      ja: 'かいてでは　なくて　こえで　いうよ。せいかいの　あとに、よみあげの　げんごで　ことばを　いってから、この　げんごでも　いうよ。ふつうは　けしてあるよ。',
+    },
     settingsVoiceTitle: { en: 'Narration voice', zh: '朗讀語音', ja: 'よみあげの　こえ' },
     settingsVoiceHint: {
       en: 'By default the spoken narration matches the language above. A grown-up can pick a different voice here.',

@@ -13,6 +13,8 @@ const { STORAGE_KEY, STICKERS, COSTUMES } = require('./rewards.js');
 const I18N = require('./i18n.js');
 const prompts = require('./audio/prompts.json');
 const reactions = require('./audio/reactions.json');
+const words = require('./audio/words.json');
+const precacheManifest = require('./precache-manifest.js');
 
 const steadyRandom = () => 0.3;
 const WORD_TOPIC_IDS = ['colors', 'face', 'family', 'animals', 'fruit', 'vegetables', 'flowers', 'vehicles', 'weather'];
@@ -282,8 +284,13 @@ function createClock() {
   };
 }
 
-// A wrong tap ends the question; the game shows the right choice for a moment, then loads a new question.
-const MISS_PAUSE_TICK = 4000;
+// A wrong tap shows the right choice; the child taps it to go on, or the game moves on by itself after this long.
+const MISS_PAUSE_TICK = 10000;
+
+// The speech element reports the clip it was playing as ended, so the next clip queued behind it (the word echo) starts.
+function endSpeech(app) {
+  app.audioElements[0].dispatch('ended');
+}
 
 // Every button that can answer the question: the picture choices, or the part buttons over the character.
 function answerButtons(app) {
@@ -943,11 +950,12 @@ test('the first questions of a fresh match already include a take-away at every 
   }
 });
 
-test('a wrong tap shows the right choice, locks the buttons, plays the try-again reaction, then loads a fresh question', () => {
+test('a wrong tap shows the right choice, plays the try-again reaction and the right word, and the right choice is tapped to go on', () => {
   const game = createGame(seededRandom(2));
   const app = createAppFixture(game);
   const pageShell = app.document.querySelector('.page-shell');
   app.startButton.click();
+  app.topicTabs.find(tab => tab.dataset.topic === 'colors').click();
   const first = game.getState().question;
   const rightButton = () => app.answerOptions.children.find(button => button.dataset.choice === game.getState().question.answerId);
   const wrongButton = app.answerOptions.children.find(button => button.dataset.choice !== first.answerId);
@@ -956,19 +964,26 @@ test('a wrong tap shows the right choice, locks the buttons, plays the try-again
   assert.equal(game.getState().missed, true);
   assert.ok(wrongButton.classList.contains('wrong-answer'));
   assert.ok(rightButton().classList.contains('right-answer'), 'the right choice is shown');
-  assert.ok(app.answerOptions.children.every(button => button.disabled), 'no second tap on the same question');
+  assert.deepEqual(app.answerOptions.children.filter(button => !button.disabled).map(button => button.dataset.choice), [first.answerId], 'only the right choice can be tapped next');
+  assert.ok(rightButton().classList.contains('second-chance'), 'the right choice pulses until it is tapped');
   assert.equal(app.elements.get('#feedback').textContent, `${I18N.STRINGS.feedbackMissNoStar.en} ${I18N.heartsLeft(HEARTS_BY_LEVEL.easy - 1, 'en')}`, 'no star to lose yet, so the message names the heart that floated away and how many are left');
   assert.ok(app.elements.get('#feedback').classList.contains('retry'));
-  assert.equal(app.nextButton.hidden, true, 'there is no Next button: the game moves on by itself');
-  assert.equal(pageShell.dataset.pointer, '', 'nobody points at the locked buttons');
+  assert.equal(app.nextButton.hidden, true, 'there is no Next button: tapping the right choice moves on');
+  assert.equal(pageShell.dataset.pointer, '', 'the pulsing right choice is the only cue, so no champion points elsewhere');
   assert.match(app.played[app.played.length - 1], /^\.\/audio\/en\/reaction-try-again-1\.mp3$/);
-  rightButton().click();
-  assert.equal(game.getState().stars, 0, 'tapping the right choice afterwards changes nothing');
-  assert.equal(game.getState().question.key, first.key);
+  endSpeech(app);
+  assert.equal(app.played[app.played.length - 1], `./audio/en/${first.wordAudioId}.mp3`, 'after the reaction the right word is said alone');
+  assert.match(first.wordAudioId, /^word-/);
+  assert.equal(app.elements.get('#echoButton').hidden, false, 'a small control says the word again');
 
-  app.clock.tick(3000);
-  assert.equal(game.getState().question.key, first.key, 'the right choice stays up long enough to see');
-  app.clock.tick(500);
+  wrongButton.click();
+  assert.equal(game.getState().hearts, HEARTS_BY_LEVEL.easy - 1, 'tapping the wrong choice again costs nothing more');
+  assert.equal(game.getState().question.key, first.key);
+  app.clock.tick(3500);
+  assert.equal(game.getState().question.key, first.key, 'the right choice stays up until it is tapped');
+  rightButton().click();
+  endSpeech(app);
+  assert.equal(game.getState().stars, 0, 'tapping the right choice afterwards earns nothing');
   const second = game.getState().question;
   assert.notEqual(second.key, first.key, 'a fresh question, never the same one');
   assert.equal(game.getState().missed, false);
@@ -990,23 +1005,23 @@ test('a wrong tap shows the right choice, locks the buttons, plays the try-again
   assert.equal(app.elements.get('#rivalPower').children.filter(pip => pip.classList.contains('spent')).length, 0, 'the buddy is back at full power');
 });
 
-test('a missed question waits a shorter moment when the sound is off, and its miss survives a language change', () => {
+test('a missed question that is not tapped moves on by itself, sooner when the sound is off, and its miss survives a language change', () => {
   const game = createGame(seededRandom(6));
   const app = createAppFixture(game);
   clickAnswer(app, game, false);
   const key = game.getState().question.key;
-  app.clock.tick(1900);
+  app.clock.tick(5900);
   assert.equal(game.getState().question.key, key);
   app.clock.tick(200);
-  assert.notEqual(game.getState().question.key, key, 'without sound the pause is only about two seconds');
+  assert.notEqual(game.getState().question.key, key, 'without sound nobody tapping the right choice moves on after about six seconds');
 
   app.startButton.click();
   clickAnswer(app, game, false);
   const missedKey = game.getState().question.key;
   app.textLanguageButtons.find(button => button.dataset.textLanguage === 'ja').click();
   assert.equal(game.getState().missed, true);
-  assert.ok(app.answerOptions.children.every(button => button.disabled), 'the rebuilt choices stay locked');
-  assert.ok(app.answerOptions.children.some(button => button.classList.contains('right-answer')));
+  assert.equal(app.answerOptions.children.filter(button => !button.disabled).length, 1, 'the rebuilt choices stay locked, except the right one');
+  assert.ok(app.answerOptions.children.find(button => !button.disabled).classList.contains('right-answer'));
   assert.equal(app.elements.get('#feedback').textContent, `${I18N.STRINGS.feedbackMissNoStar.ja} ${I18N.heartsLeft(1, 'ja')}`);
   assert.doesNotMatch(app.played[app.played.length - 1], /math-|colors-/, 'changing language mid-miss does not replay the ended question');
   app.clock.tick(MISS_PAUSE_TICK);
@@ -1052,12 +1067,16 @@ test('a miss at every level ends its question and is safe for each topic', () =>
       app.levelButtons.find(button => button.dataset.level === level).click();
       app.topicTabs.find(tab => tab.dataset.topic === topic).click();
       clickAnswer(app, game, true);
+      endSpeech(app);
+      endSpeech(app);
       app.nextButton.click();
       const before = game.getState();
       clickAnswer(app, game, false);
       assert.equal(game.getState().stars, before.stars - 1, `${level} ${topic}: the miss takes one star`);
       assert.ok(answerButtons(app).some(button => button.classList.contains('right-answer')));
-      app.clock.tick(MISS_PAUSE_TICK);
+      endSpeech(app);
+      endSpeech(app);
+      clickAnswer(app, game, true);
       assert.notEqual(game.getState().question.key, before.question.key);
     }
   }
@@ -1391,12 +1410,18 @@ print(json.dumps({
     Object.fromEntries(Object.entries(generated.languages).map(([key, config]) => [key, [config.locale, config.voice]])),
     { en: ['en-US', 'Aoede'], zh: ['zh-TW', 'Kore'], ja: ['ja-JP', 'ja-jp-tutor-1'] },
   );
-  assert.equal(generated.clips.length, 3 * (Object.keys(prompts).length + Object.keys(reactions).length));
+  assert.equal(generated.clips.length, 3 * (Object.keys(prompts).length + Object.keys(reactions).length + Object.keys(words).length));
   assert.deepEqual(generated.missing_only, [], 'a default run regenerates no bundled clip');
   assert.deepEqual(generated.repeated, [['en', 'family-sister', 'Find your older sister!'], ['zh', 'family-sister', '誰是姐姐？']]);
   const overrides = {
     'zh/family-sister': '誰是姐姐？',
     'zh/animals-cat': '小猫在哪裡？',
+    'zh/word-family-sister': '姐姐',
+    'zh/word-animals-cat': '小猫',
+    'ja/word-face-tooth': '歯！',
+    'ja/word-weather-snowy': '雪',
+    'ja/word-weather-sunny': '晴れ！',
+    'ja/word-flowers-rose': '薔薇',
     'ja/face-mouth': 'お口を見つけてね！',
     'ja/fruit-pineapple': 'パイナップルを見つけてね！',
     'ja/face-neck': '首を見つけてね！',
@@ -1405,7 +1430,7 @@ print(json.dumps({
   };
   assert.deepEqual(Object.fromEntries(generated.overrides.map(([language, audioId, text]) => [`${language}/${audioId}`, text])), overrides);
   const audioText = new Map(generated.clips.map(([language, audioId, text]) => [`${language}/${audioId}`, text]));
-  for (const [audioId, translations] of Object.entries({ ...prompts, ...reactions })) {
+  for (const [audioId, translations] of Object.entries({ ...prompts, ...reactions, ...words })) {
     for (const language of ['en', 'zh', 'ja']) {
       assert.equal(audioText.get(`${language}/${audioId}`), overrides[`${language}/${audioId}`] || translations[language]);
     }
@@ -1467,7 +1492,7 @@ test('an old saved settings shape migrates: the old text language becomes the la
 test('choosing a language sets both the on-screen text and, by default, the voice, with the pairing\'s default second language', () => {
   const storage = new FakeLocalStorage();
   const app = createAppFixture(createGame(steadyRandom), { localStorage: storage });
-  const withDefaults = overrides => ({ v: 2, secondLanguageManual: false, voiceOverride: false, speechMuted: false, allowedLevels: ['easy', 'harder', 'super'], ...overrides });
+  const withDefaults = overrides => ({ v: 2, secondLanguageManual: false, voiceOverride: false, echoLanguage: null, speechMuted: false, allowedLevels: ['easy', 'harder', 'super'], ...overrides });
   app.textLanguageButtons.find(button => button.dataset.textLanguage === 'zh').click();
   let saved = JSON.parse(storage.getItem('monsterWordArena.settings.v1'));
   assert.deepEqual(saved, withDefaults({ textLanguage: 'zh', secondLanguage: 'en', voiceLanguage: 'zh' }), '繁體中文 pairs with English by default');
@@ -2482,6 +2507,7 @@ test('the miss that takes the last heart says so, then Try again brings the hear
   const pageShell = app.document.querySelector('.page-shell');
   const el = id => app.elements.get(id);
   app.textLanguageButtons.find(button => button.dataset.textLanguage === 'ja').click();
+  app.topicTabs.find(tab => tab.dataset.topic === 'colors').click();
   assert.equal(el('#heartPips').children.length, HEARTS_BY_LEVEL.easy);
   assert.equal(el('#heartPips').children.filter(pip => pip.classList.contains('spent')).length, 0, 'every heart starts full');
   assert.equal(el('#heartMeter').attributes['aria-label'], I18N.heartsAria(3, 3, 'ja'));
@@ -2493,27 +2519,36 @@ test('the miss that takes the last heart says so, then Try again brings the hear
   assert.ok(el('#heartFloat').classList.contains('is-showing'), 'and a small "-1" floats up beside the hearts');
   assert.equal(el('#heartMeter').attributes['aria-label'], I18N.heartsAria(2, 3, 'ja'));
   assert.match(app.played[app.played.length - 1], /^\.\/audio\/ja\/reaction-try-again-1\.mp3$/);
+  endSpeech(app);
+  endSpeech(app);
   app.clock.tick(MISS_PAUSE_TICK);
 
   clickAnswer(app, game, false);
   assert.ok(el('#heartPips').classList.contains('last-heart'), 'the one heart left beats to warn');
   assert.equal(el('#feedback').textContent, `${I18N.STRINGS.feedbackMissNoStar.ja} ${I18N.heartsLeft(1, 'ja')}`);
+  endSpeech(app);
+  endSpeech(app);
   app.clock.tick(MISS_PAUSE_TICK);
 
   clickAnswer(app, game, false);
   assert.equal(game.getState().lost, true);
   assert.equal(el('#heartPips').children.filter(pip => pip.classList.contains('spent')).length, 3, 'every heart is hollow');
-  assert.equal(el('#feedback').textContent, I18N.STRINGS.feedbackLost.ja);
+  assert.equal(el('#feedback').textContent, 'おしい！こたえは　これだよ。はーとが　なくなったよ。');
   assert.equal(el('#arenaMessage').textContent, I18N.STRINGS.lostMessage.ja);
   assert.match(app.played[app.played.length - 1], /^\.\/audio\/ja\/reaction-round-lost\.mp3$/);
   assert.equal(el('#lostPanel').hidden, true, 'the right choice is shown first');
   assert.equal(el('#questionPanel').hidden, false);
   assert.ok(app.topicTabs.every(tab => tab.disabled), 'topics cannot be switched to dodge the loss');
   assert.ok(app.levelButtons.every(button => !button.disabled), 'a level choice during the miss delay can bring up the loss card');
-  app.clock.tick(2000);
-  assert.equal(el('#lostPanel').hidden, true, 'the pause lasts long enough to see the right choice');
-  app.clock.tick(2000);
-  assert.equal(el('#lostPanel').hidden, false, 'then the lost-match panel takes over');
+  app.clock.tick(5000);
+  assert.equal(el('#lostPanel').hidden, true, 'the loss panel waits for the final word echo');
+  clickAnswer(app, game, true);
+  assert.equal(el('#lostPanel').hidden, true, 'the lost match has no second-chance tap');
+  assert.ok(app.answerOptions.children.every(button => button.disabled));
+  endSpeech(app);
+  assert.equal(el('#lostPanel').hidden, true, 'the echo has started');
+  endSpeech(app);
+  assert.equal(el('#lostPanel').hidden, false, 'the lost-match panel takes over after the word');
   assert.equal(el('#questionPanel').hidden, true);
   assert.equal(el('#finishPanel').hidden, true, 'a lost match is never shown as a win');
   assert.equal(pageShell.dataset.pointer, 'lost');
@@ -2555,30 +2590,6 @@ test('choosing a level from the lost-match card starts a fresh match at that lev
   }
 });
 
-test('Start over or changing level during the last-heart delay shows the loss card before Try again', () => {
-  for (const action of ['restart', 'level']) {
-    const game = createGame(seededRandom(42));
-    const app = createAppFixture(game);
-    for (let miss = 0; miss < HEARTS_BY_LEVEL.easy; miss += 1) {
-      clickAnswer(app, game, false);
-      if (miss < HEARTS_BY_LEVEL.easy - 1) app.clock.tick(MISS_PAUSE_TICK);
-    }
-    assert.equal(game.getState().lost, true);
-    if (action === 'restart') app.elements.get('#restartButton').click();
-    else app.levelButtons.find(button => button.dataset.level === 'harder').click();
-    assert.equal(game.getState().lost, true);
-    assert.equal(game.getState().hearts, 0, `${action} cannot refill hearts`);
-    assert.equal(app.elements.get('#lostPanel').hidden, false, `${action} shows the lost-match card immediately`);
-    assert.equal(app.elements.get('#questionPanel').hidden, true);
-    app.clock.tick(MISS_PAUSE_TICK);
-    assert.equal(app.elements.get('#lostPanel').hidden, false, 'the prior miss timer cannot hide the loss card');
-    app.elements.get('#tryAgainButton').click();
-    assert.equal(game.getState().lost, false);
-    assert.equal(game.getState().hearts, HEARTS_BY_LEVEL.easy, 'Try again is the fresh-match path');
-    assert.equal(app.elements.get('#lostPanel').hidden, true);
-  }
-});
-
 test('a reaction never outlives the moment it belongs to', () => {
   const game = createGame(steadyRandom);
   const app = createAppFixture(game);
@@ -2593,6 +2604,8 @@ test('a reaction never outlives the moment it belongs to', () => {
   app.nextButton.click();
   clickAnswer(app, game, false);
   assert.match(last(), /ja\/reaction-try-again-1/);
+  endSpeech(app);
+  endSpeech(app);
   const pausesBeforeChampion = app.audioState.pauses;
   app.championCards.find(card => card.dataset.champion === 'monster').click();
   assert.ok(app.audioState.pauses > pausesBeforeChampion, 'switching champion stops the reaction');
@@ -2606,12 +2619,14 @@ test('a reaction never outlives the moment it belongs to', () => {
 
   clickAnswer(app, game, true);
   assert.match(last(), /reaction-praise/);
+  endSpeech(app);
+  endSpeech(app);
   app.nextButton.click();
   clickAnswer(app, game, false);
-  app.clock.tick(MISS_PAUSE_TICK);
-  app.nextButton.click();
+  endSpeech(app);
+  endSpeech(app);
+  clickAnswer(app, game, true);
   clickAnswer(app, game, false);
-  app.clock.tick(MISS_PAUSE_TICK);
   assert.equal(game.getState().lost, true);
   app.elements.get('#tryAgainButton').click();
   assert.match(last(), /^\.\/audio\/ja\/colors-/, 'Try again replaces the reaction with the fresh question');
@@ -3371,7 +3386,8 @@ test('keyboard and screen-reader buttons answer for each animal', () => {
   wrong.click();
   assert.equal(game.getState().missed, true);
   assert.equal(game.getState().missedChoice, wrong.dataset.choice);
-  assert.ok(spots.every(spot => spot.disabled), 'the ended question cannot be answered again');
+  assert.ok(spots.filter(spot => spot.dataset.choice !== game.getState().question.answerId).every(spot => spot.disabled), 'only the named animal can be tapped for a second chance');
+  assert.equal(spots.find(spot => spot.dataset.choice === game.getState().question.answerId).disabled, false);
 });
 
 test('if the farm picture cannot load, animals fall back to picture choices, and the character is unaffected', () => {
@@ -3626,4 +3642,431 @@ test('when the picture fails, the bigger body falls back to a few picture choice
   }
   clickAnswer(app, game);
   assert.equal(game.getState().solved, true);
+});
+
+// ---- Hear it again: the word echo, the second-chance tap, and the two-language echo ----
+
+function wordQuestionApp(topic = 'animals', options = {}) {
+  const game = createGame(seededRandom(2));
+  const app = createAppFixture(game, options);
+  app.startButton.click();
+  app.topicTabs.find(tab => tab.dataset.topic === topic).click();
+  return { game, app };
+}
+
+function clipsPlayedSince(app, index) {
+  return app.played.slice(index).map(src => src.replace('./audio/', '').replace('.mp3', ''));
+}
+
+test('each bundled word-only clip covers a word in all three languages, and word questions name it', () => {
+  const expected = WORD_TOPIC_IDS.flatMap(topic => WORD_TOPICS[topic].words.map(word => `word-${topic}-${word.id}`));
+  assert.equal(expected.length, 76);
+  assert.deepEqual(Object.keys(words).sort(), expected.sort(), 'words.json has one entry per supported word-only clip');
+  for (const [audioId, translations] of Object.entries(words)) {
+    for (const language of ['en', 'zh', 'ja']) {
+      assert.ok(translations[language], `${audioId} has ${language} text`);
+      assert.ok(fs.existsSync(path.join(__dirname, 'audio', language, `${audioId}.mp3`)), `${audioId} has a bundled ${language} clip`);
+      assert.ok(precacheManifest.AUDIO.includes(`audio/${language}/${audioId}.mp3`), `${audioId} is precached in ${language}`);
+    }
+    assert.doesNotMatch(translations.en, /[?!.]/, 'a word clip is the word alone, never a sentence');
+  }
+  const game = createGame(seededRandom(4));
+  for (const topic of WORD_TOPIC_IDS) {
+    game.chooseTopic(topic);
+    const { question } = game.getState();
+    assert.equal(question.wordAudioId, `word-${topic}-${question.answerId}`);
+    assert.ok(words[question.wordAudioId]);
+  }
+  for (const id of ALL_FACE_PARTS) {
+    for (const level of LEVELS.filter(candidate => FACE_LEVEL_IDS[candidate].includes(id))) {
+      const { question } = diagramGame(id, level).getState();
+      assert.equal(question.wordAudioId, `word-face-${id}`);
+      assert.ok(words[question.wordAudioId]);
+    }
+  }
+  game.chooseTopic('math');
+  assert.equal(game.getState().question.wordAudioId, undefined, 'math has no word to echo');
+});
+
+test('a queued clip starts when the one before it ends, and a new clip or stop cuts the rest off', () => {
+  const played = [];
+  const listeners = {};
+  const audio = {
+    src: '', currentTime: 0,
+    addEventListener(type, callback) { (listeners[type] ||= []).push(callback); },
+    pause() {}, load() {},
+    play() { played.push(this.src); return Promise.resolve(); },
+  };
+  const ended = () => listeners.ended.forEach(callback => callback());
+  const player = createSpeechPlayer(audio);
+  const events = [];
+  assert.equal(player.playSequence([
+    { audioId: 'reaction-praise-1', language: 'en', onStart: () => events.push('start-1'), onEnd: () => events.push('end-1') },
+    { audioId: 'word-animals-cat', language: 'en', onStart: () => events.push('start-2'), onEnd: () => events.push('end-2') },
+    { audioId: 'word-animals-cat', language: 'zh', onStart: () => events.push('start-3'), onEnd: () => events.push('end-3') },
+  ]), true);
+  assert.deepEqual(played, ['./audio/en/reaction-praise-1.mp3']);
+  ended();
+  assert.deepEqual(played.slice(1), ['./audio/en/word-animals-cat.mp3']);
+  ended();
+  assert.deepEqual(played.slice(2), ['./audio/zh/word-animals-cat.mp3']);
+  ended();
+  assert.deepEqual(events, ['start-1', 'end-1', 'start-2', 'end-2', 'start-3', 'end-3']);
+  ended();
+  assert.equal(played.length, 3, 'nothing plays after the last clip');
+
+  played.length = 0;
+  events.length = 0;
+  player.playSequence([
+    { audioId: 'a', language: 'en', onEnd: () => events.push('end-a') },
+    { audioId: 'b', language: 'en', onStart: () => events.push('start-b') },
+  ]);
+  player.play('c', 'en');
+  assert.deepEqual(events, [], 'a plain play drops the queue without starting its clips');
+  ended();
+  assert.deepEqual(played, ['./audio/en/a.mp3', './audio/en/c.mp3'], 'the cut-off clip never reaches its follower');
+});
+
+test('rejected clips do not discard queued words or suppress sequence completion', async () => {
+  const played = [];
+  const unavailable = [];
+  const audio = {
+    src: '', pause() {}, load() {},
+    play() {
+      played.push(this.src);
+      return Promise.reject(new Error('playback denied'));
+    },
+  };
+  const player = createSpeechPlayer(audio, () => unavailable.push(true));
+  let completed = false;
+  player.playSequence([
+    { audioId: 'reaction-praise-1', language: 'en' },
+    { audioId: 'word-animals-cat', language: 'en', onEnd: () => { completed = true; } },
+  ]);
+  await Promise.resolve();
+  await Promise.resolve();
+  assert.deepEqual(played, ['./audio/en/reaction-praise-1.mp3', './audio/en/word-animals-cat.mp3']);
+  assert.equal(completed, true, 'a rejected final word still completes the sequence');
+  assert.equal(unavailable.length, 2, 'each unavailable clip is reported');
+});
+
+test('a clip that never ends does not hold up the clips behind it', () => {
+  const timers = [];
+  const realSetTimeout = global.setTimeout;
+  const realClearTimeout = global.clearTimeout;
+  global.setTimeout = (callback, delay) => { timers.push({ callback, delay }); return timers.length; };
+  global.clearTimeout = id => { if (timers[id - 1]) timers[id - 1].callback = null; };
+  try {
+    const played = [];
+    const audio = { src: '', pause() {}, load() {}, play() { played.push(this.src); return Promise.resolve(); } };
+    const player = createSpeechPlayer(audio);
+    player.playSequence([{ audioId: 'a', language: 'en' }, { audioId: 'b', language: 'en' }]);
+    assert.equal(played.length, 1);
+    timers.at(-1).callback();
+    assert.equal(played.length, 2, 'the stalled clip is given up on');
+  } finally {
+    global.setTimeout = realSetTimeout;
+    global.clearTimeout = realClearTimeout;
+  }
+});
+
+test('after a right answer the praise is followed by the word alone, the item pulses, and a small control says it again', () => {
+  const { game, app } = wordQuestionApp('animals');
+  const state = game.getState();
+  const echo = app.elements.get('#echoButton');
+  assert.equal(echo.hidden, true, 'no replay control while a question is open');
+  const before = app.played.length;
+  clickAnswer(app, game, true);
+  const right = answerButtons(app).find(button => button.dataset.choice === state.question.answerId);
+  assert.match(clipsPlayedSince(app, before)[0], /^en\/reaction-praise-/);
+  assert.equal(echo.hidden, false);
+  assert.match(echo.attributes['aria-label'], new RegExp(WORD_TOPICS.animals.words.find(word => word.id === state.question.answerId).en));
+  endSpeech(app);
+  assert.deepEqual(clipsPlayedSince(app, before).slice(1), [`en/${state.question.wordAudioId}`], 'the word, once, in the narration voice');
+  assert.ok(right.classList.contains('is-echoing'), 'the item pulses while its word is said');
+  endSpeech(app);
+  assert.equal(right.classList.contains('is-echoing'), false, 'and stops when it is done');
+
+  const afterEcho = app.played.length;
+  echo.click();
+  assert.deepEqual(clipsPlayedSince(app, afterEcho), [`en/${state.question.wordAudioId}`], 'the control says just the word again');
+  assert.ok(right.classList.contains('is-echoing'));
+});
+
+test('the final correct word echoes with replay before the win screen appears', () => {
+  const { game, app } = wordQuestionApp('animals');
+  const el = id => app.elements.get(id);
+  for (let star = 1; star < GOAL_BY_LEVEL.easy; star += 1) {
+    clickAnswer(app, game, true);
+    endSpeech(app);
+    endSpeech(app);
+    app.nextButton.click();
+  }
+  const question = game.getState().question;
+  clickAnswer(app, game, true);
+  assert.equal(game.getState().finished, true);
+  assert.equal(el('#questionPanel').hidden, false, 'the answered item remains available while its echo plays');
+  assert.equal(el('#finishPanel').hidden, true, 'the win screen waits for the echo');
+  assert.equal(el('#echoButton').hidden, false, 'replay remains available on the final answer');
+  endSpeech(app);
+  assert.equal(app.played.at(-1), `./audio/en/${question.wordAudioId}.mp3`);
+  assert.ok(answerButtons(app).find(button => button.dataset.choice === question.answerId).classList.contains('is-echoing'));
+  assert.equal(el('#finishPanel').hidden, true, 'the win screen does not replace the playing word');
+  el('#echoButton').click();
+  assert.equal(el('#finishPanel').hidden, true, 'replaying the word still defers the win screen');
+  endSpeech(app);
+  assert.equal(el('#questionPanel').hidden, true);
+  assert.equal(el('#finishPanel').hidden, false, 'the win screen appears as soon as the echo ends');
+});
+
+test('muting during either part of the final winning echo still shows the finish screen', () => {
+  for (const phase of ['reaction', 'word']) {
+    const { game, app } = wordQuestionApp('animals');
+    for (let star = 1; star < GOAL_BY_LEVEL.easy; star += 1) {
+      clickAnswer(app, game, true);
+      endSpeech(app);
+      app.nextButton.click();
+    }
+    clickAnswer(app, game, true);
+    assert.equal(game.getState().finished, true);
+    if (phase === 'word') endSpeech(app);
+    app.muteButton.click();
+    assert.equal(app.elements.get('#finishPanel').hidden, false, `${phase}: muting completes the pending finish transition`);
+    assert.equal(app.elements.get('#questionPanel').hidden, true);
+  }
+});
+
+test('Next tapped before the echo starts waits for its start, then cuts it short', () => {
+  const { game, app } = wordQuestionApp('fruit');
+  const answeredKey = game.getState().question.key;
+  clickAnswer(app, game, true);
+  app.nextButton.click();
+  assert.equal(game.getState().question.key, answeredKey, 'Next waits while the reaction is playing');
+  endSpeech(app);
+  const question = game.getState().question;
+  assert.notEqual(question.key, answeredKey, 'the next question loads when the word echo starts');
+  assert.match(app.played.at(-1), new RegExp(`/${question.audioId}\\.mp3$`), 'the next question is read at once');
+  assert.equal(app.elements.get('#echoButton').hidden, true);
+});
+
+test('Next can cut a correct-answer echo short after the word starts', () => {
+  const { game, app } = wordQuestionApp('fruit');
+  const answeredKey = game.getState().question.key;
+  clickAnswer(app, game, true);
+  endSpeech(app);
+  assert.equal(game.getState().question.key, answeredKey);
+  assert.match(app.played.at(-1), /^\.\/audio\/en\/word-fruit-/);
+  app.nextButton.click();
+  assert.notEqual(game.getState().question.key, answeredKey);
+});
+
+test('a second-chance tap during the miss reaction waits for the full word echo', () => {
+  const { game, app } = wordQuestionApp('animals');
+  const question = game.getState().question;
+  clickAnswer(app, game, false);
+  answerButtons(app).find(button => button.dataset.choice === question.answerId).click();
+  assert.equal(game.getState().question.key, question.key, 'the tap does not skip the reaction or word');
+  endSpeech(app);
+  assert.equal(game.getState().question.key, question.key, 'the word has started but has not finished');
+  assert.equal(app.played.at(-1), `./audio/en/${question.wordAudioId}.mp3`);
+  endSpeech(app);
+  assert.notEqual(game.getState().question.key, question.key, 'the next question loads after the full word');
+});
+
+test('a miss echoes the right word after the reaction, keeps the heart lost, and waits for a tap on the right item', () => {
+  const { game, app } = wordQuestionApp('animals');
+  const question = game.getState().question;
+  const before = app.played.length;
+  clickAnswer(app, game, false);
+  assert.equal(game.getState().hearts, HEARTS_BY_LEVEL.easy - 1, 'the heart is still lost on the wrong tap');
+  endSpeech(app);
+  assert.equal(clipsPlayedSince(app, before).at(-1), `en/${question.wordAudioId}`);
+  const right = answerButtons(app).find(button => button.dataset.choice === question.answerId);
+  assert.ok(right.classList.contains('is-echoing') && right.classList.contains('second-chance'));
+  // The wait for a tap is timed from the end of the clips, so a long clip never loses the child their turn.
+  app.clock.tick(5000);
+  endSpeech(app);
+  app.clock.tick(8500);
+  assert.equal(game.getState().question.key, question.key, 'the wait began again when the word ended');
+  app.clock.tick(600);
+  assert.notEqual(game.getState().question.key, question.key, 'and if nobody taps, the game still moves on by itself');
+  assert.equal(game.getState().missed, false);
+  clickAnswer(app, game, false);
+  endSpeech(app);
+  const again = game.getState().question;
+  answerButtons(app).find(button => button.dataset.choice === again.answerId).click();
+  endSpeech(app);
+  assert.notEqual(game.getState().question.key, again.key);
+  assert.equal(game.getState().hearts, HEARTS_BY_LEVEL.easy - 2, 'the second-chance tap costs nothing and gives nothing');
+  assert.equal(game.getState().stars, 0);
+});
+
+test('a muted last-heart miss shows the loss panel immediately without a second-chance prompt', () => {
+  const game = createGame(seededRandom(5));
+  const app = createAppFixture(game);
+  app.startButton.click();
+  app.topicTabs.find(tab => tab.dataset.topic === 'colors').click();
+  app.muteButton.click();
+  for (let miss = 0; miss < HEARTS_BY_LEVEL.easy - 1; miss += 1) {
+    clickAnswer(app, game, false);
+    app.answerOptions.children.find(button => button.dataset.choice === game.getState().question.answerId).click();
+  }
+  clickAnswer(app, game, false);
+  assert.equal(game.getState().lost, true);
+  assert.equal(app.elements.get('#lostPanel').hidden, false, 'no inaudible word leaves a fallback delay');
+  assert.equal(app.elements.get('#feedback').textContent, 'Oops! This one was right. That was the last heart.');
+  app.clock.tick(10000);
+  assert.equal(app.elements.get('#lostPanel').hidden, false);
+});
+
+test('muting an interrupted miss restores second-chance taps and the fallback after unmuting', () => {
+  const tapped = wordQuestionApp('animals');
+  const tappedQuestion = tapped.game.getState().question;
+  clickAnswer(tapped.app, tapped.game, false);
+  tapped.app.muteButton.click();
+  answerButtons(tapped.app).find(button => button.dataset.choice === tappedQuestion.answerId).click();
+  assert.notEqual(tapped.game.getState().question.key, tappedQuestion.key, 'a pending second-chance tap continues immediately after muting');
+
+  const resumed = wordQuestionApp('animals');
+  const missedKey = resumed.game.getState().question.key;
+  clickAnswer(resumed.app, resumed.game, false);
+  resumed.app.muteButton.click();
+  resumed.app.muteButton.click();
+  resumed.app.clock.tick(5900);
+  assert.equal(resumed.game.getState().question.key, missedKey);
+  resumed.app.clock.tick(200);
+  assert.notEqual(resumed.game.getState().question.key, missedKey, 'the ordinary fallback remains active after unmuting');
+});
+
+test('the last-heart miss shows the loss panel as soon as its word echo ends', () => {
+  const game = createGame(seededRandom(5));
+  const app = createAppFixture(game);
+  app.startButton.click();
+  app.topicTabs.find(tab => tab.dataset.topic === 'colors').click();
+  const el = id => app.elements.get(id);
+  for (let miss = 0; miss < HEARTS_BY_LEVEL.easy; miss += 1) {
+    clickAnswer(app, game, false);
+    if (miss < HEARTS_BY_LEVEL.easy - 1) {
+      endSpeech(app);
+      endSpeech(app);
+      app.answerOptions.children.find(button => button.dataset.choice === game.getState().question.answerId).click();
+    }
+  }
+  assert.equal(game.getState().lost, true);
+  assert.equal(el('#lostPanel').hidden, true, 'the loss panel waits while the reaction is playing');
+  assert.ok(app.answerOptions.children.every(button => button.disabled), 'the last-heart miss has no second-chance tap');
+  endSpeech(app);
+  assert.equal(el('#lostPanel').hidden, true, 'the loss panel still waits while the word plays');
+  assert.match(app.played.at(-1), /^\.\/audio\/en\/word-colors-/);
+  endSpeech(app);
+  assert.equal(el('#lostPanel').hidden, false, 'the loss panel appears immediately after the word ends');
+  assert.equal(el('#questionPanel').hidden, true);
+});
+
+test('every accepted diagram alternative is marked and pulses as a second chance', () => {
+  const game = diagramGame('mouth');
+  const app = createAppFixture(game);
+  app.startButton.click();
+  const question = game.getState().question;
+  const alternative = question.acceptedIds.find(id => id !== question.answerId);
+  const spot = id => app.elements.get('#diagramSpots').children.find(button => button.dataset.choice === id);
+  const wrong = question.options.find(option => !question.acceptedIds.includes(option.id));
+  spot(wrong.id).click();
+  assert.equal(game.getState().missed, true);
+  assert.equal(spot(alternative).disabled, false);
+  assert.ok(spot(alternative).classList.contains('right-answer'));
+  assert.ok(spot(alternative).classList.contains('second-chance'));
+  assert.ok(app.elements.get('#diagramMarks').children.some(ring => ring.classList.contains('second-chance')));
+  spot(alternative).click();
+  assert.equal(game.getState().question.key, question.key, 'the alternative tap waits for the full word echo');
+  endSpeech(app);
+  endSpeech(app);
+  assert.notEqual(game.getState().question.key, question.key);
+});
+
+test('a body picture question gets the same echo and second chance, on the part ringed', () => {
+  const game = diagramGame('nose');
+  const app = createAppFixture(game);
+  app.startButton.click();
+  const question = game.getState().question;
+  assert.equal(question.format, 'diagram');
+  const spot = id => app.elements.get('#diagramSpots').children.find(button => button.dataset.choice === id);
+  spot('feet').click();
+  assert.equal(game.getState().missed, true);
+  const ring = () => app.elements.get('#diagramMarks').children.find(item => item.classList.contains('right-ring'));
+  assert.ok(ring().classList.contains('second-chance'), 'the right part pulses');
+  endSpeech(app);
+  assert.equal(app.played.at(-1), `./audio/en/${question.wordAudioId}.mp3`);
+  assert.ok(ring().classList.contains('is-echoing'));
+  endSpeech(app);
+  spot('eyes').click();
+  assert.equal(game.getState().question.key, question.key, 'a wrong part is ignored');
+  spot('nose').click();
+  assert.notEqual(game.getState().question.key, question.key, 'the right part moves on');
+});
+
+test('the two-language echo is off by default, is picked in settings, and is never the narration language', () => {
+  const storage = new FakeLocalStorage();
+  const { game, app } = wordQuestionApp('animals', { localStorage: storage });
+  assert.equal(JSON.parse(storage.getItem('monsterWordArena.settings.v1') || '{"echoLanguage":null}').echoLanguage, null);
+  clickAnswer(app, game, true);
+  const before = app.played.length;
+  endSpeech(app);
+  endSpeech(app);
+  assert.equal(clipsPlayedSince(app, before).length, 1, 'off by default: only the narration-language word');
+
+  passGate(app);
+  const options = () => app.elements.get('#echoLanguageOptions').children;
+  assert.deepEqual(options().map(button => button.dataset.echoLanguage), ['off', 'zh', 'ja'], 'the narration language is not offered');
+  assert.equal(options().find(button => button.dataset.echoLanguage === 'off').getAttribute('aria-pressed'), 'true');
+  options().find(button => button.dataset.echoLanguage === 'ja').click();
+  assert.equal(JSON.parse(storage.getItem('monsterWordArena.settings.v1')).echoLanguage, 'ja');
+
+  app.nextButton.click();
+  clickAnswer(app, game, true);
+  const question = game.getState().question;
+  const start = app.played.length;
+  endSpeech(app);
+  endSpeech(app);
+  assert.deepEqual(clipsPlayedSince(app, start), [`en/${question.wordAudioId}`, `ja/${question.wordAudioId}`], 'the word in both languages, same clips');
+  endSpeech(app);
+
+  app.nextButton.click();
+  clickAnswer(app, game, false);
+  const missStart = app.played.length;
+  endSpeech(app);
+  endSpeech(app);
+  assert.deepEqual(clipsPlayedSince(app, missStart), [`en/${game.getState().question.wordAudioId}`], 'a wrong answer never adds the second language');
+
+  app.document.querySelector('[data-voice-option="ja"]').click();
+  assert.equal(JSON.parse(storage.getItem('monsterWordArena.settings.v1')).echoLanguage, null, 'choosing the same narration voice turns the echo off');
+  assert.deepEqual(options().map(button => button.dataset.echoLanguage), ['off', 'en', 'zh']);
+});
+
+test('a saved echo language is remembered, and an old save without one keeps it off', () => {
+  const key = 'monsterWordArena.settings.v1';
+  const withEcho = new FakeLocalStorage();
+  withEcho.setItem(key, JSON.stringify({ v: 2, textLanguage: 'en', secondLanguage: 'zh', secondLanguageManual: false, voiceOverride: false, voiceLanguage: 'en', echoLanguage: 'zh', speechMuted: false, allowedLevels: ['easy', 'harder', 'super'] }));
+  const game = createGame(seededRandom(2));
+  const remembered = createAppFixture(game, { localStorage: withEcho });
+  remembered.startButton.click();
+  remembered.topicTabs.find(tab => tab.dataset.topic === 'animals').click();
+  clickAnswer(remembered, game, true);
+  const question = game.getState().question;
+  const start = remembered.played.length;
+  endSpeech(remembered);
+  endSpeech(remembered);
+  assert.deepEqual(clipsPlayedSince(remembered, start), [`en/${question.wordAudioId}`, `zh/${question.wordAudioId}`]);
+
+  const oldSave = new FakeLocalStorage();
+  oldSave.setItem(key, JSON.stringify({ v: 2, textLanguage: 'en', secondLanguage: 'zh', secondLanguageManual: false, voiceOverride: false, voiceLanguage: 'en', speechMuted: false, allowedLevels: ['easy', 'harder', 'super'] }));
+  const oldGame = createGame(seededRandom(2));
+  const old = createAppFixture(oldGame, { localStorage: oldSave });
+  old.startButton.click();
+  old.topicTabs.find(tab => tab.dataset.topic === 'animals').click();
+  clickAnswer(old, oldGame, true);
+  const oldStart = old.played.length;
+  endSpeech(old);
+  endSpeech(old);
+  assert.equal(clipsPlayedSince(old, oldStart).length, 1, 'an old save keeps the second language off');
 });

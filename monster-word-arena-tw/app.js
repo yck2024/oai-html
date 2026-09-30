@@ -84,6 +84,9 @@
   const settingsCloseButton = document.querySelector('#settingsCloseButton');
   const levelLockOptions = document.querySelector('#levelLockOptions');
   const secondLanguageOptions = document.querySelector('#secondLanguageOptions');
+  const echoLanguageOptions = document.querySelector('#echoLanguageOptions');
+  const echoButton = document.querySelector('#echoButton');
+  const echoWord = document.querySelector('#echoWord');
   const voiceLanguageOptions = document.querySelector('#voiceLanguageOptions');
   const settingsMuteButton = document.querySelector('#settingsMuteButton');
   const settingsRewardSummary = document.querySelector('#settingsRewardSummary');
@@ -126,6 +129,7 @@
         secondLanguageManual: Boolean(raw.secondLanguageManual),
         voiceOverride: Boolean(raw.voiceOverride),
         voiceLanguage: validLanguage(raw.voiceLanguage) ? raw.voiceLanguage : textLanguage,
+        echoLanguage: validLanguage(raw.echoLanguage) ? raw.echoLanguage : null,
         speechMuted: Boolean(raw.speechMuted),
         allowedLevels: raw.allowedLevels,
       };
@@ -141,6 +145,7 @@
       secondLanguageManual: false,
       voiceOverride,
       voiceLanguage: voiceOverride ? priorVoice : textLanguage,
+      echoLanguage: null,
       speechMuted: Boolean(raw.speechMuted),
       allowedLevels: raw.allowedLevels,
     };
@@ -152,6 +157,13 @@
   let secondLanguageManual = saved.secondLanguageManual;
   let voiceOverride = saved.voiceOverride;
   let voiceLanguage = voiceOverride ? saved.voiceLanguage : textLanguage;
+  // Off (null) until a grown-up picks one: after a right answer the word is also said in this second spoken
+  // language. It is never the narration voice itself, so it is cleared whenever the voice becomes that language.
+  let echoLanguage = saved.echoLanguage;
+  function reconcileEchoLanguage() {
+    if (echoLanguage === voiceLanguage) echoLanguage = null;
+  }
+  reconcileEchoLanguage();
   // Resolved before rewards-app.js loads, so it can pick up the saved text language on first render.
   window.FriendlyArenaCurrentTextLanguage = () => textLanguage;
   window.FriendlyArenaCurrentSecondLanguage = () => secondLanguage;
@@ -183,7 +195,7 @@
   });
 
   function persistSettings() {
-    saveSettings({ v: 2, textLanguage, secondLanguage, secondLanguageManual, voiceOverride, voiceLanguage, speechMuted, allowedLevels });
+    saveSettings({ v: 2, textLanguage, secondLanguage, secondLanguageManual, voiceOverride, voiceLanguage, echoLanguage, speechMuted, allowedLevels });
   }
 
   // A STRINGS entry's text in the current second language, or null when there is none chosen.
@@ -208,8 +220,41 @@
     speechPlayer.play(state.question.audioId, voiceLanguage);
   }
 
-  // Reactions share the question's audio element, so a new clip always cuts off the last one.
-  function playReaction(type) {
+  // The item the child just answered (or should tap after a miss) pulses while its word is said.
+  function echoTargets() {
+    return [
+      ...choiceButtons().filter(choice => choice.classList.contains('right-answer')),
+      ...[...diagramMarks.children].filter(ring => ring.classList.contains('right-ring')),
+    ];
+  }
+
+  function setEchoPulse(on) {
+    echoTargets().forEach(target => target.classList.toggle('is-echoing', on));
+  }
+
+  // The word said alone (never a sentence) for the answered question: in the narration voice, then, after a
+  // right answer and only when a grown-up turned it on, in the second spoken language. `done` runs when it ends.
+  function echoSteps(state, { second = false, started = null, done = null } = {}) {
+    const audioId = state.question.wordAudioId;
+    if (!audioId) return [];
+    const languages = [voiceLanguage, ...(second && echoLanguage ? [echoLanguage] : [])];
+    return languages.map((language, index) => ({
+      audioId,
+      language,
+      onStart: () => {
+        setEchoPulse(true);
+        started?.();
+      },
+      onEnd: () => {
+        setEchoPulse(false);
+        if (index === languages.length - 1) done?.();
+      },
+    }));
+  }
+
+  // Reactions share the question's audio element, so a new clip always cuts off the last one. After an answer the
+  // word is echoed right behind the reaction, in the same queue; a miss waits for that word before moving on.
+  function playReaction(type, { echo = null, onEchoStart = null, onEchoDone = null } = {}) {
     if (!speechEnabled || speechMuted) {
       speechPlayer.stop();
       return;
@@ -219,8 +264,64 @@
     reactionTurns[type] = turn + 1;
     reactionPlaying = true;
     speechStatus.textContent = '';
-    speechPlayer.play(variants[turn % variants.length], voiceLanguage);
+    speechPlayer.playSequence([
+      { audioId: variants[turn % variants.length], language: voiceLanguage },
+      ...(echo ? echoSteps(game.getState(), { ...echo, started: onEchoStart, done: onEchoDone }) : []),
+    ]);
   }
+
+  // The small button after an answer: the word again (and, after a right answer, the second language too).
+  function renderEchoButton(state) {
+    const question = state.question;
+    const target = question.wordAudioId ? currentTarget(question) : null;
+    const show = Boolean(target) && (state.solved || state.missed) && !soundIsOff();
+    echoWord.textContent = show ? target[textLanguage] : '';
+    echoButton.hidden = !show;
+    echoButton.setAttribute('aria-label', show ? `${I18N.STRINGS.echoReplayLabel[textLanguage]}: ${target[textLanguage]}` : '');
+  }
+
+  let pendingFinish = null;
+  let answerEchoStarted = false;
+  let answerEchoFinished = true;
+  let pendingNext = false;
+  let pendingSecondChance = false;
+
+  function startAnswerEcho(state) {
+    answerEchoStarted = true;
+    if (state.solved && pendingNext) {
+      pendingNext = false;
+      loadNextQuestion();
+    }
+  }
+
+  function completeAnswerEcho(state) {
+    answerEchoFinished = true;
+    if (state.missed) {
+      if (state.lost) showLostPanel();
+      else if (!pendingSecondChance) armMissFallback(state);
+      else {
+        pendingSecondChance = false;
+        continueAfterSecondChance(state);
+      }
+    } else if (state.solved) {
+      pendingFinish?.();
+      if (pendingNext) {
+        pendingNext = false;
+        loadNextQuestion();
+      }
+    }
+  }
+
+  echoButton.addEventListener('click', () => {
+    const state = game.getState();
+    if (!(state.solved || state.missed) || soundIsOff()) return;
+    reactionPlaying = false;
+    if (state.missed) {
+      answerEchoFinished = false;
+      cancelMissTimer();
+    }
+    speechPlayer.playSequence(echoSteps(state, { second: state.solved, started: () => startAnswerEcho(state), done: () => completeAnswerEcho(state) }));
+  });
 
   function renderSpeechControls() {
     startRow.hidden = speechEnabled;
@@ -400,8 +501,9 @@
     return question.options.find(option => option.id === question.answerId);
   }
 
-  // A missed question stays on screen, with its right choice marked, until the pause is over.
-  const MISS_PAUSE_MS = { withSound: 3400, quiet: 2000 };
+  // A missed question stays on screen, with its right choice marked and pulsing, until the child taps that choice.
+  // If nobody taps, the game moves on by itself after this wait, which starts over once the word has been said.
+  const MISS_PAUSE_MS = { withSound: 9000, quiet: 6000 };
   let missTimer = null;
   // Once the last heart is gone and the miss has been shown, the lost-match panel takes the question's place.
   let lostPanelShown = false;
@@ -410,6 +512,11 @@
     if (missTimer === null) return;
     clearTimeout(missTimer);
     missTimer = null;
+  }
+
+  function armMissFallback(state) {
+    cancelMissTimer();
+    missTimer = setTimeout(state.lost ? showLostPanel : loadNextQuestion, soundIsOff() ? MISS_PAUSE_MS.quiet : MISS_PAUSE_MS.withSound);
   }
 
   // Every button that can answer the current question: the picture choices, or the character's part buttons.
@@ -484,10 +591,15 @@
     });
   }
 
+  // After a miss the wrong tap is shown and the right choice stays live and pulses: tapping it is how the game goes on.
   function markMiss(state) {
+    const accepted = state.question.acceptedIds || [state.question.answerId];
     choiceButtons().forEach(choice => {
-      choice.disabled = true;
-      choice.classList.toggle('right-answer', choice.dataset.choice === state.question.answerId);
+      const acceptedChoice = accepted.includes(choice.dataset.choice);
+      const right = choice.dataset.choice === state.question.answerId || (!state.lost && acceptedChoice);
+      choice.disabled = state.lost || !acceptedChoice;
+      choice.classList.toggle('right-answer', right);
+      choice.classList.toggle('second-chance', !state.lost && acceptedChoice);
       choice.classList.toggle('wrong-answer', choice.dataset.choice === state.missedChoice);
     });
     markDiagram(state);
@@ -513,7 +625,11 @@
     const rings = [];
     const ringRegions = id => (parts[id].rings || parts[id].regions);
     if (state.missed && parts[state.missedChoice]) rings.push(...ringRegions(state.missedChoice).map(region => diagramRing(region, 'wrong-ring')));
-    if (state.solved || state.missed) rings.push(...ringRegions(question.answerId).map(region => diagramRing(region, 'right-ring')));
+    if (state.solved || state.missed) {
+      const accepted = state.question.acceptedIds || [question.answerId];
+      const marked = state.missed && !state.lost ? accepted : [question.answerId];
+      marked.forEach(id => rings.push(...ringRegions(id).map(region => diagramRing(region, state.missed && !state.lost ? 'right-ring second-chance' : 'right-ring'))));
+    }
     diagramMarks.replaceChildren(...rings);
     const target = currentTarget(question);
     diagramWord.textContent = (state.solved || state.missed) && target ? target[textLanguage] : '';
@@ -617,6 +733,7 @@
     }
     feedback.textContent = state.missed ? missFeedback(state) : I18N.STRINGS.feedbackDefault[textLanguage];
     feedback.classList.toggle('retry', state.missed);
+    renderEchoButton(state);
     nextButton.hidden = !state.solved || state.finished;
     questionPanel.hidden = state.finished || lostPanelShown;
     finishPanel.hidden = !state.finished;
@@ -645,7 +762,54 @@
     arenaMessage.textContent = I18N.sparMessage(state.champion, state.finished, combo, textLanguage);
   }
 
+  function showFinishPanel(state, nudge) {
+    questionPanel.hidden = true;
+    finishPanel.hidden = false;
+    goodbyePanel.hidden = true;
+    setBilingual(document.querySelector('#finishBody'), I18N.finishBody(state.goal, textLanguage), secondLanguage && I18N.finishBody(state.goal, secondLanguage));
+    [...topicTabsContainer.children].forEach(button => { button.disabled = true; });
+    if (nudge) {
+      playAgainButton.hidden = true;
+      breakPrompt.hidden = false;
+      setPointer('break');
+      oneMoreRoundButton.focus();
+    } else {
+      playAgainButton.hidden = false;
+      breakPrompt.hidden = true;
+      setPointer('finish');
+      playAgainButton.focus();
+    }
+  }
+
+  // After a miss the child taps the right item to go on. Any other tap changes nothing and costs nothing.
+  function continueAfterSecondChance(state) {
+    if (state.lost) {
+      speechPlayer.cancelQueued();
+      showLostPanel();
+      return;
+    }
+    loadNextQuestion();
+  }
+
+  function secondChance(optionId, state) {
+    if (state.lost) return;
+    const accepted = state.question.acceptedIds || [state.question.answerId];
+    if (!accepted.includes(String(optionId))) return;
+    sounds.play('tap');
+    cancelMissTimer();
+    if (!answerEchoFinished) {
+      pendingSecondChance = true;
+      return;
+    }
+    continueAfterSecondChance(state);
+  }
+
   function chooseAnswer(button, optionId) {
+    const before = game.getState();
+    if (before.missed) {
+      secondChance(optionId, before);
+      return;
+    }
     const result = game.answer(optionId);
     const state = game.getState();
     if (result === 'ignored') return;
@@ -662,11 +826,22 @@
       if (state.lost) [...topicTabsContainer.children].forEach(button => { button.disabled = true; });
       stage.block();
       arenaMessage.textContent = (state.lost ? I18N.STRINGS.lostMessage : I18N.STRINGS.blockMessage)[textLanguage];
-      playReaction(state.lost ? 'round-lost' : state.hearts === 1 ? 'last-heart' : 'try-again');
+      const echoExpected = Boolean(state.question.wordAudioId) && !soundIsOff();
+      answerEchoStarted = false;
+      answerEchoFinished = !echoExpected;
+      pendingSecondChance = false;
+      playReaction(state.lost ? 'round-lost' : state.hearts === 1 ? 'last-heart' : 'try-again', {
+        echo: { second: false },
+        onEchoStart: () => startAnswerEcho(state),
+        onEchoDone: () => completeAnswerEcho(state),
+      });
+      renderEchoButton(state);
       sounds.play('boing', { delay: 0.04 });
       setPointer(null);
-      cancelMissTimer();
-      missTimer = setTimeout(state.lost ? showLostPanel : loadNextQuestion, soundIsOff() ? MISS_PAUSE_MS.quiet : MISS_PAUSE_MS.withSound);
+      if (answerEchoFinished) {
+        if (state.lost) showLostPanel();
+        else armMissFallback(state);
+      } else cancelMissTimer();
       return;
     }
 
@@ -678,32 +853,31 @@
     // A soft "one more round or a break?" nudge after 2 or 3 wins in a row: no timer, nothing lost either way.
     const nudge = state.finished && breakPacer.recordWin();
     const capReaction = reward?.capped ? `cap-${reward.advice}` : null;
-    playReaction(capReaction || (nudge ? 'break-prompt' : state.finished ? 'finish' : 'praise'));
     button?.classList.add('right-answer');
-    sounds.play('sparkle', { delay: 0.03 });
     choiceButtons().forEach(choice => { choice.disabled = true; });
     markDiagram(state);
+    const finalWordEcho = state.finished && state.question.wordAudioId && !soundIsOff();
+    answerEchoStarted = false;
+    answerEchoFinished = !state.question.wordAudioId || soundIsOff();
+    pendingNext = false;
+    pendingFinish = finalWordEcho ? () => {
+      pendingFinish = null;
+      showFinishPanel(state, nudge);
+    } : null;
+    playReaction(capReaction || (nudge ? 'break-prompt' : state.finished ? 'finish' : 'praise'), {
+      echo: { second: true },
+      onEchoStart: () => startAnswerEcho(state),
+      onEchoDone: () => completeAnswerEcho(state),
+    });
+    renderEchoButton(state);
+    sounds.play('sparkle', { delay: 0.03 });
     feedback.textContent = I18N.STRINGS.feedbackCorrect[textLanguage];
     feedback.classList.remove('retry');
     renderScore(state);
     spar(state);
     if (state.finished) {
-      questionPanel.hidden = true;
-      finishPanel.hidden = false;
-      goodbyePanel.hidden = true;
-      setBilingual(document.querySelector('#finishBody'), I18N.finishBody(state.goal, textLanguage), secondLanguage && I18N.finishBody(state.goal, secondLanguage));
-      [...topicTabsContainer.children].forEach(button => { button.disabled = true; });
-      if (nudge) {
-        playAgainButton.hidden = true;
-        breakPrompt.hidden = false;
-        setPointer('break');
-        oneMoreRoundButton.focus();
-      } else {
-        playAgainButton.hidden = false;
-        breakPrompt.hidden = true;
-        setPointer('finish');
-        playAgainButton.focus();
-      }
+      finishPanel.hidden = true;
+      if (!finalWordEcho) showFinishPanel(state, nudge);
     } else {
       nextButton.hidden = false;
       nextButton.focus();
@@ -755,6 +929,7 @@
     // would otherwise collide with the newly chosen main language.
     if (!secondLanguageManual || secondLanguage === textLanguage) secondLanguage = I18N.DEFAULT_SECOND_LANGUAGE[textLanguage];
     if (!voiceOverride) voiceLanguage = textLanguage;
+    reconcileEchoLanguage();
     persistSettings();
     renderChrome();
     renderChampion(game.getState());
@@ -786,6 +961,8 @@
     sounds.setMuted(speechMuted);
     if (speechMuted) {
       speechPlayer.stop();
+      const state = game.getState();
+      if ((state.missed || pendingFinish) && !answerEchoFinished) completeAnswerEcho(state);
       speechStatus.textContent = I18N.STRINGS.soundMuted[textLanguage];
       renderQuestion(game.getState(), { speak: false });
       return;
@@ -972,6 +1149,31 @@
     if (hadFocus) secondLanguageOptions.querySelector(`[data-second-language="${secondLanguage || 'off'}"]`)?.focus();
   }
 
+  // Grown-up-only: one extra spoken language for the word after a right answer, or off. It can be any language
+  // except the narration voice, so the pair is always two different languages.
+  function renderEchoLanguageOptions() {
+    const hadFocus = echoLanguageOptions.contains(document.activeElement);
+    const choices = [null, ...I18N.TEXT_LANGUAGES.filter(language => language !== voiceLanguage)];
+    echoLanguageOptions.replaceChildren(...choices.map(language => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'language-option';
+      button.dataset.echoLanguage = language || 'off';
+      button.textContent = language ? I18N.LANGUAGE_NAMES[language] : I18N.STRINGS.settingsSecondLanguageOff[textLanguage];
+      const selected = language === echoLanguage;
+      button.classList.toggle('is-active', selected);
+      button.setAttribute('aria-pressed', String(selected));
+      button.addEventListener('click', () => {
+        echoLanguage = language;
+        persistSettings();
+        renderEchoLanguageOptions();
+      });
+      return button;
+    }));
+    echoLanguageOptions.setAttribute('aria-label', I18N.STRINGS.settingsEchoTitle[textLanguage]);
+    if (hadFocus) echoLanguageOptions.querySelector(`[data-echo-language="${echoLanguage || 'off'}"]`)?.focus();
+  }
+
   function renderVoiceLanguageOptions() {
     const hadFocus = voiceLanguageOptions.contains(document.activeElement);
     const choices = [null, ...I18N.TEXT_LANGUAGES];
@@ -987,6 +1189,7 @@
       button.addEventListener('click', () => {
         voiceOverride = Boolean(language);
         voiceLanguage = language || textLanguage;
+        reconcileEchoLanguage();
         persistSettings();
         renderChrome();
       });
@@ -1035,6 +1238,7 @@
       }
       renderLevelLockOptions();
       renderSecondLanguageOptions();
+      renderEchoLanguageOptions();
       renderVoiceLanguageOptions();
       renderSettingsSummary();
       return;
@@ -1119,6 +1323,8 @@
     document.querySelector('#settingsLevelLockHint').textContent = S.settingsLevelLockHint[textLanguage];
     document.querySelector('#settingsSecondLanguageTitle').textContent = S.settingsSecondLanguageTitle[textLanguage];
     document.querySelector('#settingsSecondLanguageHint').textContent = S.settingsSecondLanguageHint[textLanguage];
+    document.querySelector('#settingsEchoTitle').textContent = S.settingsEchoTitle[textLanguage];
+    document.querySelector('#settingsEchoHint').textContent = S.settingsEchoHint[textLanguage];
     document.querySelector('#settingsVoiceTitle').textContent = S.settingsVoiceTitle[textLanguage];
     document.querySelector('#settingsVoiceHint').textContent = S.settingsVoiceHint[textLanguage];
     document.querySelector('#settingsSoundTitle').textContent = S.settingsSoundTitle[textLanguage];
@@ -1155,6 +1361,7 @@
     });
     renderLevelLockOptions();
     renderSecondLanguageOptions();
+    renderEchoLanguageOptions();
     renderVoiceLanguageOptions();
     if (!settingsBody.hidden) renderSettingsSummary();
     renderSpeechControls();
@@ -1187,6 +1394,11 @@
 
   nextButton.addEventListener('click', () => {
     sounds.play('tap');
+    const state = game.getState();
+    if (state.solved && state.question.wordAudioId && !soundIsOff() && !answerEchoStarted) {
+      pendingNext = true;
+      return;
+    }
     loadNextQuestion();
   });
 

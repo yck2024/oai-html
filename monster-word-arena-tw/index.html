@@ -137,6 +137,7 @@
             </div>
             <span class="point-hint point-hint--answer" id="pointAnswer" aria-hidden="true"><span id="pointAnswerEmoji">🦖</span> 👇</span>
             <p class="feedback" id="feedback" role="status" aria-live="polite" aria-atomic="true">No rush—thinking is a superpower!</p>
+            <button class="echo-button" id="echoButton" type="button" hidden>🔊 <span id="echoWord"></span> <span aria-hidden="true">↻</span></button>
             <button class="next-button" id="nextButton" type="button" hidden>Next power move <span aria-hidden="true">➜</span></button>
             <span class="point-hint point-hint--next" id="pointNext" aria-hidden="true"><span id="pointNextEmoji">🦖</span> 👉</span>
           </div>
@@ -216,6 +217,11 @@
           <h3 id="settingsSecondLanguageTitle">Second language</h3>
           <p class="settings-hint" id="settingsSecondLanguageHint">Shows a smaller second language under key words and titles. Turn it off for one language only.</p>
           <div class="language-options" id="secondLanguageOptions" role="group" aria-label="Second language"></div>
+        </section>
+        <section class="settings-section">
+          <h3 id="settingsEchoTitle">Say the word in two languages</h3>
+          <p class="settings-hint" id="settingsEchoHint">After a right answer, the game also says the word in this second language. Off by default.</p>
+          <div class="language-options" id="echoLanguageOptions" role="group" aria-label="Second spoken language"></div>
         </section>
         <section class="settings-section">
           <h3 id="settingsVoiceTitle">Narration voice</h3>
