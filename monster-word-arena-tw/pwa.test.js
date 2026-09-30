@@ -50,6 +50,7 @@ test('the page exposes parsed PWA document metadata', () => {
 
 test('the precache manifest is generated from images/ and audio/ on disk, never hand-maintained', () => {
   const fresh = buildManifest();
+  assert.ok(fresh.AUDIO.includes('audio/words.json'), 'word translations are included in offline media assets');
   assert.deepEqual(MANIFEST.IMAGES, fresh.IMAGES, 'precache-manifest.js images match a fresh scan of images/ — run node generate-precache-manifest.js if this fails');
   assert.deepEqual(MANIFEST.AUDIO, fresh.AUDIO, 'precache-manifest.js audio matches a fresh scan of audio/ — run node generate-precache-manifest.js if this fails');
 });
@@ -99,5 +100,6 @@ test('isAnalyticsUrl and isMediaUrl classify the three kinds of request the serv
 
   assert.equal(PWA.isMediaUrl(`${BASE}images/champion-rex.webp`), true);
   assert.equal(PWA.isMediaUrl(`${BASE}audio/en/fruit-apple.mp3`), true);
+  assert.equal(PWA.isMediaUrl(`${BASE}audio/words.json`), true);
   assert.equal(PWA.isMediaUrl(`${BASE}index.html`), false);
 });
