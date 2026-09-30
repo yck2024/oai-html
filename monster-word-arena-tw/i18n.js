@@ -203,11 +203,11 @@
     },
     settingsSecondLanguageOff: { en: 'Off', zh: '關閉', ja: 'けす' },
     // Off by default: after a right answer, also say the word in one more language (the same word clips).
-    settingsEchoTitle: { en: 'Say the word in two languages', zh: '用兩種語言說出這個詞', ja: 'ふたつの　げんごで　ことばを　いう' },
+    settingsEchoTitle: { en: 'Say the word aloud in a second language', zh: '用第二種語言唸出這個詞', ja: 'ことばを　もうひとつの　げんごでも　いう' },
     settingsEchoHint: {
-      en: 'After a right answer, the game also says the word in this second language. Off by default. The language the narration speaks is always the first.',
-      zh: '答對之後，遊戲會再用這個第二語言說一次這個詞。預設關閉。朗讀語音的語言永遠是第一個。',
-      ja: 'せいかいの　あとに、この　にばんめの　げんごでも　ことばを　いうよ。ふつうは　けしてあるよ。よみあげの　げんごが　いつも　ひとつめだよ。',
+      en: 'Spoken, not written: after a right answer, the game also says the word aloud in this language, after saying it in the narration language. Off by default.',
+      zh: '只是唸出來，不是寫出來：答對之後，遊戲會先用朗讀語音說一次這個詞，再用這個語言說一次。預設關閉。',
+      ja: 'かいてでは　なくて　こえで　いうよ。せいかいの　あとに、よみあげの　げんごで　ことばを　いってから、この　げんごでも　いうよ。ふつうは　けしてあるよ。',
     },
     settingsVoiceTitle: { en: 'Narration voice', zh: '朗讀語音', ja: 'よみあげの　こえ' },
     settingsVoiceHint: {
