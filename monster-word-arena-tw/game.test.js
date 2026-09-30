@@ -1034,14 +1034,13 @@ test('changing topic after a miss replaces the question, while level change and 
 });
 
 test('a miss at every level ends its question and is safe for each topic', () => {
-  const game = createGame(seededRandom(12));
-  const app = createAppFixture(game);
-  app.startButton.click();
   for (const level of LEVELS) {
-    app.levelButtons.find(button => button.dataset.level === level).click();
     for (const topic of TOPICS) {
+      const game = createGame(seededRandom(12));
+      const app = createAppFixture(game);
+      app.startButton.click();
+      app.levelButtons.find(button => button.dataset.level === level).click();
       app.topicTabs.find(tab => tab.dataset.topic === topic).click();
-      app.elements.get('#restartButton').click();
       clickAnswer(app, game, true);
       app.nextButton.click();
       const before = game.getState();
@@ -1235,17 +1234,21 @@ test('subtraction narration is written in all three languages and says how many 
   assert.equal(prompts['math-take-7-7'].ja, 'ななひくななは、のこりはいくつかな？');
 });
 
-test('changing topic or level, or starting over, clears a miss that is waiting to be replaced', () => {
+test('changing topic clears a pending miss; level change and restart abandon the damaged match', () => {
   const game = createGame(steadyRandom);
   game.answer(wrongOption(game).id);
   assert.equal(game.chooseTopic('colors'), true);
   assert.equal(game.getState().missed, false);
   assert.equal(game.nextQuestion(), false, 'only a right or missed question can move on');
-  game.answer(wrongOption(game).id);
-  assert.equal(game.chooseLevel('harder'), true);
-  assert.equal(game.getState().missed, false);
-  game.answer(wrongOption(game).id);
-  assert.equal(game.restart().missed, false);
+
+  for (const abandon of ['level', 'restart']) {
+    const damagedGame = createGame(steadyRandom);
+    damagedGame.answer(wrongOption(damagedGame).id);
+    if (abandon === 'level') damagedGame.chooseLevel('harder');
+    else damagedGame.restart();
+    assert.equal(damagedGame.getState().lost, true, `${abandon} abandons the damaged match`);
+    assert.equal(damagedGame.getState().hearts, HEARTS_BY_LEVEL.easy - 1);
+  }
 });
 
 test('switching learning content keeps earned stars and resets the active attempt', () => {
@@ -2399,12 +2402,13 @@ test('reactions stay silent before Start, then follow the chosen voice', () => {
   app.nextButton.click();
   app.textLanguageButtons.find(button => button.dataset.textLanguage === 'zh').click();
   assert.equal(app.startRow.hidden, true, 'a language choice turns on the questions and cheers together');
-  app.elements.get('#restartButton').click();
-  assert.equal(game.getState().hearts, HEARTS_BY_LEVEL.easy, 'starting over brings the hearts back');
   clickAnswer(app, game, false);
   app.clock.tick(MISS_PAUSE_TICK);
   clickAnswer(app, game, false);
   app.clock.tick(MISS_PAUSE_TICK);
+  assert.equal(game.getState().lost, true);
+  app.elements.get('#tryAgainButton').click();
+  assert.equal(game.getState().hearts, HEARTS_BY_LEVEL.easy, 'Try again starts a fresh match after the loss');
   clickAnswer(app, game, true);
   app.nextButton.click();
   clickAnswer(app, game, true);
@@ -2412,10 +2416,9 @@ test('reactions stay silent before Start, then follow the chosen voice', () => {
   const questionId = /\/(math-[\w-]+)\.mp3$/;
   assert.deepEqual(app.played.map(src => src.replace(questionId, '/<question>.mp3')), [
     './audio/zh/<question>.mp3',
-    './audio/zh/<question>.mp3',
-    './audio/zh/reaction-try-again-1.mp3',
-    './audio/zh/<question>.mp3',
     './audio/zh/reaction-last-heart.mp3',
+    './audio/zh/<question>.mp3',
+    './audio/zh/reaction-round-lost.mp3',
     './audio/zh/<question>.mp3',
     './audio/zh/reaction-praise-1.mp3',
     './audio/zh/<question>.mp3',
@@ -2580,8 +2583,15 @@ test('a reaction never outlives the moment it belongs to', () => {
 
   clickAnswer(app, game, true);
   assert.match(last(), /reaction-praise/);
-  app.elements.get('#restartButton').click();
-  assert.match(last(), /^\.\/audio\/ja\/colors-/, 'restarting replaces the reaction with the new question');
+  app.nextButton.click();
+  clickAnswer(app, game, false);
+  app.clock.tick(MISS_PAUSE_TICK);
+  app.nextButton.click();
+  clickAnswer(app, game, false);
+  app.clock.tick(MISS_PAUSE_TICK);
+  assert.equal(game.getState().lost, true);
+  app.elements.get('#tryAgainButton').click();
+  assert.match(last(), /^\.\/audio\/ja\/colors-/, 'Try again replaces the reaction with the fresh question');
 
   const count = app.played.length;
   app.muteButton.click();
