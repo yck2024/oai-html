@@ -97,8 +97,40 @@
     answerHint: { en: 'Tap your answer', zh: '點一個答案', ja: 'こたえを　たっぷしてね' },
     answerGroupLabelWord: { en: 'Choose a word', zh: '選一個詞', ja: 'ことばを　えらんでね' },
     answerGroupLabelNumber: { en: 'Choose a number', zh: '選一個數字', ja: 'かずを　えらんでね' },
+    answerGroupLabelPicture: { en: 'Choose a picture', zh: '選一張圖', ja: 'えを　えらんでね' },
     feedbackDefault: { en: 'No rush—thinking is a superpower!', zh: '慢慢想，你最棒！', ja: 'あわてなくて　いいよ、かんがえるのが　とくいだね！' },
-    feedbackRetry: { en: 'That’s okay! Let’s try another one.', zh: '沒關係，再試一次！', ja: 'だいじょうぶ！もういちど　やってみよう！' },
+    // A wrong tap ends the question: the right choice is shown, then a new question follows.
+    feedbackMiss: {
+      en: 'Oops! This one was right. A star hops back—here’s a new question!',
+      zh: '哎呀！正確答案是這個。星星跳回去了，來一題新的！',
+      ja: 'おしい！こたえは　これだよ。ほしが　ひとつ　もどるよ、あたらしい　もんだいだよ！',
+    },
+    feedbackMissNoStar: {
+      en: 'Oops! This one was right. Here’s a new question!',
+      zh: '哎呀！正確答案是這個。來一題新的！',
+      ja: 'おしい！こたえは　これだよ。あたらしい　もんだいだよ！',
+    },
+    // Shown (and spoken) after a win that earned no sticker because today's cap for this language and level is used up.
+    capNoteHarderOrLanguage: {
+      en: 'Great win! To earn your next sticker, try a harder level or another language.',
+      zh: '你贏了！想拿下一張貼紙，請試試更難的難度，或換一種語言。',
+      ja: 'やったね！つぎの　しーるは、もっと　むずかしい　れべるか、ほかの　げんごで　もらえるよ。',
+    },
+    capNoteHarder: {
+      en: 'Great win! To earn your next sticker, try a harder level.',
+      zh: '你贏了！想拿下一張貼紙，請試試更難的難度。',
+      ja: 'やったね！つぎの　しーるは、もっと　むずかしい　れべるで　もらえるよ。',
+    },
+    capNoteLanguage: {
+      en: 'Great win! To earn your next sticker, try another language.',
+      zh: '你贏了！想拿下一張貼紙，請換一種語言試試。',
+      ja: 'やったね！つぎの　しーるは、ほかの　げんごで　もらえるよ。',
+    },
+    capNoteTomorrow: {
+      en: 'Great win! That is all the stickers for today. Come back tomorrow for more!',
+      zh: '你贏了！今天的貼紙都拿完了，明天再來拿更多！',
+      ja: 'やったね！きょうの　しーるは　ぜんぶ　もらったよ。あしたも　また　きてね！',
+    },
     feedbackCorrect: { en: 'You got it! Power move!', zh: '答對了！出招成功！', ja: 'せいかい！とくぎ　はつどう！' },
     nextButton: { en: 'Next power move ➜', zh: '下一招 ➜', ja: 'つぎの　とくぎ ➜' },
     finishHeading: { en: 'You’re a Sparring Champion!', zh: '你是小冠軍！', ja: 'きみは　ちゃんぴおんだ！' },
@@ -163,9 +195,9 @@
     },
     settingsRewardsTitle: { en: 'Progress so far', zh: '目前的進度', ja: 'いままでの　きろく' },
     settingsRewardsHint: {
-      en: 'Wins and stickers earned so far, saved only on this device.',
-      zh: '目前贏的次數和貼紙，只存在這台裝置。',
-      ja: 'いままで　かった　かずと　しーるだよ。この　きき　だけに　ほぞんするよ。',
+      en: 'Stickers earned so far, saved only on this device. Each language and level pays a few stickers a day.',
+      zh: '目前拿到的貼紙，只存在這台裝置。每種語言和難度每天可拿幾張貼紙。',
+      ja: 'いままで　もらった　しーるだよ。この　きき　だけに　ほぞんするよ。げんごと　れべるごとに、いちにちに　もらえる　かずが　きまってるよ。',
     },
     settingsClearButton: { en: 'Clear sticker book', zh: '清空貼紙本', ja: 'しーるちょうを　けす' },
     settingsConfirmClear: { en: 'Yes, clear it', zh: '確定清空', ja: 'けす' },
@@ -193,9 +225,9 @@
     },
     costumeNoneLabel: { en: 'None', zh: '不戴', ja: 'なし' },
     saveNotePersistent: {
-      en: 'Saved on this device only: the number of wins and each champion’s costume.',
-      zh: '只存在這台裝置：贏的次數和服裝。',
-      ja: 'この　きき　だけに、かった　かずと　ふくを　ほぞんするよ。',
+      en: 'Saved on this device only: stickers earned, today’s sticker count for each language and level, and each champion’s costume.',
+      zh: '只存在這台裝置：拿到的貼紙、今天各語言和難度的貼紙數，以及服裝。',
+      ja: 'この　きき　だけに、もらった　しーると、きょうの　げんごと　れべるごとの　かずと、ふくを　ほぞんするよ。',
     },
     saveNoteNotPersistent: {
       en: 'This browser can’t save, so stickers last for this visit.',
@@ -242,10 +274,17 @@
     }[lang];
   }
 
-  function levelChosenMessage(levelId, lang) {
+  function levelChosenMessage(levelId, lang, topicId = null) {
+    if (topicId === 'math') {
+      return {
+        easy: { en: 'Easy level—count the eggs, add or take away within five, three choices!', zh: '簡單難度：數一數蛋，五以內的加減，三個選項！', ja: 'かんたんれべる：たまごを　かぞえて、５までの　たしざんと　ひきざん、３つから　えらべるよ！' },
+        harder: { en: 'Harder level—count, add, and take away within ten, four choices!', zh: '進階難度：十以內的數數、加法和減法，四個選項！', ja: 'すこしむずかしいれべる：１０までの　かぞえる・たす・ひく、４つから　えらべるよ！' },
+        super: { en: 'Super level—plus and minus, no pictures, four choices!', zh: '超級難度：加法和減法混在一起，沒有圖片，四個選項！', ja: 'ちょうむずかしいれべる：たしざんと　ひきざん、えは　なし、４つから　えらべるよ！' },
+      }[levelId][lang];
+    }
     return {
-      easy: { en: 'Easy level—picture shown, three choices!', zh: '簡單難度：看圖選一個，三個選項！', ja: 'かんたんれべる：えを　みて　えらぶよ、３つから　えらべるよ！' },
-      harder: { en: 'Harder level—no picture, read the word, four choices!', zh: '進階難度：沒有圖片，讀出文字，四個選項！', ja: 'すこしむずかしいれべる：えは　なし、もじを　よんでね、４つから　えらべるよ！' },
+      easy: { en: 'Easy level—read the question, then pick the right picture from three!', zh: '簡單難度：讀題目，從三張圖裡選出正確的！', ja: 'かんたんれべる：もんだいを　よんで、３つの　えから　ただしい　えを　えらぶよ！' },
+      harder: { en: 'Harder level—read the word, then pick the right picture from four!', zh: '進階難度：讀出文字，從四張圖裡選出正確的！', ja: 'すこしむずかしいれべる：もじを　よんで、４つの　えから　ただしい　えを　えらぶよ！' },
       super: { en: 'Super level—listen only, four choices!', zh: '超級難度：只能用聽的，四個選項！', ja: 'ちょうむずかしいれべる：きくだけだよ、４つから　えらべるよ！' },
     }[levelId][lang];
   }
@@ -270,7 +309,7 @@
   }
 
   function settingsWinsSummary(wins, lang) {
-    return { en: `${wins} match${wins === 1 ? '' : 'es'} won`, zh: `贏了 ${wins} 場`, ja: `${wins}かい　かった` }[lang];
+    return { en: `${wins} sticker${wins === 1 ? '' : 's'} earned`, zh: `拿到 ${wins} 張貼紙`, ja: `しーるを　${wins}まい　もらった` }[lang];
   }
 
   function settingsStickerSummary(collected, total, lang) {
@@ -283,9 +322,9 @@
 
   function rewardBookIntroWins(wins, lang) {
     return {
-      en: `You won ${wins} ${wins === 1 ? 'match' : 'matches'}! Every win brings a sticker.`,
-      zh: `你贏了 ${wins} 場！每贏一場就有一張貼紙。`,
-      ja: `${wins}かい　かったね！かつたびに　しーるが　もらえるよ。`,
+      en: `You earned ${wins} ${wins === 1 ? 'sticker' : 'stickers'}! Each language and level pays a few a day. Try a harder level or another language for more.`,
+      zh: `你拿到 ${wins} 張貼紙！每種語言和難度每天可拿幾張，試試更難的難度或換一種語言，就能拿更多。`,
+      ja: `しーるを　${wins}まい　もらったね！げんごと　れべるごとに、いちにちに　もらえる　かずが　きまってるよ。むずかしい　れべるか　ほかの　げんごで　もっと　もらえるよ。`,
     }[lang];
   }
 
@@ -294,7 +333,7 @@
   }
 
   function costumeWinsToGo(wins, lang) {
-    return { en: `${wins} wins`, zh: `贏 ${wins} 次`, ja: `${wins}かい　かつと` }[lang];
+    return { en: `${wins} stickers`, zh: `拿 ${wins} 張貼紙`, ja: `${wins}まい　もらうと` }[lang];
   }
 
   function costumeSurpriseHint(name, lang) {
@@ -307,9 +346,9 @@
 
   function nextSurpriseHint(name, wins, lang) {
     return {
-      en: `Next surprise: ${name} in ${wins} ${wins === 1 ? 'win' : 'wins'}`,
-      zh: `再贏 ${wins} 次拿${name}`,
-      ja: `あと${wins}かい　かつと　${name}`,
+      en: `Next surprise: ${name} in ${wins} more ${wins === 1 ? 'sticker' : 'stickers'}`,
+      zh: `再拿 ${wins} 張貼紙得${name}`,
+      ja: `あと${wins}まい　もらうと　${name}`,
     }[lang];
   }
 
@@ -323,6 +362,18 @@
       zh: `🎁 ${championName}戴上${costumeName}了！`,
       ja: `🎁 ${championName}が　${costumeName}を　みにつけたよ！`,
     }[lang];
+  }
+
+  // The friendly line after a win that earned no sticker; `advice` comes from the rewards' recordWin result.
+  const CAP_NOTES = {
+    'harder-or-language': 'capNoteHarderOrLanguage',
+    harder: 'capNoteHarder',
+    language: 'capNoteLanguage',
+    tomorrow: 'capNoteTomorrow',
+  };
+
+  function capNote(advice, lang) {
+    return STRINGS[CAP_NOTES[advice] || CAP_NOTES.tomorrow][lang];
   }
 
   function bilingualNode(mainText, secondValue) {
@@ -345,7 +396,7 @@
 
   const api = {
     TEXT_LANGUAGES, LANGUAGE_NAMES, DEFAULT_SECOND_LANGUAGE, TOPIC_NAMES, LEVEL_NAMES, CHAMPIONS, STRINGS,
-    championReady, topicChosenMessage, levelChosenMessage, finishBody, sparMessage,
+    championReady, topicChosenMessage, levelChosenMessage, finishBody, sparMessage, capNote,
     settingsWinsSummary, settingsStickerSummary, rewardBookIntroWins, stickerStillToFind,
     costumeWinsToGo, costumeSurpriseHint, costumeRowLabel, nextSurpriseHint,
     rewardSummaryPattern, rewardUnlockText, bilingualNode, setBilingual,

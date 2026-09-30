@@ -182,6 +182,7 @@ h1 { margin: 4px 0 4px; color: #41405e; font-size: clamp(31px, 5vw, 46px); line-
 .score-row { display: flex; align-items: center; justify-content: center; gap: 11px; margin-top: auto; padding-top: 8px; }
 .score-label { color: #788c76; font-size: 9px; font-weight: 1000; letter-spacing: .12em; }
 .score-stars { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; max-width: 160px; color: #c5ba9d; font-size: 26px; line-height: 1; }
+.score-stars .just-lost { animation: gentle-nudge .35s ease-in-out 2; }
 .score-stars .earned { color: #eab543; text-shadow: 0 2px #fff; animation: star-pop .3s ease both; }
 .score-stars.compact { gap: 2px; font-size: 16px; max-width: 130px; }
 .score-count { min-width: 34px; color: #718a76; font-size: 12px; font-weight: 1000; }
@@ -218,6 +219,11 @@ h1 { margin: 4px 0 4px; color: #41405e; font-size: clamp(31px, 5vw, 46px); line-
 .question-word { margin: 10px auto 0; color: #4e3f73; font-size: clamp(28px, 6vw, 40px); font-weight: 1000; line-height: 1.2; background: #f5f0ff; border: 3px solid #fff; border-radius: 16px; padding: 10px 16px; display: inline-block; box-shadow: 0 3px 0 #ded4f2; }
 .question-picture { min-height: 48px; margin: 6px 0 0; font-size: 37px; line-height: 1.2; }
 .question-picture.dense-picture { font-size: 27px; line-height: 1.35; }
+/* Take-away eggs: the ones being taken away fade and get a cross, so the rest can still be counted. */
+.take-away-picture .egg { position: relative; display: inline-block; }
+.take-away-picture .egg-group-end { margin-right: .35em; }
+.take-away-picture .egg-taken { opacity: .32; }
+.take-away-picture .egg-taken::after { content: '✕'; position: absolute; inset: 0; display: grid; place-items: center; color: #d4574e; font-size: .8em; font-weight: 1000; opacity: 1; }
 .equation { min-height: 48px; margin: 2px 0 0; color: #4e5a71; font-size: 38px; font-weight: 1000; letter-spacing: .05em; line-height: 1.2; font-variant-numeric: tabular-nums; }
 .answer-hint { margin: 8px 0 6px; color: #8b8a95; font-size: 11px; font-weight: 850; }
 .answer-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
@@ -235,6 +241,11 @@ h1 { margin: 4px 0 4px; color: #41405e; font-size: clamp(31px, 5vw, 46px); line-
 .question-picture .word-art { width: 72px; height: 72px; margin: 0 auto; }
 .answer-icon .word-art { width: 44px; height: 44px; }
 .answer-label { display: grid; color: #55536c; font-size: 14px; line-height: 1.25; }
+/* Picture-only choices: the word is in the question, so the button is just the picture (or colour). */
+.answer-option.picture-only { min-height: 92px; padding: 8px 6px; }
+.picture-only .answer-icon { font-size: 52px; line-height: 1; }
+.picture-only .answer-icon .word-art { width: 68px; height: 68px; }
+.answer-swatch { width: 56px; height: 56px; border-width: 3px; }
 .answer-option.right-answer { border-color: #64bd8c; background: #e2f8e8; box-shadow: 0 3px 0 #abd9b5; }
 .answer-option.wrong-answer { border-color: #edaf97; background: #fff2e8; color: #795e5b; animation: gentle-nudge .22s ease-in-out; }
 .feedback { min-height: 34px; display: grid; place-items: center; margin: 7px 0 0; color: #718877; font-size: 12px; font-weight: 900; line-height: 1.4; }
@@ -340,6 +351,9 @@ footer { padding: 12px 0 0; color: #7c7b8c; text-align: center; font-size: 11px;
   .question-picture.dense-picture { font-size: 21px; }
   .question-swatch { width: 56px; height: 56px; }
   .answer-icon .word-art { width: 40px; height: 40px; }
+  .answer-option.picture-only { min-height: 84px; }
+  .picture-only .answer-icon .word-art { width: 60px; height: 60px; }
+  .answer-swatch { width: 50px; height: 50px; }
   .equation { min-height: 38px; font-size: 32px; }
   .answer-options { gap: 6px; }
   .answer-options.four-choices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -400,6 +414,9 @@ footer { padding: 12px 0 0; color: #7c7b8c; text-align: center; font-size: 11px;
   .equation { min-height: 28px; font-size: 26px; }
   .answer-hint { margin: 3px 0 3px; }
   .answer-option { min-height: 46px; padding: 4px; }
+  .answer-option.picture-only { min-height: 64px; padding: 4px; }
+  .picture-only .answer-icon .word-art { width: 50px; height: 50px; }
+  .answer-swatch { width: 42px; height: 42px; }
   .feedback { min-height: 18px; margin: 2px 0 0; font-size: 11px; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -422,6 +439,8 @@ footer { padding: 12px 0 0; color: #7c7b8c; text-align: center; font-size: 11px;
 .reward-note .reward-text, .reward-note .reward-unlock { margin: 0; color: #5f5a72; font-size: 14px; font-weight: 900; line-height: 1.4; }
 .reward-text strong { color: #b27a22; }
 .reward-note .reward-unlock { color: #6a5aa6; font-size: 13px; }
+.cap-note { border-color: #b9dcc4; background: #f2fbf3; }
+.cap-note .reward-sticker { grid-row: auto; width: 44px; height: 44px; font-size: 32px; }
 .reward-book-link { justify-self: start; min-height: 44px; border: 2px solid #eadcff; border-radius: 12px; padding: 6px 12px; background: #fff; color: #5d5190; font-size: 12px; font-weight: 950; cursor: pointer; touch-action: manipulation; }
 .sticker-book { width: min(560px, calc(100% - 24px)); max-height: calc(100% - 24px); overflow: auto; border: 3px solid #fff; border-radius: 24px; padding: 16px; background: linear-gradient(160deg, #fffdf6, #f8f0ff); color: var(--ink); box-shadow: 0 16px 40px #3a2f5a40; }
 .sticker-book:not([open]) { display: none; }

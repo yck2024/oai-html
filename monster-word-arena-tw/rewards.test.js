@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
-const { STORAGE_KEY, STICKERS, COSTUMES, createRewards } = require('./rewards.js');
+const { STORAGE_KEY, STICKERS, COSTUMES, DAILY_CAPS, createRewards } = require('./rewards.js');
 const gameApi = require('./game.js');
 
 class MemoryStorage {
@@ -19,6 +19,12 @@ class BrokenStorage {
   getItem() { throw new Error('blocked'); }
   setItem() { throw new Error('blocked'); }
   removeItem() { throw new Error('blocked'); }
+}
+
+// The device's local calendar date, the way the daily sticker tally counts it.
+function today(date = new Date()) {
+  const pad = value => String(value).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
 function saved(storage) {
@@ -66,13 +72,13 @@ test('only unlocked costumes can be worn, and any costume can be taken off', () 
   assert.deepEqual(rewards.getState().wearing, { dino: null, monster: 'crown' });
 });
 
-test('progress saves only the win count and chosen costumes on the device', () => {
+test('progress saves only the win count, chosen costumes, and today\'s sticker tally on the device', () => {
   const storage = new MemoryStorage();
   const rewards = createRewards(storage);
   rewards.recordWin('dino');
   rewards.recordWin('dino');
   assert.deepEqual(Object.keys(storage.items), [STORAGE_KEY]);
-  assert.deepEqual(saved(storage), { v: 1, wins: 2, wearing: { dino: 'crown', monster: null } });
+  assert.deepEqual(saved(storage), { v: 2, wins: 2, wearing: { dino: 'crown', monster: null }, daily: { date: today(), counts: {} } });
 
   const reloaded = createRewards(storage).getState();
   assert.equal(reloaded.wins, 2);
@@ -98,12 +104,12 @@ test('a second open tab never overwrites newer progress saved by the other tab',
   const result = staleTab.recordWin('monster');
   assert.equal(result.wins, 6);
   assert.equal(result.unlocked.id, 'flower-crown');
-  assert.deepEqual(saved(storage), { v: 1, wins: 6, wearing: { dino: 'party-hat', monster: 'flower-crown' } });
+  assert.deepEqual(saved(storage), { v: 2, wins: 6, wearing: { dino: 'party-hat', monster: 'flower-crown' }, daily: { date: today(), counts: {} } });
 
   otherTab.reset();
   assert.equal(staleTab.getState().wins, 0, 'a grown-up reset in the other tab shows up right away');
   assert.equal(staleTab.recordWin('dino').wins, 1, 'a grown-up reset in the other tab is respected');
-  assert.deepEqual(saved(storage), { v: 1, wins: 1, wearing: { dino: null, monster: null } });
+  assert.deepEqual(saved(storage), { v: 2, wins: 1, wearing: { dino: null, monster: null }, daily: { date: today(), counts: {} } });
 });
 
 test('tampered or broken saved data falls back to a safe sticker book', () => {
@@ -409,14 +415,14 @@ test('the rewards global exposes match recording, language switching, and a prog
 
 test('winning a match in the game records exactly one reward for the chosen champion', () => {
   const wins = [];
-  const page = loadPage({ withApp: true, recordWin: champion => wins.push(champion) });
+  const page = loadPage({ withApp: true, recordWin: (champion, context) => wins.push([champion, context.language, context.level]) });
   page.championCards[1].click();
   winMatch(page);
   assert.equal(page.game.getState().finished, true);
-  assert.deepEqual(wins, ['monster']);
+  assert.deepEqual(wins, [['monster', 'en', 'easy']], 'the win is recorded with the chosen language and level, for the daily sticker cap');
   page.element('playAgainButton').click();
   winMatch(page);
-  assert.deepEqual(wins, ['monster', 'monster']);
+  assert.deepEqual(wins, [['monster', 'en', 'easy'], ['monster', 'en', 'easy']]);
 });
 
 test('a win shows the new sticker, and a costume unlock dresses the champion with its picture', () => {
@@ -477,7 +483,7 @@ test('the sticker book shows collected stickers, lets the child change costumes,
   page.action('open').click();
   assert.equal(page.element('stickerBook').open, true);
   assert.equal(page.document.activeElement, page.action('close'));
-  assert.match(page.element('stickerBookIntro').textContent, /Every win brings a sticker/);
+  assert.match(page.element('stickerBookIntro').textContent, /You earned 3 stickers! Each language and level pays a few a day/);
   const slots = page.element('stickerGrid').children;
   assert.equal(slots.length, STICKERS.length);
   assert.match(slots[0].textContent, /Star/);
@@ -490,7 +496,7 @@ test('the sticker book shows collected stickers, lets the child change costumes,
   const choice = (champion, costume) => rows.querySelector(`[data-champion="${champion}"][data-costume="${costume}"]`);
   assert.equal(choice('dino', 'crown').getAttribute('aria-pressed'), 'true');
   assert.equal(choice('monster', 'party-hat').disabled, true);
-  assert.match(choice('monster', 'party-hat').textContent, /4 winsParty hat surprise/);
+  assert.match(choice('monster', 'party-hat').textContent, /4 stickersParty hat surprise/);
   assert.ok([...rows.querySelectorAll('button')].every(button => !button.id && button.getAttribute('aria-label') === null), 'costume choices stay out of analytics');
   choice('monster', 'crown').click();
   assert.equal(choice('monster', 'crown').getAttribute('aria-pressed'), 'true');
@@ -592,4 +598,158 @@ test('when the browser blocks storage the game still plays and the book says rew
   assert.match(page.element('rewardSummary').textContent, /1 \/ 12 stickers/);
   page.action('open').click();
   assert.match(page.element('rewardSaveNote').textContent, /stickers last for this visit/);
+});
+
+// --- Daily sticker cap: levelling up ---------------------------------------------------------
+
+const win = (rewards, language, level, extra = {}) => rewards.recordWin('dino', { language, level, ...extra });
+
+test('each level pays until its daily cap for the chosen language, and harder levels leave more room', () => {
+  assert.ok(DAILY_CAPS.easy >= 1 && DAILY_CAPS.easy <= 3, 'easy pays only a small daily amount');
+  assert.ok(DAILY_CAPS.harder > DAILY_CAPS.easy, 'harder has a higher cap');
+  assert.equal(DAILY_CAPS.super, Infinity, 'super has no cap');
+
+  const rewards = createRewards(new MemoryStorage());
+  for (let index = 0; index < DAILY_CAPS.easy; index += 1) {
+    const result = win(rewards, 'ja', 'easy');
+    assert.equal(result.rewarded, true);
+    assert.equal(result.capped, false);
+  }
+  const capped = win(rewards, 'ja', 'easy');
+  assert.equal(capped.rewarded, false);
+  assert.equal(capped.capped, true);
+  assert.equal(capped.sticker, null);
+  assert.equal(capped.unlocked, null);
+  assert.equal(capped.wins, DAILY_CAPS.easy, 'a capped win adds no sticker');
+  assert.equal(rewards.getState().wins, DAILY_CAPS.easy);
+  assert.deepEqual(rewards.dailyProgress('ja', 'easy'), { earned: DAILY_CAPS.easy, cap: DAILY_CAPS.easy });
+  assert.deepEqual(rewards.dailyProgress('ja', 'super'), { earned: 0, cap: null });
+
+  assert.equal(win(rewards, 'ja', 'easy').rewarded, false, 'staying on the same language and level keeps paying nothing');
+  assert.equal(win(rewards, 'en', 'easy').rewarded, true, 'another language earns again');
+  assert.equal(win(rewards, 'zh', 'easy').rewarded, true);
+  for (let index = 0; index < DAILY_CAPS.harder; index += 1) assert.equal(win(rewards, 'ja', 'harder').rewarded, true, 'a harder level earns again');
+  assert.equal(win(rewards, 'ja', 'harder').rewarded, false, 'harder has a cap too');
+  for (let index = 0; index < 30; index += 1) assert.equal(win(rewards, 'ja', 'super').rewarded, true, 'super never runs out');
+});
+
+test('the daily tally resets on the device\'s local date, and a saved tally from another day is ignored', () => {
+  let now = new Date(2026, 8, 30, 23, 30);
+  const storage = new MemoryStorage();
+  const rewards = createRewards(storage, { now: () => now });
+  for (let index = 0; index < DAILY_CAPS.easy; index += 1) win(rewards, 'ja', 'easy');
+  assert.equal(win(rewards, 'ja', 'easy').capped, true);
+  assert.deepEqual(saved(storage).daily, { date: '2026-09-30', counts: { 'ja:easy': DAILY_CAPS.easy } });
+
+  now = new Date(2026, 8, 30, 23, 59, 59);
+  assert.equal(win(rewards, 'ja', 'easy').capped, true, 'still the same local day a moment before midnight');
+  now = new Date(2026, 9, 1, 0, 0, 1);
+  assert.equal(win(rewards, 'ja', 'easy').rewarded, true, 'a new local day starts every pairing afresh');
+  assert.deepEqual(saved(storage).daily, { date: '2026-10-01', counts: { 'ja:easy': 1 } });
+  assert.equal(rewards.getState().wins, DAILY_CAPS.easy + 1);
+
+  const withoutStorage = createRewards(null, { now: () => now });
+  for (let index = 0; index < DAILY_CAPS.easy; index += 1) win(withoutStorage, 'en', 'easy');
+  assert.equal(win(withoutStorage, 'en', 'easy').capped, true, 'the cap works without device storage too');
+  now = new Date(2026, 9, 2, 8, 0);
+  assert.equal(win(withoutStorage, 'en', 'easy').rewarded, true, 'and rolls over without device storage');
+});
+
+test('a win without a language and level context always pays a sticker, and unknown values are not capped', () => {
+  const rewards = createRewards(new MemoryStorage());
+  for (let index = 0; index < 6; index += 1) assert.equal(rewards.recordWin('dino').rewarded, true);
+  for (let index = 0; index < 6; index += 1) assert.equal(win(rewards, 'fr', 'easy').rewarded, true);
+  assert.equal(win(rewards, 'ja', 'expert').rewarded, true);
+});
+
+test('the capped-win advice points to a harder level and/or another language, never a locked level', () => {
+  const advice = (rewards, language, level, allowedLevels) => win(rewards, language, level, { allowedLevels }).advice;
+  const exhaust = (rewards, language, level) => { for (let index = 0; index < DAILY_CAPS[level]; index += 1) win(rewards, language, level); };
+  const rewards = createRewards(new MemoryStorage());
+  exhaust(rewards, 'ja', 'easy');
+  assert.equal(advice(rewards, 'ja', 'easy'), 'harder-or-language');
+  assert.equal(advice(rewards, 'ja', 'easy', ['easy']), 'language', 'harder levels locked away: only another language is offered');
+  assert.equal(advice(rewards, 'ja', 'easy', ['easy', 'harder']), 'harder-or-language');
+  exhaust(rewards, 'ja', 'harder');
+  assert.equal(advice(rewards, 'ja', 'harder'), 'harder-or-language', 'super is still a harder level');
+  assert.equal(advice(rewards, 'ja', 'harder', ['harder']), 'language');
+  assert.equal(advice(rewards, 'ja', 'harder', ['harder', 'super']), 'harder-or-language');
+
+  exhaust(rewards, 'en', 'easy');
+  exhaust(rewards, 'zh', 'easy');
+  assert.equal(advice(rewards, 'ja', 'easy', ['easy']), 'tomorrow', 'with easy locked in every language there is nothing left today');
+  assert.equal(advice(rewards, 'en', 'easy'), 'harder-or-language');
+  assert.equal(advice(rewards, 'en', 'easy', ['easy', 'harder']), 'harder-or-language', 'harder is open in English and other languages');
+  exhaust(rewards, 'en', 'harder');
+  exhaust(rewards, 'zh', 'harder');
+  assert.equal(advice(rewards, 'en', 'easy', ['easy', 'harder']), 'tomorrow');
+  assert.equal(advice(rewards, 'en', 'easy', ['easy', 'harder', 'super']), 'harder-or-language');
+
+  // Easy locked by a grown-up: the player is on harder, so the message never sends them back to easy.
+  const lockedEasy = createRewards(new MemoryStorage());
+  exhaust(lockedEasy, 'ja', 'harder');
+  assert.equal(advice(lockedEasy, 'ja', 'harder', ['harder']), 'language');
+});
+
+test('an earlier save (v1: wins and costumes only) migrates in place without losing anything', () => {
+  const v1 = { v: 1, wins: 7, wearing: { dino: 'flower-crown', monster: 'crown' } };
+  const storage = new MemoryStorage({ [STORAGE_KEY]: JSON.stringify(v1) });
+  const rewards = createRewards(storage);
+  const before = rewards.getState();
+  assert.equal(before.wins, 7);
+  assert.equal(before.collected, 7);
+  assert.deepEqual(before.wearing, { dino: 'flower-crown', monster: 'crown' });
+  assert.equal(before.costumes.filter(costume => costume.unlocked).length, 3);
+  assert.equal(storage.getItem(STORAGE_KEY), JSON.stringify(v1), 'reading alone never rewrites the save');
+
+  const first = win(rewards, 'ja', 'easy');
+  assert.equal(first.rewarded, true, 'nothing earned before the update counts against today\'s cap');
+  assert.equal(first.wins, 8);
+  assert.equal(first.sticker.id, STICKERS[7].id);
+  assert.deepEqual(saved(storage), { v: 2, wins: 8, wearing: { dino: 'propeller-cap', monster: 'crown' }, daily: { date: today(), counts: { 'ja:easy': 1 } } });
+  assert.deepEqual(Object.keys(storage.items), [STORAGE_KEY], 'still the one device-only key');
+});
+
+test('a tampered daily tally is cleaned, and an older client rewriting the save only forgets the tally', () => {
+  const messy = { v: 2, wins: 2, wearing: {}, daily: { date: today(), counts: { 'ja:easy': 99999, 'xx:easy': 3, 'en:harder': -2, 'zh:super': 1.5, 'en:easy': '2' } } };
+  const storage = new MemoryStorage({ [STORAGE_KEY]: JSON.stringify(messy) });
+  const rewards = createRewards(storage);
+  assert.equal(win(rewards, 'ja', 'easy').capped, true, 'a huge tally is capped, not trusted');
+  assert.equal(win(rewards, 'en', 'harder').rewarded, true);
+  assert.equal(win(rewards, 'zh', 'super').rewarded, true);
+  assert.equal(win(rewards, 'en', 'easy').rewarded, true);
+  assert.deepEqual(saved(storage).daily.counts, { 'ja:easy': 999, 'en:harder': 1, 'zh:super': 1, 'en:easy': 1 }, 'only whole positive counts for known pairings are kept');
+
+  for (const daily of [null, 'x', [], { date: 5, counts: 3 }, { date: today() }]) {
+    const other = createRewards(new MemoryStorage({ [STORAGE_KEY]: JSON.stringify({ v: 2, wins: 1, daily }) }));
+    assert.equal(other.getState().wins, 1);
+    assert.equal(win(other, 'ja', 'easy').rewarded, true);
+  }
+
+  // The earlier client only knows wins and wearing; it drops the tally when it saves, which is harmless.
+  const old = { v: 1, wins: 3, wearing: saved(storage).wearing };
+  storage.setItem(STORAGE_KEY, JSON.stringify(old));
+  assert.equal(createRewards(storage).getState().wins, 3);
+});
+
+test('a capped win in the page celebrates with a friendly note, not a sticker, and the note follows the language', () => {
+  const storage = new MemoryStorage();
+  const page = loadPage({ storage });
+  for (let index = 0; index < DAILY_CAPS.easy; index += 1) win(page.window.ArenaRewards, 'ja', 'easy');
+  const before = saved(storage).wins;
+  const result = page.window.ArenaRewards.recordWin('dino', { language: 'ja', level: 'easy', allowedLevels: ['easy'] });
+  assert.equal(result.capped, true);
+  assert.equal(saved(storage).wins, before, 'the sticker book is untouched');
+  const note = page.finishPanel.querySelector('#rewardNote');
+  assert.ok(note.classList.contains('cap-note'));
+  assert.equal(note.getAttribute('role'), 'status');
+  assert.match(note.textContent, /Great win! To earn your next sticker, try another language\./);
+  assert.doesNotMatch(note.textContent, /New sticker|Another sticker/);
+  assert.equal(page.finishPanel.children.at(-1).id, 'playAgainButton', 'the note sits before Play again');
+
+  page.window.ArenaRewards.setLanguage('zh', 'en');
+  assert.match(page.finishPanel.querySelector('#rewardNote').textContent, /你贏了！想拿下一張貼紙，請換一種語言試試。/);
+  assert.match(page.finishPanel.querySelector('#rewardNote').textContent, /Great win!/, 'the second language shows too');
+  page.window.ArenaRewards.recordWin('dino', { language: 'ja', level: 'super' });
+  assert.match(page.finishPanel.querySelector('#rewardNote').textContent, /新貼紙|又一張貼紙/, 'the next paid win shows its sticker again');
 });

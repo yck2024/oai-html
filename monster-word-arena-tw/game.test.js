@@ -277,6 +277,9 @@ function createClock() {
   };
 }
 
+// A wrong tap ends the question; the game shows the right choice for a moment, then loads a new question.
+const MISS_PAUSE_TICK = 4000;
+
 function clickAnswer(app, game, correct = true) {
   const { answerId } = game.getState().question;
   app.answerOptions.children.find(button => (button.dataset.choice === answerId) === correct).click();
@@ -551,13 +554,14 @@ test('the shipped page markup initializes the arena and game', () => {
   assert.equal(app.elements.get('#rivalPower').children.length, GOAL_BY_LEVEL.easy);
 });
 
-test('addition questions stay within five and offer three distinct choices', () => {
+test('easy sums and take-aways stay within five and offer three distinct choices', () => {
   const game = createGame(steadyRandom);
   for (let index = 0; index < 3; index += 1) {
     const question = game.getState().question;
-    const [left, right] = question.display.split(' = ?')[0].split(' + ').map(Number);
-    assert.ok(left + right <= 5);
-    assert.equal(question.answerId, String(left + right));
+    const [left, right] = question.display.split(' = ?')[0].split(/ [+−] /).map(Number);
+    const answer = question.display.includes('+') ? left + right : left - right;
+    assert.ok(Math.max(left, right, answer) <= 5);
+    assert.equal(question.answerId, String(answer));
     assert.equal(question.options.length, 3);
     assert.equal(new Set(question.options.map(option => option.id)).size, 3);
     assert.ok(question.options.some(option => option.id === question.answerId));
@@ -606,22 +610,20 @@ test('word challenges use bilingual Taiwan Traditional Chinese and hiragana Japa
   }
 });
 
-test('every word prompt shows the picture of its matching answer for pre-readers at the easy level', () => {
+test('a word question never shows its answer\'s picture, and only Super adds words back onto the choices', () => {
   for (const seed of [0, 0.4, 0.99]) {
     const game = createGame(() => seed);
-    for (const topic of WORD_TOPIC_IDS) {
-      game.chooseTopic(topic);
-      const question = game.getState().question;
-      const target = question.options.find(option => option.id === question.answerId);
-      assert.equal(question.picture, target.icon, `${topic} picture matches the answer`);
-      assert.equal(question.options.filter(option => option.icon === question.picture).length, 1);
-      if (topic === 'colors') {
-        assert.equal(question.pictureSwatch, target.swatch, 'the color prompt shows the answer swatch');
-        assert.equal(question.options.filter(option => option.swatch === question.pictureSwatch).length, 1);
-        continue;
+    for (const level of LEVELS) {
+      game.chooseLevel(level);
+      for (const topic of WORD_TOPIC_IDS) {
+        game.chooseTopic(topic);
+        const question = game.getState().question;
+        assert.equal(question.picture, '', `${level} ${topic} shows no picture with the question`);
+        assert.equal(question.pictureImage, undefined);
+        assert.equal(question.pictureSwatch, undefined);
+        assert.equal(question.wordLabels, level === 'super', `${level} ${topic} labels its choices only at super`);
+        assert.ok(question.options.every(option => option.icon || option.swatch), 'every choice has a picture or swatch to show');
       }
-      assert.equal(question.pictureImage, target.image, `${topic} art matches the answer`);
-      assert.equal(question.options.filter(option => option.image === question.pictureImage).length, 1);
     }
   }
 });
@@ -653,13 +655,9 @@ test('every picture word has bundled original art sized for a phone page', () =>
   assert.deepEqual(committed, expectedImages, 'all word, arena, sticker, and costume art has a game consumer');
 });
 
-test('each correct answer knocks one pip off the sparring buddy with no penalty for misses', () => {
+test('each correct answer knocks one pip off the sparring buddy', () => {
   const game = createGame(steadyRandom);
   const goal = GOAL_BY_LEVEL.easy;
-  assert.equal(game.getState().rivalPower, goal);
-  const { question } = game.getState();
-  const wrong = question.options.find(option => option.id !== question.answerId);
-  game.answer(wrong.id);
   assert.equal(game.getState().rivalPower, goal);
   for (let hit = 1; hit <= goal; hit += 1) {
     if (hit > 1) game.nextQuestion();
@@ -669,16 +667,404 @@ test('each correct answer knocks one pip off the sparring buddy with no penalty 
   assert.equal(game.restart().rivalPower, goal);
 });
 
-test('a wrong answer is retryable and never awards a star', () => {
-  const game = createGame(steadyRandom);
+function wrongOption(game) {
   const { question } = game.getState();
-  const wrong = question.options.find(option => option.id !== question.answerId);
-  assert.equal(game.answer(wrong.id), 'try-again');
-  assert.equal(game.getState().stars, 0);
-  assert.equal(game.getState().solved, false);
-  assert.equal(game.getState().feedback, 'try-again');
+  return question.options.find(option => option.id !== question.answerId);
+}
+
+test('a wrong answer ends the question, takes one star back (never below zero), and a fresh question follows', () => {
+  const game = createGame(steadyRandom);
+  const first = game.getState().question;
+  assert.equal(game.answer(wrongOption(game).id), 'missed');
+  let state = game.getState();
+  assert.equal(state.stars, 0, 'no star to lose yet, so it stays at zero');
+  assert.equal(state.starLost, false);
+  assert.equal(state.missed, true);
+  assert.equal(state.solved, false);
+  assert.equal(state.feedback, 'missed');
+  assert.equal(game.answer(first.answerId), 'ignored', 'the ended question cannot be answered again, even correctly');
+  assert.equal(game.answer(wrongOption(game).id), 'ignored', 'and a second tap cannot take another star');
+  assert.equal(game.nextQuestion(), true);
+  state = game.getState();
+  assert.notEqual(state.question.key, first.key, 'a fresh question, never the same one');
+  assert.equal(state.missed, false);
   assert.equal(answerCorrectly(game), 'correct');
   assert.equal(game.getState().stars, 1);
+
+  game.nextQuestion();
+  assert.equal(game.answer(wrongOption(game).id), 'missed');
+  state = game.getState();
+  assert.equal(state.stars, 0, 'a miss takes one star from the current match');
+  assert.equal(state.starLost, true);
+  assert.equal(state.rivalPower, GOAL_BY_LEVEL.easy, 'the buddy is back to full power');
+  game.nextQuestion();
+  assert.equal(game.getState().starLost, false, 'the flag belongs to the miss only');
+});
+
+// Expected number of answers to win a match when each answer is right with probability p: the star count is a
+// walk that goes up on a right answer and down (never below zero) on a miss, and the match ends at the goal.
+function expectedQuestionsToWin(goal, p) {
+  const rows = Array.from({ length: goal }, () => Array(goal + 1).fill(0));
+  for (let star = 0; star < goal; star += 1) {
+    rows[star][star] += 1;
+    if (star + 1 < goal) rows[star][star + 1] -= p;
+    rows[star][Math.max(star - 1, 0)] -= 1 - p;
+    rows[star][goal] = 1;
+  }
+  for (let pivot = 0; pivot < goal; pivot += 1) {
+    const best = rows.reduce((found, row, index) => (index >= pivot && Math.abs(row[pivot]) > Math.abs(rows[found][pivot]) ? index : found), pivot);
+    [rows[pivot], rows[best]] = [rows[best], rows[pivot]];
+    for (let index = 0; index < goal; index += 1) {
+      if (index === pivot) continue;
+      const factor = rows[index][pivot] / rows[pivot][pivot];
+      for (let column = pivot; column <= goal; column += 1) rows[index][column] -= factor * rows[pivot][column];
+    }
+  }
+  return rows[0][goal] / rows[0][0];
+}
+
+test('tapping at random cannot win a match on average at any level, while a player who mostly knows the answers wins at a steady pace', () => {
+  for (const level of LEVELS) {
+    const goal = GOAL_BY_LEVEL[level];
+    const guess = 1 / CHOICE_COUNT[level];
+    assert.ok(2 * guess - 1 < 0, `${level}: a random tap loses more stars than it wins on average`);
+    assert.ok(expectedQuestionsToWin(goal, guess) >= 8 * goal, `${level}: random tapping needs at least 8 times the perfect number of answers`);
+    assert.ok(expectedQuestionsToWin(goal, 0.9) <= 1.4 * goal, `${level}: a 90% player is nearly at the perfect pace`);
+    assert.ok(expectedQuestionsToWin(goal, 0.8) <= 1.75 * goal, `${level}: an 80% player wins in under twice the perfect number of answers`);
+    assert.ok(expectedQuestionsToWin(goal, 0.7) <= 2.5 * goal, `${level}: even a 70% player keeps winning at a steady pace`);
+  }
+  assert.ok(Math.abs(expectedQuestionsToWin(3, 1 / 3) - 33) < 1e-6, 'the model matches a hand calculation');
+
+  // The real game, driven by a seeded player, agrees with the model.
+  function winsPerAnswer(level, accuracy, answers, seed) {
+    const player = seededRandom(seed);
+    const game = createGame(seededRandom(seed + 1));
+    game.chooseLevel(level);
+    let wins = 0;
+    for (let count = 0; count < answers; count += 1) {
+      const { question } = game.getState();
+      const pick = accuracy === 'random'
+        ? question.options[Math.floor(player() * question.options.length)].id
+        : player() < accuracy ? question.answerId : wrongOption(game).id;
+      if (game.answer(pick) === 'finished') {
+        wins += 1;
+        game.restart();
+      } else game.nextQuestion();
+    }
+    return wins / answers;
+  }
+  for (const level of LEVELS) {
+    const goal = GOAL_BY_LEVEL[level];
+    const random = winsPerAnswer(level, 'random', 30000, 5);
+    assert.ok(random <= 1 / (8 * goal), `${level}: random tapping wins a match at most once per ${8 * goal} answers (saw ${random})`);
+    const skilled = winsPerAnswer(level, 0.8, 30000, 6);
+    assert.ok(Math.abs(1 / skilled - expectedQuestionsToWin(goal, 0.8)) < 0.4, `${level}: an 80% player wins about every ${expectedQuestionsToWin(goal, 0.8).toFixed(1)} answers (saw ${(1 / skilled).toFixed(1)})`);
+  }
+});
+
+test('a wrong tap shows the right choice, locks the buttons, plays the try-again reaction, then loads a fresh question', () => {
+  const game = createGame(seededRandom(2));
+  const app = createAppFixture(game);
+  const pageShell = app.document.querySelector('.page-shell');
+  app.startButton.click();
+  const first = game.getState().question;
+  const rightButton = () => app.answerOptions.children.find(button => button.dataset.choice === game.getState().question.answerId);
+  const wrongButton = app.answerOptions.children.find(button => button.dataset.choice !== first.answerId);
+  wrongButton.click();
+
+  assert.equal(game.getState().missed, true);
+  assert.ok(wrongButton.classList.contains('wrong-answer'));
+  assert.ok(rightButton().classList.contains('right-answer'), 'the right choice is shown');
+  assert.ok(app.answerOptions.children.every(button => button.disabled), 'no second tap on the same question');
+  assert.equal(app.elements.get('#feedback').textContent, I18N.STRINGS.feedbackMissNoStar.en, 'no star to lose yet, so the message does not mention one');
+  assert.ok(app.elements.get('#feedback').classList.contains('retry'));
+  assert.equal(app.nextButton.hidden, true, 'there is no Next button: the game moves on by itself');
+  assert.equal(pageShell.dataset.pointer, '', 'nobody points at the locked buttons');
+  assert.match(app.played[app.played.length - 1], /^\.\/audio\/en\/reaction-try-again-1\.mp3$/);
+  rightButton().click();
+  assert.equal(game.getState().stars, 0, 'tapping the right choice afterwards changes nothing');
+  assert.equal(game.getState().question.key, first.key);
+
+  app.clock.tick(3000);
+  assert.equal(game.getState().question.key, first.key, 'the right choice stays up long enough to see');
+  app.clock.tick(500);
+  const second = game.getState().question;
+  assert.notEqual(second.key, first.key, 'a fresh question, never the same one');
+  assert.equal(game.getState().missed, false);
+  assert.ok(app.answerOptions.children.every(button => !button.disabled && !button.classList.contains('right-answer') && !button.classList.contains('wrong-answer')));
+  assert.equal(app.elements.get('#feedback').textContent, I18N.STRINGS.feedbackDefault.en);
+  assert.match(app.played[app.played.length - 1], new RegExp(`/${second.audioId}\\.mp3$`), 'the new question is read out');
+  assert.equal(pageShell.dataset.pointer, 'answer');
+  assert.equal(app.document.activeElement, app.answerOptions.children[0]);
+
+  // With a star in hand, the miss takes it back and says so gently.
+  answerCorrectly(game);
+  app.nextButton.click();
+  app.answerOptions.children.find(button => button.dataset.choice !== game.getState().question.answerId).click();
+  assert.equal(game.getState().stars, 0);
+  assert.equal(app.elements.get('#feedback').textContent, I18N.STRINGS.feedbackMiss.en);
+  assert.equal(app.elements.get('#scoreCount').textContent, `0 / ${GOAL_BY_LEVEL.easy}`);
+  assert.equal(app.elements.get('#scoreStars').children.filter(star => star.classList.contains('earned')).length, 0);
+  assert.equal(app.elements.get('#rivalPower').children.filter(pip => pip.classList.contains('spent')).length, 0, 'the buddy is back at full power');
+});
+
+test('a missed question waits a shorter moment when the sound is off, and its miss survives a language change', () => {
+  const game = createGame(seededRandom(6));
+  const app = createAppFixture(game);
+  clickAnswer(app, game, false);
+  const key = game.getState().question.key;
+  app.clock.tick(1900);
+  assert.equal(game.getState().question.key, key);
+  app.clock.tick(200);
+  assert.notEqual(game.getState().question.key, key, 'without sound the pause is only about two seconds');
+
+  app.startButton.click();
+  clickAnswer(app, game, false);
+  const missedKey = game.getState().question.key;
+  app.textLanguageButtons.find(button => button.dataset.textLanguage === 'ja').click();
+  assert.equal(game.getState().missed, true);
+  assert.ok(app.answerOptions.children.every(button => button.disabled), 'the rebuilt choices stay locked');
+  assert.ok(app.answerOptions.children.some(button => button.classList.contains('right-answer')));
+  assert.equal(app.elements.get('#feedback').textContent, I18N.STRINGS.feedbackMissNoStar.ja);
+  assert.doesNotMatch(app.played[app.played.length - 1], /math-|colors-/, 'changing language mid-miss does not replay the ended question');
+  app.clock.tick(MISS_PAUSE_TICK);
+  assert.notEqual(game.getState().question.key, missedKey);
+  assert.match(app.played[app.played.length - 1], /^\.\/audio\/ja\//);
+});
+
+test('choosing another topic or level, or starting over, while a miss waits replaces the miss for good', () => {
+  for (const change of [
+    app => app.topicTabs.find(tab => tab.dataset.topic === 'colors').click(),
+    app => app.levelButtons.find(button => button.dataset.level === 'harder').click(),
+    app => app.elements.get('#restartButton').click(),
+  ]) {
+    const game = createGame(seededRandom(9));
+    const app = createAppFixture(game);
+    app.startButton.click();
+    clickAnswer(app, game, false);
+    change(app);
+    assert.equal(game.getState().missed, false);
+    const key = game.getState().question.key;
+    const stars = game.getState().stars;
+    app.clock.tick(MISS_PAUSE_TICK);
+    assert.equal(game.getState().question.key, key, 'the cancelled pause never swaps the new question away');
+    assert.equal(game.getState().stars, stars);
+    assert.ok(app.answerOptions.children.every(button => !button.disabled));
+  }
+});
+
+test('a miss at every level ends its question and is safe for each topic', () => {
+  const game = createGame(seededRandom(12));
+  const app = createAppFixture(game);
+  app.startButton.click();
+  for (const level of LEVELS) {
+    app.levelButtons.find(button => button.dataset.level === level).click();
+    for (const topic of TOPICS) {
+      app.topicTabs.find(tab => tab.dataset.topic === topic).click();
+      clickAnswer(app, game, true);
+      app.nextButton.click();
+      const before = game.getState();
+      clickAnswer(app, game, false);
+      assert.equal(game.getState().stars, before.stars - 1, `${level} ${topic}: the miss takes one star`);
+      assert.ok(app.answerOptions.children.some(button => button.classList.contains('right-answer')));
+      app.clock.tick(MISS_PAUSE_TICK);
+      assert.notEqual(game.getState().question.key, before.question.key);
+    }
+  }
+});
+
+test('the level descriptions in every language say what each level now asks for', () => {
+  const app = createAppFixture(createGame(seededRandom(2)));
+  const message = () => app.elements.get('#arenaMessage').textContent;
+  app.topicTabs.find(tab => tab.dataset.topic === 'animals').click();
+  const [easy, harder, superButton] = app.levelButtons;
+  harder.click();
+  assert.equal(message(), I18N.levelChosenMessage('harder', 'en', 'animals'));
+  assert.match(message(), /read the word.*pick the right picture from four/);
+  easy.click();
+  assert.match(message(), /read the question.*pick the right picture from three/);
+  superButton.click();
+  assert.match(message(), /listen only/);
+  for (const topic of ['animals', 'math']) {
+    for (const level of LEVELS) {
+      for (const language of ['en', 'zh', 'ja']) assert.ok(I18N.levelChosenMessage(level, language, topic), `${topic} ${level} ${language}`);
+    }
+  }
+  assert.match(I18N.levelChosenMessage('easy', 'zh', 'animals'), /三張圖/);
+  assert.match(I18N.levelChosenMessage('harder', 'zh', 'animals'), /四張圖/);
+  assert.match(I18N.levelChosenMessage('easy', 'ja'), /えを　えらぶ/);
+  assert.match(I18N.levelChosenMessage('easy', 'en', 'math'), /add or take away within five/);
+  assert.match(I18N.levelChosenMessage('super', 'en', 'math'), /plus and minus, no pictures/);
+  app.topicTabs.find(tab => tab.dataset.topic === 'math').click();
+  harder.click();
+  assert.match(message(), /count, add, and take away within ten/);
+});
+
+test('take-away eggs stay countable: every egg shows and the ones taken away are marked', () => {
+  const game = createGame(seededRandom(3));
+  const app = createAppFixture(game);
+  const picture = app.elements.get('#questionPicture');
+  const seen = new Set();
+  for (const level of ['easy', 'harder', 'super']) {
+    app.levelButtons.find(button => button.dataset.level === level).click();
+    for (let draw = 0; draw < 200; draw += 1) {
+      app.topicTabs.find(tab => tab.dataset.topic === 'math').click();
+      const { question } = game.getState();
+      if (!question.display.includes('−')) {
+        assert.equal(picture.classList.contains('take-away-picture'), false);
+        continue;
+      }
+      if (level === 'super') {
+        assert.equal(picture.hidden, true);
+        continue;
+      }
+      const { total, taken } = question.takeAway;
+      const eggs = picture.children;
+      seen.add(level);
+      assert.equal(picture.hidden, false);
+      assert.ok(picture.classList.contains('take-away-picture'));
+      assert.equal(eggs.length, total, 'every egg is drawn');
+      assert.equal(eggs.filter(egg => egg.classList.contains('egg-taken')).length, taken, 'the eggs being taken away are marked');
+      assert.equal(eggs.filter(egg => !egg.classList.contains('egg-taken')).length, Number(question.answerId), 'the eggs left are the answer');
+      assert.ok(eggs.slice(total - taken).every(egg => egg.classList.contains('egg-taken')), 'the taken eggs are the last ones');
+      assert.ok(eggs.every(egg => egg.textContent === '🥚'));
+      assert.equal(picture.getAttribute('aria-hidden'), 'true');
+      assert.equal(app.elements.get('#equation').textContent, question.display);
+    }
+  }
+  assert.deepEqual([...seen].sort(), ['easy', 'harder']);
+});
+
+test('a win after the daily cap celebrates, says which way to earn the next sticker, and adds nothing to the book', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  app.championCards[0].click();
+  app.textLanguageButtons.find(button => button.dataset.textLanguage === 'en').click();
+  const note = () => app.elements.get('#finishPanel').children.find(child => child.id === 'rewardNote');
+  const summary = () => app.elements.get('#rewardSummary').textContent;
+  const winOne = () => {
+    playMatchToFinish(app, game);
+    const shown = note();
+    app.elements.get('#playAgainButton').hidden ? app.document.querySelector('#oneMoreRoundButton').click() : app.elements.get('#playAgainButton').click();
+    return shown;
+  };
+
+  assert.match(winOne().textContent, /New sticker/);
+  assert.match(winOne().textContent, /Another sticker|New sticker|Rex gets/);
+  const stickersBefore = summary();
+  const played = app.played.length;
+  playMatchToFinish(app, game);
+  assert.ok(note().classList.contains('cap-note'), 'the third easy win in a language is capped');
+  assert.match(note().textContent, /Great win! To earn your next sticker, try a harder level or another language\./);
+  assert.match(app.played[app.played.length - 1], /^\.\/audio\/en\/reaction-cap-harder-or-language\.mp3$/, 'the message is spoken in the voice language');
+  assert.equal(app.played.length > played, true);
+  assert.equal(app.elements.get('#finishTitle').textContent.length > 0, true, 'the celebration screen still shows');
+  assert.equal(summary(), stickersBefore, 'the sticker book did not grow');
+  app.document.querySelector('[data-reward-action="open"]').click();
+  assert.ok(app.elements.get('#stickerGrid').children.filter(slot => !slot.classList.contains('is-empty')).length === 2);
+  app.document.querySelector('[data-reward-action="close"]').click();
+
+  // Another language earns again, and the message is spoken in that voice when it caps out.
+  app.elements.get('#playAgainButton').hidden ? app.document.querySelector('#oneMoreRoundButton').click() : app.elements.get('#playAgainButton').click();
+  app.textLanguageButtons.find(button => button.dataset.textLanguage === 'zh').click();
+  assert.match(winOne().textContent, /新貼紙|又一張貼紙/, 'another language pays a sticker again');
+  app.levelButtons.find(button => button.dataset.level === 'harder').click();
+  assert.match(winOne().textContent, /新貼紙|又一張貼紙/, 'a harder level pays again too');
+});
+
+test('with harder levels locked the cap message points to another language, and with nothing left it says come back tomorrow', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  app.championCards[0].click();
+  app.textLanguageButtons.find(button => button.dataset.textLanguage === 'ja').click();
+  passGate(app);
+  for (const level of ['harder', 'super']) {
+    const input = app.document.querySelector(`[data-level-lock="${level}"]`).querySelector('input');
+    input.checked = false;
+    input.dispatch('change');
+  }
+  app.document.querySelector('#settingsCloseButton').click();
+  assert.equal(game.getState().level, 'easy');
+  const note = () => app.elements.get('#finishPanel').children.find(child => child.id === 'rewardNote');
+  const again = () => (app.elements.get('#playAgainButton').hidden ? app.document.querySelector('#oneMoreRoundButton') : app.elements.get('#playAgainButton')).click();
+
+  playMatchToFinish(app, game);
+  again();
+  playMatchToFinish(app, game);
+  again();
+  playMatchToFinish(app, game);
+  assert.ok(note().classList.contains('cap-note'));
+  assert.match(note().textContent, /ほかの　げんごで/, 'the note points to another language, never a locked level');
+  assert.doesNotMatch(note().textContent, /むずかしい/);
+  assert.match(app.played[app.played.length - 1], /^\.\/audio\/ja\/reaction-cap-language\.mp3$/);
+
+  for (const language of ['en', 'zh']) {
+    again();
+    app.textLanguageButtons.find(button => button.dataset.textLanguage === language).click();
+    playMatchToFinish(app, game);
+    again();
+    playMatchToFinish(app, game);
+  }
+  again();
+  app.textLanguageButtons.find(button => button.dataset.textLanguage === 'en').click();
+  playMatchToFinish(app, game);
+  assert.match(note().textContent, /Come back tomorrow for more!/);
+  assert.match(app.played[app.played.length - 1], /^\.\/audio\/en\/reaction-cap-tomorrow\.mp3$/);
+});
+
+test('the cap messages, the miss messages, and the new level texts are hiragana-only in Japanese', () => {
+  const KATAKANA = /[ァ-ヺ]/;
+  const KANJI = /[一-鿿]/;
+  for (const advice of ['harder-or-language', 'harder', 'language', 'tomorrow']) {
+    for (const language of ['en', 'zh', 'ja']) assert.ok(I18N.capNote(advice, language).length > 10);
+    assert.doesNotMatch(I18N.capNote(advice, 'ja'), KATAKANA);
+    assert.doesNotMatch(I18N.capNote(advice, 'ja'), KANJI);
+  }
+  assert.equal(I18N.capNote('unknown', 'en'), I18N.capNote('tomorrow', 'en'));
+  for (const topic of ['math', 'animals']) {
+    for (const level of LEVELS) {
+      assert.doesNotMatch(I18N.levelChosenMessage(level, 'ja', topic), KATAKANA);
+      assert.doesNotMatch(I18N.levelChosenMessage(level, 'ja', topic), KANJI);
+    }
+  }
+  for (const key of ['feedbackMiss', 'feedbackMissNoStar', 'answerGroupLabelPicture']) {
+    assert.ok(I18N.STRINGS[key].en && I18N.STRINGS[key].zh && I18N.STRINGS[key].ja);
+  }
+  // Each spoken cap line carries the same message as the written one.
+  const clipFor = { 'harder-or-language': 'reaction-cap-harder-or-language', harder: 'reaction-cap-harder', language: 'reaction-cap-language', tomorrow: 'reaction-cap-tomorrow' };
+  for (const [advice, clip] of Object.entries(clipFor)) {
+    assert.equal(reactions[clip].en, I18N.capNote(advice, 'en'));
+    assert.equal(reactions[clip].zh, I18N.capNote(advice, 'zh'));
+    assert.deepEqual(REACTIONS[`cap-${advice}`], [clip]);
+  }
+});
+
+test('subtraction narration is written in all three languages and says how many are left', () => {
+  const takeIds = Object.keys(prompts).filter(id => id.startsWith('math-take-'));
+  assert.ok(takeIds.length >= 40, `plenty of take-away clips (${takeIds.length})`);
+  for (const id of takeIds) {
+    const [, , from, take] = id.split('-').map(Number);
+    assert.match(prompts[id].en, /minus .*\. How many are left\?$/, id);
+    assert.match(prompts[id].zh, /^[一二三四五六七八九十]減[一二三四五六七八九十]，還剩下多少？$/, id);
+    assert.match(prompts[id].ja, /ひく.*は、のこりはいくつかな？$/, id);
+    assert.ok(take >= 1 && take <= from && from <= 10, id);
+  }
+  assert.equal(prompts['math-take-5-2'].en, 'Five minus two. How many are left?');
+  assert.equal(prompts['math-take-5-2'].zh, '五減二，還剩下多少？');
+  assert.equal(prompts['math-take-7-7'].ja, 'ななひくななは、のこりはいくつかな？');
+});
+
+test('changing topic or level, or starting over, clears a miss that is waiting to be replaced', () => {
+  const game = createGame(steadyRandom);
+  game.answer(wrongOption(game).id);
+  assert.equal(game.chooseTopic('colors'), true);
+  assert.equal(game.getState().missed, false);
+  assert.equal(game.nextQuestion(), false, 'only a right or missed question can move on');
+  game.answer(wrongOption(game).id);
+  assert.equal(game.chooseLevel('harder'), true);
+  assert.equal(game.getState().missed, false);
+  game.answer(wrongOption(game).id);
+  assert.equal(game.restart().missed, false);
 });
 
 test('switching learning content keeps earned stars and resets the active attempt', () => {
@@ -728,11 +1114,23 @@ test('invalid topics and answers are ignored without changing progress', () => {
   assert.equal(game.getState().stars, 0);
 });
 
+// Every math clip ID the game can ask for, found by drawing many questions at every level.
+function allMathAudioIds() {
+  const ids = new Set();
+  const game = createGame(seededRandom(21));
+  for (const level of LEVELS) {
+    game.chooseLevel(level);
+    for (let draw = 0; draw < 3000; draw += 1) {
+      ids.add(game.getState().question.audioId);
+      game.chooseTopic('math');
+    }
+  }
+  return [...ids];
+}
+
 test('every math and vocabulary prompt has bundled English, Taiwan Mandarin, and Japanese audio', () => {
   const expected = [
-    'math-1-1', 'math-1-2', 'math-2-2', 'math-2-1', 'math-3-1',
-    'math-count', 'math-3-3', 'math-4-2', 'math-5-2', 'math-3-4', 'math-4-4',
-    'math-5-3', 'math-6-3', 'math-4-5', 'math-5-5', 'math-6-4',
+    ...allMathAudioIds(),
     ...WORD_TOPIC_IDS.flatMap(topic => WORD_TOPICS[topic].words.map(word => `${topic}-${word.id}`)),
   ].sort();
   assert.deepEqual(Object.keys(prompts).sort(), expected);
@@ -753,7 +1151,9 @@ test('every math and vocabulary prompt has bundled English, Taiwan Mandarin, and
 
 test('every spoken reaction has bundled English, Taiwan Mandarin, and Japanese audio', () => {
   const reactionIds = Object.values(REACTIONS).flat();
-  assert.deepEqual(Object.keys(REACTIONS), ['praise', 'try-again', 'finish', 'break-prompt', 'break-goodbye']);
+  assert.deepEqual(Object.keys(REACTIONS), [
+    'praise', 'try-again', 'cap-harder-or-language', 'cap-harder', 'cap-language', 'cap-tomorrow', 'finish', 'break-prompt', 'break-goodbye',
+  ]);
   assert.deepEqual([...reactionIds].sort(), Object.keys(reactions).sort());
   for (const variants of Object.values(REACTIONS)) assert.ok(variants.length >= 1 && variants.length <= 3);
   for (const audioId of reactionIds) {
@@ -965,43 +1365,68 @@ test('settings persistence degrades safely when storage is unavailable', () => {
   });
 });
 
-test('face and family art renders with a single chosen-language label and falls back to emoji if a picture fails', () => {
+test('word choices are picture-only where the question shows the word, keep an accessible name, and fall back to emoji if a picture fails', () => {
   const game = createGame(steadyRandom);
   const app = createAppFixture(game);
   const questionPicture = app.elements.get('#questionPicture');
   app.topicTabs.find(tab => tab.dataset.topic === 'face').click();
 
   const { question } = game.getState();
-  const answer = question.options.find(option => option.id === question.answerId);
-  const [art] = questionPicture.children;
-  assert.equal(art.tagName, 'IMG');
-  assert.equal(art.src, question.pictureImage);
-  assert.equal(art.alt, answer.en, 'the question picture carries its answer\'s chosen-language label');
-  assert.equal(art.draggable, false, 'pressing the picture never starts an image drag');
+  assert.equal(questionPicture.hidden, true, 'the easy question shows no picture, only the written prompt');
+  assert.equal(questionPicture.children.length, 0);
+  assert.equal(app.elements.get('#questionPrompt').hidden, false);
   for (const button of app.answerOptions.children) {
     const option = question.options.find(choice => choice.id === button.dataset.choice);
-    const [icon, label] = button.children;
+    assert.equal(button.children.length, 1, 'a picture-only choice holds just the picture');
+    const [icon] = button.children;
     assert.equal(icon.getAttribute('aria-hidden'), 'true');
     assert.equal(icon.children[0].src, option.image);
     assert.equal(icon.children[0].alt, option.en);
     assert.equal(icon.children[0].draggable, false, 'pressing the answer picture never starts an image drag');
-    assert.equal(label.textContent, option.en, 'the button shows the chosen-language word');
+    assert.equal(button.getAttribute('aria-label'), option.en, 'screen readers still get the word');
+    assert.ok(button.classList.contains('picture-only'));
+    assert.ok(!button.textContent.includes(option.en), 'the word is not painted on the button');
   }
+  assert.equal(app.answerOptions.getAttribute('aria-label'), I18N.STRINGS.answerGroupLabelPicture.en);
 
-  art.dispatch('error');
-  assert.equal(questionPicture.textContent, question.picture);
-  assert.ok(questionPicture.children.every(child => child.tagName !== 'IMG'));
   const answerArt = app.answerOptions.children[0].children[0];
   answerArt.children[0].dispatch('error');
   assert.equal(answerArt.textContent, question.options.find(option => option.id === app.answerOptions.children[0].dataset.choice).icon);
 
-  app.topicTabs.find(tab => tab.dataset.topic === 'family').click();
-  const familyArt = questionPicture.children[0];
-  art.dispatch('error');
-  assert.equal(questionPicture.children[0], familyArt, 'a stale picture failure cannot replace the new question');
   app.topicTabs.find(tab => tab.dataset.topic === 'math').click();
-  assert.equal(questionPicture.children.length, 0);
-  assert.equal(questionPicture.textContent, game.getState().question.picture);
+  assert.equal(questionPicture.children.length > 0 || questionPicture.textContent.length > 0, true, 'math still shows its eggs');
+  assert.equal(app.answerOptions.children.every(button => !button.classList.contains('picture-only')), true);
+});
+
+test('picture-only choices apply at easy and harder for every word topic, and super keeps picture-and-word choices', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  app.startButton.click();
+  for (const level of LEVELS) {
+    app.levelButtons.find(button => button.dataset.level === level).click();
+    for (const topic of WORD_TOPIC_IDS) {
+      app.topicTabs.find(tab => tab.dataset.topic === topic).click();
+      const { question } = game.getState();
+      for (const button of app.answerOptions.children) {
+        const option = question.options.find(choice => choice.id === button.dataset.choice);
+        const word = topic === 'colors' && level === 'super' ? option.en.toLowerCase() : option.en;
+        if (level === 'super') {
+          assert.ok(!button.classList.contains('picture-only'), `${topic} super keeps its labels`);
+          assert.ok(button.textContent.includes(word), `${topic} super shows the word: ${word}`);
+        } else {
+          assert.ok(button.classList.contains('picture-only'), `${topic} ${level} choices are pictures only`);
+          assert.equal(button.textContent, '', 'no label text');
+          assert.equal(button.getAttribute('aria-label'), option.en);
+          const picture = button.children[0];
+          if (topic === 'colors') assert.equal(picture.style.backgroundColor, option.swatch);
+        }
+      }
+      const written = { easy: 'prompt', harder: 'word', super: null }[level];
+      if (written === 'prompt') assert.equal(app.elements.get('#questionPrompt').hidden, false);
+      if (written === 'word') assert.equal(app.elements.get('#questionWord').hidden, false);
+      assert.equal(app.elements.get('#questionPicture').hidden, true, `${level} ${topic} shows no question picture`);
+    }
+  }
 });
 
 test('unmuting clears stale muted status even when playback is skipped on the finish screen', () => {
@@ -1031,7 +1456,7 @@ test('game-generated prompt IDs exist for every selectable word and math target 
     game.chooseLevel(level);
     for (const topic of TOPICS) {
       game.chooseTopic(topic);
-      for (let draw = 0; draw < 80; draw += 1) {
+      for (let draw = 0; draw < (topic === 'math' ? 3000 : 80); draw += 1) {
         audioIds.add(game.getState().question.audioId);
         game.chooseTopic(topic);
       }
@@ -1043,43 +1468,107 @@ test('game-generated prompt IDs exist for every selectable word and math target 
   assert.equal(audioIds.size, Object.keys(prompts).length, 'the game reaches every bundled prompt');
 });
 
-test('easy math keeps small sums; harder counts and adds to ten; super keeps only sums to ten with the numbers shown', () => {
+function mathParts(question) {
+  const match = question.display.match(/^(\d+) ([+−]) (\d+) = \?$/);
+  return match && { left: Number(match[1]), op: match[2], right: Number(match[3]) };
+}
+
+test('easy math adds and takes away within five; harder counts, adds, and takes away within ten; super mixes plus and minus with no picture', () => {
   const game = createGame(seededRandom(3));
   const seen = { easy: new Set(), harder: new Set(), super: new Set() };
+  const keys = { easy: new Set(), harder: new Set(), super: new Set() };
+  const eggCount = text => [...text].filter(char => char === '🥚').length;
   for (const level of LEVELS) {
     game.chooseLevel(level);
-    for (let draw = 0; draw < 60; draw += 1) {
+    for (let draw = 0; draw < 400; draw += 1) {
       const question = game.getState().question;
+      keys[level].add(question.key);
       const values = question.options.map(option => Number(option.id));
       assert.equal(question.options.length, CHOICE_COUNT[level]);
       assert.equal(new Set(values).size, values.length, 'choices are distinct');
       assert.ok(question.options.some(option => option.id === question.answerId));
+      assert.ok(values.every(value => value >= 0 && value <= 10), `${level} choices stay between zero and ten`);
       const answer = Number(question.answerId);
-      if (question.display) {
-        const [left, right] = question.display.split(' = ?')[0].split(' + ').map(Number);
-        assert.equal(answer, left + right);
-        if (level !== 'super') assert.equal([...question.picture].filter(char => char === '🥚').length, answer);
+      const parts = mathParts(question);
+      if (parts) {
+        const expected = parts.op === '+' ? parts.left + parts.right : parts.left - parts.right;
+        assert.equal(answer, expected);
+        assert.ok(answer >= 0, 'a take-away never goes below zero');
+        if (parts.op === '−') {
+          assert.ok(parts.right >= 1 && parts.right <= parts.left);
+          assert.match(question.audioId, /^math-take-/);
+          assert.equal(question.promptEn, 'How many are left?');
+          assert.match(question.promptZh, /剩/);
+          assert.match(question.promptJa, /のこり/);
+          if (level === 'super') assert.equal(question.takeAway, null);
+          else {
+            assert.deepEqual(question.takeAway, { total: parts.left, taken: parts.right }, 'the picture shows every egg and which are taken away');
+            assert.equal(eggCount(question.picture), parts.left);
+          }
+        } else {
+          assert.equal(question.takeAway, null);
+          assert.equal(question.promptEn, 'How many altogether?');
+          if (level !== 'super') assert.equal(eggCount(question.picture), parts.left + parts.right);
+        }
+        seen[level].add(parts.op);
+        const biggest = Math.max(parts.left, parts.right, answer);
+        assert.ok(biggest <= (level === 'easy' ? 5 : 10), `${level} stays within ${level === 'easy' ? 'five' : 'ten'}: ${question.display}`);
       } else {
         assert.equal(level, 'harder', 'only the harder level asks counting questions');
         assert.equal(question.audioId, 'math-count', 'the counting clip never says the answer');
-        assert.equal([...question.picture].filter(char => char === '🥚').length, answer);
-      }
-      if (level === 'easy') assert.ok(answer <= 5);
-      else {
-        assert.ok(answer >= 5 && answer <= 10);
-        assert.ok(values.every(value => value >= 1 && value <= 10), `${level} choices stay between one and ten`);
+        assert.equal(eggCount(question.picture), answer);
+        seen[level].add('count');
       }
       if (level === 'super') {
         assert.equal(question.picture, '', 'super math hides the egg picture');
         assert.ok(question.display, 'super math always shows the equation numbers');
       }
-      seen[level].add(question.display ? 'sum' : 'count');
       game.chooseTopic('math');
     }
   }
-  assert.deepEqual([...seen.easy], ['sum']);
-  assert.deepEqual([...seen.harder].sort(), ['count', 'sum']);
-  assert.deepEqual([...seen.super], ['sum']);
+  assert.deepEqual([...seen.easy].sort(), ['+', '−']);
+  assert.deepEqual([...seen.harder].sort(), ['+', 'count', '−']);
+  assert.deepEqual([...seen.super].sort(), ['+', '−']);
+  assert.ok(keys.easy.size >= 20, 'easy has a big enough pool that the same few sums do not keep repeating');
+  assert.ok(keys.harder.size >= 50 && keys.super.size >= 45, 'harder and super pools are large too');
+});
+
+test('a take-away can have 0 as its answer, and 0 is offered as a choice at every level that allows it', () => {
+  const zeroLevels = new Set();
+  const game = createGame(seededRandom(8));
+  for (const level of LEVELS) {
+    game.chooseLevel(level);
+    for (let draw = 0; draw < 600; draw += 1) {
+      const { question } = game.getState();
+      if (question.answerId === '0') {
+        zeroLevels.add(level);
+        assert.ok(question.options.some(option => option.id === '0'));
+      }
+      game.chooseTopic('math');
+    }
+  }
+  assert.deepEqual([...zeroLevels].sort(), ['easy', 'harder', 'super']);
+  const easyAtZero = createGame(() => 0.5);
+  easyAtZero.chooseTopic('math');
+  for (let draw = 0; draw < 30; draw += 1) {
+    const { question } = easyAtZero.getState();
+    if (question.answerId === '0') assert.deepEqual(question.options.map(option => Number(option.id)).sort(), [0, 1, 2]);
+    easyAtZero.chooseTopic('math');
+  }
+});
+
+test('harder and super sometimes offer the wrong-operation result as a distractor', () => {
+  const game = createGame(seededRandom(4));
+  game.chooseLevel('super');
+  let tempted = 0;
+  for (let draw = 0; draw < 500; draw += 1) {
+    const { question } = game.getState();
+    const { left, op, right } = mathParts(question);
+    const wrong = op === '+' ? Math.abs(left - right) : left + right;
+    if (question.options.some(option => Number(option.id) === wrong && wrong !== Number(question.answerId))) tempted += 1;
+    game.chooseTopic('math');
+  }
+  assert.ok(tempted > 100 && tempted < 450, `the wrong-operation choice appears about half the time (${tempted}/500)`);
 });
 
 test('word questions offer three choices on easy, four on harder and super, all from the bigger pool', () => {
@@ -1189,7 +1678,7 @@ test('switching up to a higher-goal level restarts the match at the new, larger 
   assert.equal(state.finished, false);
 });
 
-test('the level buttons switch choices, goal markers, and the color prompt shows its swatch', () => {
+test('the level buttons switch choices and goal markers, and color choices are swatches only', () => {
   const game = createGame(steadyRandom);
   const app = createAppFixture(game);
   app.startButton.click();
@@ -1216,8 +1705,10 @@ test('the level buttons switch choices, goal markers, and the color prompt shows
   easyButton.click();
   app.topicTabs.find(tab => tab.dataset.topic === 'colors').click();
   const { question } = game.getState();
-  const [swatch] = app.elements.get('#questionPicture').children;
-  assert.equal(swatch.style.backgroundColor, question.pictureSwatch);
+  assert.equal(app.elements.get('#questionPicture').hidden, true, 'the color question shows only its written prompt');
+  const target = question.options.find(option => option.id === question.answerId);
+  const swatches = app.answerOptions.children.map(button => button.children[0].style.backgroundColor);
+  assert.ok(swatches.includes(target.swatch), 'the right colour is one of the swatch-only choices');
   assert.equal(app.elements.get('#questionPicture').classList.contains('dense-picture'), false);
 
   for (let star = 1; star <= GOAL_BY_LEVEL.easy; star += 1) {
@@ -1427,12 +1918,12 @@ test('clearing rewards refreshes the visible grown-up progress summary', () => {
   app.elements.get('#gateInput').value = String(a + b);
   app.document.querySelector('#gateSubmitButton').click();
   const summary = app.elements.get('#settingsRewardSummary');
-  assert.match(summary.textContent, /1 match/);
+  assert.match(summary.textContent, /1 sticker earned/);
 
   app.document.querySelector('[data-reward-action="open"]').click();
   app.document.querySelector('[data-reward-action="reset"]').click();
   app.document.querySelector('[data-reward-action="confirm-reset"]').click();
-  assert.match(summary.textContent, /0 match/);
+  assert.match(summary.textContent, /0 stickers earned/);
 });
 
 test('external reward storage updates refresh the open grown-up progress summary', () => {
@@ -1448,11 +1939,11 @@ test('external reward storage updates refresh the open grown-up progress summary
   app.elements.get('#gateInput').value = String(a + b);
   app.document.querySelector('#gateSubmitButton').click();
   const summary = app.elements.get('#settingsRewardSummary');
-  assert.match(summary.textContent, /1 match/);
+  assert.match(summary.textContent, /1 sticker earned/);
 
   storage.setItem(STORAGE_KEY, JSON.stringify({ v: 1, wins: 0, wearing: { dino: null, monster: null } }));
   app.dispatchWindowEvent('storage', { key: STORAGE_KEY });
-  assert.match(summary.textContent, /0 match/);
+  assert.match(summary.textContent, /0 stickers earned/);
 });
 
 test('a small grown-up settings area is gated by a math check, then offers a level lock, mute mirror, and progress summary', () => {
@@ -1502,7 +1993,7 @@ test('a small grown-up settings area is gated by a math check, then offers a lev
   settingsMuteButton.click();
   assert.equal(app.muteButton.getAttribute('aria-pressed'), 'true', 'the settings mute mirrors the main mute button');
 
-  assert.match(app.elements.get('#settingsRewardSummary').textContent, /0 match/);
+  assert.match(app.elements.get('#settingsRewardSummary').textContent, /0 stickers earned/);
 });
 
 test('pressing Enter on a correct grown-up answer waits for keyup before focusing Close', () => {
@@ -1645,7 +2136,7 @@ test('the on-screen text language switches every child-facing string and, by def
   assert.match(app.played[app.played.length - 1], /^\.\/audio\/zh\//, 'the language choice is also the sound-on gesture and sets the voice');
   const question = game.getState().question;
   const target = question.options.find(option => option.id === question.answerId);
-  assert.equal(app.answerOptions.children.find(button => button.dataset.choice === target.id).children[1].textContent, target.zh);
+  assert.equal(app.answerOptions.children.find(button => button.dataset.choice === target.id).getAttribute('aria-label'), target.zh, 'the picture-only choice keeps its word in the chosen language as its name');
 
   app.textLanguageButtons.find(button => button.dataset.textLanguage === 'ja').click();
   assert.equal(app.elements.get('#championHeading').textContent, I18N.STRINGS.championHeading.ja);
@@ -1713,6 +2204,7 @@ test('reactions stay silent before Start, then follow the chosen voice', () => {
   const game = createGame(steadyRandom);
   const app = createAppFixture(game);
   clickAnswer(app, game, false);
+  app.clock.tick(MISS_PAUSE_TICK);
   clickAnswer(app, game, true);
   assert.deepEqual(app.played, [], 'no reaction before Start, a language, replay, or unmute');
   assert.equal(app.startRow.hidden, false);
@@ -1721,19 +2213,23 @@ test('reactions stay silent before Start, then follow the chosen voice', () => {
   app.textLanguageButtons.find(button => button.dataset.textLanguage === 'zh').click();
   assert.equal(app.startRow.hidden, true, 'a language choice turns on the questions and cheers together');
   clickAnswer(app, game, false);
+  app.clock.tick(MISS_PAUSE_TICK);
   clickAnswer(app, game, false);
+  app.clock.tick(MISS_PAUSE_TICK);
   clickAnswer(app, game, true);
   app.nextButton.click();
   clickAnswer(app, game, true);
-  assert.equal(game.getState().finished, true, 'the silent correct answer before any language choice already counted a star');
-  const questionId = () => /\/(math-\d-\d)\.mp3$/;
-  assert.deepEqual(app.played.map(src => src.replace(questionId(), '/<question>.mp3')), [
+  assert.equal(game.getState().stars, 2, 'two misses (one star, then none to lose) and three right answers leave two stars');
+  const questionId = /\/(math-[\w-]+)\.mp3$/;
+  assert.deepEqual(app.played.map(src => src.replace(questionId, '/<question>.mp3')), [
     './audio/zh/<question>.mp3',
     './audio/zh/reaction-try-again-1.mp3',
+    './audio/zh/<question>.mp3',
     './audio/zh/reaction-try-again-2.mp3',
+    './audio/zh/<question>.mp3',
     './audio/zh/reaction-praise-1.mp3',
     './audio/zh/<question>.mp3',
-    './audio/zh/reaction-finish-1.mp3',
+    './audio/zh/reaction-praise-2.mp3',
   ]);
 });
 
@@ -1845,7 +2341,7 @@ test('a right answer plays the power move, then the buddy wobbles and giggles as
   assert.equal(effects.children.length, 0, 'the next question starts on a calm stage');
 });
 
-test('a miss is a pillow block with no penalty that quietly restarts the right-in-a-row combo', () => {
+test('a miss is a pillow block that takes a star back and quietly restarts the right-in-a-row combo', () => {
   const game = createGame(steadyRandom);
   const app = createAppFixture(game);
   const combo = app.elements.get('#comboBadge');
@@ -1866,8 +2362,10 @@ test('a miss is a pillow block with no penalty that quietly restarts the right-i
   assert.ok(app.elements.get('#arenaStage').classList.contains('thinking'));
   assert.equal(combo.classList.contains('is-shown'), false);
   assert.match(message.textContent, /Pillow block/);
-  assert.equal(game.getState().stars, 2, 'a miss never takes a star away');
-  app.clock.tick(TIMING.blockSettle);
+  assert.equal(game.getState().stars, 1, 'a miss takes one star back from the match');
+  assert.equal(app.elements.get('#scoreCount').textContent, `1 / ${GOAL_BY_LEVEL.easy}`);
+  assert.ok(app.elements.get('#scoreStars').children[1].classList.contains('just-lost'), 'the star that went back gets a little shake');
+  app.clock.tick(MISS_PAUSE_TICK);
   assert.equal(poses(app), 'ready/ready');
 
   clickAnswer(app, game);
@@ -2133,8 +2631,10 @@ test('the game plays gentle effects from the child\'s own taps without a voice c
   clickAnswer(app, game, false);
   assert.deepEqual(app.effects, ['chime', 'tap', 'boing'], 'a miss is a soft pillow boing, and the invitation chime is not crowded by another prompt');
   app.later();
+  app.clock.tick(MISS_PAUSE_TICK);
+  app.later();
   clickAnswer(app, game, true);
-  assert.deepEqual(app.effects.slice(3), ['tap', 'sparkle', 'whoosh', 'giggle', 'chime'], 'a right answer sparkles, whooshes, and giggles');
+  assert.deepEqual(app.effects.slice(3).filter(name => name !== 'chime'), ['tap', 'sparkle', 'whoosh', 'giggle'], 'a right answer sparkles, whooshes, and giggles');
   assert.deepEqual(app.played, [], 'effects never play through the speech element or start narration');
 
   for (let star = 2; star <= GOAL_BY_LEVEL.easy; star += 1) {

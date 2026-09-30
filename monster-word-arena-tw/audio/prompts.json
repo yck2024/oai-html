@@ -129,6 +129,291 @@
     "zh": "六加四，總共是多少？",
     "ja": "ろくたすよんは、ぜんぶでいくつかな？"
   },
+  "math-1-3": {
+    "en": "One plus three. How many altogether?",
+    "zh": "一加三，總共是多少？",
+    "ja": "いちたすさんは、ぜんぶでいくつかな？"
+  },
+  "math-1-4": {
+    "en": "One plus four. How many altogether?",
+    "zh": "一加四，總共是多少？",
+    "ja": "いちたすよんは、ぜんぶでいくつかな？"
+  },
+  "math-2-3": {
+    "en": "Two plus three. How many altogether?",
+    "zh": "二加三，總共是多少？",
+    "ja": "にたすさんは、ぜんぶでいくつかな？"
+  },
+  "math-3-2": {
+    "en": "Three plus two. How many altogether?",
+    "zh": "三加二，總共是多少？",
+    "ja": "さんたすには、ぜんぶでいくつかな？"
+  },
+  "math-4-1": {
+    "en": "Four plus one. How many altogether?",
+    "zh": "四加一，總共是多少？",
+    "ja": "よんたすいちは、ぜんぶでいくつかな？"
+  },
+  "math-4-3": {
+    "en": "Four plus three. How many altogether?",
+    "zh": "四加三，總共是多少？",
+    "ja": "よんたすさんは、ぜんぶでいくつかな？"
+  },
+  "math-5-1": {
+    "en": "Five plus one. How many altogether?",
+    "zh": "五加一，總共是多少？",
+    "ja": "ごたすいちは、ぜんぶでいくつかな？"
+  },
+  "math-5-4": {
+    "en": "Five plus four. How many altogether?",
+    "zh": "五加四，總共是多少？",
+    "ja": "ごたすよんは、ぜんぶでいくつかな？"
+  },
+  "math-6-1": {
+    "en": "Six plus one. How many altogether?",
+    "zh": "六加一，總共是多少？",
+    "ja": "ろくたすいちは、ぜんぶでいくつかな？"
+  },
+  "math-6-2": {
+    "en": "Six plus two. How many altogether?",
+    "zh": "六加二，總共是多少？",
+    "ja": "ろくたすには、ぜんぶでいくつかな？"
+  },
+  "math-7-1": {
+    "en": "Seven plus one. How many altogether?",
+    "zh": "七加一，總共是多少？",
+    "ja": "ななたすいちは、ぜんぶでいくつかな？"
+  },
+  "math-7-2": {
+    "en": "Seven plus two. How many altogether?",
+    "zh": "七加二，總共是多少？",
+    "ja": "ななたすには、ぜんぶでいくつかな？"
+  },
+  "math-7-3": {
+    "en": "Seven plus three. How many altogether?",
+    "zh": "七加三，總共是多少？",
+    "ja": "ななたすさんは、ぜんぶでいくつかな？"
+  },
+  "math-8-1": {
+    "en": "Eight plus one. How many altogether?",
+    "zh": "八加一，總共是多少？",
+    "ja": "はちたすいちは、ぜんぶでいくつかな？"
+  },
+  "math-8-2": {
+    "en": "Eight plus two. How many altogether?",
+    "zh": "八加二，總共是多少？",
+    "ja": "はちたすには、ぜんぶでいくつかな？"
+  },
+  "math-9-1": {
+    "en": "Nine plus one. How many altogether?",
+    "zh": "九加一，總共是多少？",
+    "ja": "きゅうたすいちは、ぜんぶでいくつかな？"
+  },
+  "math-take-2-1": {
+    "en": "Two minus one. How many are left?",
+    "zh": "二減一，還剩下多少？",
+    "ja": "にひくいちは、のこりはいくつかな？"
+  },
+  "math-take-2-2": {
+    "en": "Two minus two. How many are left?",
+    "zh": "二減二，還剩下多少？",
+    "ja": "にひくには、のこりはいくつかな？"
+  },
+  "math-take-3-1": {
+    "en": "Three minus one. How many are left?",
+    "zh": "三減一，還剩下多少？",
+    "ja": "さんひくいちは、のこりはいくつかな？"
+  },
+  "math-take-3-2": {
+    "en": "Three minus two. How many are left?",
+    "zh": "三減二，還剩下多少？",
+    "ja": "さんひくには、のこりはいくつかな？"
+  },
+  "math-take-3-3": {
+    "en": "Three minus three. How many are left?",
+    "zh": "三減三，還剩下多少？",
+    "ja": "さんひくさんは、のこりはいくつかな？"
+  },
+  "math-take-4-1": {
+    "en": "Four minus one. How many are left?",
+    "zh": "四減一，還剩下多少？",
+    "ja": "よんひくいちは、のこりはいくつかな？"
+  },
+  "math-take-4-2": {
+    "en": "Four minus two. How many are left?",
+    "zh": "四減二，還剩下多少？",
+    "ja": "よんひくには、のこりはいくつかな？"
+  },
+  "math-take-4-3": {
+    "en": "Four minus three. How many are left?",
+    "zh": "四減三，還剩下多少？",
+    "ja": "よんひくさんは、のこりはいくつかな？"
+  },
+  "math-take-4-4": {
+    "en": "Four minus four. How many are left?",
+    "zh": "四減四，還剩下多少？",
+    "ja": "よんひくよんは、のこりはいくつかな？"
+  },
+  "math-take-5-1": {
+    "en": "Five minus one. How many are left?",
+    "zh": "五減一，還剩下多少？",
+    "ja": "ごひくいちは、のこりはいくつかな？"
+  },
+  "math-take-5-2": {
+    "en": "Five minus two. How many are left?",
+    "zh": "五減二，還剩下多少？",
+    "ja": "ごひくには、のこりはいくつかな？"
+  },
+  "math-take-5-3": {
+    "en": "Five minus three. How many are left?",
+    "zh": "五減三，還剩下多少？",
+    "ja": "ごひくさんは、のこりはいくつかな？"
+  },
+  "math-take-5-4": {
+    "en": "Five minus four. How many are left?",
+    "zh": "五減四，還剩下多少？",
+    "ja": "ごひくよんは、のこりはいくつかな？"
+  },
+  "math-take-5-5": {
+    "en": "Five minus five. How many are left?",
+    "zh": "五減五，還剩下多少？",
+    "ja": "ごひくごは、のこりはいくつかな？"
+  },
+  "math-take-6-1": {
+    "en": "Six minus one. How many are left?",
+    "zh": "六減一，還剩下多少？",
+    "ja": "ろくひくいちは、のこりはいくつかな？"
+  },
+  "math-take-6-2": {
+    "en": "Six minus two. How many are left?",
+    "zh": "六減二，還剩下多少？",
+    "ja": "ろくひくには、のこりはいくつかな？"
+  },
+  "math-take-6-3": {
+    "en": "Six minus three. How many are left?",
+    "zh": "六減三，還剩下多少？",
+    "ja": "ろくひくさんは、のこりはいくつかな？"
+  },
+  "math-take-6-4": {
+    "en": "Six minus four. How many are left?",
+    "zh": "六減四，還剩下多少？",
+    "ja": "ろくひくよんは、のこりはいくつかな？"
+  },
+  "math-take-6-5": {
+    "en": "Six minus five. How many are left?",
+    "zh": "六減五，還剩下多少？",
+    "ja": "ろくひくごは、のこりはいくつかな？"
+  },
+  "math-take-7-1": {
+    "en": "Seven minus one. How many are left?",
+    "zh": "七減一，還剩下多少？",
+    "ja": "ななひくいちは、のこりはいくつかな？"
+  },
+  "math-take-7-2": {
+    "en": "Seven minus two. How many are left?",
+    "zh": "七減二，還剩下多少？",
+    "ja": "ななひくには、のこりはいくつかな？"
+  },
+  "math-take-7-3": {
+    "en": "Seven minus three. How many are left?",
+    "zh": "七減三，還剩下多少？",
+    "ja": "ななひくさんは、のこりはいくつかな？"
+  },
+  "math-take-7-4": {
+    "en": "Seven minus four. How many are left?",
+    "zh": "七減四，還剩下多少？",
+    "ja": "ななひくよんは、のこりはいくつかな？"
+  },
+  "math-take-7-5": {
+    "en": "Seven minus five. How many are left?",
+    "zh": "七減五，還剩下多少？",
+    "ja": "ななひくごは、のこりはいくつかな？"
+  },
+  "math-take-7-7": {
+    "en": "Seven minus seven. How many are left?",
+    "zh": "七減七，還剩下多少？",
+    "ja": "ななひくななは、のこりはいくつかな？"
+  },
+  "math-take-8-1": {
+    "en": "Eight minus one. How many are left?",
+    "zh": "八減一，還剩下多少？",
+    "ja": "はちひくいちは、のこりはいくつかな？"
+  },
+  "math-take-8-2": {
+    "en": "Eight minus two. How many are left?",
+    "zh": "八減二，還剩下多少？",
+    "ja": "はちひくには、のこりはいくつかな？"
+  },
+  "math-take-8-3": {
+    "en": "Eight minus three. How many are left?",
+    "zh": "八減三，還剩下多少？",
+    "ja": "はちひくさんは、のこりはいくつかな？"
+  },
+  "math-take-8-4": {
+    "en": "Eight minus four. How many are left?",
+    "zh": "八減四，還剩下多少？",
+    "ja": "はちひくよんは、のこりはいくつかな？"
+  },
+  "math-take-8-5": {
+    "en": "Eight minus five. How many are left?",
+    "zh": "八減五，還剩下多少？",
+    "ja": "はちひくごは、のこりはいくつかな？"
+  },
+  "math-take-9-1": {
+    "en": "Nine minus one. How many are left?",
+    "zh": "九減一，還剩下多少？",
+    "ja": "きゅうひくいちは、のこりはいくつかな？"
+  },
+  "math-take-9-2": {
+    "en": "Nine minus two. How many are left?",
+    "zh": "九減二，還剩下多少？",
+    "ja": "きゅうひくには、のこりはいくつかな？"
+  },
+  "math-take-9-3": {
+    "en": "Nine minus three. How many are left?",
+    "zh": "九減三，還剩下多少？",
+    "ja": "きゅうひくさんは、のこりはいくつかな？"
+  },
+  "math-take-9-4": {
+    "en": "Nine minus four. How many are left?",
+    "zh": "九減四，還剩下多少？",
+    "ja": "きゅうひくよんは、のこりはいくつかな？"
+  },
+  "math-take-9-5": {
+    "en": "Nine minus five. How many are left?",
+    "zh": "九減五，還剩下多少？",
+    "ja": "きゅうひくごは、のこりはいくつかな？"
+  },
+  "math-take-10-1": {
+    "en": "Ten minus one. How many are left?",
+    "zh": "十減一，還剩下多少？",
+    "ja": "じゅうひくいちは、のこりはいくつかな？"
+  },
+  "math-take-10-2": {
+    "en": "Ten minus two. How many are left?",
+    "zh": "十減二，還剩下多少？",
+    "ja": "じゅうひくには、のこりはいくつかな？"
+  },
+  "math-take-10-3": {
+    "en": "Ten minus three. How many are left?",
+    "zh": "十減三，還剩下多少？",
+    "ja": "じゅうひくさんは、のこりはいくつかな？"
+  },
+  "math-take-10-4": {
+    "en": "Ten minus four. How many are left?",
+    "zh": "十減四，還剩下多少？",
+    "ja": "じゅうひくよんは、のこりはいくつかな？"
+  },
+  "math-take-10-5": {
+    "en": "Ten minus five. How many are left?",
+    "zh": "十減五，還剩下多少？",
+    "ja": "じゅうひくごは、のこりはいくつかな？"
+  },
+  "math-take-10-10": {
+    "en": "Ten minus ten. How many are left?",
+    "zh": "十減十，還剩下多少？",
+    "ja": "じゅうひくじゅうは、のこりはいくつかな？"
+  },
   "colors-blue": {
     "en": "Find blue!",
     "zh": "找出藍色！",
