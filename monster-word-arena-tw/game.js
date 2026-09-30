@@ -555,7 +555,7 @@
         return false;
       }
 
-      const currentAttempt = attempt;
+      const currentAttempt = ++attempt;
       audio.src = `./audio/${language}/${audioId}.mp3`;
       audio.load();
       try {
@@ -563,7 +563,7 @@
         playback?.catch(() => {
           if (currentAttempt !== attempt) return;
           onUnavailable();
-          abandonSequence();
+          advance();
         });
         return true;
       } catch (_error) {
@@ -586,20 +586,13 @@
       const step = queued.shift();
       if (!step) return;
       if (!start(step.audioId, step.language)) {
-        abandonSequence();
+        step.onEnd?.();
+        advance();
         return;
       }
       current = step;
       step.onStart?.();
       fallbackTimer = setTimeout(advance, CLIP_FALLBACK_MS);
-    }
-
-    function abandonSequence() {
-      clearFallback();
-      queued = [];
-      const finished = current;
-      current = null;
-      finished?.onEnd?.();
     }
 
     // Clips one after another on the same element: [{ audioId, language, onStart, onEnd }]. Any later play, stop or

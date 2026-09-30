@@ -3514,6 +3514,29 @@ test('a queued clip starts when the one before it ends, and a new clip or stop c
   assert.deepEqual(played, ['./audio/en/a.mp3', './audio/en/c.mp3'], 'the cut-off clip never reaches its follower');
 });
 
+test('rejected clips do not discard queued words or suppress sequence completion', async () => {
+  const played = [];
+  const unavailable = [];
+  const audio = {
+    src: '', pause() {}, load() {},
+    play() {
+      played.push(this.src);
+      return Promise.reject(new Error('playback denied'));
+    },
+  };
+  const player = createSpeechPlayer(audio, () => unavailable.push(true));
+  let completed = false;
+  player.playSequence([
+    { audioId: 'reaction-praise-1', language: 'en' },
+    { audioId: 'word-animals-cat', language: 'en', onEnd: () => { completed = true; } },
+  ]);
+  await Promise.resolve();
+  await Promise.resolve();
+  assert.deepEqual(played, ['./audio/en/reaction-praise-1.mp3', './audio/en/word-animals-cat.mp3']);
+  assert.equal(completed, true, 'a rejected final word still completes the sequence');
+  assert.equal(unavailable.length, 2, 'each unavailable clip is reported');
+});
+
 test('a clip that never ends does not hold up the clips behind it', () => {
   const timers = [];
   const realSetTimeout = global.setTimeout;
