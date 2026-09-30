@@ -177,9 +177,9 @@ def selected_clips(prompts, languages, clip_ids, overwrite):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate bundled Gemini TTS prompt and reaction clips in English, Taiwan Mandarin, and Japanese.")
+    parser = argparse.ArgumentParser(description="Generate bundled Gemini TTS prompt, reaction, and word clips in English, Taiwan Mandarin, and Japanese.")
     parser.add_argument("--overwrite", action="store_true", help="Regenerate selected existing clips")
-    parser.add_argument("--clip", action="append", help="Generate only this prompt or reaction ID (repeatable)")
+    parser.add_argument("--clip", action="append", help="Generate only this prompt, reaction, or word ID (repeatable)")
     parser.add_argument("--language", action="append", choices=LANGUAGES, help="Limit generation to this language (repeatable)")
     parser.add_argument("--confirm", action="store_true", help="Authorize paid API requests")
     args = parser.parse_args()
