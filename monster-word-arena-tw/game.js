@@ -34,6 +34,49 @@
     { id: 'hands', zh: '手', en: 'hands', ja: 'おてて', icon: '👐', image: './images/face-hands.webp' },
     { id: 'feet', zh: '腳', en: 'feet', ja: 'あし', icon: '🦶', image: './images/face-feet.webp' },
   ];
+  // The face topic's picture questions: one whole character (face and body) showing every part in FACE_PARTS, with no
+  // labels. The child hears a part's name and taps it on the picture. A part is one or more tap regions (a pair, like
+  // the two eyes, has two and either counts); each region is an ellipse [centreX, centreY, radiusX, radiusY] given as
+  // fractions of the picture's width and height, deliberately bigger than the part itself so small fingers can land it.
+  const FACE_DIAGRAM = {
+    image: './images/face-body.webp',
+    width: 700,
+    height: 960,
+    // Fewest CSS pixels a region is ever allowed to reach from its centre, however small the picture is shown.
+    minRadiusPx: 24,
+    parts: {
+      hair: { regions: [[0.4925, 0.1424, 0.3541, 0.133]] },
+      eyes: { regions: [[0.3691, 0.313, 0.0912, 0.0626], [0.632, 0.3067, 0.0912, 0.0626]] },
+      nose: { regions: [[0.5032, 0.3443, 0.0745, 0.045]] },
+      mouth: { regions: [[0.5011, 0.41, 0.1341, 0.0626]] },
+      // The teeth are a thin strip inside the mouth; their smaller minimum keeps the region distinct at small sizes.
+      tooth: { regions: [[0.5011, 0.39, 0.118, 0.0297]], minRadiusPx: 12 },
+      ears: { regions: [[0.2049, 0.3498, 0.0912, 0.0704], [0.7929, 0.3419, 0.0912, 0.0704]] },
+      hands: { regions: [[0.0955, 0.5689, 0.118, 0.0861], [0.9056, 0.5689, 0.118, 0.0861]] },
+      feet: { regions: [[0.3423, 0.9249, 0.1288, 0.0665], [0.6588, 0.9288, 0.1288, 0.0626]] },
+    },
+    // Teeth are part of the mouth: tapping them when asked for the mouth is right. Asked for a tooth, the mouth is not.
+    alsoAccepted: { mouth: ['tooth'] },
+  };
+
+  // Which part a tap lands on, or null when it lands on no part (the clothes, the empty background). x and y are
+  // fractions of the picture; size ({ width, height } in CSS pixels) lets a small picture keep every region at least
+  // minRadiusPx wide. Where regions overlap, the nearest normalized region wins.
+  function diagramPartAt(x, y, size = null) {
+    let best = null;
+    Object.entries(FACE_DIAGRAM.parts).forEach(([id, part]) => {
+      const minRadius = part.minRadiusPx || FACE_DIAGRAM.minRadiusPx;
+      const minX = size ? minRadius / size.width : 0;
+      const minY = size ? minRadius / size.height : 0;
+      part.regions.forEach(([cx, cy, rx, ry]) => {
+        const distance = Math.hypot((x - cx) / Math.max(rx, minX), (y - cy) / Math.max(ry, minY));
+        if (distance > 1) return;
+        if (!best || distance < best.distance) best = { id, distance };
+      });
+    });
+    return best ? best.id : null;
+  }
+
   const FAMILY = [
     { id: 'dad', zh: '爸爸', en: 'Dad', ja: 'おとうさん', icon: '👨', image: './images/family-dad.webp' },
     { id: 'mom', zh: '媽媽', en: 'Mom', ja: 'おかあさん', icon: '👩', image: './images/family-mom.webp' },
@@ -269,11 +312,23 @@
 
   // The prompt is written above the choices, and the answer's picture only ever appears on a choice: Easy and
   // Harder show pictures alone (the word is in the question), Super adds the word back because the question is heard.
+  // A question on the character: every part is a choice (the tap regions), the same prompt and narration as the
+  // icon question, and the right answer is the named part (plus any part that counts as inside it).
+  function diagramQuestion(question, target, words) {
+    return {
+      ...question,
+      format: 'diagram',
+      acceptedIds: [target.id, ...(FACE_DIAGRAM.alsoAccepted[target.id] || [])],
+      wordLabels: false,
+      options: words.map(({ promptEn: _prompt, ...option }) => option),
+    };
+  }
+
   function wordQuestion(topic, level, random, previousKey) {
     const { words, promptZh, promptEn, promptJa } = WORD_TOPICS[topic];
     const target = pickFresh(words, random, previousKey, word => `${topic}-${word.id}`);
     const others = shuffled(words.filter(word => word !== target), random).slice(0, CHOICE_COUNT[level] - 1);
-    return {
+    const question = {
       topic,
       key: `${topic}-${target.id}`,
       audioId: `${topic}-${target.id}`,
@@ -286,6 +341,8 @@
       answerId: target.id,
       options: shuffled([target, ...others], random).map(({ promptEn: _prompt, ...option }) => option),
     };
+    if (topic !== 'face') return question;
+    return diagramQuestion(question, target, words);
   }
 
   function questionFor(topic, level, random, previousKey, recentOps) {
@@ -298,7 +355,8 @@
   const OPEN_QUESTION = { solved: false, missed: false, missedChoice: '', starLost: false, heartLost: false, feedback: '' };
 
   function createGame(random = Math.random) {
-    // The next question, plus the run of recent operations it extends (math only) so plus and minus keep taking turns.
+    // The next question, plus the run of recent kinds it extends so plus and minus (math operations) and the face
+    // topic's picture and icon questions keep taking turns.
     function drawQuestion(topic, level, previousKey, recentOps = []) {
       const question = questionFor(topic, level, random, previousKey, recentOps);
       return { question, recentOps: question.op ? [...recentOps, question.op].slice(-2) : [] };
@@ -366,7 +424,7 @@
     function answer(optionId) {
       if (over() || state.solved || state.missed) return 'ignored';
       if (!state.question.options.some(option => option.id === String(optionId))) return 'ignored';
-      if (String(optionId) !== state.question.answerId) {
+      if (!(state.question.acceptedIds || [state.question.answerId]).includes(String(optionId))) {
         const stars = Math.max(0, state.stars - 1);
         const hearts = Math.max(0, state.hearts - 1);
         const lost = hearts === 0;
@@ -449,7 +507,7 @@
     return { play, stop };
   }
 
-  const api = { GOAL_BY_LEVEL, HEARTS_BY_LEVEL, CHOICE_COUNT, TOPICS, LEVELS, WORD_TOPICS, REACTIONS, createGame, createSpeechPlayer };
+  const api = { GOAL_BY_LEVEL, HEARTS_BY_LEVEL, CHOICE_COUNT, TOPICS, LEVELS, WORD_TOPICS, REACTIONS, FACE_DIAGRAM, diagramPartAt, createGame, createSpeechPlayer };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof window !== 'undefined') window.FriendlyArena = api;
 })();

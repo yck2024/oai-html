@@ -22,6 +22,12 @@
     if (key) sounds.play('chime');
   }
   const answerOptions = document.querySelector('#answerOptions');
+  const faceDiagram = document.querySelector('#faceDiagram');
+  const diagramStage = document.querySelector('#diagramStage');
+  const diagramArt = document.querySelector('#diagramArt');
+  const diagramMarks = document.querySelector('#diagramMarks');
+  const diagramSpots = document.querySelector('#diagramSpots');
+  const diagramWord = document.querySelector('#diagramWord');
   const questionPrompt = document.querySelector('#questionPrompt');
   const questionWord = document.querySelector('#questionWord');
   const questionPicture = document.querySelector('#questionPicture');
@@ -405,13 +411,96 @@
     missTimer = null;
   }
 
+  // Every button that can answer the current question: the picture choices, or the character's part buttons.
+  function choiceButtons() {
+    return [...answerOptions.children, ...diagramSpots.children];
+  }
+
+  // The question is asked on the picture of the character, unless that picture could not load (then the same
+  // parts are offered as picture choices, so the question stays playable).
+  let diagramFailed = false;
+  diagramArt.addEventListener('error', () => {
+    diagramFailed = true;
+    renderQuestion(game.getState(), { speak: false });
+  });
+
+  // A picture that already failed before this script ran never fires an error event again.
+  if (diagramArt.complete && diagramArt.naturalWidth === 0) diagramFailed = true;
+
+  function usesDiagram(question) {
+    return question.format === 'diagram' && !diagramFailed;
+  }
+
   function markMiss(state) {
-    [...answerOptions.children].forEach(choice => {
+    choiceButtons().forEach(choice => {
       choice.disabled = true;
       choice.classList.toggle('right-answer', choice.dataset.choice === state.question.answerId);
       choice.classList.toggle('wrong-answer', choice.dataset.choice === state.missedChoice);
     });
+    markDiagram(state);
   }
+
+  // One ring per tap region of a part, sized from the region so it sits on the part it marks.
+  function diagramRing(region, className) {
+    const [cx, cy, rx, ry] = region;
+    const ring = document.createElement('span');
+    ring.className = `diagram-ring ${className}`;
+    ring.style.left = `${(cx - rx) * 100}%`;
+    ring.style.top = `${(cy - ry) * 100}%`;
+    ring.style.width = `${rx * 200}%`;
+    ring.style.height = `${ry * 200}%`;
+    return ring;
+  }
+
+  // After an answer the right part is ringed and named; a wrong tap also rings the part that was tapped.
+  function markDiagram(state) {
+    const question = state.question;
+    if (!usesDiagram(question)) return;
+    const { parts } = window.FriendlyArena.FACE_DIAGRAM;
+    const rings = [];
+    if (state.missed && parts[state.missedChoice]) rings.push(...parts[state.missedChoice].regions.map(region => diagramRing(region, 'wrong-ring')));
+    if (state.solved || state.missed) rings.push(...parts[question.answerId].regions.map(region => diagramRing(region, 'right-ring')));
+    diagramMarks.replaceChildren(...rings);
+    const target = currentTarget(question);
+    diagramWord.textContent = (state.solved || state.missed) && target ? target[textLanguage] : '';
+    diagramWord.hidden = !diagramWord.textContent;
+  }
+
+  // One button per part for keyboards and screen readers. Pointers tap the picture itself and are matched to the
+  // nearest generous region (see diagramPartAt), so these buttons never take a tap away from a neighbouring part.
+  function makeDiagramSpots(question) {
+    const { parts } = window.FriendlyArena.FACE_DIAGRAM;
+    return question.options.map(option => {
+      const [cx, cy, rx, ry] = parts[option.id].regions[0];
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'diagram-spot';
+      button.dataset.choice = option.id;
+      button.style.left = `${(cx - rx) * 100}%`;
+      button.style.top = `${(cy - ry) * 100}%`;
+      button.style.width = `${rx * 200}%`;
+      button.style.height = `${ry * 200}%`;
+      button.setAttribute('aria-label', option[textLanguage]);
+      button.addEventListener('click', () => chooseAnswer(button, option.id));
+      return button;
+    });
+  }
+
+  function tapDiagram(event) {
+    // A keyboard or screen reader activates a part's own button (which answers for itself); a finger or mouse
+    // lands on the picture.
+    if (event.target?.dataset?.choice) return;
+    const box = diagramStage.getBoundingClientRect();
+    if (!box.width || !box.height) return;
+    const part = window.FriendlyArena.diagramPartAt(
+      (event.clientX - box.left) / box.width,
+      (event.clientY - box.top) / box.height,
+      { width: box.width, height: box.height },
+    );
+    // A tap that lands on no part (the clothes, the empty background) is not an answer and costs nothing.
+    if (part) chooseAnswer(null, part);
+  }
+  diagramStage.addEventListener('click', tapDiagram);
 
   // What a wrong tap cost, in words: the heart (and star) that went, then how many hearts remain.
   function missFeedback(state) {
@@ -449,12 +538,23 @@
 
     equation.textContent = question.display;
     equation.hidden = !question.display;
-    answerOptions.replaceChildren(...question.options.map(option => makeAnswerButton(option, question)));
+    const onDiagram = usesDiagram(question);
+    faceDiagram.hidden = !onDiagram;
+    answerOptions.hidden = onDiagram;
+    diagramMarks.replaceChildren();
+    diagramWord.hidden = true;
+    diagramSpots.replaceChildren(...(onDiagram ? makeDiagramSpots(question) : []));
+    faceDiagram.setAttribute('aria-label', I18N.STRINGS.diagramGroupLabel[textLanguage]);
+    document.querySelector('#answerHint').textContent = (onDiagram ? I18N.STRINGS.diagramHint : I18N.STRINGS.answerHint)[textLanguage];
+    answerOptions.replaceChildren(...(onDiagram ? [] : question.options.map(option => makeAnswerButton(option, question))));
     answerOptions.classList.toggle('four-choices', question.options.length === 4);
     const groupLabel = question.topic === 'math' ? 'answerGroupLabelNumber' : question.wordLabels ? 'answerGroupLabelWord' : 'answerGroupLabelPicture';
     answerOptions.setAttribute('aria-label', I18N.STRINGS[groupLabel][textLanguage]);
     if (state.missed) markMiss(state);
-    else cancelMissTimer();
+    else {
+      cancelMissTimer();
+      markDiagram(state);
+    }
     feedback.textContent = state.missed ? missFeedback(state) : I18N.STRINGS.feedbackDefault[textLanguage];
     feedback.classList.toggle('retry', state.missed);
     nextButton.hidden = !state.solved || state.finished;
@@ -490,7 +590,7 @@
     const state = game.getState();
     if (result === 'ignored') return;
     sounds.play('tap');
-    answerOptions.querySelectorAll('button').forEach(choice => choice.classList.remove('wrong-answer', 'right-answer'));
+    choiceButtons().forEach(choice => choice.classList.remove('wrong-answer', 'right-answer'));
 
     if (result === 'missed' || result === 'lost') {
       markMiss(state);
@@ -519,9 +619,10 @@
     const nudge = state.finished && breakPacer.recordWin();
     const capReaction = reward?.capped ? `cap-${reward.advice}` : null;
     playReaction(capReaction || (nudge ? 'break-prompt' : state.finished ? 'finish' : 'praise'));
-    button.classList.add('right-answer');
+    button?.classList.add('right-answer');
     sounds.play('sparkle', { delay: 0.03 });
-    answerOptions.querySelectorAll('button').forEach(choice => { choice.disabled = true; });
+    choiceButtons().forEach(choice => { choice.disabled = true; });
+    markDiagram(state);
     feedback.textContent = I18N.STRINGS.feedbackCorrect[textLanguage];
     feedback.classList.remove('retry');
     renderScore(state);
@@ -1007,7 +1108,7 @@
     stage.settle();
     arenaMessage.textContent = I18N.STRINGS.yourTurnMessage[textLanguage];
     renderQuestion(game.getState());
-    answerOptions.querySelector('button')?.focus();
+    choiceButtons()[0]?.focus();
     setPointer('answer');
   }
 
@@ -1044,7 +1145,7 @@
     arenaMessage.textContent = I18N.STRINGS.readyMessage[textLanguage];
     renderChampion(state);
     renderQuestion(state, { speak: speechEnabled });
-    answerOptions.querySelector('button')?.focus();
+    choiceButtons()[0]?.focus();
     breakPrompt.hidden = true;
     goodbyePanel.hidden = true;
     playAgainButton.hidden = false;

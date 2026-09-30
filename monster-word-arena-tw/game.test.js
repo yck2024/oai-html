@@ -6,7 +6,7 @@ const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 const test = require('node:test');
 const vm = require('node:vm');
-const { GOAL_BY_LEVEL, HEARTS_BY_LEVEL, CHOICE_COUNT, TOPICS, LEVELS, WORD_TOPICS, REACTIONS, createGame, createSpeechPlayer } = require('./game.js');
+const { GOAL_BY_LEVEL, HEARTS_BY_LEVEL, CHOICE_COUNT, TOPICS, LEVELS, WORD_TOPICS, REACTIONS, FACE_DIAGRAM, diagramPartAt, createGame, createSpeechPlayer } = require('./game.js');
 const { EFFECTS, EFFECT_LEVEL, MUSIC_LEVEL, createSoundBoard } = require('./sounds.js');
 const { POSES, ART, TIMING, comboText } = require('./arena.js');
 const { STORAGE_KEY, STICKERS, COSTUMES } = require('./rewards.js');
@@ -69,6 +69,11 @@ parser.feed(open('index.html', encoding='utf-8').read())
 print(json.dumps({'scripts': parser.sources, 'roots': parser.roots}))
 `], { cwd: __dirname, encoding: 'utf8' }));
 const PAGE_SCRIPTS = PAGE.scripts;
+
+function drawWordQuestion(game, topic) {
+  game.chooseTopic(topic);
+  return game.getState().question;
+}
 
 function answerCorrectly(game) {
   const state = game.getState();
@@ -280,9 +285,14 @@ function createClock() {
 // A wrong tap ends the question; the game shows the right choice for a moment, then loads a new question.
 const MISS_PAUSE_TICK = 4000;
 
+// Every button that can answer the question: the picture choices, or the part buttons over the character.
+function answerButtons(app) {
+  return [...app.answerOptions.children, ...app.elements.get('#diagramSpots').children];
+}
+
 function clickAnswer(app, game, correct = true) {
-  const { answerId } = game.getState().question;
-  app.answerOptions.children.find(button => (button.dataset.choice === answerId) === correct).click();
+  const { answerId, acceptedIds = [answerId] } = game.getState().question;
+  answerButtons(app).find(button => (button.dataset.choice === answerId) === correct && (correct || !acceptedIds.includes(button.dataset.choice))).click();
 }
 
 class FakeParam {
@@ -616,12 +626,11 @@ test('a word question never shows its answer\'s picture, and only Super adds wor
     for (const level of LEVELS) {
       game.chooseLevel(level);
       for (const topic of WORD_TOPIC_IDS) {
-        game.chooseTopic(topic);
-        const question = game.getState().question;
+        const question = drawWordQuestion(game, topic);
         assert.equal(question.picture, '', `${level} ${topic} shows no picture with the question`);
         assert.equal(question.pictureImage, undefined);
         assert.equal(question.pictureSwatch, undefined);
-        assert.equal(question.wordLabels, level === 'super', `${level} ${topic} labels its choices only at super`);
+        assert.equal(question.wordLabels, topic === 'face' ? false : level === 'super', `${level} ${topic} labels its choices correctly`);
         assert.ok(question.options.every(option => option.icon || option.swatch), 'every choice has a picture or swatch to show');
       }
     }
@@ -651,6 +660,7 @@ test('every picture word has bundled original art sized for a phone page', () =>
     ...pictureWords.map(({ word }) => path.basename(word.image)),
     ...ART.map(file => path.basename(file)),
     ...[...STICKERS, ...COSTUMES].map(item => path.basename(item.image)),
+    path.basename(FACE_DIAGRAM.image),
   ].sort();
   assert.deepEqual(committed, expectedImages, 'all word, arena, sticker, and costume art has a game consumer');
 });
@@ -669,7 +679,7 @@ test('each correct answer knocks one pip off the sparring buddy', () => {
 
 function wrongOption(game) {
   const { question } = game.getState();
-  return question.options.find(option => option.id !== question.answerId);
+  return question.options.find(option => !(question.acceptedIds || [question.answerId]).includes(option.id));
 }
 
 test('a wrong answer ends the question, takes a heart and a star back (never below zero), and a fresh question follows', () => {
@@ -1046,7 +1056,7 @@ test('a miss at every level ends its question and is safe for each topic', () =>
       const before = game.getState();
       clickAnswer(app, game, false);
       assert.equal(game.getState().stars, before.stars - 1, `${level} ${topic}: the miss takes one star`);
-      assert.ok(app.answerOptions.children.some(button => button.classList.contains('right-answer')));
+      assert.ok(answerButtons(app).some(button => button.classList.contains('right-answer')));
       app.clock.tick(MISS_PAUSE_TICK);
       assert.notEqual(game.getState().question.key, before.question.key);
     }
@@ -1553,7 +1563,7 @@ test('word choices are picture-only where the question shows the word, keep an a
   const game = createGame(steadyRandom);
   const app = createAppFixture(game);
   const questionPicture = app.elements.get('#questionPicture');
-  app.topicTabs.find(tab => tab.dataset.topic === 'face').click();
+  app.topicTabs.find(tab => tab.dataset.topic === 'family').click();
 
   const { question } = game.getState();
   assert.equal(questionPicture.hidden, true, 'the easy question shows no picture, only the written prompt');
@@ -1591,6 +1601,12 @@ test('picture-only choices apply at easy and harder for every word topic, and su
     for (const topic of WORD_TOPIC_IDS) {
       app.topicTabs.find(tab => tab.dataset.topic === topic).click();
       const { question } = game.getState();
+      if (topic === 'face') {
+        assert.equal(question.format, 'diagram', `${level} face uses the character diagram`);
+        assert.equal(app.elements.get('#faceDiagram').hidden, false);
+        assert.equal(app.answerOptions.children.length, 0);
+        continue;
+      }
       for (const button of app.answerOptions.children) {
         const option = question.options.find(choice => choice.id === button.dataset.choice);
         const word = topic === 'colors' && level === 'super' ? option.en.toLowerCase() : option.en;
@@ -1764,7 +1780,8 @@ test('word questions offer three choices on easy, four on harder and super, all 
       const targets = new Set();
       for (let draw = 0; draw < 60; draw += 1) {
         const question = game.getState().question;
-        assert.equal(question.options.length, CHOICE_COUNT[level]);
+        // A picture of the character offers every part at once; the choices are its tap regions.
+        assert.equal(question.options.length, question.format === 'diagram' ? WORD_TOPICS[topic].words.length : CHOICE_COUNT[level]);
         assert.equal(new Set(question.options.map(option => option.id)).size, question.options.length);
         assert.ok(question.options.some(option => option.id === question.answerId));
         targets.add(question.answerId);
@@ -3020,4 +3037,134 @@ test('effects and music duck under narration without touching the speech clip', 
   assert.match(speech.src, /\/en\/reaction-try-again-1\.mp3$/, 'a miss effect never replaces the try-again reaction clip');
   speech.dispatch('ended');
   assert.equal(app.sound.board.getState().speaking, false);
+});
+
+// ---- Face topic: the picture of the character ----
+
+// A face game whose current question is a picture of the character asking for `target`.
+function diagramGame(target, level = 'easy') {
+  for (let seed = 1; seed < 400; seed += 1) {
+    const game = createGame(seededRandom(seed));
+    game.chooseLevel(level);
+    game.chooseTopic('face');
+    for (let draw = 0; draw < 12; draw += 1) {
+      const { question } = game.getState();
+      if (question.format === 'diagram' && question.answerId === target) return game;
+      game.chooseTopic('face');
+    }
+  }
+  throw new Error(`no picture question for ${target}`);
+}
+
+// The centre of a part's first tap region, as fractions of the picture.
+function centreOf(part, index = 0) {
+  const [cx, cy] = FACE_DIAGRAM.parts[part].regions[index];
+  return [cx, cy];
+}
+
+test('every face question at every level uses the character diagram', () => {
+  for (const level of LEVELS) {
+    const game = createGame(seededRandom(5));
+    game.chooseLevel(level);
+    game.chooseTopic('face');
+    for (let draw = 0; draw < GOAL_BY_LEVEL[level]; draw += 1) {
+      assert.equal(game.getState().question.format, 'diagram', `${level} question ${draw + 1}`);
+      assert.equal(game.answer(game.getState().question.answerId), draw + 1 === GOAL_BY_LEVEL[level] ? 'finished' : 'correct');
+      if (draw + 1 < GOAL_BY_LEVEL[level]) game.nextQuestion();
+    }
+  }
+  const other = createGame(seededRandom(5));
+  other.chooseTopic('colors');
+  assert.equal(other.getState().question.format, undefined, 'only the face topic has a picture of the character');
+});
+
+test('a failed diagram image falls back to picture choices for the face question', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  app.topicTabs.find(tab => tab.dataset.topic === 'face').click();
+  assert.equal(app.elements.get('#faceDiagram').hidden, false);
+
+  app.elements.get('#diagramArt').dispatch('error');
+
+  assert.equal(app.elements.get('#faceDiagram').hidden, true);
+  assert.equal(app.answerOptions.hidden, false);
+  assert.equal(app.answerOptions.children.length, WORD_TOPICS.face.words.length);
+  assert.equal(game.getState().question.format, 'diagram', 'the fallback is a rendering path, not an alternating question format');
+});
+
+test('a picture question offers every body part as a tap region and shows no label with the question', () => {
+  for (const level of LEVELS) {
+    const question = diagramGame('eyes', level).getState().question;
+    assert.deepEqual(question.options.map(option => option.id).sort(), WORD_TOPICS.face.words.map(word => word.id).sort());
+    assert.equal(question.wordLabels, false, 'no word is written on the picture during the question');
+    assert.deepEqual(Object.keys(FACE_DIAGRAM.parts).sort(), WORD_TOPICS.face.words.map(word => word.id).sort(), 'every part has a region');
+  }
+});
+
+test('tapping the named part on the picture is right; a wrong part costs a heart and a star like any wrong answer', () => {
+  const right = diagramGame('nose');
+  assert.equal(right.answer(diagramPartAt(...centreOf('nose'))), 'correct');
+  assert.equal(right.getState().stars, 1);
+  assert.equal(right.getState().hearts, HEARTS_BY_LEVEL.easy);
+
+  const miss = diagramGame('nose');
+  miss.answer(diagramPartAt(...centreOf('feet')));
+  const state = miss.getState();
+  assert.equal(state.missed, true);
+  assert.equal(state.missedChoice, 'feet');
+  assert.equal(state.hearts, HEARTS_BY_LEVEL.easy - 1);
+  assert.equal(state.heartLost, true);
+  assert.equal(miss.answer('nose'), 'ignored', 'the ended question cannot be answered again');
+});
+
+test('a wrong tap on the picture at the last heart loses the match', () => {
+  const game = diagramGame('hair', 'easy');
+  const wrongPart = () => wrongOption(game).id;
+  for (let heart = 0; heart < HEARTS_BY_LEVEL.easy - 1; heart += 1) {
+    assert.equal(game.answer(wrongPart()), 'missed');
+    game.nextQuestion();
+  }
+  assert.equal(game.getState().hearts, 1);
+  assert.equal(game.answer(wrongPart()), 'lost');
+  assert.equal(game.getState().hearts, 0);
+  assert.equal(game.getState().lost, true);
+});
+
+test('paired parts: either eye, ear, hand or foot counts as the part', () => {
+  for (const part of ['eyes', 'ears', 'hands', 'feet']) {
+    const { regions } = FACE_DIAGRAM.parts[part];
+    assert.equal(regions.length, 2, `${part} come in a pair`);
+    regions.forEach(([cx, cy], index) => {
+      assert.equal(diagramPartAt(cx, cy), part, `${part}: region ${index + 1} is the part`);
+      const game = diagramGame(part);
+      assert.equal(game.answer(diagramPartAt(cx, cy)), 'correct', `${part}: region ${index + 1} answers right`);
+    });
+  }
+  ['hair', 'nose', 'mouth', 'tooth'].forEach(part => assert.equal(FACE_DIAGRAM.parts[part].regions.length, 1, `${part} is a single part`));
+});
+
+test('a tap that lands on no part is not an answer, and a small picture keeps every region finger-sized', () => {
+  assert.equal(diagramPartAt(0.5, 0.65), null, 'the clothes');
+  assert.equal(diagramPartAt(0.02, 0.02), null, 'the empty background');
+  // Shown small, a region grows to the minimum radius around its centre, never past it.
+  const [cx, cy] = centreOf('nose');
+  const small = { width: 190, height: 260 };
+  const noseWidth = FACE_DIAGRAM.parts.nose.regions[0][2] * small.width;
+  assert.ok(noseWidth < FACE_DIAGRAM.minRadiusPx, 'the nose region alone would be too small for a finger at this size');
+  assert.equal(diagramPartAt(cx, cy, small), 'nose', 'the nose centre stays the nose despite the overlapping tooth hit region');
+  assert.equal(diagramPartAt(...centreOf('tooth'), small), 'tooth', 'the tooth centre stays the tooth at this size');
+  assert.equal(diagramPartAt(0.5011, 0.43, small), 'mouth', 'the mouth remains distinct below the teeth');
+  assert.equal(diagramPartAt(cx + 10 / small.width, cy - 4 / small.height, small), 'nose', 'a tap beyond the drawn region still counts, up to the minimum');
+  assert.notEqual(diagramPartAt(cx + 60 / small.width, cy, small), 'nose', 'well outside the nose it is not the nose');
+});
+
+test('the teeth count as the mouth, but the mouth is not a tooth', () => {
+  const mouth = diagramGame('mouth');
+  assert.deepEqual(mouth.getState().question.acceptedIds, ['mouth', 'tooth']);
+  assert.equal(mouth.answer('tooth'), 'correct', 'tapping the teeth when asked for the mouth is right');
+  const tooth = diagramGame('tooth');
+  assert.deepEqual(tooth.getState().question.acceptedIds, ['tooth']);
+  assert.equal(tooth.answer('mouth'), 'missed', 'asked for a tooth, the mouth is not');
+  assert.equal(diagramPartAt(...centreOf('tooth')), 'tooth', 'the nearest overlapping region is the teeth');
+  assert.equal(diagramPartAt(0.5011, 0.43), 'mouth');
 });
