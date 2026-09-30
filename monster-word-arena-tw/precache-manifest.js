@@ -66,6 +66,7 @@
     "images/fruit-pineapple.webp",
     "images/fruit-strawberry.webp",
     "images/fruit-watermelon.webp",
+    "images/scene-farm.webp",
     "images/sticker-balloon.webp",
     "images/sticker-bubbles.webp",
     "images/sticker-cupcake.webp",

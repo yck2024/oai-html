@@ -6,7 +6,7 @@ const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 const test = require('node:test');
 const vm = require('node:vm');
-const { GOAL_BY_LEVEL, HEARTS_BY_LEVEL, CHOICE_COUNT, TOPICS, LEVELS, WORD_TOPICS, REACTIONS, FACE_DIAGRAM, FACE_LEVEL_IDS, diagramPartAt, createGame, createSpeechPlayer } = require('./game.js');
+const { GOAL_BY_LEVEL, HEARTS_BY_LEVEL, CHOICE_COUNT, TOPICS, LEVELS, WORD_TOPICS, REACTIONS, FACE_DIAGRAM, FACE_LEVEL_IDS, DIAGRAMS, diagramPartAt, createGame, createSpeechPlayer } = require('./game.js');
 const { EFFECTS, EFFECT_LEVEL, MUSIC_LEVEL, createSoundBoard } = require('./sounds.js');
 const { POSES, ART, TIMING, comboText } = require('./arena.js');
 const { STORAGE_KEY, STICKERS, COSTUMES } = require('./rewards.js');
@@ -630,7 +630,7 @@ test('a word question never shows its answer\'s picture, and only Super adds wor
         assert.equal(question.picture, '', `${level} ${topic} shows no picture with the question`);
         assert.equal(question.pictureImage, undefined);
         assert.equal(question.pictureSwatch, undefined);
-        assert.equal(question.wordLabels, topic === 'face' ? false : level === 'super', `${level} ${topic} labels its choices correctly`);
+        assert.equal(question.wordLabels, DIAGRAMS[topic] ? false : level === 'super', `${level} ${topic} labels its choices correctly`);
         assert.ok(question.options.every(option => option.icon || option.swatch), 'every choice has a picture or swatch to show');
       }
     }
@@ -660,7 +660,7 @@ test('every picture word has bundled original art sized for a phone page', () =>
     ...pictureWords.map(({ word }) => path.basename(word.image)),
     ...ART.map(file => path.basename(file)),
     ...[...STICKERS, ...COSTUMES].map(item => path.basename(item.image)),
-    path.basename(FACE_DIAGRAM.image),
+    ...Object.values(DIAGRAMS).map(diagram => path.basename(diagram.image)),
   ].sort();
   assert.deepEqual(committed, expectedImages, 'all word, arena, sticker, and costume art has a game consumer');
 });
@@ -1604,8 +1604,8 @@ test('picture-only choices apply at easy and harder for every word topic, and su
     for (const topic of WORD_TOPIC_IDS) {
       app.topicTabs.find(tab => tab.dataset.topic === topic).click();
       const { question } = game.getState();
-      if (topic === 'face') {
-        assert.equal(question.format, 'diagram', `${level} face uses the character diagram`);
+      if (DIAGRAMS[topic]) {
+        assert.equal(question.format, 'diagram', `${level} ${topic} uses its picture`);
         assert.equal(app.elements.get('#faceDiagram').hidden, false);
         assert.equal(app.answerOptions.children.length, 0);
         continue;
@@ -1784,7 +1784,7 @@ test('word questions offer three choices on easy, four on harder and super, all 
       for (let draw = 0; draw < 60; draw += 1) {
         const question = game.getState().question;
         // A picture of the character offers the level's parts at once; the choices are its tap regions.
-        assert.equal(question.options.length, question.format === 'diagram' ? FACE_LEVEL_IDS[level].length : CHOICE_COUNT[level]);
+        assert.equal(question.options.length, topic === 'face' ? FACE_LEVEL_IDS[level].length : topic === 'animals' ? WORD_TOPICS.animals.words.length : CHOICE_COUNT[level]);
         assert.equal(new Set(question.options.map(option => option.id)).size, question.options.length);
         assert.ok(question.options.some(option => option.id === question.answerId));
         targets.add(question.answerId);
@@ -3148,18 +3148,18 @@ test('paired parts: either eye, ear, hand or foot counts as the part', () => {
 });
 
 test('a tap that lands on no part is not an answer, and a small picture keeps every region finger-sized', () => {
-  assert.equal(diagramPartAt(0.5, 0.65, null, FACE_LEVEL_IDS.easy), null, 'the clothes, while no part of the body is asked about there');
+  assert.equal(diagramPartAt(0.5, 0.65, null, 'face', FACE_LEVEL_IDS.easy), null, 'the clothes, while no part of the body is asked about there');
   assert.equal(diagramPartAt(0.02, 0.02), null, 'the empty background');
   // Shown small, a region grows to the minimum radius around its centre, never past it.
   const [cx, cy] = centreOf('nose');
   const small = { width: 190, height: 260 };
   const noseWidth = FACE_DIAGRAM.parts.nose.regions[0][2] * small.width;
   assert.ok(noseWidth < FACE_DIAGRAM.minRadiusPx, 'the nose region alone would be too small for a finger at this size');
-  assert.equal(diagramPartAt(cx, cy, small, FACE_LEVEL_IDS.easy), 'nose', 'the nose centre stays the nose despite the overlapping tooth hit region');
-  assert.equal(diagramPartAt(...centreOf('tooth'), small, FACE_LEVEL_IDS.easy), 'tooth', 'the tooth centre stays the tooth at this size');
-  assert.equal(diagramPartAt(0.5011, 0.43, small, FACE_LEVEL_IDS.easy), 'mouth', 'the mouth remains distinct below the teeth');
-  assert.equal(diagramPartAt(cx + 10 / small.width, cy - 4 / small.height, small, FACE_LEVEL_IDS.easy), 'nose', 'a tap beyond the drawn region still counts, up to the minimum');
-  assert.notEqual(diagramPartAt(cx + 60 / small.width, cy, small, FACE_LEVEL_IDS.easy), 'nose', 'well outside the nose it is not the nose');
+  assert.equal(diagramPartAt(cx, cy, small, 'face', FACE_LEVEL_IDS.easy), 'nose', 'the nose centre stays the nose despite the overlapping tooth hit region');
+  assert.equal(diagramPartAt(...centreOf('tooth'), small, 'face', FACE_LEVEL_IDS.easy), 'tooth', 'the tooth centre stays the tooth at this size');
+  assert.equal(diagramPartAt(0.5011, 0.43, small, 'face', FACE_LEVEL_IDS.easy), 'mouth', 'the mouth remains distinct below the teeth');
+  assert.equal(diagramPartAt(cx + 10 / small.width, cy - 4 / small.height, small, 'face', FACE_LEVEL_IDS.easy), 'nose', 'a tap beyond the drawn region still counts, up to the minimum');
+  assert.notEqual(diagramPartAt(cx + 60 / small.width, cy, small, 'face', FACE_LEVEL_IDS.easy), 'nose', 'well outside the nose it is not the nose');
 });
 
 test('the teeth count as the mouth, but the mouth is not a tooth', () => {
@@ -3171,6 +3171,256 @@ test('the teeth count as the mouth, but the mouth is not a tooth', () => {
   assert.equal(tooth.answer('mouth'), 'missed', 'asked for a tooth, the mouth is not');
   assert.equal(diagramPartAt(...centreOf('tooth')), 'tooth', 'the nearest overlapping region is the teeth');
   assert.equal(diagramPartAt(0.5011, 0.43), 'mouth');
+});
+
+// ---- Animals topic: the farm scene ----
+
+const FARM = DIAGRAMS.animals;
+const ANIMAL_IDS = WORD_TOPICS.animals.words.map(word => word.id);
+
+// An animals game whose current question is the farm picture asking for `target`.
+function sceneGame(target, level = 'easy') {
+  for (let seed = 1; seed < 400; seed += 1) {
+    const game = createGame(seededRandom(seed));
+    game.chooseLevel(level);
+    game.chooseTopic('animals');
+    for (let draw = 0; draw < 12; draw += 1) {
+      if (game.getState().question.answerId === target) return game;
+      game.chooseTopic('animals');
+    }
+  }
+  throw new Error(`no farm question for ${target}`);
+}
+
+function animalCentre(animal) {
+  const [cx, cy] = FARM.parts[animal].regions[0];
+  return [cx, cy];
+}
+
+// A page on the animals topic whose scene is drawn 400 CSS pixels square, so a tap can be aimed at a fraction of it.
+function sceneApp(size = 400) {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  app.startButton.click();
+  const stage = app.elements.get('#diagramStage');
+  stage.getBoundingClientRect = () => ({ left: 0, top: 0, width: size, height: size });
+  app.topicTabs.find(tab => tab.dataset.topic === 'animals').click();
+  return {
+    game,
+    app,
+    stage,
+    marks: () => app.elements.get('#diagramMarks').children,
+    tap: (x, y) => stage.dispatch('click', { clientX: x * size, clientY: y * size }),
+  };
+}
+
+test('the farm layout table places each of the eight animals inside the picture, and the icons are the ones the topic uses', () => {
+  assert.equal(FARM.image, './images/scene-farm.webp');
+  assert.ok(fs.existsSync(path.join(__dirname, FARM.image)), 'the farm background is committed');
+  assert.deepEqual(FARM.items.map(item => item.id).sort(), [...ANIMAL_IDS].sort(), 'each animal is placed exactly once');
+  assert.deepEqual(Object.keys(FARM.parts).sort(), [...ANIMAL_IDS].sort(), 'each animal has a tap region');
+  const ratio = FARM.width / FARM.height;
+  for (const { id, x, y, size } of FARM.items) {
+    assert.ok(x - size / 2 >= 0 && x + size / 2 <= 1, `${id} fits across the picture`);
+    assert.ok(y - size / 2 / ratio >= 0 && y + size / 2 / ratio <= 1, `${id} fits down the picture`);
+    const [cx, cy, rx, ry] = FARM.parts[id].regions[0];
+    assert.deepEqual([cx, cy], [x, y], `${id}'s tap region is centred on its icon`);
+    assert.ok(rx >= size / 2 && ry >= size / 2 / ratio, `${id}'s tap region covers its icon`);
+  }
+});
+
+test('the farm scene keeps every animal tappable on its own, even on a small phone', () => {
+  const small = { width: 290, height: 290 };
+  for (const animal of ANIMAL_IDS) {
+    const [cx, cy] = animalCentre(animal);
+    assert.equal(diagramPartAt(cx, cy, null, 'animals'), animal, `${animal} is found by its centre`);
+    assert.equal(diagramPartAt(cx, cy, small, 'animals'), animal, `${animal} is found by its centre on a small picture`);
+    for (const other of ANIMAL_IDS.filter(id => id !== animal)) {
+      const [ox, oy, rx, ry] = FARM.parts[other].regions[0];
+      assert.ok(Math.hypot((cx - ox) / rx, (cy - oy) / ry) > 1, `${other}'s region does not swallow the centre of ${animal}`);
+    }
+    const [, , rx, ry] = FARM.parts[animal].regions[0];
+    assert.ok(Math.min(rx * small.width, ry * small.height) >= FARM.minRadiusPx * 0.75, `${animal} is a finger-sized target on a small picture`);
+  }
+});
+
+test('a tap on bare scenery is no animal, and the character keeps its own regions', () => {
+  for (const [x, y] of [[0.02, 0.02], [0.5, 0.05], [0.9, 0.3], [0.05, 0.95], [0.65, 0.95], [0.5, 0.65]]) {
+    assert.equal(diagramPartAt(x, y, null, 'animals'), null, `nothing at ${x}, ${y}`);
+  }
+  assert.equal(diagramPartAt(...centreOf('nose')), 'nose', 'the default is still the character');
+  assert.equal(diagramPartAt(...animalCentre('pig'), null, 'face'), null, 'the character has no pig');
+  assert.equal(diagramPartAt(0.5, 0.5, null, 'fruit'), null, 'a topic with no picture has no regions');
+});
+
+test('every animals question at every level is asked on the farm, with all eight animals to tap', () => {
+  for (const level of LEVELS) {
+    const game = createGame(seededRandom(9));
+    game.chooseLevel(level);
+    game.chooseTopic('animals');
+    for (let draw = 0; draw < GOAL_BY_LEVEL[level]; draw += 1) {
+      const { question } = game.getState();
+      assert.equal(question.format, 'diagram', `${level} question ${draw + 1}`);
+      assert.equal(question.wordLabels, false);
+      assert.deepEqual(question.options.map(option => option.id).sort(), [...ANIMAL_IDS].sort());
+      assert.deepEqual(question.acceptedIds, [question.answerId], 'only the named animal is right');
+      assert.equal(question.audioId, `animals-${question.answerId}`, 'the existing "Find the dog!" narration is reused');
+      assert.equal(game.answer(diagramPartAt(...animalCentre(question.answerId), null, 'animals')), draw + 1 === GOAL_BY_LEVEL[level] ? 'finished' : 'correct');
+      if (draw + 1 < GOAL_BY_LEVEL[level]) game.nextQuestion();
+    }
+  }
+  for (const topic of ['fruit', 'vegetables', 'flowers', 'vehicles', 'weather', 'family', 'colors', 'math']) {
+    const game = createGame(seededRandom(9));
+    game.chooseTopic(topic);
+    assert.equal(game.getState().question.format, undefined, `${topic} still offers picture choices`);
+  }
+});
+
+test('tapping the wrong animal costs a heart and a star like any wrong answer; the named animal wins', () => {
+  const right = sceneGame('pig');
+  assert.equal(right.answer(diagramPartAt(...animalCentre('pig'), null, 'animals')), 'correct');
+  assert.equal(right.getState().hearts, HEARTS_BY_LEVEL.easy);
+
+  const miss = sceneGame('pig');
+  miss.answer(diagramPartAt(...animalCentre('cat'), null, 'animals'));
+  const state = miss.getState();
+  assert.equal(state.missed, true);
+  assert.equal(state.missedChoice, 'cat');
+  assert.equal(state.hearts, HEARTS_BY_LEVEL.easy - 1);
+  assert.equal(miss.answer('pig'), 'ignored', 'the ended question cannot be answered again');
+
+  const game = sceneGame('dog');
+  for (let heart = 0; heart < HEARTS_BY_LEVEL.easy - 1; heart += 1) {
+    assert.equal(game.answer(wrongOption(game).id), 'missed');
+    game.nextQuestion();
+  }
+  assert.equal(game.answer(wrongOption(game).id), 'lost', 'the last heart ends the match as on the body picture');
+});
+
+test('the farm page draws the background and each animal where the layout puts it, with a button per animal', () => {
+  const { app } = sceneApp();
+  const art = app.elements.get('#diagramArt');
+  assert.equal(app.elements.get('#faceDiagram').hidden, false);
+  assert.equal(app.elements.get('#faceDiagram').dataset.diagram, 'animals');
+  assert.equal(app.answerOptions.hidden, true);
+  assert.equal(art.src, FARM.image, 'the farm replaces the character picture');
+  assert.equal(art.width, FARM.width);
+  assert.equal(art.height, FARM.height);
+
+  const items = app.elements.get('#diagramItems').children;
+  assert.equal(items.length, ANIMAL_IDS.length);
+  FARM.items.forEach(({ id, x, y, size }, index) => {
+    const word = WORD_TOPICS.animals.words.find(entry => entry.id === id);
+    assert.equal(items[index].children[0].src, word.image, `${id} uses the topic's own icon`);
+    assert.equal(items[index].children[0].alt, '', 'the picture is decoration; the buttons carry the names');
+    assert.equal(items[index].style.left, `${(x - size / 2) * 100}%`);
+    assert.equal(items[index].style.width, `${size * 100}%`);
+    assert.equal(items[index].style.top, `${(y - size / 2) * 100}%`, 'a square picture keeps the icon square');
+  });
+
+  const spots = app.elements.get('#diagramSpots').children;
+  assert.deepEqual(spots.map(spot => spot.dataset.choice).sort(), [...ANIMAL_IDS].sort());
+  const dog = spots.find(spot => spot.dataset.choice === 'dog');
+  assert.equal(dog.getAttribute('aria-label'), 'dog');
+  assert.match(app.elements.get('#faceDiagram').getAttribute('aria-label'), /farm/i);
+  assert.equal(items.every(item => item.getAttribute('aria-hidden') === null), true);
+  assert.equal(app.elements.get('#diagramItems').getAttribute('aria-hidden'), 'true');
+});
+
+test('a tap on the meadow costs nothing; a tap on an animal answers; the answer is ringed and named', () => {
+  const { game, app, tap, marks } = sceneApp();
+  const before = game.getState();
+  tap(0.5, 0.65);
+  tap(0.02, 0.02);
+  assert.equal(game.getState().hearts, before.hearts);
+  assert.equal(game.getState().missed, false);
+  assert.equal(game.getState().solved, false);
+  assert.equal(marks().length, 0, 'nothing is ringed');
+
+  const target = before.question.answerId;
+  const other = ANIMAL_IDS.find(id => id !== target);
+  tap(...animalCentre(other));
+  assert.equal(game.getState().missed, true);
+  assert.equal(game.getState().missedChoice, other);
+  assert.equal(game.getState().hearts, before.hearts - 1);
+  assert.equal(marks().filter(ring => ring.classList.contains('wrong-ring')).length, 1, 'the tapped animal is ringed');
+  assert.equal(marks().filter(ring => ring.classList.contains('right-ring')).length, 1, 'the named animal is ringed');
+  const name = WORD_TOPICS.animals.words.find(word => word.id === target).en;
+  assert.equal(app.elements.get('#diagramWord').textContent, name, 'and named');
+  assert.equal(app.elements.get('#diagramWord').hidden, false);
+
+  tap(...animalCentre(target));
+  assert.equal(game.getState().hearts, before.hearts - 1, 'a second tap on the ended question changes nothing');
+});
+
+test('tapping the named animal wins the question and rings it', () => {
+  const { game, app, tap, marks } = sceneApp();
+  const target = game.getState().question.answerId;
+  tap(...animalCentre(target));
+  assert.equal(game.getState().solved, true);
+  assert.equal(marks().length, 1);
+  assert.ok(marks()[0].classList.contains('right-ring'));
+  assert.equal(app.elements.get('#diagramWord').hidden, false);
+});
+
+test('keyboard and screen-reader buttons answer for each animal', () => {
+  const { game, app } = sceneApp();
+  const target = game.getState().question.answerId;
+  const spots = app.elements.get('#diagramSpots').children;
+  const wrong = spots.find(spot => spot.dataset.choice !== target);
+  wrong.click();
+  assert.equal(game.getState().missed, true);
+  assert.equal(game.getState().missedChoice, wrong.dataset.choice);
+  assert.ok(spots.every(spot => spot.disabled), 'the ended question cannot be answered again');
+});
+
+test('if the farm picture cannot load, animals fall back to picture choices, and the character is unaffected', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  app.topicTabs.find(tab => tab.dataset.topic === 'animals').click();
+  assert.equal(app.elements.get('#faceDiagram').hidden, false);
+
+  app.elements.get('#diagramArt').dispatch('error');
+
+  assert.equal(app.elements.get('#faceDiagram').hidden, true);
+  assert.equal(app.elements.get('#diagramItems').children.length, 0);
+  assert.equal(app.answerOptions.hidden, false);
+  assert.equal(app.answerOptions.children.length, ANIMAL_IDS.length);
+  assert.equal(game.getState().question.format, 'diagram');
+
+  app.topicTabs.find(tab => tab.dataset.topic === 'face').click();
+  assert.equal(app.elements.get('#faceDiagram').hidden, false, 'a missing farm picture does not take the character away');
+  assert.equal(app.elements.get('#diagramArt').src, DIAGRAMS.face.image, 'the character picture is put back');
+  app.topicTabs.find(tab => tab.dataset.topic === 'animals').click();
+  assert.equal(app.elements.get('#faceDiagram').hidden, true, 'and the farm stays on picture choices');
+});
+
+test('moving between the character and the farm swaps the picture and hides it until the new one has loaded', () => {
+  const game = createGame(steadyRandom);
+  const app = createAppFixture(game);
+  const art = app.elements.get('#diagramArt');
+  app.topicTabs.find(tab => tab.dataset.topic === 'face').click();
+  assert.equal(art.classList.contains('is-loading'), false, 'the character is already in the page');
+  app.topicTabs.find(tab => tab.dataset.topic === 'animals').click();
+  assert.equal(art.src, DIAGRAMS.animals.image);
+  assert.equal(art.classList.contains('is-loading'), true);
+  art.dispatch('load');
+  assert.equal(art.classList.contains('is-loading'), false);
+  app.topicTabs.find(tab => tab.dataset.topic === 'face').click();
+  assert.equal(art.src, DIAGRAMS.face.image);
+  assert.equal(art.width, DIAGRAMS.face.width);
+  assert.equal(app.elements.get('#diagramItems').children.length, 0, 'the character has no icons drawn on it');
+  assert.equal(app.elements.get('#faceDiagram').dataset.diagram, 'face');
+});
+
+test('an animal icon that cannot load is replaced by its emoji', () => {
+  const { app } = sceneApp();
+  const item = app.elements.get('#diagramItems').children[0];
+  item.children[0].dispatch('error');
+  const word = WORD_TOPICS.animals.words.find(entry => entry.id === FARM.items[0].id);
+  assert.equal(item.children.length, 0);
+  assert.equal(item.textContent, word.icon);
+  assert.ok(item.classList.contains('emoji-item'));
 });
 
 // ---- A bigger body: ten more parts, and a pool for each level ----
@@ -3235,8 +3485,8 @@ test('every new body part has a region, a three-language label, an icon and a sp
 test('every part\'s regions answer for that part, on a big picture and on a small one, and no part swallows another', () => {
   for (const part of ALL_FACE_PARTS) {
     FACE_DIAGRAM.parts[part].regions.forEach(([cx, cy], index) => {
-      assert.equal(diagramPartAt(cx, cy, null, FACE_LEVEL_IDS.super), part, `${part}: region ${index + 1} is the part`);
-      assert.equal(diagramPartAt(cx, cy, SMALL_PICTURE, FACE_LEVEL_IDS.super), part, `${part}: region ${index + 1} is the part on a small picture`);
+      assert.equal(diagramPartAt(cx, cy, null, 'face', FACE_LEVEL_IDS.super), part, `${part}: region ${index + 1} is the part`);
+      assert.equal(diagramPartAt(cx, cy, SMALL_PICTURE, 'face', FACE_LEVEL_IDS.super), part, `${part}: region ${index + 1} is the part on a small picture`);
     });
   }
   ['head', 'neck', 'tummy'].forEach(part => assert.equal(FACE_DIAGRAM.parts[part].regions.length, 1, `${part} is a single part`));
@@ -3246,7 +3496,7 @@ test('every part\'s regions answer for that part, on a big picture and on a smal
 });
 
 test('regions at the body\'s edges fit the parts they name, not the clothes around them', () => {
-  const at = (x, y, level = 'super') => diagramPartAt(x, y, null, FACE_LEVEL_IDS[level]);
+  const at = (x, y, level = 'super') => diagramPartAt(x, y, null, 'face', FACE_LEVEL_IDS[level]);
   assert.equal(at(0.3, 0.6), 'arms', 'the sleeve and upper arm are the arm');
   assert.equal(at(0.34, 0.505), 'shoulders', 'the top of the sleeve is the shoulder');
   assert.equal(at(0.5, 0.65), 'tummy', 'the middle of the shirt is the tummy');
@@ -3272,7 +3522,7 @@ test('regions at the body\'s edges fit the parts they name, not the clothes arou
 });
 
 test('a level never lets a part it does not ask about take a tap', () => {
-  const at = (x, y, level) => diagramPartAt(x, y, null, FACE_LEVEL_IDS[level]);
+  const at = (x, y, level) => diagramPartAt(x, y, null, 'face', FACE_LEVEL_IDS[level]);
   const [fingersX, fingersY] = centreOf('fingers');
   const [toesX, toesY] = centreOf('toes');
   for (const level of ['easy', 'harder']) {
