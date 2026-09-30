@@ -3151,6 +3151,9 @@ test('a tap that lands on no part is not an answer, and a small picture keeps ev
   const small = { width: 190, height: 260 };
   const noseWidth = FACE_DIAGRAM.parts.nose.regions[0][2] * small.width;
   assert.ok(noseWidth < FACE_DIAGRAM.minRadiusPx, 'the nose region alone would be too small for a finger at this size');
+  assert.equal(diagramPartAt(cx, cy, small), 'nose', 'the nose centre stays the nose despite the overlapping tooth hit region');
+  assert.equal(diagramPartAt(...centreOf('tooth'), small), 'tooth', 'the tooth centre stays the tooth at this size');
+  assert.equal(diagramPartAt(0.5011, 0.43, small), 'mouth', 'the mouth remains distinct below the teeth');
   assert.equal(diagramPartAt(cx + 10 / small.width, cy - 4 / small.height, small), 'nose', 'a tap beyond the drawn region still counts, up to the minimum');
   assert.notEqual(diagramPartAt(cx + 60 / small.width, cy, small), 'nose', 'well outside the nose it is not the nose');
 });
@@ -3162,6 +3165,6 @@ test('the teeth count as the mouth, but the mouth is not a tooth', () => {
   const tooth = diagramGame('tooth');
   assert.deepEqual(tooth.getState().question.acceptedIds, ['tooth']);
   assert.equal(tooth.answer('mouth'), 'missed', 'asked for a tooth, the mouth is not');
-  assert.equal(diagramPartAt(...centreOf('tooth')), 'tooth', 'where the teeth and the mouth overlap the teeth win');
+  assert.equal(diagramPartAt(...centreOf('tooth')), 'tooth', 'the nearest overlapping region is the teeth');
   assert.equal(diagramPartAt(0.5011, 0.43), 'mouth');
 });

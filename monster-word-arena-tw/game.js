@@ -49,9 +49,8 @@
       eyes: { regions: [[0.3691, 0.313, 0.0912, 0.0626], [0.632, 0.3067, 0.0912, 0.0626]] },
       nose: { regions: [[0.5032, 0.3443, 0.0745, 0.045]] },
       mouth: { regions: [[0.5011, 0.41, 0.1341, 0.0626]] },
-      // The teeth are a thin strip inside the mouth: their region wins where the two overlap, and its smaller minimum
-      // keeps it from swallowing the nose above it.
-      tooth: { regions: [[0.5011, 0.39, 0.118, 0.0297]], priority: 1, minRadiusPx: 12 },
+      // The teeth are a thin strip inside the mouth; their smaller minimum keeps the region distinct at small sizes.
+      tooth: { regions: [[0.5011, 0.39, 0.118, 0.0297]], minRadiusPx: 12 },
       ears: { regions: [[0.2049, 0.3498, 0.0912, 0.0704], [0.7929, 0.3419, 0.0912, 0.0704]] },
       hands: { regions: [[0.0955, 0.5689, 0.118, 0.0861], [0.9056, 0.5689, 0.118, 0.0861]] },
       feet: { regions: [[0.3423, 0.9249, 0.1288, 0.0665], [0.6588, 0.9288, 0.1288, 0.0626]] },
@@ -62,7 +61,7 @@
 
   // Which part a tap lands on, or null when it lands on no part (the clothes, the empty background). x and y are
   // fractions of the picture; size ({ width, height } in CSS pixels) lets a small picture keep every region at least
-  // minRadiusPx wide. Where regions overlap, a higher-priority part wins, then the tap nearest a region's centre.
+  // minRadiusPx wide. Where regions overlap, the nearest normalized region wins.
   function diagramPartAt(x, y, size = null) {
     let best = null;
     Object.entries(FACE_DIAGRAM.parts).forEach(([id, part]) => {
@@ -72,8 +71,7 @@
       part.regions.forEach(([cx, cy, rx, ry]) => {
         const distance = Math.hypot((x - cx) / Math.max(rx, minX), (y - cy) / Math.max(ry, minY));
         if (distance > 1) return;
-        const priority = part.priority || 0;
-        if (!best || priority > best.priority || (priority === best.priority && distance < best.distance)) best = { id, priority, distance };
+        if (!best || distance < best.distance) best = { id, distance };
       });
     });
     return best ? best.id : null;
