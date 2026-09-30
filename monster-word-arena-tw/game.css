@@ -260,13 +260,20 @@ h1 { margin: 4px 0 4px; color: #41405e; font-size: clamp(31px, 5vw, 46px); line-
 .answer-swatch { width: 56px; height: 56px; border-width: 3px; }
 .answer-option.right-answer { border-color: #64bd8c; background: #e2f8e8; box-shadow: 0 3px 0 #abd9b5; }
 .answer-option.wrong-answer { border-color: #edaf97; background: #fff2e8; color: #795e5b; animation: gentle-nudge .22s ease-in-out; }
-/* Face topic picture question: one character, tapped on the part that was named. The height is the limit, so the whole
-   child always fits the screen; the regions that catch taps are bigger than the parts (see FACE_DIAGRAM). */
-.face-diagram { --diagram-height: clamp(260px, calc(100vh - 380px), 560px); margin: 6px auto 0; }
+/* Picture questions: one picture (the face topic's character, or the animals topic's farm), tapped on the item that
+   was named. The height is the limit, so the whole picture always fits the screen; the regions that catch taps are
+   bigger than the items (see DIAGRAMS in game.js). --diagram-w and --diagram-h are the picture's size in pixels. */
+.face-diagram { --diagram-height: clamp(260px, calc(100vh - 380px), 560px); --diagram-w: 700; --diagram-h: 960; margin: 6px auto 0; }
+.face-diagram[data-diagram="animals"] { --diagram-w: 800; --diagram-h: 800; }
 @supports (height: 100svh) { .face-diagram { --diagram-height: clamp(260px, calc(100svh - 380px), 560px); } }
-.diagram-stage { position: relative; width: calc(var(--diagram-height) * 700 / 960); max-width: 100%; aspect-ratio: 700 / 960; margin: 0 auto; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.diagram-stage { position: relative; container-type: inline-size; width: calc(var(--diagram-height) * var(--diagram-w) / var(--diagram-h)); max-width: 100%; aspect-ratio: var(--diagram-w) / var(--diagram-h); margin: 0 auto; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .diagram-art { display: block; width: 100%; height: 100%; pointer-events: none; -webkit-user-drag: none; }
-.diagram-marks, .diagram-spots { position: absolute; inset: 0; pointer-events: none; }
+.diagram-art.is-loading { opacity: 0; }
+.diagram-marks, .diagram-spots, .diagram-items { position: absolute; inset: 0; pointer-events: none; }
+/* A scene's animals: the topic's own icons, drawn where the layout table puts them (the picture takes the taps). */
+.diagram-item { position: absolute; display: block; pointer-events: none; }
+.diagram-item img { display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; -webkit-user-drag: none; }
+.diagram-item.emoji-item { display: grid; place-items: center; line-height: 1; }
 /* Keyboard and screen-reader buttons: invisible until focused, and never a target for a finger (the picture is). */
 .diagram-spot { position: absolute; padding: 0; border: 0; border-radius: 50%; background: transparent; pointer-events: none; }
 .diagram-spot:focus-visible { outline: 4px solid #8d6fe0; outline-offset: 2px; }

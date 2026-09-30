@@ -56,6 +56,7 @@
     "images/fruit-pineapple.webp",
     "images/fruit-strawberry.webp",
     "images/fruit-watermelon.webp",
+    "images/scene-farm.webp",
     "images/sticker-balloon.webp",
     "images/sticker-bubbles.webp",
     "images/sticker-cupcake.webp",
@@ -548,5 +549,5 @@
     "audio/zh/weather-thunder.mp3",
     "audio/zh/weather-windy.mp3"
   ],
-  "MEDIA_VERSION": "9b56adfef56c"
+  "MEDIA_VERSION": "5e626daf13f3"
 }));
