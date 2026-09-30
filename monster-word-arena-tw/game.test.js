@@ -759,20 +759,27 @@ test('the last heart ends the match: the miss is shown, then nothing but Try aga
   }
 });
 
-test('a heart never buys itself back inside a match: switching topic keeps hearts, and a new level or restart refills them', () => {
-  const game = createGame(seededRandom(32));
-  game.answer(wrongOption(game).id);
-  game.nextQuestion();
-  assert.equal(game.getState().hearts, 2);
-  game.chooseTopic('colors');
-  assert.equal(game.getState().hearts, 2, 'changing topic is not a way to get hearts back');
-  game.chooseTopic('math');
-  assert.equal(game.getState().hearts, 2);
-  game.chooseLevel('harder');
-  assert.equal(game.getState().hearts, HEARTS_BY_LEVEL.harder, 'a new level is a new match with its own hearts');
-  game.answer(wrongOption(game).id);
-  game.restart();
-  assert.equal(game.getState().hearts, HEARTS_BY_LEVEL.harder);
+test('abandoning a match after a miss loses it without restoring hearts; a clean level change or restart starts normally', () => {
+  for (const action of ['restart', 'level']) {
+    const game = createGame(seededRandom(32));
+    game.answer(wrongOption(game).id);
+    game.nextQuestion();
+    assert.equal(game.getState().hearts, 2);
+    if (action === 'restart') game.restart();
+    else game.chooseLevel('harder');
+    assert.equal(game.getState().lost, true, `${action} ends the match`);
+    assert.equal(game.getState().hearts, 2, `${action} cannot refill spent hearts`);
+    assert.equal(game.getState().level, 'easy', 'the abandoned match keeps its level');
+    const fresh = game.restart();
+    assert.equal(fresh.lost, false, 'Try again starts a fresh match after the loss');
+    assert.equal(fresh.hearts, HEARTS_BY_LEVEL.easy);
+  }
+
+  const clean = createGame(seededRandom(33));
+  assert.equal(clean.restart().hearts, HEARTS_BY_LEVEL.easy, 'Start over before a miss works normally');
+  assert.equal(clean.getState().lost, false);
+  assert.equal(clean.chooseLevel('harder'), true, 'level choice between matches works normally');
+  assert.equal(clean.getState().hearts, HEARTS_BY_LEVEL.harder);
 });
 
 test('tapping every choice in turn cannot win a question: the first tap settles it', () => {
@@ -976,24 +983,32 @@ test('a missed question waits a shorter moment when the sound is off, and its mi
   assert.match(app.played[app.played.length - 1], /^\.\/audio\/ja\//);
 });
 
-test('choosing another topic or level, or starting over, while a miss waits replaces the miss for good', () => {
-  for (const change of [
-    app => app.topicTabs.find(tab => tab.dataset.topic === 'colors').click(),
+test('changing topic after a miss replaces the question, while level change and Start over lose the match', () => {
+  const game = createGame(seededRandom(9));
+  const app = createAppFixture(game);
+  app.startButton.click();
+  clickAnswer(app, game, false);
+  app.topicTabs.find(tab => tab.dataset.topic === 'colors').click();
+  assert.equal(game.getState().missed, false);
+  const key = game.getState().question.key;
+  app.clock.tick(MISS_PAUSE_TICK);
+  assert.equal(game.getState().question.key, key, 'the cancelled pause never swaps the new question away');
+  assert.ok(app.answerOptions.children.every(button => !button.disabled));
+
+  for (const action of [
     app => app.levelButtons.find(button => button.dataset.level === 'harder').click(),
     app => app.elements.get('#restartButton').click(),
   ]) {
-    const game = createGame(seededRandom(9));
-    const app = createAppFixture(game);
-    app.startButton.click();
-    clickAnswer(app, game, false);
-    change(app);
-    assert.equal(game.getState().missed, false);
-    const key = game.getState().question.key;
-    const stars = game.getState().stars;
-    app.clock.tick(MISS_PAUSE_TICK);
-    assert.equal(game.getState().question.key, key, 'the cancelled pause never swaps the new question away');
-    assert.equal(game.getState().stars, stars);
-    assert.ok(app.answerOptions.children.every(button => !button.disabled));
+    const currentGame = createGame(seededRandom(10));
+    const currentApp = createAppFixture(currentGame);
+    currentApp.startButton.click();
+    clickAnswer(currentApp, currentGame, false);
+    action(currentApp);
+    assert.equal(currentGame.getState().lost, true);
+    assert.equal(currentGame.getState().hearts, HEARTS_BY_LEVEL.easy - 1);
+    assert.equal(currentApp.elements.get('#lostPanel').hidden, false);
+    currentApp.clock.tick(MISS_PAUSE_TICK);
+    assert.equal(currentApp.elements.get('#lostPanel').hidden, false, 'the ended miss cannot later replace the loss screen');
   }
 });
 
@@ -2381,6 +2396,33 @@ test('reactions stay silent before Start, then follow the chosen voice', () => {
     './audio/zh/<question>.mp3',
     './audio/zh/reaction-praise-2.mp3',
   ]);
+});
+
+test('Start over or changing level after a miss immediately shows the loss without refilling hearts', () => {
+  for (const abandon of ['restart', 'level']) {
+    const game = createGame(seededRandom(40));
+    const app = createAppFixture(game);
+    app.textLanguageButtons.find(button => button.dataset.textLanguage === 'en').click();
+    clickAnswer(app, game, false);
+    assert.equal(game.getState().hearts, HEARTS_BY_LEVEL.easy - 1);
+    if (abandon === 'restart') app.elements.get('#restartButton').click();
+    else app.levelButtons.find(button => button.dataset.level === 'harder').click();
+    assert.equal(game.getState().lost, true);
+    assert.equal(game.getState().hearts, HEARTS_BY_LEVEL.easy - 1);
+    assert.equal(game.getState().level, 'easy');
+    assert.equal(app.elements.get('#lostPanel').hidden, false, 'the lost-match card appears immediately');
+    assert.equal(app.elements.get('#questionPanel').hidden, true);
+    assert.ok(app.topicTabs.every(tab => tab.disabled) && app.levelButtons.every(button => button.disabled));
+    app.elements.get('#tryAgainButton').click();
+    assert.equal(game.getState().hearts, HEARTS_BY_LEVEL.easy);
+    assert.equal(game.getState().lost, false);
+  }
+
+  const game = createGame(seededRandom(43));
+  const app = createAppFixture(game);
+  app.elements.get('#restartButton').click();
+  assert.equal(game.getState().hearts, HEARTS_BY_LEVEL.easy, 'Start over with no miss restarts normally');
+  assert.equal(game.getState().lost, false);
 });
 
 test('the miss that takes the last heart says so, then Try again brings the hearts and the questions back', () => {

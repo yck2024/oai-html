@@ -335,8 +335,15 @@
       return true;
     }
 
+    function abandonCurrentMatch() {
+      if (over() || state.hearts === HEARTS_BY_LEVEL[state.level]) return false;
+      state = { ...state, lost: true };
+      return true;
+    }
+
     function chooseLevel(level) {
       if (over() || level === state.level || !LEVELS.includes(level)) return false;
+      if (abandonCurrentMatch()) return true;
       state = { ...state, level, stars: 0, hearts: HEARTS_BY_LEVEL[level], ...OPEN_QUESTION, ...drawQuestion(state.topic, level, state.question.key, state.recentOps) };
       return true;
     }
@@ -374,8 +381,9 @@
       return true;
     }
 
-    // Starting again, whether after a win, a lost match, or by choice, refills the hearts and clears the stars.
+    // Starting over during a match with a spent heart loses that match; a new match can start only after it is over.
     function restart(level = state.level) {
+      if (abandonCurrentMatch()) return getState();
       const nextLevel = LEVELS.includes(level) ? level : state.level;
       state = {
         ...state,

@@ -676,8 +676,10 @@
         sounds.play('tap');
         stage.settle();
         arenaMessage.textContent = I18N.topicChosenMessage(topic, textLanguage);
-        renderQuestion(game.getState());
-        if (speechEnabled) setPointer('answer');
+        const state = game.getState();
+        renderQuestion(state, { speak: !state.lost });
+        if (state.lost) showLostPanel();
+        else if (speechEnabled) setPointer('answer');
       });
       return tab;
     }));
@@ -700,8 +702,10 @@
         if (!game.chooseLevel(level)) return;
         stage.settle();
         arenaMessage.textContent = I18N.levelChosenMessage(level, textLanguage, game.getState().topic);
-        renderQuestion(game.getState());
-        if (speechEnabled) setPointer('answer');
+        const state = game.getState();
+        renderQuestion(state, { speak: !state.lost });
+        if (state.lost) showLostPanel();
+        else if (speechEnabled) setPointer('answer');
       });
       return button;
     });
@@ -755,7 +759,9 @@
     const resolved = PACING.resolveAllowedLevel(state.level, allowedLevels);
     if (resolved !== state.level && game.chooseLevel(resolved)) {
       stage.settle();
-      renderQuestion(game.getState());
+      const nextState = game.getState();
+      renderQuestion(nextState, { speak: !nextState.lost });
+      if (nextState.lost) showLostPanel();
     }
   }
 
@@ -994,7 +1000,7 @@
 
   // After the last heart's miss has been shown: hearts come back with Try again, which starts the match over.
   function showLostPanel() {
-    missTimer = null;
+    cancelMissTimer();
     if (!game.getState().lost) return;
     lostPanelShown = true;
     questionPanel.hidden = true;
@@ -1016,6 +1022,11 @@
     lostPanelShown = false;
     const state = game.restart(level);
     sounds.play('tap');
+    if (state.lost) {
+      renderQuestion(state, { speak: false });
+      showLostPanel();
+      return;
+    }
     stage.startMatch();
     arenaMessage.textContent = I18N.STRINGS.readyMessage[textLanguage];
     renderChampion(state);
