@@ -511,8 +511,9 @@
     if (!usesDiagram(question)) return;
     const { parts } = diagramOf(question);
     const rings = [];
-    if (state.missed && parts[state.missedChoice]) rings.push(...parts[state.missedChoice].regions.map(region => diagramRing(region, 'wrong-ring')));
-    if (state.solved || state.missed) rings.push(...parts[question.answerId].regions.map(region => diagramRing(region, 'right-ring')));
+    const ringRegions = id => (parts[id].rings || parts[id].regions);
+    if (state.missed && parts[state.missedChoice]) rings.push(...ringRegions(state.missedChoice).map(region => diagramRing(region, 'wrong-ring')));
+    if (state.solved || state.missed) rings.push(...ringRegions(question.answerId).map(region => diagramRing(region, 'right-ring')));
     diagramMarks.replaceChildren(...rings);
     const target = currentTarget(question);
     diagramWord.textContent = (state.solved || state.missed) && target ? target[textLanguage] : '';
@@ -550,6 +551,7 @@
       (event.clientY - box.top) / box.height,
       { width: box.width, height: box.height },
       game.getState().question.topic,
+      game.getState().question.options.map(option => option.id),
     );
     // A tap that lands on no part (the clothes, the empty background, the bare meadow) is not an answer and costs nothing.
     if (part) chooseAnswer(null, part);
@@ -602,8 +604,10 @@
     diagramSpots.replaceChildren(...(onDiagram ? makeDiagramSpots(question) : []));
     faceDiagram.setAttribute('aria-label', I18N.STRINGS[question.topic === 'face' ? 'diagramGroupLabel' : 'farmGroupLabel'][textLanguage]);
     document.querySelector('#answerHint').textContent = (onDiagram ? I18N.STRINGS.diagramHint : I18N.STRINGS.answerHint)[textLanguage];
-    answerOptions.replaceChildren(...(onDiagram ? [] : question.options.map(option => makeAnswerButton(option, question))));
-    answerOptions.classList.toggle('four-choices', question.options.length === 4);
+    // A picture question whose picture failed offers a few picture choices, like any other word question.
+    const choices = question.fallbackOptions || question.options;
+    answerOptions.replaceChildren(...(onDiagram ? [] : choices.map(option => makeAnswerButton(option, question))));
+    answerOptions.classList.toggle('four-choices', choices.length === 4);
     const groupLabel = question.topic === 'math' ? 'answerGroupLabelNumber' : question.wordLabels ? 'answerGroupLabelWord' : 'answerGroupLabelPicture';
     answerOptions.setAttribute('aria-label', I18N.STRINGS[groupLabel][textLanguage]);
     if (state.missed) markMiss(state);

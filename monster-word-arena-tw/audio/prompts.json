@@ -464,6 +464,56 @@
     "zh": "找一找：腳！",
     "ja": "あしをみつけてね！"
   },
+  "face-head": {
+    "en": "Find the head!",
+    "zh": "找一找：頭！",
+    "ja": "あたまをみつけてね！"
+  },
+  "face-cheeks": {
+    "en": "Find the cheeks!",
+    "zh": "找一找：臉頰！",
+    "ja": "ほっぺをみつけてね！"
+  },
+  "face-neck": {
+    "en": "Find the neck!",
+    "zh": "找一找：脖子！",
+    "ja": "くびをみつけてね！"
+  },
+  "face-shoulders": {
+    "en": "Find the shoulders!",
+    "zh": "找一找：肩膀！",
+    "ja": "かたをみつけてね！"
+  },
+  "face-arms": {
+    "en": "Find the arms!",
+    "zh": "找一找：手臂！",
+    "ja": "うでをみつけてね！"
+  },
+  "face-tummy": {
+    "en": "Find the tummy!",
+    "zh": "找一找：肚子！",
+    "ja": "おなかをみつけてね！"
+  },
+  "face-legs": {
+    "en": "Find the legs!",
+    "zh": "找一找：腿！",
+    "ja": "ふとももをみつけてね！"
+  },
+  "face-knees": {
+    "en": "Find the knees!",
+    "zh": "找一找：膝蓋！",
+    "ja": "ひざをみつけてね！"
+  },
+  "face-fingers": {
+    "en": "Find the fingers!",
+    "zh": "找一找：手指！",
+    "ja": "ゆびをみつけてね！"
+  },
+  "face-toes": {
+    "en": "Find the toes!",
+    "zh": "找一找：腳趾！",
+    "ja": "あしのゆびをみつけてね！"
+  },
   "family-grandpa": {
     "en": "Find your grandpa!",
     "zh": "誰是爺爺？",
