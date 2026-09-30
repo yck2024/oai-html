@@ -952,6 +952,8 @@
     sounds.setMuted(speechMuted);
     if (speechMuted) {
       speechPlayer.stop();
+      const state = game.getState();
+      if (state.missed && !answerEchoFinished) completeAnswerEcho(state);
       speechStatus.textContent = I18N.STRINGS.soundMuted[textLanguage];
       renderQuestion(game.getState(), { speak: false });
       return;

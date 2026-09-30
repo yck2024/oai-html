@@ -3698,6 +3698,25 @@ test('a muted last-heart miss shows the loss panel immediately without a second-
   assert.equal(app.elements.get('#lostPanel').hidden, false);
 });
 
+test('muting an interrupted miss restores second-chance taps and the fallback after unmuting', () => {
+  const tapped = wordQuestionApp('animals');
+  const tappedQuestion = tapped.game.getState().question;
+  clickAnswer(tapped.app, tapped.game, false);
+  tapped.app.muteButton.click();
+  answerButtons(tapped.app).find(button => button.dataset.choice === tappedQuestion.answerId).click();
+  assert.notEqual(tapped.game.getState().question.key, tappedQuestion.key, 'a pending second-chance tap continues immediately after muting');
+
+  const resumed = wordQuestionApp('animals');
+  const missedKey = resumed.game.getState().question.key;
+  clickAnswer(resumed.app, resumed.game, false);
+  resumed.app.muteButton.click();
+  resumed.app.muteButton.click();
+  resumed.app.clock.tick(5900);
+  assert.equal(resumed.game.getState().question.key, missedKey);
+  resumed.app.clock.tick(200);
+  assert.notEqual(resumed.game.getState().question.key, missedKey, 'the ordinary fallback remains active after unmuting');
+});
+
 test('the last-heart miss shows the loss panel as soon as its word echo ends', () => {
   const game = createGame(seededRandom(5));
   const app = createAppFixture(game);
