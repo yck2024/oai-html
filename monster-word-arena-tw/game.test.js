@@ -857,7 +857,7 @@ test('tapping at random cannot win a match at any level, while a player who most
         if (result === 'finished') wins += 1;
         if (result === 'correct' || result === 'missed') game.nextQuestion();
       }
-      game.restart();
+      game.tryAgain();
     }
     return wins / matches;
   }
