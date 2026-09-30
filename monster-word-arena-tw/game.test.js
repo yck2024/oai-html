@@ -3557,6 +3557,30 @@ test('after a right answer the praise is followed by the word alone, the item pu
   assert.ok(right.classList.contains('is-echoing'));
 });
 
+test('the final correct word echoes with replay before the win screen appears', () => {
+  const { game, app } = wordQuestionApp('animals');
+  const el = id => app.elements.get(id);
+  for (let star = 1; star < GOAL_BY_LEVEL.easy; star += 1) {
+    clickAnswer(app, game, true);
+    app.nextButton.click();
+  }
+  const question = game.getState().question;
+  clickAnswer(app, game, true);
+  assert.equal(game.getState().finished, true);
+  assert.equal(el('#questionPanel').hidden, false, 'the answered item remains available while its echo plays');
+  assert.equal(el('#finishPanel').hidden, true, 'the win screen waits for the echo');
+  assert.equal(el('#echoButton').hidden, false, 'replay remains available on the final answer');
+  endSpeech(app);
+  assert.equal(app.played.at(-1), `./audio/en/${question.wordAudioId}.mp3`);
+  assert.ok(answerButtons(app).find(button => button.dataset.choice === question.answerId).classList.contains('is-echoing'));
+  assert.equal(el('#finishPanel').hidden, true, 'the win screen does not replace the playing word');
+  el('#echoButton').click();
+  assert.equal(el('#finishPanel').hidden, true, 'replaying the word still defers the win screen');
+  endSpeech(app);
+  assert.equal(el('#questionPanel').hidden, true);
+  assert.equal(el('#finishPanel').hidden, false, 'the win screen appears as soon as the echo ends');
+});
+
 test('tapping Next right away cuts the echo short instead of making the child wait', () => {
   const { game, app } = wordQuestionApp('fruit');
   clickAnswer(app, game, true);

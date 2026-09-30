@@ -256,7 +256,7 @@
 
   // Reactions share the question's audio element, so a new clip always cuts off the last one. After an answer the
   // word is echoed right behind the reaction, in the same queue; the next question (or a tap) cuts what is left.
-  function playReaction(type, { echo = null } = {}) {
+  function playReaction(type, { echo = null, onEchoDone = null } = {}) {
     if (!speechEnabled || speechMuted) {
       speechPlayer.stop();
       return;
@@ -268,7 +268,7 @@
     speechStatus.textContent = '';
     speechPlayer.playSequence([
       { audioId: variants[turn % variants.length], language: voiceLanguage },
-      ...(echo ? echoSteps(game.getState(), { ...echo, done: echoDone }) : []),
+      ...(echo ? echoSteps(game.getState(), { ...echo, done: onEchoDone || echoDone }) : []),
     ]);
   }
 
@@ -276,17 +276,18 @@
   function renderEchoButton(state) {
     const question = state.question;
     const target = question.wordAudioId ? currentTarget(question) : null;
-    const show = Boolean(target) && (state.solved || state.missed) && !state.finished && !soundIsOff();
+    const show = Boolean(target) && (state.solved || state.missed) && !soundIsOff();
     echoWord.textContent = show ? target[textLanguage] : '';
     echoButton.hidden = !show;
     echoButton.setAttribute('aria-label', show ? `${I18N.STRINGS.echoReplayLabel[textLanguage]}: ${target[textLanguage]}` : '');
   }
 
+  let pendingFinish = null;
   echoButton.addEventListener('click', () => {
     const state = game.getState();
     if (!(state.solved || state.missed) || soundIsOff()) return;
     reactionPlaying = false;
-    speechPlayer.playSequence(echoSteps(state, { second: state.solved, done: echoDone }));
+    speechPlayer.playSequence(echoSteps(state, { second: state.solved, done: pendingFinish || echoDone }));
   });
 
   function renderSpeechControls() {
@@ -719,6 +720,25 @@
     arenaMessage.textContent = I18N.sparMessage(state.champion, state.finished, combo, textLanguage);
   }
 
+  function showFinishPanel(state, nudge) {
+    questionPanel.hidden = true;
+    finishPanel.hidden = false;
+    goodbyePanel.hidden = true;
+    setBilingual(document.querySelector('#finishBody'), I18N.finishBody(state.goal, textLanguage), secondLanguage && I18N.finishBody(state.goal, secondLanguage));
+    [...topicTabsContainer.children].forEach(button => { button.disabled = true; });
+    if (nudge) {
+      playAgainButton.hidden = true;
+      breakPrompt.hidden = false;
+      setPointer('break');
+      oneMoreRoundButton.focus();
+    } else {
+      playAgainButton.hidden = false;
+      breakPrompt.hidden = true;
+      setPointer('finish');
+      playAgainButton.focus();
+    }
+  }
+
   // After a miss the child taps the right item to go on. Any other tap changes nothing and costs nothing.
   function secondChance(optionId, state) {
     const accepted = state.question.acceptedIds || [state.question.answerId];
@@ -774,9 +794,15 @@
     button?.classList.add('right-answer');
     choiceButtons().forEach(choice => { choice.disabled = true; });
     markDiagram(state);
-    // A right answer is followed by its word (and the second language, if a grown-up chose one). The last answer of
-    // a match has no word to show: its panel gives way to the finish screen, so the match ends on its own cheer.
-    playReaction(capReaction || (nudge ? 'break-prompt' : state.finished ? 'finish' : 'praise'), { echo: state.finished ? null : { second: true } });
+    const finalWordEcho = state.finished && state.question.wordAudioId && !soundIsOff();
+    pendingFinish = finalWordEcho ? () => {
+      pendingFinish = null;
+      showFinishPanel(state, nudge);
+    } : null;
+    playReaction(capReaction || (nudge ? 'break-prompt' : state.finished ? 'finish' : 'praise'), {
+      echo: { second: true },
+      onEchoDone: pendingFinish,
+    });
     renderEchoButton(state);
     sounds.play('sparkle', { delay: 0.03 });
     feedback.textContent = I18N.STRINGS.feedbackCorrect[textLanguage];
@@ -784,22 +810,8 @@
     renderScore(state);
     spar(state);
     if (state.finished) {
-      questionPanel.hidden = true;
-      finishPanel.hidden = false;
-      goodbyePanel.hidden = true;
-      setBilingual(document.querySelector('#finishBody'), I18N.finishBody(state.goal, textLanguage), secondLanguage && I18N.finishBody(state.goal, secondLanguage));
-      [...topicTabsContainer.children].forEach(button => { button.disabled = true; });
-      if (nudge) {
-        playAgainButton.hidden = true;
-        breakPrompt.hidden = false;
-        setPointer('break');
-        oneMoreRoundButton.focus();
-      } else {
-        playAgainButton.hidden = false;
-        breakPrompt.hidden = true;
-        setPointer('finish');
-        playAgainButton.focus();
-      }
+      finishPanel.hidden = true;
+      if (!finalWordEcho) showFinishPanel(state, nudge);
     } else {
       nextButton.hidden = false;
       nextButton.focus();
