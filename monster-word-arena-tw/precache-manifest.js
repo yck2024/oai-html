@@ -26,6 +26,7 @@
     "images/costume-flower-crown.webp",
     "images/costume-party-hat.webp",
     "images/costume-propeller-cap.webp",
+    "images/face-body.webp",
     "images/face-ears.webp",
     "images/face-eyes.webp",
     "images/face-feet.webp",
@@ -547,5 +548,5 @@
     "audio/zh/weather-thunder.mp3",
     "audio/zh/weather-windy.mp3"
   ],
-  "MEDIA_VERSION": "fc43a1f6c8a6"
+  "MEDIA_VERSION": "9b56adfef56c"
 }));

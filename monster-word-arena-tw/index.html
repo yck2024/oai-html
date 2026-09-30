@@ -126,6 +126,14 @@
             <p class="equation" id="equation">1 + 1 = ?</p>
             <p class="answer-hint" id="answerHint">Tap your answer</p>
             <div class="answer-options" id="answerOptions" role="group" aria-label="Choose an answer"></div>
+            <div class="face-diagram" id="faceDiagram" role="group" aria-label="Picture of a child. Tap the part you hear." hidden>
+              <div class="diagram-stage" id="diagramStage">
+                <img class="diagram-art" id="diagramArt" src="./images/face-body.webp" alt="" width="700" height="960" draggable="false" decoding="async">
+                <div class="diagram-marks" id="diagramMarks" aria-hidden="true"></div>
+                <div class="diagram-spots" id="diagramSpots"></div>
+              </div>
+              <p class="diagram-word" id="diagramWord" hidden></p>
+            </div>
             <span class="point-hint point-hint--answer" id="pointAnswer" aria-hidden="true"><span id="pointAnswerEmoji">🦖</span> 👇</span>
             <p class="feedback" id="feedback" role="status" aria-live="polite" aria-atomic="true">No rush—thinking is a superpower!</p>
             <button class="next-button" id="nextButton" type="button" hidden>Next power move <span aria-hidden="true">➜</span></button>

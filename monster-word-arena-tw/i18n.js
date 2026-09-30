@@ -95,6 +95,9 @@
     },
     soundMuted: { en: 'Sound is muted.', zh: '聲音已靜音。', ja: 'おとは　みゅーとちゅうです。' },
     answerHint: { en: 'Tap your answer', zh: '點一個答案', ja: 'こたえを　たっぷしてね' },
+    // The face topic's picture of a child: the hint under the question and the picture's accessible name.
+    diagramHint: { en: 'Tap it on the picture', zh: '在圖上點一點', ja: 'えの　なかで　たっぷしてね' },
+    diagramGroupLabel: { en: 'Picture of a child. Tap the part you hear.', zh: '小朋友的圖。點一點你聽到的身體部位。', ja: 'こどもの　え。きいた　ところを　たっぷしてね。' },
     answerGroupLabelWord: { en: 'Choose a word', zh: '選一個詞', ja: 'ことばを　えらんでね' },
     answerGroupLabelNumber: { en: 'Choose a number', zh: '選一個數字', ja: 'かずを　えらんでね' },
     answerGroupLabelPicture: { en: 'Choose a picture', zh: '選一張圖', ja: 'えを　えらんでね' },
