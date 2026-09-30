@@ -116,9 +116,9 @@
       ja: 'おしい！こたえは　これだよ。はーとが　ひとつ　とんでいくよ。これを　たっぷして　つづけよう。',
     },
     feedbackLost: {
-      en: 'Oops! This one was right. That was the last heart. Tap it to go on.',
-      zh: '哎呀！正確答案是這個。愛心用完了。點一下它，繼續。',
-      ja: 'おしい！こたえは　これだよ。はーとが　なくなったよ。これを　たっぷして　つづけよう。',
+      en: 'Oops! This one was right. That was the last heart.',
+      zh: '哎呀！正確答案是這個。愛心用完了。',
+      ja: 'おしい！こたえは　これだよ。はーとが　なくなったよ。',
     },
     // The small button after an answer that says the word again, and its accessible name.
     echoReplayLabel: { en: 'Hear the word again', zh: '再聽一次這個詞', ja: 'ことばを　もういちど　きく' },

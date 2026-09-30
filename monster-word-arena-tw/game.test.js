@@ -2525,7 +2525,7 @@ test('the miss that takes the last heart says so, then Try again brings the hear
   clickAnswer(app, game, false);
   assert.equal(game.getState().lost, true);
   assert.equal(el('#heartPips').children.filter(pip => pip.classList.contains('spent')).length, 3, 'every heart is hollow');
-  assert.equal(el('#feedback').textContent, I18N.STRINGS.feedbackLost.ja);
+  assert.equal(el('#feedback').textContent, 'おしい！こたえは　これだよ。はーとが　なくなったよ。');
   assert.equal(el('#arenaMessage').textContent, I18N.STRINGS.lostMessage.ja);
   assert.match(app.played[app.played.length - 1], /^\.\/audio\/ja\/reaction-round-lost\.mp3$/);
   assert.equal(el('#lostPanel').hidden, true, 'the right choice is shown first');
@@ -3678,6 +3678,24 @@ test('a miss echoes the right word after the reaction, keeps the heart lost, and
   assert.notEqual(game.getState().question.key, again.key);
   assert.equal(game.getState().hearts, HEARTS_BY_LEVEL.easy - 2, 'the second-chance tap costs nothing and gives nothing');
   assert.equal(game.getState().stars, 0);
+});
+
+test('a muted last-heart miss shows the loss panel immediately without a second-chance prompt', () => {
+  const game = createGame(seededRandom(5));
+  const app = createAppFixture(game);
+  app.startButton.click();
+  app.topicTabs.find(tab => tab.dataset.topic === 'colors').click();
+  app.muteButton.click();
+  for (let miss = 0; miss < HEARTS_BY_LEVEL.easy - 1; miss += 1) {
+    clickAnswer(app, game, false);
+    app.answerOptions.children.find(button => button.dataset.choice === game.getState().question.answerId).click();
+  }
+  clickAnswer(app, game, false);
+  assert.equal(game.getState().lost, true);
+  assert.equal(app.elements.get('#lostPanel').hidden, false, 'no inaudible word leaves a fallback delay');
+  assert.equal(app.elements.get('#feedback').textContent, 'Oops! This one was right. That was the last heart.');
+  app.clock.tick(10000);
+  assert.equal(app.elements.get('#lostPanel').hidden, false);
 });
 
 test('the last-heart miss shows the loss panel as soon as its word echo ends', () => {

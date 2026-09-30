@@ -830,7 +830,7 @@
       sounds.play('boing', { delay: 0.04 });
       setPointer(null);
       if (answerEchoFinished) {
-        if (state.lost && echoExpected) showLostPanel();
+        if (state.lost) showLostPanel();
         else armMissFallback(state);
       } else cancelMissTimer();
       return;
