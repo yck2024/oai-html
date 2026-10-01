@@ -8,10 +8,6 @@
   const blockCount = value => Math.min(BLOCK_MAX, Math.max(0, Math.floor(Number(value)) || 0));
   const SVG_NS = 'http://www.w3.org/2000/svg';
   const FRAME_CELLS = 10;
-// The pictures of Math 2 questions. A question's `visual` is plain data ({ type, ...fields }, nothing but strings,
-  // numbers, booleans, arrays and objects); app.js hands it to build(), which finds the builder registered for
-  // `type` and returns the element to show above the answer buttons. A later card adds its picture by appending one
-  // builder to BUILDERS and nothing else here changes. A builder is (visual, document) => Element.
   const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
   const round = value => Math.round(value * 100) / 100;
   // A ten-frame is two rows of five cells. Counters fill it a row at a time, left to right, so five is a full top row
@@ -82,7 +78,8 @@
     }
     return marks;
   }
-// Where the two hands point, in degrees clockwise from twelve. The hour hand moves with the minutes, so at half past
+
+  // Where the two hands point, in degrees clockwise from twelve. The hour hand moves with the minutes, so at half past
   // it sits halfway between two numbers (3:30 is 105 degrees, between the 3 at 90 and the 4 at 120).
   function clockAngles(hour, minute) {
     return { hour: ((hour % 12) + minute / 60) * 30, minute: minute * 6 };
