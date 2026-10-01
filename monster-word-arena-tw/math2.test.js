@@ -86,7 +86,7 @@ test('a Math 2 question has number choices inside its own range, a unique right 
       assert.ok(values.every(value => Number.isInteger(value) && value >= question.range.min && value <= question.range.max), `${level} choices stay inside the range`);
       assert.equal(question.picture, '');
       assert.equal(question.takeAway, null);
-      if (question.kind !== 'missing-addend') assert.equal(question.display, '');
+      if (!['missing-addend', 'add-within-20', 'take-within-20'].includes(question.kind)) assert.equal(question.display, '');
       assert.deepEqual(JSON.parse(JSON.stringify(question.visual)), question.visual, 'visual is plain data');
       if (question.visual) assert.ok(visuals.BUILDERS[question.visual.type], `a builder is registered for ${question.visual.type}`);
       for (const option of question.options) assert.deepEqual([option.zh, option.en, option.ja], [option.id, option.id, option.id]);
@@ -223,14 +223,24 @@ test('the numerals builder draws one tile per number, and unknown or missing vis
   assert.equal(visuals.build(undefined, document), null);
 });
 
+function recordingDocument() {
+  const make = (namespace, tag) => ({
+    namespace, tag, className: '', attributes: {}, children: [],
+    setAttribute(name, value) { this.attributes[name] = String(value); },
+    append(...nodes) { this.children.push(...nodes); },
+  });
+  return { createElement: tag => make(null, tag), createElementNS: (namespace, tag) => make(namespace, tag) };
+}
+
 const ofKind = (level, kind, count = 900) => drawQuestions(level, count).filter(question => question.kind === kind);
 const swapDigits = value => (value % 10) * 10 + Math.floor(value / 10);
 
 test('Math 2 offers the required cards alongside tens and ones at their intended levels', () => {
   const kindsAt = level => [...new Set(drawQuestions(level, 900).map(question => question.kind))].sort();
   assert.deepEqual(kindsAt('easy'), ['compare', 'make-ten']);
-  assert.deepEqual(kindsAt('harder'), ['blocks', 'compare', 'missing-addend']);
-  assert.deepEqual(kindsAt('super'), ['blocks', 'compare', 'missing-addend', 'ten-more-less']);
+  assert.deepEqual(kindsAt('harder'), ['add-within-20', 'blocks', 'compare', 'missing-addend', 'take-within-20']);
+  assert.deepEqual(kindsAt('super'), ['add-within-20', 'blocks', 'compare', 'missing-addend', 'take-within-20', 'ten-more-less']);
+
 });
 
 test('make ten uses a ten-frame and asks for the missing counters', () => {
@@ -363,4 +373,176 @@ test('the blocks builder draws a rod for every ten and a cube for every one, cap
   assert.deepEqual(counts({ type: 'blocks', tens: 9, ones: 9 }), [9, 9]);
   assert.deepEqual(counts({ type: 'blocks', tens: 12, ones: 40 }), [9, 9], 'more than nine is capped');
   assert.deepEqual(counts({ type: 'blocks', tens: -3, ones: 'x' }), [0, 0], 'a bad count draws nothing');
+});
+
+// Sums and take-aways within twenty that cross ten.
+const EN_NUMBERS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen'];
+const ZH_NUMBERS = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八'];
+const JA_NUMBERS = ['ゼロ', 'いち', 'に', 'さん', 'よん', 'ご', 'ろく', 'なな', 'はち', 'きゅう', 'じゅう', 'じゅういち', 'じゅうに', 'じゅうさん', 'じゅうよん', 'じゅうご', 'じゅうろく', 'じゅうなな', 'じゅうはち'];
+const capital = word => word[0].toUpperCase() + word.slice(1);
+const within20Kinds = ['add-within-20', 'take-within-20'];
+const within20Questions = (level, count) => drawQuestions(level, count).filter(question => within20Kinds.includes(question.kind));
+// The two numbers of a within-20 key: "math2-add-8-5" is 8 and 5, "math2-take-13-6" is 13 and 6.
+const numbersOf = question => question.key.split('-').slice(2).map(Number);
+
+test('within 20: every sum and take-away crosses ten with both numbers 2-9, and has its own narration key', () => {
+  const sums = MATH2_KINDS.find(entry => entry.kind === 'add-within-20').audioIds;
+  const takeAways = MATH2_KINDS.find(entry => entry.kind === 'take-within-20').audioIds;
+  assert.equal(sums.length, 36);
+  assert.equal(takeAways.length, 36);
+  for (const id of sums) {
+    const [left, right] = id.split('-').slice(2).map(Number);
+    assert.equal(id, `math2-add-${left}-${right}`);
+    assert.ok(left >= 2 && left <= 9 && right >= 2 && right <= 9 && left + right >= 11 && left + right <= 18, id);
+  }
+  for (const id of takeAways) {
+    const [from, take] = id.split('-').slice(2).map(Number);
+    assert.equal(id, `math2-take-${from}-${take}`);
+    assert.ok(from >= 11 && from <= 18 && take >= 2 && take <= 9 && from - take >= 2 && from - take <= 9, id);
+  }
+  assert.equal(new Set([...sums, ...takeAways]).size, 72);
+});
+
+test('within 20: each prompt says the two numbers in all three languages, as the Math prompts do, and not the answer', () => {
+  const ids = within20Kinds.flatMap(kind => MATH2_KINDS.find(entry => entry.kind === kind).audioIds);
+  for (const id of ids) {
+    const [first, second] = id.split('-').slice(2).map(Number);
+    const sum = id.startsWith('math2-add-');
+    assert.deepEqual(prompts[id], sum
+      ? { en: `${capital(EN_NUMBERS[first])} plus ${EN_NUMBERS[second]}. How many altogether?`, zh: `${ZH_NUMBERS[first]}加${ZH_NUMBERS[second]}，總共是多少？`, ja: `${JA_NUMBERS[first]}たす${JA_NUMBERS[second]}は、ぜんぶでいくつかな？` }
+      : { en: `${capital(EN_NUMBERS[first])} minus ${EN_NUMBERS[second]}. How many are left?`, zh: `${ZH_NUMBERS[first]}減${ZH_NUMBERS[second]}，還剩下多少？`, ja: `${JA_NUMBERS[first]}ひく${JA_NUMBERS[second]}は、のこりはいくつかな？` }, id);
+    assert.doesNotMatch(prompts[id].ja, /[ァ-ヿ㐀-鿿]/, `${id} is hiragana only in Japanese`);
+    assert.doesNotMatch(prompts[id].en + prompts[id].zh + prompts[id].ja, /\d/, `${id} is written out as it is spoken`);
+  }
+});
+
+test('within 20: Easy never asks them, Harder shows two ten-frames with the equation, Super shows the equation only', () => {
+  assert.equal(within20Questions('easy', 600).length, 0, 'Easy holds only Step 1 content');
+  const kindsSeen = new Set();
+  for (const level of ['harder', 'super']) {
+    const questions = within20Questions(level, 800);
+    assert.ok(questions.length > 150, `${level}: within-20 questions are regularly offered`);
+    for (const question of questions) {
+      kindsSeen.add(question.kind);
+      const [first, second] = numbersOf(question);
+      const sum = question.kind === 'add-within-20';
+      assert.equal(question.audioId, question.key);
+      assert.equal(question.display, sum ? `${first} + ${second} = ?` : `${first} − ${second} = ?`);
+      assert.equal(Number(question.answerId), sum ? first + second : first - second);
+      assert.deepEqual(question.range, { min: 0, max: 20 });
+      assert.equal(question.options.length, CHOICE_COUNT[level]);
+      assert.equal(question.picture, '');
+      assert.equal(question.promptEn, sum ? 'How many altogether?' : 'How many are left?');
+      if (level === 'super') assert.equal(question.visual, null, 'no picture on Super');
+      else assert.equal(question.visual.type, 'ten-frame');
+    }
+  }
+  assert.deepEqual([...kindsSeen].sort(), within20Kinds);
+});
+
+test('within 20: a sum draws its two frames and marks the counters that fill the fuller frame to ten', () => {
+  const questions = within20Questions('harder', 800).filter(question => question.kind === 'add-within-20');
+  const sums = new Set();
+  for (const question of questions) {
+    const [left, right] = numbersOf(question);
+    sums.add(question.key);
+    const { counts, sign, move } = question.visual;
+    assert.deepEqual(counts, [left, right]);
+    assert.equal(sign, '+');
+    const keep = right > left ? 1 : 0;
+    assert.deepEqual(move, { from: 1 - keep, to: keep, count: 10 - counts[keep] });
+    assert.ok(move.count >= 1 && move.count <= counts[1 - keep], 'the counters moved come from the other frame');
+    assert.ok(counts[keep] + move.count === 10 && counts[1 - keep] - move.count >= 0);
+  }
+  assert.ok(sums.size > 30, `${sums.size} of the 36 sums come up`);
+  // 8 + 5: two counters move to fill the frame of eight, leaving three.
+  assert.deepEqual(MATH2_KINDS.find(entry => entry.kind === 'add-within-20').generators.harder(() => 0, '', 'harder').visual, { type: 'ten-frame', counts: [2, 9], sign: '+', move: { from: 0, to: 1, count: 1 } });
+});
+
+test('within 20: a take-away draws a full frame plus the ones, and crosses out the counters taken away', () => {
+  const questions = within20Questions('harder', 800).filter(question => question.kind === 'take-within-20');
+  const taken = new Set();
+  for (const question of questions) {
+    const [from, take] = numbersOf(question);
+    taken.add(question.key);
+    const { counts, taken: crossedOut } = question.visual;
+    assert.deepEqual(counts, [10, from - 10]);
+    assert.deepEqual(crossedOut, [take - (from - 10), from - 10], 'all the ones go first, then some of the full frame');
+    assert.equal(crossedOut[0] + crossedOut[1], take);
+    assert.equal(counts[0] + counts[1] - take, Number(question.answerId));
+    assert.equal(question.visual.sign, undefined);
+  }
+  assert.ok(taken.size > 30, `${taken.size} of the 36 take-aways come up`);
+  const thirteenMinusSix = MATH2_KINDS.find(entry => entry.kind === 'take-within-20').generators.harder(() => 0, '', 'harder');
+  assert.equal(thirteenMinusSix.key, 'math2-take-11-2');
+  assert.deepEqual(thirteenMinusSix.visual, { type: 'ten-frame', counts: [10, 1], taken: [1, 1] });
+});
+
+test('within 20: choices stay inside 0-20, hold the answer, and sometimes the slip a child is likely to make', () => {
+  for (const level of ['harder', 'super']) {
+    const questions = within20Questions(level, 1000);
+    let slips = 0;
+    for (const question of questions) {
+      const answer = Number(question.answerId);
+      const slip = question.kind === 'add-within-20' ? answer - 10 : 10 - answer;
+      if (valuesOf(question).includes(slip)) slips += 1;
+      assert.ok(valuesOf(question).every(value => value >= 0 && value <= 20));
+    }
+    assert.ok(slips > questions.length * 0.3 && slips < questions.length * 0.9, `${level}: ${slips}/${questions.length}`);
+  }
+});
+
+test('within 20: sums and take-aways take turns, and the same problem is never asked twice running', () => {
+  const asked = drawQuestions('harder', 1500);
+  asked.forEach((question, index) => {
+    if (index > 0) assert.notEqual(question.key, asked[index - 1].key);
+    if (index > 1 && asked[index - 1].kind === question.kind) assert.notEqual(asked[index - 2].kind, question.kind);
+  });
+});
+
+test('the ten-frame builder marks counters to move, the cells they fill, and counters taken away, and puts a plus between two frames', () => {
+  const document = recordingDocument();
+  const row = visuals.build({ type: 'ten-frame', counts: [8, 5], sign: '+', move: { from: 1, to: 0, count: 2 } }, document);
+  assert.equal(row.className, 'ten-frames ten-frames-pair');
+  assert.deepEqual(row.children.map(node => node.tag), ['svg', 'span', 'svg']);
+  assert.equal(row.children[1].className, 'ten-frame-sign');
+  assert.equal(row.children[1].textContent, '+');
+  const [eight, , five] = row.children;
+  const classes = (svg, name) => svg.children.filter(node => node.attributes.class === name || (node.attributes.class || '').split(' ').includes(name));
+  assert.equal(classes(eight, 'ten-frame-counter').length, 8);
+  assert.equal(classes(eight, 'ten-frame-moving').length, 0);
+  assert.equal(classes(eight, 'ten-frame-gap').length, 2);
+  // The two gap cells are the first two empty cells, straight after the eight counters.
+  const cellsOfEight = eight.children.filter(node => (node.attributes.class || '').startsWith('ten-frame-cell'));
+  assert.deepEqual(cellsOfEight.map(cell => cell.attributes.class.includes('ten-frame-gap')), [0, 0, 0, 0, 0, 0, 0, 0, 1, 1].map(Boolean));
+  assert.equal(classes(five, 'ten-frame-counter').length, 5);
+  assert.equal(classes(five, 'ten-frame-moving').length, 2);
+  assert.equal(classes(five, 'ten-frame-gap').length, 0);
+
+  const taking = visuals.build({ type: 'ten-frame', counts: [10, 3], taken: [3, 3] }, document);
+  assert.deepEqual(taking.children.map(node => node.tag), ['svg', 'svg'], 'no plus without a sign');
+  taking.children.forEach(svg => {
+    assert.equal(classes(svg, 'ten-frame-taken').length, 3);
+    assert.equal(classes(svg, 'ten-frame-cross').length, 6, 'two strokes cross each taken counter');
+  });
+  assert.equal(classes(taking.children[0], 'ten-frame-counter').length, 10);
+  // Taken counters are the last ones filled: here the third counter of the second frame, and the last three of the first.
+  const takenIndexes = svg => svg.children.filter(node => node.attributes.class && node.attributes.class.startsWith('ten-frame-counter')).map((node, index) => (node.attributes.class.includes('taken') ? index : -1)).filter(index => index >= 0);
+  assert.deepEqual(takenIndexes(taking.children[0]), [7, 8, 9]);
+  assert.deepEqual(takenIndexes(taking.children[1]), [0, 1, 2]);
+});
+
+test('the ten-frame builder ignores a move or a count of marks that does not fit the frames', () => {
+  const document = recordingDocument();
+  const marked = visuals.build({ type: 'ten-frame', counts: [9, 4], move: { from: 1, to: 0, count: 7 }, taken: [20, -1] }, document);
+  const count = (svg, name) => svg.children.filter(node => (node.attributes.class || '').split(' ').includes(name)).length;
+  assert.equal(count(marked.children[1], 'ten-frame-moving'), 1, 'only one empty cell is left to fill');
+  assert.equal(count(marked.children[0], 'ten-frame-gap'), 1);
+  assert.equal(count(marked.children[0], 'ten-frame-taken'), 9, 'taken is clamped to the counters there');
+  assert.equal(count(marked.children[1], 'ten-frame-taken'), 0);
+  for (const move of [{ from: 0, to: 0, count: 2 }, { from: 0, to: 5, count: 2 }, { from: 'a', to: 1, count: 2 }, { count: 2 }, null]) {
+    const row = visuals.build({ type: 'ten-frame', counts: [8, 5], move }, document);
+    assert.equal(count(row.children[0], 'ten-frame-gap') + count(row.children[1], 'ten-frame-moving'), 0, JSON.stringify(move));
+  }
+  assert.equal(visuals.build({ type: 'ten-frame', counts: [3], sign: '+' }, document).children.length, 1, 'no plus before the first frame');
 });
