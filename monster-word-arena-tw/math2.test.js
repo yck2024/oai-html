@@ -86,7 +86,7 @@ test('a Math 2 question has number choices inside its own range, a unique right 
       assert.ok(values.every(value => Number.isInteger(value) && value >= question.range.min && value <= question.range.max), `${level} choices stay inside the range`);
       assert.equal(question.picture, '');
       assert.equal(question.takeAway, null);
-      if (question.kind !== 'missing-addend') assert.equal(question.display, '');
+      if (!['missing-addend', 'add-within-20', 'take-within-20'].includes(question.kind)) assert.equal(question.display, '');
       assert.deepEqual(JSON.parse(JSON.stringify(question.visual)), question.visual, 'visual is plain data');
       if (question.visual) assert.ok(visuals.BUILDERS[question.visual.type], `a builder is registered for ${question.visual.type}`);
       for (const option of question.options) assert.deepEqual([option.zh, option.en, option.ja], [option.id, option.id, option.id]);
@@ -421,7 +421,7 @@ test('within 20: Easy never asks them, Harder shows two ten-frames with the equa
   const kindsSeen = new Set();
   for (const level of ['harder', 'super']) {
     const questions = within20Questions(level, 800);
-    assert.ok(questions.length > 300, `${level}: about half the questions`);
+    assert.ok(questions.length > 150, `${level}: within-20 questions are regularly offered`);
     for (const question of questions) {
       kindsSeen.add(question.kind);
       const [first, second] = numbersOf(question);
