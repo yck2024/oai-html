@@ -239,6 +239,12 @@ h1 { margin: 4px 0 4px; color: #41405e; font-size: clamp(31px, 5vw, 46px); line-
 .take-away-picture .egg-taken { opacity: .32; }
 .take-away-picture .egg-taken::after { content: '✕'; position: absolute; inset: 0; display: grid; place-items: center; color: #d4574e; font-size: .8em; font-weight: 1000; opacity: 1; }
 .question-visual { margin: 6px auto 0; }
+/* Ten-frame: pale empty cells and solid orange counters, so a child counts the counters and not the gaps. */
+.ten-frames { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.ten-frame { flex: 0 1 230px; min-width: 0; max-width: 100%; height: auto; }
+.ten-frame-board { fill: #f5f0ff; stroke: #8f82b8; stroke-width: 2.5; }
+.ten-frame-cell { fill: #fffdf8; stroke: #d9cfe9; stroke-width: 1.5; }
+.ten-frame-counter { fill: #f2762e; stroke: #b9531a; stroke-width: 2; }
 .numeral-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .numeral-tile { min-width: 52px; border: 2px solid #e8dfd0; border-radius: 14px; padding: 6px 10px; background: #fff; color: #63568a; font-size: 31px; font-weight: 1000; font-variant-numeric: tabular-nums; box-shadow: 0 3px 0 #e6ddcf; }
 .equation { min-height: 48px; margin: 2px 0 0; color: #4e5a71; font-size: 38px; font-weight: 1000; letter-spacing: .05em; line-height: 1.2; font-variant-numeric: tabular-nums; }
