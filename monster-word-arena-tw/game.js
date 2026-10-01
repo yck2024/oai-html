@@ -420,6 +420,8 @@
   // (random, previousKey, level) and returns a draft:
   //   key, audioId, answer, choices (numbers, the answer among them), range ({ min, max }, bounding every choice),
   //   promptZh / promptEn / promptJa, and optionally display (a text line) and visual (plain data for math2-visuals.js).
+  // A kind whose choices are not plain numbers (the clock) returns `options` instead of choices and range: the answer
+  // buttons themselves ({ id, zh, en, ja, ...data }), plus answerStyle, which tells app.js how to draw them.
   // Later cards append an entry here and nothing else in this file changes.
   const MATH2_RANGE_BY_LEVEL = { easy: { min: 0, max: 20 }, harder: { min: 0, max: 99 }, super: { min: 0, max: 99 } };
 
@@ -696,6 +698,81 @@
     return { ...problem, choices: numberOptions(problem, level, random) };
   }
 
+  // The clock: o'clock and half past only (a first look at telling time). The hour hand sits halfway between two numbers at
+  // half past. A clock is read two ways: the picture is shown and the child taps its time in words (answerStyle 'time'),
+  // or the time is asked and the child taps the matching clock face (answerStyle 'clock', Super only). Harder reads
+  // o'clock and half past; Super reads half past and finds clocks. Easy has no clock. Every time is its own option: id
+  // "3:00" or "3:30", with the wording each language says and writes.
+  const CLOCK_HOUR_ZH = ['一', '兩', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
+  const CLOCK_HOUR_JA = ['いち', 'に', 'さん', 'よ', 'ご', 'ろく', 'しち', 'はち', 'く', 'じゅう', 'じゅういち', 'じゅうに'];
+  const clockMinuteId = minute => (minute === 0 ? '00' : '30');
+  const wrapHour = hour => (((hour - 1) % 12) + 12) % 12 + 1;
+
+  function clockTime(hour, minute) {
+    return {
+      id: `${hour}:${clockMinuteId(minute)}`,
+      en: minute === 0 ? `${hour} o'clock` : `half past ${hour}`,
+      zh: `${CLOCK_HOUR_ZH[hour - 1]}點${minute === 0 ? '' : '半'}`,
+      ja: `${CLOCK_HOUR_JA[hour - 1]}じ${minute === 0 ? '' : 'はん'}`,
+      time: { hour, minute },
+    };
+  }
+
+  // The answer and its neighbours, the way a child goes wrong: the hour before or after (at half past, the hand is
+  // between two numbers, so both are tempting), then one more from further off, or the same hour at the other minute.
+  function clockChoices(hour, minute, count, random, mixMinutes) {
+    const other = minute === 0 ? 30 : 0;
+    const required = [clockTime(wrapHour(hour - 1), minute), clockTime(wrapHour(hour + 1), minute)];
+    const optional = [clockTime(wrapHour(hour + 2), minute), clockTime(wrapHour(hour - 2), minute)];
+    if (mixMinutes) optional.push(clockTime(hour, other));
+    const wrong = [...required, ...shuffled(optional, random)].slice(0, count - 1);
+    return shuffled([clockTime(hour, minute), ...wrong], random);
+  }
+
+  const CLOCK_WHAT = { audioId: 'math2-clock-what', promptZh: '現在幾點了？', promptEn: 'What time is it?', promptJa: 'いま、なんじかな？' };
+
+  // The question asked as "find the clock that says ...", spoken once for every time (hour 1-12, :00 and :30).
+  const CLOCK_FIND_IDS = [];
+  for (let hour = 1; hour <= 12; hour += 1) [0, 30].forEach(minute => CLOCK_FIND_IDS.push(`math2-clock-find-${hour}-${clockMinuteId(minute)}`));
+
+  function clockFindPrompts(hour, minute) {
+    const time = clockTime(hour, minute);
+    return { promptZh: `哪一個鐘是${time.zh}？`, promptEn: `Find the clock that says ${time.en}.`, promptJa: `${time.ja}のとけいは、どれかな？` };
+  }
+
+  // A clock question names one hour of twelve at one minute; the same time is never asked twice in a row.
+  function clockTarget(minutes, random, previousKey, keyPrefix) {
+    const targets = [];
+    for (let hour = 1; hour <= 12; hour += 1) minutes.forEach(minute => targets.push({ hour, minute, key: `${keyPrefix}-${hour}-${clockMinuteId(minute)}` }));
+    return pickFresh(targets, random, previousKey, target => target.key);
+  }
+
+  function clockReadDraft(minute) {
+    return (random, previousKey, level) => {
+      const { hour, key } = clockTarget([minute], random, previousKey, 'math2-clock-read');
+      return {
+        key,
+        ...CLOCK_WHAT,
+        answer: `${hour}:${clockMinuteId(minute)}`,
+        answerStyle: 'time',
+        visual: { type: 'clock', hour, minute },
+        options: clockChoices(hour, minute, CHOICE_COUNT[level], random, minute !== 0),
+      };
+    };
+  }
+
+  function clockFindDraft(random, previousKey, level) {
+    const { hour, minute, key } = clockTarget([0, 30], random, previousKey, 'math2-clock-find');
+    return {
+      key,
+      audioId: `math2-clock-find-${hour}-${clockMinuteId(minute)}`,
+      ...clockFindPrompts(hour, minute),
+      answer: `${hour}:${clockMinuteId(minute)}`,
+      answerStyle: 'clock',
+      options: clockChoices(hour, minute, CHOICE_COUNT[level], random, true),
+    };
+  }
+
   const MATH2_KINDS = [
     { kind: 'compare', audioIds: ['math2-bigger', 'math2-smaller'], generators: { easy: compareDraft, harder: compareDraft, super: compareDraft } },
     { kind: 'make-ten', audioIds: ['math2-ten-more'], generators: { easy: makeTenDraft } },
@@ -705,6 +782,9 @@
     { kind: 'add-within-20', audioIds: CROSS_TEN_SUMS.map(crossTenSumKey), generators: { harder: crossTenSumDraft, super: crossTenSumDraft } },
     { kind: 'take-within-20', audioIds: CROSS_TEN_TAKE_AWAYS.map(crossTenTakeKey), generators: { harder: crossTenTakeDraft, super: crossTenTakeDraft } },
     { kind: 'sequence', audioIds: Object.values(SEQUENCE_PROMPTS).map(prompt => prompt.audioId), generators: { easy: sequenceDraft, harder: sequenceDraft, super: sequenceDraft } },
+    { kind: 'clock-oclock', audioIds: [CLOCK_WHAT.audioId], generators: { harder: clockReadDraft(0) } },
+    { kind: 'clock-half', audioIds: [CLOCK_WHAT.audioId], generators: { harder: clockReadDraft(30), super: clockReadDraft(30) } },
+    { kind: 'clock-find', audioIds: CLOCK_FIND_IDS, generators: { super: clockFindDraft } },
   ];
 
   // Like plus and minus on Math: the same kind is never asked three times in a row while another is on offer.
@@ -735,9 +815,9 @@
       dense: false,
       // Plain data that app.js hands to math2-visuals.js to draw; null when the question is only its number buttons.
       visual: draft.visual || null,
-      range: draft.range,
+      ...(draft.answerStyle ? { answerStyle: draft.answerStyle } : { range: draft.range }),
       answerId: String(draft.answer),
-      options: shuffled(draft.choices.map(value => ({
+      options: draft.options || shuffled(draft.choices.map(value => ({
         id: String(value), zh: String(value), en: String(value), ja: String(value), icon: '⭐',
       })), random),
     };

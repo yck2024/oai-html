@@ -1158,5 +1158,130 @@
     "en": "Count backward. What number comes next?",
     "zh": "倒著數，接下來是哪一個數字？",
     "ja": "うしろむきにかぞえよう。つぎのかずは、なにかな？"
+  },
+  "math2-clock-what": {
+    "en": "What time is it?",
+    "zh": "現在幾點了？",
+    "ja": "いま、なんじかな？"
+  },
+  "math2-clock-find-1-00": {
+    "en": "Find the clock that says one o'clock.",
+    "zh": "哪一個鐘是一點？",
+    "ja": "いちじのとけいは、どれかな？"
+  },
+  "math2-clock-find-1-30": {
+    "en": "Find the clock that says half past one.",
+    "zh": "哪一個鐘是一點半？",
+    "ja": "いちじはんのとけいは、どれかな？"
+  },
+  "math2-clock-find-2-00": {
+    "en": "Find the clock that says two o'clock.",
+    "zh": "哪一個鐘是兩點？",
+    "ja": "にじのとけいは、どれかな？"
+  },
+  "math2-clock-find-2-30": {
+    "en": "Find the clock that says half past two.",
+    "zh": "哪一個鐘是兩點半？",
+    "ja": "にじはんのとけいは、どれかな？"
+  },
+  "math2-clock-find-3-00": {
+    "en": "Find the clock that says three o'clock.",
+    "zh": "哪一個鐘是三點？",
+    "ja": "さんじのとけいは、どれかな？"
+  },
+  "math2-clock-find-3-30": {
+    "en": "Find the clock that says half past three.",
+    "zh": "哪一個鐘是三點半？",
+    "ja": "さんじはんのとけいは、どれかな？"
+  },
+  "math2-clock-find-4-00": {
+    "en": "Find the clock that says four o'clock.",
+    "zh": "哪一個鐘是四點？",
+    "ja": "よじのとけいは、どれかな？"
+  },
+  "math2-clock-find-4-30": {
+    "en": "Find the clock that says half past four.",
+    "zh": "哪一個鐘是四點半？",
+    "ja": "よじはんのとけいは、どれかな？"
+  },
+  "math2-clock-find-5-00": {
+    "en": "Find the clock that says five o'clock.",
+    "zh": "哪一個鐘是五點？",
+    "ja": "ごじのとけいは、どれかな？"
+  },
+  "math2-clock-find-5-30": {
+    "en": "Find the clock that says half past five.",
+    "zh": "哪一個鐘是五點半？",
+    "ja": "ごじはんのとけいは、どれかな？"
+  },
+  "math2-clock-find-6-00": {
+    "en": "Find the clock that says six o'clock.",
+    "zh": "哪一個鐘是六點？",
+    "ja": "ろくじのとけいは、どれかな？"
+  },
+  "math2-clock-find-6-30": {
+    "en": "Find the clock that says half past six.",
+    "zh": "哪一個鐘是六點半？",
+    "ja": "ろくじはんのとけいは、どれかな？"
+  },
+  "math2-clock-find-7-00": {
+    "en": "Find the clock that says seven o'clock.",
+    "zh": "哪一個鐘是七點？",
+    "ja": "しちじのとけいは、どれかな？"
+  },
+  "math2-clock-find-7-30": {
+    "en": "Find the clock that says half past seven.",
+    "zh": "哪一個鐘是七點半？",
+    "ja": "しちじはんのとけいは、どれかな？"
+  },
+  "math2-clock-find-8-00": {
+    "en": "Find the clock that says eight o'clock.",
+    "zh": "哪一個鐘是八點？",
+    "ja": "はちじのとけいは、どれかな？"
+  },
+  "math2-clock-find-8-30": {
+    "en": "Find the clock that says half past eight.",
+    "zh": "哪一個鐘是八點半？",
+    "ja": "はちじはんのとけいは、どれかな？"
+  },
+  "math2-clock-find-9-00": {
+    "en": "Find the clock that says nine o'clock.",
+    "zh": "哪一個鐘是九點？",
+    "ja": "くじのとけいは、どれかな？"
+  },
+  "math2-clock-find-9-30": {
+    "en": "Find the clock that says half past nine.",
+    "zh": "哪一個鐘是九點半？",
+    "ja": "くじはんのとけいは、どれかな？"
+  },
+  "math2-clock-find-10-00": {
+    "en": "Find the clock that says ten o'clock.",
+    "zh": "哪一個鐘是十點？",
+    "ja": "じゅうじのとけいは、どれかな？"
+  },
+  "math2-clock-find-10-30": {
+    "en": "Find the clock that says half past ten.",
+    "zh": "哪一個鐘是十點半？",
+    "ja": "じゅうじはんのとけいは、どれかな？"
+  },
+  "math2-clock-find-11-00": {
+    "en": "Find the clock that says eleven o'clock.",
+    "zh": "哪一個鐘是十一點？",
+    "ja": "じゅういちじのとけいは、どれかな？"
+  },
+  "math2-clock-find-11-30": {
+    "en": "Find the clock that says half past eleven.",
+    "zh": "哪一個鐘是十一點半？",
+    "ja": "じゅういちじはんのとけいは、どれかな？"
+  },
+  "math2-clock-find-12-00": {
+    "en": "Find the clock that says twelve o'clock.",
+    "zh": "哪一個鐘是十二點？",
+    "ja": "じゅうにじのとけいは、どれかな？"
+  },
+  "math2-clock-find-12-30": {
+    "en": "Find the clock that says half past twelve.",
+    "zh": "哪一個鐘是十二點半？",
+    "ja": "じゅうにじはんのとけいは、どれかな？"
   }
 }

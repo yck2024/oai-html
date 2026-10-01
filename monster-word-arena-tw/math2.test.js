@@ -81,15 +81,20 @@ test('a Math 2 question has number choices inside its own range, a unique right 
       const values = valuesOf(question);
       assert.equal(question.topic, 'math2');
       assert.equal(question.options.length, CHOICE_COUNT[level]);
-      assert.equal(new Set(values).size, values.length, 'choices are distinct');
-      assert.ok(values.includes(Number(question.answerId)));
-      assert.ok(values.every(value => Number.isInteger(value) && value >= question.range.min && value <= question.range.max), `${level} choices stay inside the range`);
+      assert.equal(new Set(question.options.map(option => option.id)).size, question.options.length, 'choices are distinct');
+      assert.ok(question.options.some(option => option.id === question.answerId));
+      if (question.answerStyle) {
+        assert.equal(question.range, undefined);
+        assert.ok(['time', 'clock'].includes(question.answerStyle));
+      } else {
+        assert.ok(values.every(value => Number.isInteger(value) && value >= question.range.min && value <= question.range.max), `${level} choices stay inside the range`);
+      }
       assert.equal(question.picture, '');
       assert.equal(question.takeAway, null);
       if (!['missing-addend', 'add-within-20', 'take-within-20'].includes(question.kind)) assert.equal(question.display, '');
       assert.deepEqual(JSON.parse(JSON.stringify(question.visual)), question.visual, 'visual is plain data');
       if (question.visual) assert.ok(visuals.BUILDERS[question.visual.type], `a builder is registered for ${question.visual.type}`);
-      for (const option of question.options) assert.deepEqual([option.zh, option.en, option.ja], [option.id, option.id, option.id]);
+      if (!question.answerStyle) for (const option of question.options) assert.deepEqual([option.zh, option.en, option.ja], [option.id, option.id, option.id]);
     }
   }
 });
@@ -238,9 +243,10 @@ const swapDigits = value => (value % 10) * 10 + Math.floor(value / 10);
 test('Math 2 offers the required cards alongside tens and ones at their intended levels', () => {
   const kindsAt = level => [...new Set(drawQuestions(level, 900).map(question => question.kind))].sort();
   assert.deepEqual(kindsAt('easy'), ['compare', 'make-ten', 'sequence']);
-  assert.deepEqual(kindsAt('harder'), ['add-within-20', 'blocks', 'compare', 'missing-addend', 'sequence', 'take-within-20']);
-  assert.deepEqual(kindsAt('super'), ['add-within-20', 'blocks', 'compare', 'missing-addend', 'sequence', 'take-within-20', 'ten-more-less']);
-
+  assert.deepEqual(kindsAt('harder'), ['add-within-20', 'blocks', 'clock-half', 'clock-oclock', 'compare', 'missing-addend', 'sequence', 'take-within-20']);
+  assert.deepEqual(kindsAt('super'), ['add-within-20', 'blocks', 'clock-find', 'clock-half', 'compare', 'missing-addend', 'sequence', 'take-within-20', 'ten-more-less']);
+  assert.deepEqual(MATH2_KINDS.find(entry => entry.kind === 'make-ten').audioIds, ['math2-ten-more']);
+  assert.deepEqual(MATH2_KINDS.find(entry => entry.kind === 'missing-addend').audioIds, ['math2-ten-missing']);
 });
 
 test('make ten uses a ten-frame and asks for the missing counters', () => {

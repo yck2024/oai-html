@@ -8,13 +8,21 @@
   const blockCount = value => Math.min(BLOCK_MAX, Math.max(0, Math.floor(Number(value)) || 0));
   const SVG_NS = 'http://www.w3.org/2000/svg';
   const FRAME_CELLS = 10;
+// The pictures of Math 2 questions. A question's `visual` is plain data ({ type, ...fields }, nothing but strings,
+  // numbers, booleans, arrays and objects); app.js hands it to build(), which finds the builder registered for
+  // `type` and returns the element to show above the answer buttons. A later card adds its picture by appending one
+  // builder to BUILDERS and nothing else here changes. A builder is (visual, document) => Element.
+  const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
+  const round = value => Math.round(value * 100) / 100;
+  // A ten-frame is two rows of five cells. Counters fill it a row at a time, left to right, so five is a full top row
+  // and a child can see "five and some more" without counting. Sizes are in viewBox units; CSS sets the drawn size.
   const FRAME_COLUMNS = 5;
   const FRAME_ROWS = 2;
   const CELL = 44;
   const FRAME_PAD = 5;
 
-  function svgElement(document, tag, attributes) {
-    const element = document.createElementNS(SVG_NS, tag);
+  function svgElement(document, tag, attributes = {}) {
+    const element = document.createElementNS(SVG_NAMESPACE, tag);
     Object.entries(attributes).forEach(([name, value]) => element.setAttribute(name, String(value)));
     return element;
   }
@@ -74,6 +82,16 @@
     }
     return marks;
   }
+// Where the two hands point, in degrees clockwise from twelve. The hour hand moves with the minutes, so at half past
+  // it sits halfway between two numbers (3:30 is 105 degrees, between the 3 at 90 and the 4 at 120).
+  function clockAngles(hour, minute) {
+    return { hour: ((hour % 12) + minute / 60) * 30, minute: minute * 6 };
+  }
+
+  const pointOnClock = (angle, length) => ({
+    x: round(100 + length * Math.sin((angle * Math.PI) / 180)),
+    y: round(100 - length * Math.cos((angle * Math.PI) / 180)),
+  });
 
   const BUILDERS = {
     // Ten-frames in a row, one per entry: visual = { type: 'ten-frame', counts: [3] } is one frame with three counters,
@@ -140,6 +158,32 @@
       });
       return row;
     },
+
+    // A round clock with the numbers 1-12 and two hands: visual = { type: 'clock', hour: 3, minute: 30 }. The short, thick
+    // hour hand and the long, thin minute hand differ in colour as well as length. Only :00 and :30 are asked today,
+    // but the minute hand follows any minute.
+    clock(visual, document) {
+      const angles = clockAngles(visual.hour, visual.minute);
+      const svg = svgElement(document, 'svg', { viewBox: '0 0 200 200', class: 'clock-face', 'aria-hidden': 'true', focusable: 'false' });
+      svg.append(svgElement(document, 'circle', { class: 'clock-rim', cx: 100, cy: 100, r: 94 }));
+      for (let mark = 1; mark <= 12; mark += 1) {
+        const outer = pointOnClock(mark * 30, 90);
+        const inner = pointOnClock(mark * 30, 84);
+        svg.append(svgElement(document, 'line', { class: 'clock-tick', x1: inner.x, y1: inner.y, x2: outer.x, y2: outer.y }));
+        const place = pointOnClock(mark * 30, 69);
+        const number = svgElement(document, 'text', { class: 'clock-number', x: place.x, y: place.y, 'text-anchor': 'middle', 'dominant-baseline': 'central' });
+        number.textContent = String(mark);
+        svg.append(number);
+      }
+      const hourEnd = pointOnClock(angles.hour, 38);
+      const minuteEnd = pointOnClock(angles.minute, 55);
+      svg.append(
+        svgElement(document, 'line', { class: 'clock-hand clock-hour-hand', x1: 100, y1: 100, x2: hourEnd.x, y2: hourEnd.y }),
+        svgElement(document, 'line', { class: 'clock-hand clock-minute-hand', x1: 100, y1: 100, x2: minuteEnd.x, y2: minuteEnd.y }),
+        svgElement(document, 'circle', { class: 'clock-centre', cx: 100, cy: 100, r: 7 }),
+      );
+      return svg;
+    },
   };
 
   // The element for a visual, or null when there is none or no builder is registered for its type.
@@ -148,7 +192,7 @@
     return builder ? builder(visual, document) : null;
   }
 
-  const api = { BUILDERS, build };
+  const api = { BUILDERS, build, clockAngles };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof window !== 'undefined') window.FriendlyArenaMath2Visuals = api;
 })();

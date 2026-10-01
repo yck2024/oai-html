@@ -457,6 +457,17 @@
         label.textContent = textLanguage === 'en' ? option.en.toLowerCase() : option[textLanguage];
         button.append(label);
       }
+    } else if (question.answerStyle === 'clock') {
+      // "Find the clock": the choice is a clock face. Its time stays as the accessible name, as for any picture-only choice.
+      button.classList.add('clock-option');
+      button.setAttribute('aria-label', option[textLanguage]);
+      button.append(window.FriendlyArenaMath2Visuals.build({ type: 'clock', ...option.time }, document));
+    } else if (question.answerStyle === 'time') {
+      // "What time is it?": the choice is the time written out, in the language on screen.
+      const time = document.createElement('span');
+      time.className = 'time-choice';
+      time.textContent = option[textLanguage];
+      button.append(time);
     } else if (isMathTopic(question.topic)) {
       const number = document.createElement('span');
       number.className = 'number-choice';
@@ -730,7 +741,10 @@
     const choices = question.fallbackOptions || question.options;
     answerOptions.replaceChildren(...(onDiagram ? [] : choices.map(option => makeAnswerButton(option, question))));
     answerOptions.classList.toggle('four-choices', choices.length === 4);
-    const groupLabel = isMathTopic(question.topic) ? 'answerGroupLabelNumber' : question.wordLabels ? 'answerGroupLabelWord' : 'answerGroupLabelPicture';
+    const groupLabel = {
+      time: 'answerGroupLabelTime',
+      clock: 'answerGroupLabelClock',
+    }[question.answerStyle] || (isMathTopic(question.topic) ? 'answerGroupLabelNumber' : question.wordLabels ? 'answerGroupLabelWord' : 'answerGroupLabelPicture');
     answerOptions.setAttribute('aria-label', I18N.STRINGS[groupLabel][textLanguage]);
     if (state.missed) markMiss(state);
     else {
