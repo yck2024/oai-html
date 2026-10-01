@@ -653,6 +653,49 @@
     };
   }
 
+  // Four shared clips work for every step: the visible numbers teach the size of each jump without
+  // the narration reading a particular sequence (or its answer). Backward counting lives only on Super.
+  const SEQUENCE_PROMPTS = {
+    next: { audioId: 'math2-sequence-next', promptZh: '接下來是哪一個數字？', promptEn: 'What number comes next?', promptJa: 'つぎのかずは、なにかな？' },
+    missing: { audioId: 'math2-sequence-missing', promptZh: '少了哪一個數字？', promptEn: 'What number is missing?', promptJa: 'ぬけているかずは、なにかな？' },
+    jumps: { audioId: 'math2-sequence-jumps', promptZh: '每次跳一樣多，接下來是哪一個數字？', promptEn: 'Count in equal jumps. What number comes next?', promptJa: 'おなじかずずつかぞえてね。つぎのかずは、なにかな？' },
+    backward: { audioId: 'math2-sequence-backward', promptZh: '倒著數，接下來是哪一個數字？', promptEn: 'Count backward. What number comes next?', promptJa: 'うしろむきにかぞえよう。つぎのかずは、なにかな？' },
+  };
+
+  function sequencePool(steps, missing) {
+    const pool = [];
+    for (const step of steps) {
+      const size = Math.abs(step);
+      const max = size <= 2 ? 20 : 100;
+      // Skip-count from multiples of the step, keeping every tile (and the hidden answer) in range.
+      for (let low = 0; low + size * 3 <= max; low += size) {
+        const values = Array.from({ length: 4 }, (_, index) => low + size * index);
+        if (step < 0) values.reverse();
+        for (const gap of missing ? [1, 2, 3] : [3]) {
+          const prompt = gap !== 3 ? 'missing' : step < 0 ? 'backward' : size === 1 ? 'next' : 'jumps';
+          pool.push({
+            key: `math2-sequence-${step}-${values[0]}-${gap}`,
+            ...SEQUENCE_PROMPTS[prompt],
+            answer: values[gap],
+            range: { min: 0, max },
+            visual: { type: 'sequence', values: values.map((value, index) => index === gap ? null : value) },
+          });
+        }
+      }
+    }
+    return pool;
+  }
+  const SEQUENCE_POOLS = {
+    easy: sequencePool([1, 10], false),
+    harder: sequencePool([2, 5, 10], true),
+    super: sequencePool([-1, -2, -5, -10], true),
+  };
+
+  function sequenceDraft(random, previousKey, level) {
+    const problem = pickFresh(SEQUENCE_POOLS[level], random, previousKey, item => item.key);
+    return { ...problem, choices: numberOptions(problem, level, random) };
+  }
+
   const MATH2_KINDS = [
     { kind: 'compare', audioIds: ['math2-bigger', 'math2-smaller'], generators: { easy: compareDraft, harder: compareDraft, super: compareDraft } },
     { kind: 'make-ten', audioIds: ['math2-ten-more'], generators: { easy: makeTenDraft } },
@@ -661,6 +704,7 @@
     { kind: 'ten-more-less', audioIds: ['math2-tens-more', 'math2-tens-less'], generators: { super: tenMoreLessDraft } },
     { kind: 'add-within-20', audioIds: CROSS_TEN_SUMS.map(crossTenSumKey), generators: { harder: crossTenSumDraft, super: crossTenSumDraft } },
     { kind: 'take-within-20', audioIds: CROSS_TEN_TAKE_AWAYS.map(crossTenTakeKey), generators: { harder: crossTenTakeDraft, super: crossTenTakeDraft } },
+    { kind: 'sequence', audioIds: Object.values(SEQUENCE_PROMPTS).map(prompt => prompt.audioId), generators: { easy: sequenceDraft, harder: sequenceDraft, super: sequenceDraft } },
   ];
 
   // Like plus and minus on Math: the same kind is never asked three times in a row while another is on offer.

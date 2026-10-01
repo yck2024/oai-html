@@ -1138,5 +1138,25 @@
     "en": "Eighteen minus nine. How many are left?",
     "zh": "十八減九，還剩下多少？",
     "ja": "じゅうはちひくきゅうは、のこりはいくつかな？"
+  },
+  "math2-sequence-next": {
+    "en": "What number comes next?",
+    "zh": "接下來是哪一個數字？",
+    "ja": "つぎのかずは、なにかな？"
+  },
+  "math2-sequence-missing": {
+    "en": "What number is missing?",
+    "zh": "少了哪一個數字？",
+    "ja": "ぬけているかずは、なにかな？"
+  },
+  "math2-sequence-jumps": {
+    "en": "Count in equal jumps. What number comes next?",
+    "zh": "每次跳一樣多，接下來是哪一個數字？",
+    "ja": "おなじかずずつかぞえてね。つぎのかずは、なにかな？"
+  },
+  "math2-sequence-backward": {
+    "en": "Count backward. What number comes next?",
+    "zh": "倒著數，接下來是哪一個數字？",
+    "ja": "うしろむきにかぞえよう。つぎのかずは、なにかな？"
   }
 }

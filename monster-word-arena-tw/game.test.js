@@ -1447,6 +1447,7 @@ print(json.dumps({
     'ja/face-neck': '首を見つけてね！',
     'ja/face-shoulders': '肩を見つけてね！',
     'ja/face-legs': '太ももを見つけてね！',
+    'ja/math2-sequence-jumps': '同じ数ずつ数えてね。次の数は、何かな？',
   };
   assert.deepEqual(Object.fromEntries(generated.overrides.map(([language, audioId, text]) => [`${language}/${audioId}`, text])), overrides);
   const audioText = new Map(generated.clips.map(([language, audioId, text]) => [`${language}/${audioId}`, text]));
@@ -4098,6 +4099,11 @@ test('the Math 2 tab sits beside Math, shows number buttons only, and has its ow
   assert.deepEqual(app.topicTabs.map(tab => tab.dataset.topic).slice(0, 2), ['math', 'math2']);
   app.topicTabs.find(tab => tab.dataset.topic === 'math2').click();
   assert.equal(game.getState().topic, 'math2');
+  // This foundation test exercises the plain-number card; other registered cards may have visuals now.
+  for (let draw = 0; game.getState().question.kind !== 'compare' && draw < 100; draw += 1) {
+    app.topicTabs.find(tab => tab.dataset.topic === 'math2').click();
+  }
+  assert.equal(game.getState().question.kind, 'compare');
   assert.equal(app.elements.get('#arenaMessage').textContent, I18N.topicChosenMessage('math2', 'en'));
   assert.deepEqual(I18N.TOPIC_NAMES.math2, { en: 'Math 2', zh: '數學2', ja: 'すうがく2', emoji: '🔢' });
   const choices = [...app.answerOptions.children];
@@ -4163,7 +4169,7 @@ test('a make-ten question draws its ten-frame above the number buttons, and the 
   app.topicTabs.find(tab => tab.dataset.topic === 'math2').click();
   const container = app.elements.get('#questionVisual');
   let seen = 0;
-  for (let draws = 0; draws < 40 && seen < 3; draws += 1) {
+  for (let draws = 0; draws < 40 && seen < 1; draws += 1) {
     const question = game.getState().question;
     const frame = container.children[0];
     if (question.kind === 'make-ten') {
@@ -4173,37 +4179,50 @@ test('a make-ten question draws its ten-frame above the number buttons, and the 
       assert.equal(frame.children.length, 1);
       assert.equal(frame.children[0].children.filter(node => node.attributes.class === 'ten-frame-counter').length, question.visual.counts[0]);
       assert.equal(app.elements.get('#equation').hidden, true, 'Easy shows the frame without an equation');
-    } else {
-      assert.equal(container.hidden, true, 'a question without a frame clears the last one');
-    }
-    clickAnswer(app, game, true);
-    endSpeech(app);
-    app.nextButton.click();
+    } else if (question.visual) {
+      assert.equal(container.hidden, false);
+      assert.equal(container.children[0].className, 'numeral-row sequence-row');
+    } else assert.equal(container.hidden, true, 'a question without a visual clears the last one');
+    clickAnswer(app, game, true); endSpeech(app); app.nextButton.click();
   }
-  assert.equal(seen, 3, 'make ten comes up on Math 2 Easy');
-  app.levelButtons.find(button => button.dataset.level === 'harder').click();
-  for (let draws = 0; draws < 40; draws += 1) {
-    const question = game.getState().question;
-    if (question.kind === 'missing-addend') {
-      assert.equal(container.children[0].children.length, 1, 'Harder shows the frame');
-      assert.equal(app.elements.get('#equation').textContent, question.display);
-      assert.equal(app.elements.get('#equation').hidden, false);
-      break;
+  assert.equal(seen, 1, 'make ten is reachable on Math 2 Easy');
+  for (const [level, kind] of [['harder', 'missing-addend'], ['super', 'missing-addend']]) {
+    app.levelButtons.find(button => button.dataset.level === level).click();
+    let found = false;
+    for (let draws = 0; draws < 40; draws += 1) {
+      const question = game.getState().question;
+      if (question.kind === kind) {
+        found = true;
+        assert.equal(container.hidden, level === 'super', level === 'super' ? 'Super shows the equation only' : 'Harder shows the frame');
+        assert.equal(app.elements.get('#equation').textContent, question.display);
+        break;
+      }
+      clickAnswer(app, game, true); endSpeech(app); app.nextButton.click();
     }
-    clickAnswer(app, game, true);
-    endSpeech(app);
-    app.nextButton.click();
+    assert.equal(found, true, `${level} reaches missing addend`);
   }
-  app.levelButtons.find(button => button.dataset.level === 'super').click();
-  for (let draws = 0; draws < 40; draws += 1) {
+});
+
+test('a sequence card renders its missing tile at every level, narrates it, and clears when switching to Math', () => {
+  for (const level of LEVELS) {
+    const game = createGame(seededRandom(6));
+    const app = createAppFixture(game);
+    app.startButton.click();
+    app.levelButtons.find(button => button.dataset.level === level).click();
+    const tab = app.topicTabs.find(tab => tab.dataset.topic === 'math2');
+    for (let draw = 0; game.getState().question.kind !== 'sequence' && draw < 100; draw += 1) tab.click();
     const question = game.getState().question;
-    if (question.kind === 'missing-addend') {
-      assert.equal(container.hidden, true, 'Super shows the equation only');
-      assert.match(app.elements.get('#equation').textContent, /\?.*= 10$/);
-      break;
-    }
-    clickAnswer(app, game, true);
-    endSpeech(app);
-    app.nextButton.click();
+    assert.equal(question.kind, 'sequence');
+    const container = app.elements.get('#questionVisual');
+    assert.equal(container.hidden, false);
+    const row = container.children[0];
+    assert.equal(row.className, 'numeral-row sequence-row');
+    assert.deepEqual(row.children.map(tile => tile.textContent), question.visual.values.map(value => value === null ? '?' : String(value)));
+    assert.equal(row.children.filter(tile => tile.className.includes('sequence-gap')).length, 1);
+    assert.ok(app.played.at(-1).endsWith(`/en/${question.audioId}.mp3`));
+    assert.equal(answerButtons(app).length, CHOICE_COUNT[level]);
+    app.topicTabs.find(button => button.dataset.topic === 'math').click();
+    assert.equal(container.hidden, true);
+    assert.equal(container.children.length, 0, 'no stale sequence remains on Math');
   }
 });

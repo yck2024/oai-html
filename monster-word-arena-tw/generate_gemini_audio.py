@@ -83,6 +83,8 @@ PRONUNCIATION_OVERRIDES = {
     ("ja", "face-neck"): "首を見つけてね！",
     ("ja", "face-shoulders"): "肩を見つけてね！",
     ("ja", "face-legs"): "太ももを見つけてね！",
+    # Both transcribers heard 数えよ instead of 数えよう; use a clear 数えてね invitation.
+    ("ja", "math2-sequence-jumps"): "同じ数ずつ数えてね。次の数は、何かな？",
 }
 
 
