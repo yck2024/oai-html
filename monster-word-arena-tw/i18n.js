@@ -16,6 +16,7 @@
 
   const TOPIC_NAMES = {
     math: { en: 'Math', zh: '數學', ja: 'すうがく', emoji: '➕' },
+    math2: { en: 'Math 2', zh: '數學2', ja: 'すうがく2', emoji: '🔢' },
     colors: { en: 'Colors', zh: '顏色', ja: 'いろ', emoji: '🎨' },
     face: { en: 'Body', zh: '身體', ja: 'からだ', emoji: '🙂' },
     family: { en: 'Family', zh: '家人', ja: 'かぞく', emoji: '🏠' },
@@ -304,6 +305,13 @@
   }
 
   function levelChosenMessage(levelId, lang, topicId = null) {
+    if (topicId === 'math2') {
+      return {
+        easy: { en: 'Easy level—gentle number puzzles, three choices!', zh: '簡單難度：輕鬆的數字小謎題，三個選項！', ja: 'かんたんれべる：やさしい　かずの　なぞなぞ、３つから　えらべるよ！' },
+        harder: { en: 'Harder level—bigger numbers and more puzzles, four choices!', zh: '進階難度：更大的數字和更多謎題，四個選項！', ja: 'すこしむずかしいれべる：おおきな　かずと　いろいろな　なぞなぞ、４つから　えらべるよ！' },
+        super: { en: 'Super level—mixed number puzzles, as few pictures as possible, four choices!', zh: '超級難度：各種數字謎題混在一起，盡量不用圖片，四個選項！', ja: 'ちょうむずかしいれべる：いろいろな　かずの　なぞなぞ、えは　できるだけ　なし、４つから　えらべるよ！' },
+      }[levelId][lang];
+    }
     if (topicId === 'math') {
       return {
         easy: { en: 'Easy level—count the eggs, add or take away within five, three choices!', zh: '簡單難度：數一數蛋，五以內的加減，三個選項！', ja: 'かんたんれべる：たまごを　かぞえて、５までの　たしざんと　ひきざん、３つから　えらべるよ！' },

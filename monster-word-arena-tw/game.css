@@ -208,6 +208,8 @@ h1 { margin: 4px 0 4px; color: #41405e; font-size: clamp(31px, 5vw, 46px); line-
 .topic-tab > span:last-child { display: grid; text-align: left; }
 .topic-tab.is-active { background: #fff; color: #594e76; box-shadow: 0 2px 6px #867a671b; }
 .topic-tab:disabled { cursor: default; opacity: .7; }
+/* A last tab alone on its row sits in the middle of five columns, or spans both columns on a phone. */
+.topic-tab:last-child:nth-child(5n+1) { grid-column: 3; }
 .level-choice { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .level-option { min-height: 40px; border: 2px solid #e8dfd0; border-radius: 12px; padding: 6px 12px; background: #fff; color: #5f5a72; font-size: 12px; font-weight: 950; cursor: pointer; touch-action: manipulation; }
 .level-option.is-active { border-color: #7fbf95; background: #e6f6ea; color: #3f7152; }
@@ -236,6 +238,9 @@ h1 { margin: 4px 0 4px; color: #41405e; font-size: clamp(31px, 5vw, 46px); line-
 .take-away-picture .egg-group-end { margin-right: .35em; }
 .take-away-picture .egg-taken { opacity: .32; }
 .take-away-picture .egg-taken::after { content: '✕'; position: absolute; inset: 0; display: grid; place-items: center; color: #d4574e; font-size: .8em; font-weight: 1000; opacity: 1; }
+.question-visual { margin: 6px auto 0; }
+.numeral-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.numeral-tile { min-width: 52px; border: 2px solid #e8dfd0; border-radius: 14px; padding: 6px 10px; background: #fff; color: #63568a; font-size: 31px; font-weight: 1000; font-variant-numeric: tabular-nums; box-shadow: 0 3px 0 #e6ddcf; }
 .equation { min-height: 48px; margin: 2px 0 0; color: #4e5a71; font-size: 38px; font-weight: 1000; letter-spacing: .05em; line-height: 1.2; font-variant-numeric: tabular-nums; }
 .answer-hint { margin: 8px 0 6px; color: #8b8a95; font-size: 11px; font-weight: 850; }
 .answer-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
@@ -379,6 +384,8 @@ footer { padding: 12px 0 0; color: #7c7b8c; text-align: center; font-size: 11px;
   .score-stars.compact { font-size: 15px; }
   .text-language { min-height: 40px; padding: 5px 9px; font-size: 10px; }
   .topic-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px; padding: 3px; }
+  .topic-tab:last-child:nth-child(5n+1) { grid-column: auto; }
+  .topic-tab:last-child:nth-child(odd) { grid-column: 1 / -1; }
   .speech-controls { gap: 6px; margin-top: 7px; padding: 7px 5px; }
   .speech-playback { gap: 5px; }
   .speech-control, .level-option { min-height: 44px; padding: 6px 9px; font-size: 11px; }

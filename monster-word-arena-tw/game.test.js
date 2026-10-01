@@ -6,7 +6,7 @@ const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 const test = require('node:test');
 const vm = require('node:vm');
-const { GOAL_BY_LEVEL, HEARTS_BY_LEVEL, CHOICE_COUNT, TOPICS, LEVELS, WORD_TOPICS, REACTIONS, FACE_DIAGRAM, FACE_LEVEL_IDS, DIAGRAMS, diagramPartAt, createGame, createSpeechPlayer } = require('./game.js');
+const { GOAL_BY_LEVEL, HEARTS_BY_LEVEL, CHOICE_COUNT, TOPICS, MATH2_KINDS, isMathTopic, LEVELS, WORD_TOPICS, REACTIONS, FACE_DIAGRAM, FACE_LEVEL_IDS, DIAGRAMS, diagramPartAt, createGame, createSpeechPlayer } = require('./game.js');
 const { EFFECTS, EFFECT_LEVEL, MUSIC_LEVEL, createSoundBoard } = require('./sounds.js');
 const { POSES, ART, TIMING, comboText } = require('./arena.js');
 const { STORAGE_KEY, STICKERS, COSTUMES } = require('./rewards.js');
@@ -599,7 +599,7 @@ test('word challenges use bilingual Taiwan Traditional Chinese and hiragana Japa
     vehicles: ['汽車', '公車', '火車', '飛機', '腳踏車', '消防車'],
     weather: ['晴天', '雨天', '陰天', '下雪', '颳風', '彩虹', '打雷'],
   };
-  assert.deepEqual(TOPICS, ['math', ...WORD_TOPIC_IDS]);
+  assert.deepEqual(TOPICS, ['math', 'math2', ...WORD_TOPIC_IDS]);
   assert.deepEqual(Object.keys(WORD_TOPICS), WORD_TOPIC_IDS);
   for (const topic of WORD_TOPIC_IDS) {
     assert.deepEqual(WORD_TOPICS[topic].words.map(word => word.zh), expected[topic], `${topic} uses the expected Traditional Chinese`);
@@ -1341,9 +1341,13 @@ function allMathAudioIds() {
   return [...ids];
 }
 
+// The clips every Math 2 kind says it can ask for: a later card registers its kind and these follow, with no test edit.
+const MATH2_AUDIO_IDS = MATH2_KINDS.flatMap(entry => entry.audioIds);
+
 test('every math and vocabulary prompt has bundled English, Taiwan Mandarin, and Japanese audio', () => {
   const expected = [
     ...allMathAudioIds(),
+    ...MATH2_AUDIO_IDS,
     ...WORD_TOPIC_IDS.flatMap(topic => WORD_TOPICS[topic].words.map(word => `${topic}-${word.id}`)),
   ].sort();
   assert.deepEqual(Object.keys(prompts).sort(), expected);
@@ -1684,7 +1688,7 @@ test('game-generated prompt IDs exist for every selectable word and math target 
     game.chooseLevel(level);
     for (const topic of TOPICS) {
       game.chooseTopic(topic);
-      for (let draw = 0; draw < (topic === 'math' ? 3000 : 80); draw += 1) {
+      for (let draw = 0; draw < (isMathTopic(topic) ? 3000 : 80); draw += 1) {
         audioIds.add(game.getState().question.audioId);
         game.chooseTopic(topic);
       }
@@ -4069,4 +4073,68 @@ test('a saved echo language is remembered, and an old save without one keeps it 
   endSpeech(old);
   endSpeech(old);
   assert.equal(clipsPlayedSince(old, oldStart).length, 1, 'an old save keeps the second language off');
+});
+
+test('the Math 2 tab sits beside Math, shows number buttons only, and has its own level text in every language', () => {
+  const game = createGame(seededRandom(6));
+  const app = createAppFixture(game);
+  app.startButton.click();
+  assert.deepEqual(app.topicTabs.map(tab => tab.dataset.topic).slice(0, 2), ['math', 'math2']);
+  app.topicTabs.find(tab => tab.dataset.topic === 'math2').click();
+  assert.equal(game.getState().topic, 'math2');
+  assert.equal(app.elements.get('#arenaMessage').textContent, I18N.topicChosenMessage('math2', 'en'));
+  assert.deepEqual(I18N.TOPIC_NAMES.math2, { en: 'Math 2', zh: '數學2', ja: 'すうがく2', emoji: '🔢' });
+  const choices = [...app.answerOptions.children];
+  assert.equal(choices.length, CHOICE_COUNT.easy);
+  assert.ok(choices.every(button => button.children[0].className === 'number-choice' && !button.classList.contains('picture-only')));
+  assert.equal(app.answerOptions.attributes['aria-label'], I18N.STRINGS.answerGroupLabelNumber.en);
+  assert.equal(app.elements.get('#questionWord').hidden, true);
+  assert.equal(app.elements.get('#questionPicture').hidden, true);
+  assert.equal(app.elements.get('#equation').hidden, true);
+  assert.equal(app.elements.get('#questionVisual').hidden, true, 'a question with no visual shows none');
+  assert.equal(app.elements.get('#questionPrompt').textContent.replace(/\s+/g, ' ').trim().startsWith('Which number is the biggest?'), true);
+  app.levelButtons.find(button => button.dataset.level === 'harder').click();
+  assert.equal(app.elements.get('#arenaMessage').textContent, I18N.levelChosenMessage('harder', 'en', 'math2'));
+  assert.notEqual(I18N.levelChosenMessage('harder', 'en', 'math2'), I18N.levelChosenMessage('harder', 'en', 'math'));
+  for (const level of LEVELS) {
+    const messages = ['en', 'zh', 'ja'].map(language => I18N.levelChosenMessage(level, language, 'math2'));
+    assert.equal(new Set(messages).size, 3, `${level} has a message in each language`);
+    assert.doesNotMatch(messages[2], /[ァ-ヿ㐀-鿿]/, `${level} Japanese is hiragana`);
+  }
+});
+
+test('a Math 2 answer counts like any other: a right tap earns a star and a miss costs a heart', () => {
+  const game = createGame(seededRandom(8));
+  const app = createAppFixture(game);
+  app.startButton.click();
+  app.topicTabs.find(tab => tab.dataset.topic === 'math2').click();
+  clickAnswer(app, game, true);
+  assert.equal(game.getState().stars, 1);
+  assert.equal(app.elements.get('#echoButton').hidden, true, 'a number answer has no word to echo');
+  endSpeech(app);
+  app.nextButton.click();
+  clickAnswer(app, game, false);
+  assert.equal(game.getState().hearts, HEARTS_BY_LEVEL.easy - 1);
+  assert.ok(answerButtons(app).some(button => button.classList.contains('right-answer')));
+});
+
+test('a question that carries a visual has math2-visuals.js draw it above the answers, and the next question clears it', () => {
+  const base = createGame(seededRandom(9));
+  base.chooseTopic('math2');
+  let visual = { type: 'numerals', values: [4, 17, 9] };
+  const game = {
+    ...base,
+    getState: () => ({ ...base.getState(), question: { ...base.getState().question, visual } }),
+  };
+  const app = createAppFixture(game);
+  app.startButton.click();
+  const container = app.elements.get('#questionVisual');
+  assert.equal(container.hidden, false);
+  assert.equal(container.children.length, 1);
+  assert.equal(container.children[0].className, 'numeral-row');
+  assert.deepEqual(container.children[0].children.map(tile => tile.textContent), ['4', '17', '9']);
+  visual = { type: 'a-picture-nobody-built-yet' };
+  app.levelButtons.find(button => button.dataset.level === 'harder').click();
+  assert.equal(container.hidden, true, 'an unknown picture type is skipped, not drawn half-way');
+  assert.equal(container.children.length, 0);
 });

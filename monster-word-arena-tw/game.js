@@ -7,7 +7,7 @@
   // therefore cannot carry a player through a match, while a player who mostly knows the answers rarely runs out.
   const HEARTS_BY_LEVEL = { easy: 3, harder: 4, super: 5 };
   const CHOICE_COUNT = { easy: 3, harder: 4, super: 4 };
-  const TOPICS = ['math', 'colors', 'face', 'family', 'animals', 'fruit', 'vegetables', 'flowers', 'vehicles', 'weather'];
+  const TOPICS = ['math', 'math2', 'colors', 'face', 'family', 'animals', 'fruit', 'vegetables', 'flowers', 'vehicles', 'weather'];
   // Word questions never show the answer's picture next to the answer's picture. Easy shows only the written prompt
   // and offers three picture-only choices. Harder shows the written word and four picture-only choices.
   // Super is listening-only (no picture, no written word) with four picture-and-word choices; it falls back to the
@@ -267,7 +267,11 @@
     'break-goodbye': ['reaction-break-goodbye-1'],
   };
   const EGG = '🥚';
-  // The biggest answer any math question or choice can show.
+  // Topics whose answers are numbers: they show number buttons, speak a numeric prompt, and have no word to echo.
+  const MATH_TOPICS = ['math', 'math2'];
+  const isMathTopic = topic => MATH_TOPICS.includes(topic);
+  // The biggest answer a Math question or choice can show. A problem may carry its own `range` ({ min, max }) instead,
+  // which is how Math 2 questions reach 20 and 99 without moving this limit.
   const MAX_ANSWER = 10;
   const COUNTING = [5, 6, 7, 8, 9, 10];
   // Sums and take-aways are generated from a rule, so the pools stay large and every entry has a narration clip.
@@ -338,8 +342,9 @@
   // half the time, the number a wrong operation would give (for example the sum on a take-away question).
   function numberOptions(problem, level, random) {
     const { answer } = problem;
+    const { min = 0, max = MAX_ANSWER } = problem.range || {};
     const others = CHOICE_COUNT[level] - 1;
-    const inRange = value => value >= 0 && value <= MAX_ANSWER && value !== answer;
+    const inRange = value => value >= min && value <= max && value !== answer;
     if (level === 'easy') {
       const neighbours = [];
       for (let distance = 1; neighbours.length < others; distance += 1) {
@@ -408,6 +413,102 @@
     };
   }
 
+  // Math 2 is a second topic of number questions with its own three levels. Each kind of question registers one entry:
+  // its `kind`, the narration clips it can ask for (`audioIds`, which must all exist in audio/prompts.json), and one
+  // generator for every level it appears at (a level without a generator never asks it). A generator takes
+  // (random, previousKey, level) and returns a draft:
+  //   key, audioId, answer, choices (numbers, the answer among them), range ({ min, max }, bounding every choice),
+  //   promptZh / promptEn / promptJa, and optionally display (a text line) and visual (plain data for math2-visuals.js).
+  // Later cards append an entry here and nothing else in this file changes.
+  const MATH2_RANGE_BY_LEVEL = { easy: { min: 0, max: 20 }, harder: { min: 0, max: 99 }, super: { min: 0, max: 99 } };
+
+  // Which number is the biggest or the smallest? Easy and Harder always ask for the biggest, so a first player meets one
+  // idea at a time; Super asks for the smallest too, taking turns. Mandarin uses 大 and 小 for numbers.
+  const COMPARE_PROMPTS = {
+    bigger: { audioId: 'math2-bigger', promptZh: '哪一個數字最大？', promptEn: 'Which number is the biggest?', promptJa: 'いちばんおおきいかずは、どれかな？' },
+    smaller: { audioId: 'math2-smaller', promptZh: '哪一個數字最小？', promptEn: 'Which number is the smallest?', promptJa: 'いちばんちいさいかずは、どれかな？' },
+  };
+
+  // The direction a compare question asked, read back from its key (null for any other question).
+  function compareDirectionOf(key) {
+    const match = /^math2-compare-(bigger|smaller)-/.exec(key || '');
+    return match ? match[1] : null;
+  }
+
+  function compareDirection(level, random, previousKey) {
+    if (level !== 'super') return 'bigger';
+    const previous = compareDirectionOf(previousKey);
+    if (previous) return previous === 'bigger' ? 'smaller' : 'bigger';
+    return random() < 0.5 ? 'bigger' : 'smaller';
+  }
+
+  // `count` different numbers from the level's range. Harder (two-digit numbers) half the time includes a pair that
+  // swaps its digits (34 and 43), the pair a child mixes up when reading tens before ones.
+  function compareNumbers(level, count, random) {
+    const { min, max } = MATH2_RANGE_BY_LEVEL[level];
+    const numbers = [];
+    if (level !== 'easy' && random() < 0.5) {
+      const tens = 1 + Math.floor(random() * 9);
+      const ones = 1 + Math.floor(random() * 8);
+      const swapped = ones >= tens ? ones + 1 : ones;
+      numbers.push(tens * 10 + swapped, swapped * 10 + tens);
+    }
+    const pool = [];
+    for (let value = min; value <= max; value += 1) pool.push(value);
+    return [...numbers, ...shuffled(pool.filter(value => !numbers.includes(value)), random)].slice(0, count);
+  }
+
+  function compareDraft(random, previousKey, level) {
+    const direction = compareDirection(level, random, previousKey);
+    const range = MATH2_RANGE_BY_LEVEL[level];
+    let choices = compareNumbers(level, CHOICE_COUNT[level], random);
+    const keyOf = values => `math2-compare-${direction}-${[...values].sort((a, b) => a - b).join('-')}`;
+    // The same numbers again would be the same question: step every number up one (wrapping), which keeps them different.
+    if (keyOf(choices) === previousKey) choices = choices.map(value => (value === range.max ? range.min : value + 1));
+    const answer = direction === 'bigger' ? Math.max(...choices) : Math.min(...choices);
+    return { key: keyOf(choices), ...COMPARE_PROMPTS[direction], answer, choices, range };
+  }
+
+  const MATH2_KINDS = [
+    { kind: 'compare', audioIds: ['math2-bigger', 'math2-smaller'], generators: { easy: compareDraft, harder: compareDraft, super: compareDraft } },
+  ];
+
+  // Like plus and minus on Math: the same kind is never asked three times in a row while another is on offer.
+  function rotateKinds(kinds, recentKinds) {
+    const [older, latest] = recentKinds.slice(-2);
+    if (!latest || older !== latest) return kinds;
+    const others = kinds.filter(entry => entry.kind !== latest);
+    return others.length ? others : kinds;
+  }
+
+  function math2Question(level, random, previousKey, recentKinds = []) {
+    const offered = MATH2_KINDS.filter(entry => entry.generators[level]);
+    if (!offered.length) throw new Error(`No Math 2 question is registered for ${level}`);
+    const rotated = rotateKinds(offered, recentKinds);
+    const entry = rotated[Math.floor(random() * rotated.length)];
+    const draft = entry.generators[level](random, previousKey, level);
+    return {
+      topic: 'math2',
+      kind: entry.kind,
+      key: draft.key,
+      audioId: draft.audioId,
+      promptZh: draft.promptZh,
+      promptEn: draft.promptEn,
+      promptJa: draft.promptJa,
+      display: draft.display || '',
+      picture: '',
+      takeAway: null,
+      dense: false,
+      // Plain data that app.js hands to math2-visuals.js to draw; null when the question is only its number buttons.
+      visual: draft.visual || null,
+      range: draft.range,
+      answerId: String(draft.answer),
+      options: shuffled(draft.choices.map(value => ({
+        id: String(value), zh: String(value), en: String(value), ja: String(value), icon: '⭐',
+      })), random),
+    };
+  }
+
   // The prompt is written above the choices, and the answer's picture only ever appears on a choice: Easy and
   // Harder show pictures alone (the word is in the question), Super adds the word back because the question is heard.
   // A question on its topic's picture uses active parts as tap regions, with the same prompt and narration as the
@@ -451,6 +552,7 @@
 
   function questionFor(topic, level, random, previousKey, recentOps) {
     if (topic === 'math') return mathQuestion(level, random, previousKey, recentOps);
+    if (topic === 'math2') return math2Question(level, random, previousKey, recentOps);
     if (WORD_TOPICS[topic]) return wordQuestion(topic, level, random, previousKey);
     throw new Error(`Unknown topic: ${topic}`);
   }
@@ -459,11 +561,12 @@
   const OPEN_QUESTION = { solved: false, missed: false, missedChoice: '', starLost: false, heartLost: false, feedback: '' };
 
   function createGame(random = Math.random) {
-    // The next question, plus the run of recent kinds it extends so plus and minus (math operations) and the face
-    // topic's picture and icon questions keep taking turns.
+    // The next question, plus the run of recent kinds it extends so plus and minus (math operations), Math 2's kinds and
+    // the face topic's picture and icon questions keep taking turns.
     function drawQuestion(topic, level, previousKey, recentOps = []) {
       const question = questionFor(topic, level, random, previousKey, recentOps);
-      return { question, recentOps: question.op ? [...recentOps, question.op].slice(-2) : [] };
+      const run = question.kind || question.op;
+      return { question, recentOps: run ? [...recentOps, run].slice(-2) : [] };
     }
 
     let state = {
@@ -672,7 +775,7 @@
     return { play, stop, playSequence, cancelQueued };
   }
 
-  const api = { GOAL_BY_LEVEL, HEARTS_BY_LEVEL, CHOICE_COUNT, TOPICS, LEVELS, WORD_TOPICS, REACTIONS, FACE_DIAGRAM, FACE_LEVEL_IDS, FARM_SCENE, DIAGRAMS, diagramPartAt, createGame, createSpeechPlayer };
+  const api = { GOAL_BY_LEVEL, HEARTS_BY_LEVEL, CHOICE_COUNT, TOPICS, MATH_TOPICS, isMathTopic, MATH2_KINDS, rotateKinds, numberOptions, LEVELS, WORD_TOPICS, REACTIONS, FACE_DIAGRAM, FACE_LEVEL_IDS, FARM_SCENE, DIAGRAMS, diagramPartAt, createGame, createSpeechPlayer };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof window !== 'undefined') window.FriendlyArena = api;
 })();

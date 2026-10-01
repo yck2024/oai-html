@@ -103,3 +103,17 @@ test('isAnalyticsUrl and isMediaUrl classify the three kinds of request the serv
   assert.equal(PWA.isMediaUrl(`${BASE}audio/words.json`), true);
   assert.equal(PWA.isMediaUrl(`${BASE}index.html`), false);
 });
+
+test('every script the page loads is in the shell precache list, so a new file cannot be missing offline', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const scripts = parseHeadElements(html).filter(item => item.tag === 'script' && item.src);
+  const scriptUrls = scripts.map(script => new URL(script.src, BASE).href);
+  const shellUrls = PWA.shellAssetUrls(BASE);
+  assert.ok(scripts.some(script => new URL(script.src, BASE).pathname.endsWith('/math2-visuals.js')));
+  assert.ok(
+    scripts.findIndex(script => new URL(script.src, BASE).pathname.endsWith('/math2-visuals.js'))
+      < scripts.findIndex(script => new URL(script.src, BASE).pathname.endsWith('/app.js')),
+    'the Math 2 pictures load before the app that uses them',
+  );
+  for (const url of scriptUrls) assert.ok(shellUrls.includes(url), `${url} is precached with the shell`);
+});
