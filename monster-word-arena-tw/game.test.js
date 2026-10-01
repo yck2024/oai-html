@@ -1343,6 +1343,20 @@ function allMathAudioIds() {
   return [...ids];
 }
 
+test('every registered Math 2 prompt is reached at a level where its kind is offered', () => {
+  const reached = new Set();
+  const game = createGame(seededRandom(31));
+  for (const level of LEVELS) {
+    game.chooseLevel(level);
+    game.chooseTopic('math2');
+    for (let draw = 0; draw < 3000; draw += 1) {
+      reached.add(game.getState().question.audioId);
+      game.chooseTopic('math2');
+    }
+  }
+  assert.deepEqual([...reached].sort(), [...MATH2_AUDIO_IDS].sort());
+});
+
 // The clips every Math 2 kind says it can ask for: a later card registers its kind and these follow, with no test edit.
 const MATH2_AUDIO_IDS = MATH2_KINDS.flatMap(entry => entry.audioIds);
 
