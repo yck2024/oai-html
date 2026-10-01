@@ -245,6 +245,15 @@ h1 { margin: 4px 0 4px; color: #41405e; font-size: clamp(31px, 5vw, 46px); line-
 .ten-frame-board { fill: #f5f0ff; stroke: #8f82b8; stroke-width: 2.5; }
 .ten-frame-cell { fill: #fffdf8; stroke: #d9cfe9; stroke-width: 1.5; }
 .ten-frame-counter { fill: #f2762e; stroke: #b9531a; stroke-width: 2; }
+/* Two frames for a sum or take-away within twenty sit side by side at any width. The counters that fill the other frame
+   to ten are teal, with dashed teal cells to land in; counters taken away fade and get a cross, like the eggs above. */
+.ten-frames-pair { flex-wrap: nowrap; align-items: center; gap: 6px; }
+.ten-frames-pair .ten-frame { flex: 1 1 0; max-width: 200px; }
+.ten-frame-sign { flex: none; color: #63568a; font-size: 34px; font-weight: 1000; line-height: 1; }
+.ten-frame-moving { fill: #2fa59d; stroke: #1f7771; }
+.ten-frame-gap { fill: #e6f6f4; stroke: #2fa59d; stroke-width: 3; stroke-dasharray: 6 4; }
+.ten-frame-taken { opacity: .32; }
+.ten-frame-cross { stroke: #d4574e; stroke-width: 5; stroke-linecap: round; }
 .numeral-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .numeral-tile { min-width: 52px; border: 2px solid #e8dfd0; border-radius: 14px; padding: 6px 10px; background: #fff; color: #63568a; font-size: 31px; font-weight: 1000; font-variant-numeric: tabular-nums; box-shadow: 0 3px 0 #e6ddcf; }
 .blocks { --cube: min(14px, 4.2vw); --gap: calc(var(--cube) * .43); display: flex; align-items: flex-end; justify-content: center; gap: calc(var(--cube) * 1.4); }

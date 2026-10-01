@@ -34,6 +34,8 @@ The word clips live in `audio/words.json` (76 words, id `word-<topic>-<word>`, i
 
 **Math 2** is a second number topic beside Math, with its own Easy / Harder / Super. Math is unchanged. Math 2 grows one kind of question at a time, drawing on the grade 1–2 curricula of Taiwan, Japan and the US, and it is made for young players: **Easy holds only first-step content** and the harder kinds live behind Harder and Super. Every kind is one tap on a number button, so a child never needs to read; each question is spoken. Bigger or smaller uses number choices only, with no picture.
 
+**Math 2** is a second number topic beside Math, with its own Easy / Harder / Super. Math is unchanged. Math 2 grows one kind of question at a time, drawing on the grade 1–2 curricula of Taiwan, Japan and the US, and it is made for young players: **Easy holds only first-step content** and the harder kinds live behind Harder and Super. Every kind is one tap on a number button, so a child never needs to read; each question is spoken. Bigger or smaller uses number choices only; make ten and the sums within 20 add drawn ten-frames.
+
 | Kind | Easy | Harder | Super | Clips |
 | --- | --- | --- | --- | --- |
 | Bigger or smaller (`compare`) | the biggest of three numbers, 0–20 | the biggest of four numbers, 0–99 (often with digit-swapped neighbours, such as 34 and 43) | 0–99, biggest and smallest taking turns | `math2-bigger`, `math2-smaller` |
@@ -41,6 +43,9 @@ The word clips live in `audio/words.json` (76 words, id `word-<topic>-<word>`, i
 | Missing addend (`missing-addend`) | — | the ten-frame plus "3 + ? = 10" | the equation only, with the blank first or second ("? + 3 = 10") | `math2-ten-missing` |
 | Tens and ones, count the blocks (`blocks`) | none | count rods (tens) and cubes (ones) to 99, from four choices | the same | `math2-blocks` |
 | Tens and ones, ten more or ten less (`ten-more-less`) | none | none | the number shown as a numeral; find ten more or ten less, taking turns | `math2-tens-more`, `math2-tens-less` |
+
+| Sums within 20 (`add-within-20`) | — | two ten-frames and "8 + 5 = ?" | the equation only | `math2-add-<a>-<b>` (36) |
+| Take-aways within 20 (`take-within-20`) | — | a full frame plus the ones and "13 − 6 = ?", the counters taken away crossed out | the equation only | `math2-take-<from>-<n>` (36) |
 
 The two prompts are shared by every question ("Which number is the biggest?" / 「哪一個數字最大？」 / 「いちばんおおきいかずは、どれかな？」, and the same with smallest). In Mandarin they use 大 and 小, the words for numbers (多 and 少 are kept for groups). The spoken prompt never gives the answer. Easy and Harder ask only for the biggest, so a first player meets one idea at a time; on Super, the direction changes on each successive bigger-or-smaller question.
 
@@ -58,6 +63,20 @@ The six clips for bigger or smaller and the nine for tens and ones were transcri
 ### Make ten
 
 The ten-frame (`{ type: 'ten-frame', counts: [3] }`) is drawn in SVG, two rows of five cells, with counters filling the top row first and then the bottom row. The first addend (1–9) is the number of counters; the answer is what is missing from ten. Easy asks how many more; Harder and Super ask for a missing addend, with Super sometimes putting the blank first. The shared prompts never contain the answer (`math2-ten-more` and `math2-ten-missing`).
+
+The ten-frame (`{ type: 'ten-frame', counts: [3] }`) is drawn in SVG, two rows of five cells, with solid orange counters filling the top row first and then the bottom row, so five is a full top row. Empty cells are pale, so a child counts the counters and not the gaps. `counts` lists one entry per frame (0 to 10 counters each); the builder draws several frames in a row, as the [sums within 20](#within-20) do. The first addend (1–9) is the number of counters; the answer is what is missing from ten. The spoken prompts never contain the answer, and each of the two is one clip shared by every question ("How many more make ten?" / 「還要再加幾個，就湊成十？」 / 「あといくつで、じゅうになるかな？」, and "Which number fills the blank to make ten?" / 「空格裡要放哪一個數字，才能湊成十？」 / 「あいているところにいれると、じゅうになるかずは、どれかな？」). Easy offers the answer and its closest neighbours; Harder and Super half the time offer the number already shown (the answer to "how many are there?" rather than "how many more?"), the likely wrong tap. The six clips were transcribed back with whisper.cpp (large-v3-turbo). English and Japanese matched; the first Mandarin "missing" wording 填進空格 came back as 田径空格, so it was reworded to 空格裡要放…, regenerated once, and then matched (Mandarin comes back in simplified script, as for the other clips).
+
+### Within 20
+
+Sums and take-aways that cross ten, the make-ten strategy of grade 1: Easy never asks them, Harder shows two ten-frames with the equation, and Super shows the equation alone. Both numbers being added or taken away run from 2 to 9 and the take-away's answer is 2 to 9 as well, so every problem crosses ten (36 sums such as 8 + 5, from 2 + 9 to 9 + 9, and 36 take-aways such as 13 − 6, from 11 − 2 to 18 − 9). The picture is the same `ten-frame` builder as make ten, with three optional extras, all plain data:
+
+- A sum draws its two frames with a "+" between them (`sign`). The counters that fill the fuller frame to ten are teal, and the empty cells they would land in are dashed teal (`move: { from, to, count }`), so for 8 + 5 the child sees two of the five counters ready to move into the frame of eight, without being told the answer. When the second number is the larger, its frame is the one that gets filled (2 + 9 moves the one counter from the frame of two).
+- A take-away draws a full frame and the ones (`counts: [10, 3]` for 13 − 6) and fades and crosses out the counters being taken away (`taken: [3, 3]`): the ones first, then some of the full frame.
+- A frame count, a move or a taken count that does not fit its frames is ignored or clamped, never drawn wrongly.
+
+Each problem has its own spoken prompt, so the clip names both numbers but never the answer ("Eight plus five. How many altogether?" / 「八加五，總共是多少？」 / 「はちたすごは、ぜんぶでいくつかな？」; "Thirteen minus six. How many are left?" / 「十三減六，還剩下多少？」 / 「じゅうさんひくろくは、のこりはいくつかな？」), the same wording Math uses. That is 72 keys, `math2-add-<a>-<b>` and `math2-take-<from>-<n>`, or 216 clips in three languages; the on-screen prompt stays the short "How many altogether?" / "How many are left?" as it is in Math. Choices run from 0 to 20 and, on Harder and Super, half the time include the slip a child is likely to make: the sum without its ten (3 for 8 + 5) or ten minus the answer for a take-away (3 for 13 − 6).
+
+All 216 clips were generated with `generate_gemini_audio.py` and transcribed back with whisper.cpp (large-v3-turbo) against the manifest text. English and Japanese matched every clip (the transcriber writes numbers as digits, "all together" for "altogether", and Japanese in its usual kanji spellings, so numbers were compared as numbers); Mandarin matched apart from three "十三減五" and "十五減…" clips where the number was misheard (十三 as 十三兼, 十五 as 食物), which were regenerated and then matched (one needed a third try).
 
 ## Research notes
 

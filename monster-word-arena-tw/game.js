@@ -586,6 +586,70 @@
       choices: tensChoices(answer, CHOICE_COUNT.super, [start - sign * 10, start + sign, digitSwap(answer)], random, range),
       range,
       visual: { type: 'numerals', values: [start] },
+
+    };
+  }
+
+  // Within twenty: sums and take-aways that cross ten ("8 + 5", "13 − 6"), the grade 1 make-ten strategy. Easy never asks
+  // them. Harder draws two ten-frames with the equation; Super shows the equation alone. Every problem has its own
+  // spoken prompt ("Eight plus five. How many altogether?"), which names the numbers but never the answer. Both numbers
+  // being added or taken away run from 2 to 9, and the answer of a take-away is 2 to 9 too, so a problem always crosses
+  // ten without leaving a lone counter or an empty frame.
+  const WITHIN_20_RANGE = { min: 0, max: 20 };
+  const CROSS_TEN_SUMS = [];
+  const CROSS_TEN_TAKE_AWAYS = [];
+  for (let left = 2; left <= 9; left += 1) {
+    for (let right = 2; right <= 9; right += 1) if (left + right > 10) CROSS_TEN_SUMS.push({ left, right });
+  }
+  for (let from = 11; from <= 18; from += 1) {
+    for (let take = 2; take <= 9; take += 1) if (from - take >= 2 && from - take <= 9) CROSS_TEN_TAKE_AWAYS.push({ from, take });
+  }
+  const crossTenSumKey = ({ left, right }) => `math2-add-${left}-${right}`;
+  const crossTenTakeKey = ({ from, take }) => `math2-take-${from}-${take}`;
+
+  // The ten-frames for 8 + 5: the larger number stays put and the counters that fill its frame to ten are marked as the
+  // ones to move over from the other frame, so a child sees "ten and three more" without being told. 13 − 6 is a full
+  // frame and three, with the six counters being taken away faded out (the ones first, then from the full frame).
+  function crossTenSumVisual({ left, right }) {
+    const keep = right > left ? 1 : 0;
+    const counts = [left, right];
+    return { type: 'ten-frame', counts, sign: '+', move: { from: 1 - keep, to: keep, count: 10 - counts[keep] } };
+  }
+
+  function crossTenTakeVisual({ from, take }) {
+    const ones = from - 10;
+    return { type: 'ten-frame', counts: [10, ones], taken: [take - ones, ones] };
+  }
+
+  // The slips a child is most likely to make: forgetting the ten in a sum (13 for 8 + 5 is 3), and in a take-away
+  // taking the ones from the ones digit the wrong way round (13 − 6 is 3 from 6, so 10 minus the answer).
+  function crossTenSumDraft(random, previousKey, level) {
+    const problem = pickFresh(CROSS_TEN_SUMS, random, previousKey, crossTenSumKey);
+    const answer = problem.left + problem.right;
+    return {
+      key: crossTenSumKey(problem),
+      audioId: crossTenSumKey(problem),
+      ...mathPrompts({ op: 'add' }),
+      answer,
+      choices: numberOptions({ answer, mixedUp: answer - 10, range: WITHIN_20_RANGE }, level, random),
+      range: WITHIN_20_RANGE,
+      display: `${problem.left} + ${problem.right} = ?`,
+      visual: level === 'harder' ? crossTenSumVisual(problem) : null,
+    };
+  }
+
+  function crossTenTakeDraft(random, previousKey, level) {
+    const problem = pickFresh(CROSS_TEN_TAKE_AWAYS, random, previousKey, crossTenTakeKey);
+    const answer = problem.from - problem.take;
+    return {
+      key: crossTenTakeKey(problem),
+      audioId: crossTenTakeKey(problem),
+      ...mathPrompts({ op: 'take' }),
+      answer,
+      choices: numberOptions({ answer, mixedUp: 10 - answer, range: WITHIN_20_RANGE }, level, random),
+      range: WITHIN_20_RANGE,
+      display: `${problem.from} − ${problem.take} = ?`,
+      visual: level === 'harder' ? crossTenTakeVisual(problem) : null,
     };
   }
 
@@ -595,6 +659,8 @@
     { kind: 'missing-addend', audioIds: ['math2-ten-missing'], generators: { harder: missingAddendDraft, super: missingAddendDraft } },
     { kind: 'blocks', audioIds: ['math2-blocks'], generators: { harder: blocksDraft, super: blocksDraft } },
     { kind: 'ten-more-less', audioIds: ['math2-tens-more', 'math2-tens-less'], generators: { super: tenMoreLessDraft } },
+    { kind: 'add-within-20', audioIds: CROSS_TEN_SUMS.map(crossTenSumKey), generators: { harder: crossTenSumDraft, super: crossTenSumDraft } },
+    { kind: 'take-within-20', audioIds: CROSS_TEN_TAKE_AWAYS.map(crossTenTakeKey), generators: { harder: crossTenTakeDraft, super: crossTenTakeDraft } },
   ];
 
   // Like plus and minus on Math: the same kind is never asked three times in a row while another is on offer.

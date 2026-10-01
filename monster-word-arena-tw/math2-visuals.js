@@ -7,6 +7,11 @@
   const BLOCK_MAX = 9;
   const blockCount = value => Math.min(BLOCK_MAX, Math.max(0, Math.floor(Number(value)) || 0));
   const SVG_NS = 'http://www.w3.org/2000/svg';
+  const FRAME_CELLS = 10;
+  const FRAME_COLUMNS = 5;
+  const FRAME_ROWS = 2;
+  const CELL = 44;
+  const FRAME_PAD = 5;
 
   function svgElement(document, tag, attributes) {
     const element = document.createElementNS(SVG_NS, tag);
@@ -14,17 +19,39 @@
     return element;
   }
 
-  function tenFrameSvg(count, document) {
-    const filled = Math.min(10, Math.max(0, Math.floor(Number(count)) || 0));
-    const width = 5 * 44 + 10;
-    const height = 2 * 44 + 10;
+  const wholeNumber = (value, most) => Math.min(most, Math.max(0, Math.floor(Number(value)) || 0));
+
+  // One frame holding `count` counters (a whole number from 0 to 10; anything else is clamped into that range).
+  // `marks` dresses the frame for a sum or a take-away within twenty, and each mark is a count of cells:
+  //   moving: the last counters, drawn in a second colour, to be moved into the other frame's empty cells
+  //   gap:    the empty cells just after the counters, outlined as the places those counters will fill
+  //   taken:  the last counters, faded and crossed out, as the ones being taken away
+  function tenFrameSvg(count, document, marks = {}) {
+    const filled = wholeNumber(count, FRAME_CELLS);
+    const moving = Math.min(filled, wholeNumber(marks.moving, FRAME_CELLS));
+    const gap = Math.min(FRAME_CELLS - filled, wholeNumber(marks.gap, FRAME_CELLS));
+    const taken = Math.min(filled, wholeNumber(marks.taken, FRAME_CELLS));
+    const width = FRAME_COLUMNS * CELL + FRAME_PAD * 2;
+    const height = FRAME_ROWS * CELL + FRAME_PAD * 2;
     const svg = svgElement(document, 'svg', { viewBox: `0 0 ${width} ${height}`, class: 'ten-frame', focusable: 'false', 'aria-hidden': 'true' });
     svg.append(svgElement(document, 'rect', { class: 'ten-frame-board', x: 1, y: 1, width: width - 2, height: height - 2, rx: 12 }));
-    for (let index = 0; index < 10; index += 1) {
-      const left = 5 + (index % 5) * 44;
-      const top = 5 + Math.floor(index / 5) * 44;
-      svg.append(svgElement(document, 'rect', { class: 'ten-frame-cell', x: left + 2, y: top + 2, width: 40, height: 40, rx: 8 }));
-      if (index < filled) svg.append(svgElement(document, 'circle', { class: 'ten-frame-counter', cx: left + 22, cy: top + 22, r: 15 }));
+    for (let index = 0; index < FRAME_CELLS; index += 1) {
+      const left = FRAME_PAD + (index % FRAME_COLUMNS) * CELL;
+      const top = FRAME_PAD + Math.floor(index / FRAME_COLUMNS) * CELL;
+      const isGap = index >= filled && index < filled + gap;
+      svg.append(svgElement(document, 'rect', { class: isGap ? 'ten-frame-cell ten-frame-gap' : 'ten-frame-cell', x: left + 2, y: top + 2, width: CELL - 4, height: CELL - 4, rx: 8 }));
+      if (index < filled) {
+        const extra = index >= filled - taken ? ' ten-frame-taken' : index >= filled - moving ? ' ten-frame-moving' : '';
+        svg.append(svgElement(document, 'circle', { class: `ten-frame-counter${extra}`, cx: left + CELL / 2, cy: top + CELL / 2, r: CELL / 2 - 7 }));
+        if (extra === ' ten-frame-taken') {
+          const reach = CELL / 2 - 12;
+          const [cx, cy] = [left + CELL / 2, top + CELL / 2];
+          svg.append(
+            svgElement(document, 'line', { class: 'ten-frame-cross', x1: cx - reach, y1: cy - reach, x2: cx + reach, y2: cy + reach }),
+            svgElement(document, 'line', { class: 'ten-frame-cross', x1: cx - reach, y1: cy + reach, x2: cx + reach, y2: cy - reach }),
+          );
+        }
+      }
     }
     return svg;
   }
@@ -33,11 +60,41 @@
   // numbers, booleans, arrays and objects); app.js hands it to build(), which finds the builder registered for
   // `type` and returns the element to show above the answer buttons. A later card adds its picture by appending one
   // builder to BUILDERS and nothing else here changes. A builder is (visual, document) => Element.
+  // The marks each frame of a ten-frame visual carries. `taken` is one count per frame. `move` is
+  // { from, to, count } with frame indexes: the last `count` counters of frame `from` are marked to move into the
+  // `count` empty cells that follow the counters of frame `to`. A move that does not fit both frames is ignored.
+  function frameMarks(visual, counts) {
+    const marks = counts.map((_, index) => ({ taken: Array.isArray(visual.taken) ? visual.taken[index] : 0 }));
+    const { from, to, count } = visual.move || {};
+    const fits = Number.isInteger(from) && Number.isInteger(to) && from !== to && counts[from] !== undefined && counts[to] !== undefined;
+    if (fits) {
+      const size = Math.min(wholeNumber(count, FRAME_CELLS), wholeNumber(counts[from], FRAME_CELLS), FRAME_CELLS - wholeNumber(counts[to], FRAME_CELLS));
+      marks[from].moving = size;
+      marks[to].gap = size;
+    }
+    return marks;
+  }
+
   const BUILDERS = {
+    // Ten-frames in a row, one per entry: visual = { type: 'ten-frame', counts: [3] } is one frame with three counters,
+    // and a sum within twenty passes two counts. Optional extras for two frames, all plain data:
+    //   sign:  '+' written between the frames
+    //   move:  { from, to, count }, the counters that fill the other frame to ten
+    //   taken: one count per frame, the counters faded out as taken away
     'ten-frame'(visual, document) {
       const row = document.createElement('div');
-      row.className = 'ten-frames';
-      (visual.counts || []).forEach(count => row.append(tenFrameSvg(count, document)));
+      const counts = visual.counts || [];
+      row.className = counts.length === 2 ? 'ten-frames ten-frames-pair' : 'ten-frames';
+      const marks = frameMarks(visual, counts);
+      counts.forEach((count, index) => {
+        if (index > 0 && visual.sign === '+') {
+          const sign = document.createElement('span');
+          sign.className = 'ten-frame-sign';
+          sign.textContent = '+';
+          row.append(sign);
+        }
+        row.append(tenFrameSvg(count, document, marks[index]));
+      });
       return row;
     },
 
