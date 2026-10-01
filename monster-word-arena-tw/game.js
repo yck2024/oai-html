@@ -333,8 +333,6 @@
   }
 
   function wrongOperationResult(problem) {
-    // A Math 2 question may name the one wrong number a child is most likely to tap (see the ten-frame kinds below).
-    if (problem.mixedUp !== undefined) return problem.mixedUp;
     if (problem.op === 'add') return Math.abs(problem.left - problem.right);
     if (problem.op === 'take') return problem.from + problem.take;
     return null;
@@ -471,56 +469,88 @@
     return { key: keyOf(choices), ...COMPARE_PROMPTS[direction], answer, choices, range };
   }
 
-  // Make ten. Easy shows a ten-frame with some counters and asks how many more fill it; Harder shows the frame and the
-  // equation ("3 + ? = 10"); Super shows only the equation, with the blank sometimes first ("? + 3 = 10"). Both kinds
-  // share one spoken prompt each, so the clip never gives the answer. The most likely wrong tap is the number already
-  // there (counting the counters instead of the empty cells), so Harder and Super offer it half the time.
-  const TEN_PROMPTS = {
-    more: { audioId: 'math2-ten-more', promptZh: '還要再加幾個，就湊成十？', promptEn: 'How many more make ten?', promptJa: 'あといくつで、じゅうになるかな？' },
-    missing: { audioId: 'math2-ten-missing', promptZh: '空格裡要放哪一個數字，才能湊成十？', promptEn: 'Which number fills the blank to make ten?', promptJa: 'あいているところにいれると、じゅうになるかずは、どれかな？' },
+  // Tens and ones. A child counts base-ten blocks (rods of ten and single cubes, at most 9 of each so the picture stays
+  // readable on a phone) or finds the number that is ten more or ten less than the one shown. The wrong choices are the
+  // mistakes a child makes: the digits read the other way round (34 for 43), a rod counted wrongly, or a cube counted
+  // wrongly. Neither kind appears on Easy.
+  const TENS_PROMPTS = {
+    blocks: { audioId: 'math2-blocks', promptZh: '這裡一共有多少個積木？', promptEn: 'How many blocks are there in all?', promptJa: 'ブロックは、ぜんぶでいくつかな？' },
+    more: { audioId: 'math2-ten-more', promptZh: '比這個數字大十的數字是哪一個？', promptEn: 'Which number is ten more than this number?', promptJa: 'このかずより、じゅうおおきいかずは、どれかな？' },
+    less: { audioId: 'math2-ten-less', promptZh: '比這個數字小十的數字是哪一個？', promptEn: 'Which number is ten less than this number?', promptJa: 'このかずより、じゅうちいさいかずは、どれかな？' },
   };
-  const TEN_RANGE = { min: 0, max: 10 };
-  // Counters already in the frame (the first addend): never none and never full, so there is always something to add.
-  const TEN_COUNTS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
-  function tenChoices(shown, level, random) {
-    return numberOptions({ answer: 10 - shown, mixedUp: shown, range: TEN_RANGE }, level, random);
+  // The number with its two digits swapped (34 gives 43), or null when that is the same number or not a two-digit one.
+  function digitSwap(value) {
+    const tens = Math.floor(value / 10);
+    const ones = value % 10;
+    return tens >= 1 && ones >= 1 && tens !== ones ? ones * 10 + tens : null;
   }
 
-  function makeTenDraft(random, previousKey, level) {
-    const shown = pickFresh(TEN_COUNTS, random, previousKey, count => `math2-make-ten-${count}`);
+  // `count` distinct numbers inside the range with the answer among them: first the mistakes named in `likely` (in that
+  // order), then the closest numbers, so the choices are always full whatever the answer is.
+  function tensChoices(answer, count, likely, random, range) {
+    const chosen = [answer];
+    const add = value => {
+      if (value !== null && Number.isInteger(value) && value >= range.min && value <= range.max && !chosen.includes(value) && chosen.length < count) chosen.push(value);
+    };
+    likely.forEach(add);
+    const nearby = [];
+    for (let distance = 1; distance <= 10; distance += 1) nearby.push(answer - distance, answer + distance);
+    shuffled(nearby, random).forEach(add);
+    return chosen;
+  }
+
+  function blocksDraft(random, previousKey) {
+    const range = MATH2_RANGE_BY_LEVEL.harder;
+    let answer = (1 + Math.floor(random() * 9)) * 10 + Math.floor(random() * 10);
+    const keyOf = value => `math2-blocks-${value}`;
+    // The same blocks again would be the same question: move on one (wrapping to 10), which is a different count.
+    if (keyOf(answer) === previousKey) answer = answer === range.max ? 10 : answer + 1;
+    const rodMistake = answer + 10 <= range.max && (answer - 10 < 0 || random() < 0.5) ? answer + 10 : answer - 10;
+    const cubeMistake = answer % 10 === 9 || (answer % 10 !== 0 && random() < 0.5) ? answer - 1 : answer + 1;
     return {
-      key: `math2-make-ten-${shown}`,
-      ...TEN_PROMPTS.more,
-      answer: 10 - shown,
-      choices: tenChoices(shown, level, random),
-      range: TEN_RANGE,
-      visual: { type: 'ten-frame', counts: [shown] },
+      key: keyOf(answer),
+      ...TENS_PROMPTS.blocks,
+      answer,
+      choices: tensChoices(answer, CHOICE_COUNT.harder, [digitSwap(answer), rodMistake, cubeMistake], random, range),
+      range,
+      visual: { type: 'blocks', tens: Math.floor(answer / 10), ones: answer % 10 },
     };
   }
 
-  function missingAddendDraft(random, previousKey, level) {
-    const frameShown = level !== 'super';
-    // Harder always writes "3 + ? = 10"; Super also writes "? + 3 = 10".
-    const sides = frameShown ? ['first'] : ['first', 'second'];
-    const problems = TEN_COUNTS.flatMap(shown => sides.map(side => ({ shown, side })));
-    const keyOf = ({ shown, side }) => `math2-missing-ten-${side}-${shown}`;
-    const { shown, side } = pickFresh(problems, random, previousKey, keyOf);
+  // Ten more or ten less than a number shown as a numeral. Like bigger and smaller, the two directions take turns.
+  function tenDirectionOf(key) {
+    const match = /^math2-ten-(more|less)-/.exec(key || '');
+    return match ? match[1] : null;
+  }
+
+  function tenMoreLessDraft(random, previousKey) {
+    const range = MATH2_RANGE_BY_LEVEL.super;
+    const previous = tenDirectionOf(previousKey);
+    const direction = previous ? (previous === 'more' ? 'less' : 'more') : random() < 0.5 ? 'more' : 'less';
+    const sign = direction === 'more' ? 1 : -1;
+    // 10 more needs room to climb and 10 less room to fall, so the start runs 1-89 or 10-99.
+    const low = direction === 'more' ? 1 : 10;
+    const high = direction === 'more' ? 89 : range.max;
+    let start = low + Math.floor(random() * (high - low + 1));
+    const keyOf = value => `math2-ten-${direction}-${value}`;
+    if (keyOf(start) === previousKey) start = start === high ? low : start + 1;
+    const answer = start + sign * 10;
     return {
-      key: keyOf({ shown, side }),
-      ...TEN_PROMPTS.missing,
-      answer: 10 - shown,
-      choices: tenChoices(shown, level, random),
-      range: TEN_RANGE,
-      display: side === 'first' ? `${shown} + ? = 10` : `? + ${shown} = 10`,
-      visual: frameShown ? { type: 'ten-frame', counts: [shown] } : null,
+      key: keyOf(start),
+      ...TENS_PROMPTS[direction],
+      answer,
+      // The wrong way round (ten less for ten more), one more or less instead of ten, and the swapped digits.
+      choices: tensChoices(answer, CHOICE_COUNT.super, [start - sign * 10, start + sign, digitSwap(answer)], random, range),
+      range,
+      visual: { type: 'numerals', values: [start] },
     };
   }
 
   const MATH2_KINDS = [
     { kind: 'compare', audioIds: ['math2-bigger', 'math2-smaller'], generators: { easy: compareDraft, harder: compareDraft, super: compareDraft } },
-    { kind: 'make-ten', audioIds: ['math2-ten-more'], generators: { easy: makeTenDraft } },
-    { kind: 'missing-addend', audioIds: ['math2-ten-missing'], generators: { harder: missingAddendDraft, super: missingAddendDraft } },
+    { kind: 'blocks', audioIds: ['math2-blocks'], generators: { harder: blocksDraft, super: blocksDraft } },
+    { kind: 'ten-more-less', audioIds: ['math2-ten-more', 'math2-ten-less'], generators: { super: tenMoreLessDraft } },
   ];
 
   // Like plus and minus on Math: the same kind is never asked three times in a row while another is on offer.

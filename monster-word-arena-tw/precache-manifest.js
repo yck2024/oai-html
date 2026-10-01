@@ -231,8 +231,9 @@
     "audio/en/math-take-9-4.mp3",
     "audio/en/math-take-9-5.mp3",
     "audio/en/math2-bigger.mp3",
+    "audio/en/math2-blocks.mp3",
     "audio/en/math2-smaller.mp3",
-    "audio/en/math2-ten-missing.mp3",
+    "audio/en/math2-ten-less.mp3",
     "audio/en/math2-ten-more.mp3",
     "audio/en/reaction-break-goodbye-1.mp3",
     "audio/en/reaction-break-prompt-1.mp3",
@@ -473,8 +474,9 @@
     "audio/ja/math-take-9-4.mp3",
     "audio/ja/math-take-9-5.mp3",
     "audio/ja/math2-bigger.mp3",
+    "audio/ja/math2-blocks.mp3",
     "audio/ja/math2-smaller.mp3",
-    "audio/ja/math2-ten-missing.mp3",
+    "audio/ja/math2-ten-less.mp3",
     "audio/ja/math2-ten-more.mp3",
     "audio/ja/reaction-break-goodbye-1.mp3",
     "audio/ja/reaction-break-prompt-1.mp3",
@@ -716,8 +718,9 @@
     "audio/zh/math-take-9-4.mp3",
     "audio/zh/math-take-9-5.mp3",
     "audio/zh/math2-bigger.mp3",
+    "audio/zh/math2-blocks.mp3",
     "audio/zh/math2-smaller.mp3",
-    "audio/zh/math2-ten-missing.mp3",
+    "audio/zh/math2-ten-less.mp3",
     "audio/zh/math2-ten-more.mp3",
     "audio/zh/reaction-break-goodbye-1.mp3",
     "audio/zh/reaction-break-prompt-1.mp3",
@@ -830,5 +833,5 @@
     "audio/zh/word-weather-thunder.mp3",
     "audio/zh/word-weather-windy.mp3"
   ],
-  "MEDIA_VERSION": "59d579a5a71e"
+  "MEDIA_VERSION": "e799bebc0b74"
 }));
