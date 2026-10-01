@@ -209,7 +209,16 @@ def main():
     for index, (language, audio_id, text) in enumerate(clips, start=1):
         output_dir = AUDIO_DIR / language
         output_dir.mkdir(parents=True, exist_ok=True)
-        wav = request_wav(api_key, text, LANGUAGES[language], language, audio_id)
+        language_config = LANGUAGES[language]
+        if audio_id.startswith("word-number-"):
+            language_config = {
+                **language_config,
+                "style": language_config["style"] + (
+                    " Speak exactly and only the supplied number word. Do not add"
+                    " counters, units, suffixes, particles, or other words."
+                ),
+            }
+        wav = request_wav(api_key, text, language_config, language, audio_id)
         encode_mp3(wav, output_dir / f"{audio_id}.mp3")
         print(f"Generated {index}/{len(clips)}: {language}/{audio_id}.mp3")
         if index < len(clips):
