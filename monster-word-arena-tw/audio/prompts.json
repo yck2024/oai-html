@@ -760,11 +760,21 @@
     "ja": "ブロックは、ぜんぶでいくつかな？"
   },
   "math2-ten-more": {
+    "en": "How many more make ten?",
+    "zh": "還要再加幾個，就湊成十？",
+    "ja": "あといくつで、じゅうになるかな？"
+  },
+  "math2-ten-missing": {
+    "en": "Which number fills the blank to make ten?",
+    "zh": "空格裡要放哪一個數字，才能湊成十？",
+    "ja": "あいているところにいれると、じゅうになるかずは、どれかな？"
+  },
+  "math2-tens-more": {
     "en": "Which number is ten more than this number?",
     "zh": "比這個數字大十的數字是哪一個？",
     "ja": "このかずより、じゅうおおきいかずは、どれかな？"
   },
-  "math2-ten-less": {
+  "math2-tens-less": {
     "en": "Which number is ten less than this number?",
     "zh": "比這個數字小十的數字是哪一個？",
     "ja": "このかずより、じゅうちいさいかずは、どれかな？"

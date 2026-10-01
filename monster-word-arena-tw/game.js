@@ -333,6 +333,7 @@
   }
 
   function wrongOperationResult(problem) {
+    if (problem.mixedUp !== undefined) return problem.mixedUp;
     if (problem.op === 'add') return Math.abs(problem.left - problem.right);
     if (problem.op === 'take') return problem.from + problem.take;
     return null;
@@ -469,14 +470,55 @@
     return { key: keyOf(choices), ...COMPARE_PROMPTS[direction], answer, choices, range };
   }
 
+  // Make ten and missing addends use the same ten-frame and prompts at their respective levels.
+  const TEN_PROMPTS = {
+    more: { audioId: 'math2-ten-more', promptZh: '還要再加幾個，就湊成十？', promptEn: 'How many more make ten?', promptJa: 'あといくつで、じゅうになるかな？' },
+    missing: { audioId: 'math2-ten-missing', promptZh: '空格裡要放哪一個數字，才能湊成十？', promptEn: 'Which number fills the blank to make ten?', promptJa: 'あいているところにいれると、じゅうになるかずは、どれかな？' },
+  };
+  const TEN_RANGE = { min: 0, max: 10 };
+  const TEN_COUNTS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+  function tenChoices(shown, level, random) {
+    return numberOptions({ answer: 10 - shown, mixedUp: shown, range: TEN_RANGE }, level, random);
+  }
+
+  function makeTenDraft(random, previousKey, level) {
+    const shown = pickFresh(TEN_COUNTS, random, previousKey, count => `math2-make-ten-${count}`);
+    return {
+      key: `math2-make-ten-${shown}`,
+      ...TEN_PROMPTS.more,
+      answer: 10 - shown,
+      choices: tenChoices(shown, level, random),
+      range: TEN_RANGE,
+      visual: { type: 'ten-frame', counts: [shown] },
+    };
+  }
+
+  function missingAddendDraft(random, previousKey, level) {
+    const frameShown = level !== 'super';
+    const sides = frameShown ? ['first'] : ['first', 'second'];
+    const problems = TEN_COUNTS.flatMap(shown => sides.map(side => ({ shown, side })));
+    const keyOf = ({ shown, side }) => `math2-missing-ten-${side}-${shown}`;
+    const { shown, side } = pickFresh(problems, random, previousKey, keyOf);
+    return {
+      key: keyOf({ shown, side }),
+      ...TEN_PROMPTS.missing,
+      answer: 10 - shown,
+      choices: tenChoices(shown, level, random),
+      range: TEN_RANGE,
+      display: side === 'first' ? `${shown} + ? = 10` : `? + ${shown} = 10`,
+      visual: frameShown ? { type: 'ten-frame', counts: [shown] } : null,
+    };
+  }
+
   // Tens and ones. A child counts base-ten blocks (rods of ten and single cubes, at most 9 of each so the picture stays
   // readable on a phone) or finds the number that is ten more or ten less than the one shown. The wrong choices are the
   // mistakes a child makes: the digits read the other way round (34 for 43), a rod counted wrongly, or a cube counted
   // wrongly. Neither kind appears on Easy.
   const TENS_PROMPTS = {
     blocks: { audioId: 'math2-blocks', promptZh: '這裡一共有多少個積木？', promptEn: 'How many blocks are there in all?', promptJa: 'ブロックは、ぜんぶでいくつかな？' },
-    more: { audioId: 'math2-ten-more', promptZh: '比這個數字大十的數字是哪一個？', promptEn: 'Which number is ten more than this number?', promptJa: 'このかずより、じゅうおおきいかずは、どれかな？' },
-    less: { audioId: 'math2-ten-less', promptZh: '比這個數字小十的數字是哪一個？', promptEn: 'Which number is ten less than this number?', promptJa: 'このかずより、じゅうちいさいかずは、どれかな？' },
+    more: { audioId: 'math2-tens-more', promptZh: '比這個數字大十的數字是哪一個？', promptEn: 'Which number is ten more than this number?', promptJa: 'このかずより、じゅうおおきいかずは、どれかな？' },
+    less: { audioId: 'math2-tens-less', promptZh: '比這個數字小十的數字是哪一個？', promptEn: 'Which number is ten less than this number?', promptJa: 'このかずより、じゅうちいさいかずは、どれかな？' },
   };
 
   // The number with its two digits swapped (34 gives 43), or null when that is the same number or not a two-digit one.
@@ -549,8 +591,10 @@
 
   const MATH2_KINDS = [
     { kind: 'compare', audioIds: ['math2-bigger', 'math2-smaller'], generators: { easy: compareDraft, harder: compareDraft, super: compareDraft } },
+    { kind: 'make-ten', audioIds: ['math2-ten-more'], generators: { easy: makeTenDraft } },
+    { kind: 'missing-addend', audioIds: ['math2-ten-missing'], generators: { harder: missingAddendDraft, super: missingAddendDraft } },
     { kind: 'blocks', audioIds: ['math2-blocks'], generators: { harder: blocksDraft, super: blocksDraft } },
-    { kind: 'ten-more-less', audioIds: ['math2-ten-more', 'math2-ten-less'], generators: { super: tenMoreLessDraft } },
+    { kind: 'ten-more-less', audioIds: ['math2-tens-more', 'math2-tens-less'], generators: { super: tenMoreLessDraft } },
   ];
 
   // Like plus and minus on Math: the same kind is never asked three times in a row while another is on offer.

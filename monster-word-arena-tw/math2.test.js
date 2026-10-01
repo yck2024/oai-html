@@ -86,7 +86,7 @@ test('a Math 2 question has number choices inside its own range, a unique right 
       assert.ok(values.every(value => Number.isInteger(value) && value >= question.range.min && value <= question.range.max), `${level} choices stay inside the range`);
       assert.equal(question.picture, '');
       assert.equal(question.takeAway, null);
-      assert.equal(question.display, '');
+      if (question.kind !== 'missing-addend') assert.equal(question.display, '');
       assert.deepEqual(JSON.parse(JSON.stringify(question.visual)), question.visual, 'visual is plain data');
       if (question.visual) assert.ok(visuals.BUILDERS[question.visual.type], `a builder is registered for ${question.visual.type}`);
       for (const option of question.options) assert.deepEqual([option.zh, option.en, option.ja], [option.id, option.id, option.id]);
@@ -198,7 +198,7 @@ test('switching between Math and Math 2 starts each topic with its own kind of q
   for (let round = 0; round < 20; round += 1) {
     game.chooseTopic('math2');
     assert.equal(game.getState().question.topic, 'math2');
-    assert.equal(game.getState().question.kind, 'compare');
+    assert.ok(MATH2_KINDS.some(entry => entry.kind === game.getState().question.kind));
     game.chooseTopic('math');
     assert.equal(game.getState().question.topic, 'math');
     assert.equal(game.getState().question.kind, undefined);
@@ -226,11 +226,35 @@ test('the numerals builder draws one tile per number, and unknown or missing vis
 const ofKind = (level, kind, count = 900) => drawQuestions(level, count).filter(question => question.kind === kind);
 const swapDigits = value => (value % 10) * 10 + Math.floor(value / 10);
 
-test('tens and ones: Easy has none, Harder counts blocks, Super adds ten more and ten less', () => {
-  const kindsAt = level => [...new Set(drawQuestions(level, 600).map(question => question.kind))].sort();
-  assert.deepEqual(kindsAt('easy'), ['compare']);
-  assert.deepEqual(kindsAt('harder'), ['blocks', 'compare']);
-  assert.deepEqual(kindsAt('super'), ['blocks', 'compare', 'ten-more-less']);
+test('Math 2 offers the required cards alongside tens and ones at their intended levels', () => {
+  const kindsAt = level => [...new Set(drawQuestions(level, 900).map(question => question.kind))].sort();
+  assert.deepEqual(kindsAt('easy'), ['compare', 'make-ten']);
+  assert.deepEqual(kindsAt('harder'), ['blocks', 'compare', 'missing-addend']);
+  assert.deepEqual(kindsAt('super'), ['blocks', 'compare', 'missing-addend', 'ten-more-less']);
+});
+
+test('make ten uses a ten-frame and asks for the missing counters', () => {
+  for (const question of ofKind('easy', 'make-ten', 200)) {
+    const shown = question.visual.counts[0];
+    assert.ok(shown >= 1 && shown <= 9);
+    assert.equal(Number(question.answerId), 10 - shown);
+    assert.equal(question.audioId, 'math2-ten-more');
+    assert.equal(question.display, '');
+    assert.deepEqual(question.range, { min: 0, max: 10 });
+  }
+});
+
+test('missing addends use a ten-frame on Harder and an equation-only prompt on Super', () => {
+  for (const level of ['harder', 'super']) {
+    const questions = ofKind(level, 'missing-addend', 300);
+    assert.ok(questions.length > 30);
+    for (const question of questions) {
+      assert.equal(question.audioId, 'math2-ten-missing');
+      assert.equal(Number(question.answerId) + Number(question.display.match(/\d+/)[0]), 10);
+      assert.equal(Boolean(question.visual), level === 'harder');
+      assert.equal(question.visual?.type, level === 'harder' ? 'ten-frame' : undefined);
+    }
+  }
 });
 
 test('counting blocks: the picture is rods and cubes to 99, the answer is tens times ten plus ones, with a digit-swapped choice', () => {
@@ -275,7 +299,7 @@ test('ten more and ten less: the start is shown as one numeral, the answer is 10
     const start = question.visual.values[0];
     directions.add(direction);
     assert.deepEqual(question.visual, { type: 'numerals', values: [start] });
-    assert.equal(question.audioId, `math2-ten-${direction}`);
+    assert.equal(question.audioId, `math2-tens-${direction}`);
     assert.equal(Number(question.answerId), direction === 'more' ? start + 10 : start - 10);
     assert.ok(start >= 0 && Number(question.answerId) >= 0 && Number(question.answerId) <= 99);
     assert.equal(question.options.length, 4);
@@ -308,6 +332,17 @@ test('ten more and ten less: the prompts say more and less with 大 and 小 for 
     assert.match(clip.ja, new RegExp(`じゅう${japanese}`));
     assert.doesNotMatch(clip.ja, /[㐀-鿿]/, 'on-screen Japanese stays kana');
   }
+});
+
+test('the ten-frame builder draws ten cells and the requested counters', () => {
+  const document = {
+    createElement(tag) { return { tag, className: '', children: [], attributes: {}, append(...nodes) { this.children.push(...nodes); }, setAttribute(name, value) { this.attributes[name] = String(value); } }; },
+    createElementNS(namespace, tag) { return { namespace, tag, className: '', children: [], attributes: {}, append(...nodes) { this.children.push(...nodes); }, setAttribute(name, value) { this.attributes[name] = String(value); } }; },
+  };
+  const row = visuals.build({ type: 'ten-frame', counts: [7] }, document);
+  assert.equal(row.className, 'ten-frames');
+  assert.equal(row.children[0].children.filter(node => node.attributes.class === 'ten-frame-cell').length, 10);
+  assert.equal(row.children[0].children.filter(node => node.attributes.class === 'ten-frame-counter').length, 7);
 });
 
 test('the blocks builder draws a rod for every ten and a cube for every one, capped at nine of each', () => {

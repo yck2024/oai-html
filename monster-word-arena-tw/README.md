@@ -37,8 +37,10 @@ The word clips live in `audio/words.json` (76 words, id `word-<topic>-<word>`, i
 | Kind | Easy | Harder | Super | Clips |
 | --- | --- | --- | --- | --- |
 | Bigger or smaller (`compare`) | the biggest of three numbers, 0–20 | the biggest of four numbers, 0–99 (often with digit-swapped neighbours, such as 34 and 43) | 0–99, biggest and smallest taking turns | `math2-bigger`, `math2-smaller` |
+| Make ten (`make-ten`) | a ten-frame with 1–9 counters: "How many more make ten?" | — | — | `math2-ten-more` |
+| Missing addend (`missing-addend`) | — | the ten-frame plus "3 + ? = 10" | the equation only, with the blank first or second ("? + 3 = 10") | `math2-ten-missing` |
 | Tens and ones, count the blocks (`blocks`) | none | count rods (tens) and cubes (ones) to 99, from four choices | the same | `math2-blocks` |
-| Tens and ones, ten more or ten less (`ten-more-less`) | none | none | the number shown as a numeral; find ten more or ten less, taking turns | `math2-ten-more`, `math2-ten-less` |
+| Tens and ones, ten more or ten less (`ten-more-less`) | none | none | the number shown as a numeral; find ten more or ten less, taking turns | `math2-tens-more`, `math2-tens-less` |
 
 The two prompts are shared by every question ("Which number is the biggest?" / 「哪一個數字最大？」 / 「いちばんおおきいかずは、どれかな？」, and the same with smallest). In Mandarin they use 大 and 小, the words for numbers (多 and 少 are kept for groups). The spoken prompt never gives the answer. Easy and Harder ask only for the biggest, so a first player meets one idea at a time; the direction changes on every Super question.
 
@@ -47,11 +49,15 @@ The two prompts are shared by every question ("Which number is the biggest?" / �
 Adding a kind needs no change to the shared code:
 
 - **`game.js`**: append one entry to `MATH2_KINDS` — its `kind`, the clip ids it can ask for (`audioIds`) and one generator per level it appears at. A generator returns a draft: `key`, `audioId`, `answer`, `choices` (numbers, the answer among them), `range` (`{ min, max }`, bounding every choice, so a kind can reach 20 or 99 without moving Math's limit of ten), the three prompts, and optionally `display` and `visual`. The topic rotates kinds like Math rotates plus and minus (the same kind is never asked three times in a row while another is on offer); the same question is never asked twice in a row.
-- **`visual`** is plain data (`{ type: 'numerals', values: [...] }`) and nothing else: no markup and no functions. `app.js` hands it to `math2-visuals.js`, whose `BUILDERS` registry holds one function per `type` (`(visual, document) => Element`). Today it holds plain numerals and the base-ten blocks; a picture such as a ten-frame or a clock is one more builder there. A type with no builder is skipped.
+- **`visual`** is plain data (`{ type: 'numerals', values: [...] }`) and nothing else: no markup and no functions. `app.js` hands it to `math2-visuals.js`, whose `BUILDERS` registry holds one function per `type` (`(visual, document) => Element`). Today it holds plain numerals, ten-frames and base-ten blocks; a picture such as a clock is one more builder there. A type with no builder is skipped.
 - **Narration**: add the clip text to `audio/prompts.json`, generate it with `generate_gemini_audio.py --clip <id> --confirm`, check each clip by transcribing it back, and run `node monster-word-arena-tw/generate-precache-manifest.js` (never edit `precache-manifest.js` by hand).
 - **Tests**: `game.test.js` checks that the bundled prompts are exactly the Math, word and Math 2 registry clips, and that the game reaches every one of them, both read from `MATH2_KINDS`; a new kind adds no edit to either. Its own behaviour goes in `math2.test.js`.
 
 The six clips for bigger or smaller and the nine for tens and ones were transcribed back with whisper.cpp (large-v3-turbo); all three languages matched the manifest text (Mandarin came back in simplified script, the same as the other clips, and ten came back as "10" in English and Japanese).
+
+### Make ten
+
+The ten-frame (`{ type: 'ten-frame', counts: [3] }`) is drawn in SVG, two rows of five cells, with counters filling the top row first and then the bottom row. The first addend (1–9) is the number of counters; the answer is what is missing from ten. Easy asks how many more; Harder and Super ask for a missing addend, with Super sometimes putting the blank first. The shared prompts never contain the answer (`math2-ten-more` and `math2-ten-missing`).
 
 ## Research notes
 
