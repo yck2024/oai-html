@@ -116,6 +116,18 @@
       return blocks;
     },
 
+    // null marks the missing number, never the answer. Keep the four tiles on one row, in counting order.
+    sequence(visual, document) {
+      const row = document.createElement('div');
+      row.className = 'numeral-row sequence-row';
+      (visual.values || []).forEach(value => {
+        const tile = document.createElement('span');
+        tile.className = `numeral-tile${value === null ? ' sequence-gap' : ''}`;
+        tile.textContent = value === null ? '?' : String(value);
+        row.append(tile);
+      });
+      return row;
+    },
     // Plain numerals in a row, one tile each: visual = { type: 'numerals', values: [3, 12, 40] }.
     numerals(visual, document) {
       const row = document.createElement('div');

@@ -261,6 +261,10 @@ h1 { margin: 4px 0 4px; color: #41405e; font-size: clamp(31px, 5vw, 46px); line-
 .block-rod { width: var(--cube); height: calc(var(--cube) * 10); border: 1.5px solid #2f8c7f; border-radius: 3px; box-sizing: border-box; background: repeating-linear-gradient(to bottom, #4fb3a4 0, #4fb3a4 calc(var(--cube) - 1.5px), #2f8c7f calc(var(--cube) - 1.5px), #2f8c7f var(--cube)); }
 .block-ones { display: flex; flex-wrap: wrap-reverse; align-content: flex-start; gap: var(--gap); width: calc(var(--cube) * 5 + var(--gap) * 4); height: calc(var(--cube) * 2 + var(--gap)); }
 .block-cube { width: var(--cube); height: var(--cube); border: 1.5px solid #cf7a2a; border-radius: 3px; box-sizing: border-box; background: #f5a45a; }
+/* A sequence must stay one row: four equal tiles shrink to fit even a narrow phone, including 100. */
+.sequence-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(4px, 1vw, 8px); max-width: 340px; margin: 0 auto; }
+.sequence-row .numeral-tile { min-width: 0; padding: 8px 2px; font-size: clamp(22px, 6vw, 31px); }
+.sequence-row .sequence-gap { border: 3px dashed #8573aa; background: #f5f0ff; }
 .equation { min-height: 48px; margin: 2px 0 0; color: #4e5a71; font-size: 38px; font-weight: 1000; letter-spacing: .05em; line-height: 1.2; font-variant-numeric: tabular-nums; }
 .answer-hint { margin: 8px 0 6px; color: #8b8a95; font-size: 11px; font-weight: 850; }
 .answer-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }

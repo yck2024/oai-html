@@ -237,9 +237,9 @@ const swapDigits = value => (value % 10) * 10 + Math.floor(value / 10);
 
 test('Math 2 offers the required cards alongside tens and ones at their intended levels', () => {
   const kindsAt = level => [...new Set(drawQuestions(level, 900).map(question => question.kind))].sort();
-  assert.deepEqual(kindsAt('easy'), ['compare', 'make-ten']);
-  assert.deepEqual(kindsAt('harder'), ['add-within-20', 'blocks', 'compare', 'missing-addend', 'take-within-20']);
-  assert.deepEqual(kindsAt('super'), ['add-within-20', 'blocks', 'compare', 'missing-addend', 'take-within-20', 'ten-more-less']);
+  assert.deepEqual(kindsAt('easy'), ['compare', 'make-ten', 'sequence']);
+  assert.deepEqual(kindsAt('harder'), ['add-within-20', 'blocks', 'compare', 'missing-addend', 'sequence', 'take-within-20']);
+  assert.deepEqual(kindsAt('super'), ['add-within-20', 'blocks', 'compare', 'missing-addend', 'sequence', 'take-within-20', 'ten-more-less']);
 
 });
 
