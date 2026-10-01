@@ -17,7 +17,7 @@
   // top-level shell file is added to the app.
   const SHELL_FILES = [
     '', 'index.html', 'game.css',
-    'game.js', 'pacing.js', 'i18n.js', 'sounds.js', 'arena.js', 'app.js', 'rewards.js', 'rewards-app.js',
+    'game.js', 'pacing.js', 'i18n.js', 'sounds.js', 'arena.js', 'math2-visuals.js', 'app.js', 'rewards.js', 'rewards-app.js',
     'offline.js',
     'manifest.webmanifest',
     'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-512-maskable.png', 'icons/apple-touch-icon.png',

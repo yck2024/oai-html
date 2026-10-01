@@ -5,6 +5,7 @@
   const { bilingualNode, setBilingual } = I18N;
   const PACING = window.FriendlyArenaPacing;
   const game = window.FriendlyArena.createGame();
+  const { isMathTopic } = window.FriendlyArena;
   const stage = window.FriendlyArenaStage.createArenaStage(document);
   const pageShell = document.querySelector('.page-shell');
 
@@ -32,6 +33,7 @@
   const questionPrompt = document.querySelector('#questionPrompt');
   const questionWord = document.querySelector('#questionWord');
   const questionPicture = document.querySelector('#questionPicture');
+  const questionVisual = document.querySelector('#questionVisual');
   const equation = document.querySelector('#equation');
   const feedback = document.querySelector('#feedback');
   const nextButton = document.querySelector('#nextButton');
@@ -441,7 +443,7 @@
     button.addEventListener('click', () => chooseAnswer(button, option.id));
     // Where the question already shows the word, a choice is only a picture (or colour), so it cannot be
     // matched by comparing letters. The word stays as the button's accessible name for screen readers.
-    const pictureOnly = question.topic !== 'math' && !question.wordLabels;
+    const pictureOnly = !isMathTopic(question.topic) && !question.wordLabels;
 
     if (question.topic === 'colors') {
       const swatch = document.createElement('span');
@@ -455,7 +457,7 @@
         label.textContent = textLanguage === 'en' ? option.en.toLowerCase() : option[textLanguage];
         button.append(label);
       }
-    } else if (question.topic === 'math') {
+    } else if (isMathTopic(question.topic)) {
       const number = document.createElement('span');
       number.className = 'number-choice';
       number.textContent = option[textLanguage];
@@ -683,7 +685,7 @@
 
   function renderQuestion(state, { speak = true } = {}) {
     const question = state.question;
-    const isWordTopic = question.topic !== 'math';
+    const isWordTopic = !isMathTopic(question.topic);
     const target = isWordTopic ? currentTarget(question) : null;
     const showWord = isWordTopic && (state.level === 'harder' || (state.level === 'super' && soundIsOff()));
     const showGenericPrompt = isWordTopic && state.level === 'super' && !soundIsOff();
@@ -705,6 +707,10 @@
       questionPicture.textContent = question.picture;
       questionPicture.hidden = !question.picture;
     }
+    // A Math 2 question may carry plain data for a picture (a ten-frame, a clock); math2-visuals.js draws it.
+    const visual = question.visual ? window.FriendlyArenaMath2Visuals.build(question.visual, document) : null;
+    questionVisual.replaceChildren(...(visual ? [visual] : []));
+    questionVisual.hidden = !visual;
     questionPicture.classList.toggle('dense-picture', Boolean(question.dense));
     questionPicture.classList.toggle('take-away-picture', Boolean(question.takeAway));
 
@@ -724,7 +730,7 @@
     const choices = question.fallbackOptions || question.options;
     answerOptions.replaceChildren(...(onDiagram ? [] : choices.map(option => makeAnswerButton(option, question))));
     answerOptions.classList.toggle('four-choices', choices.length === 4);
-    const groupLabel = question.topic === 'math' ? 'answerGroupLabelNumber' : question.wordLabels ? 'answerGroupLabelWord' : 'answerGroupLabelPicture';
+    const groupLabel = isMathTopic(question.topic) ? 'answerGroupLabelNumber' : question.wordLabels ? 'answerGroupLabelWord' : 'answerGroupLabelPicture';
     answerOptions.setAttribute('aria-label', I18N.STRINGS[groupLabel][textLanguage]);
     if (state.missed) markMiss(state);
     else {

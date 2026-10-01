@@ -743,5 +743,15 @@
     "en": "Find the thunder!",
     "zh": "找出打雷！",
     "ja": "かみなりをみつけてね！"
+  },
+  "math2-bigger": {
+    "en": "Which number is the biggest?",
+    "zh": "哪一個數字最大？",
+    "ja": "いちばんおおきいかずは、どれかな？"
+  },
+  "math2-smaller": {
+    "en": "Which number is the smallest?",
+    "zh": "哪一個數字最小？",
+    "ja": "いちばんちいさいかずは、どれかな？"
   }
 }
