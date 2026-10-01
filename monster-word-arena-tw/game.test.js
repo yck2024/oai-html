@@ -463,6 +463,8 @@ function createPageDocument() {
       element.ownerDocument = document;
       return element;
     },
+    // Math 2's ten-frame is drawn as SVG.
+    createElementNS: (_namespace, tagName) => document.createElement(tagName),
     createTextNode: text => ({ textContent: String(text) }),
   };
   allElements.forEach(element => { element.ownerDocument = document; });
@@ -4091,8 +4093,9 @@ test('the Math 2 tab sits beside Math, shows number buttons only, and has its ow
   assert.equal(app.elements.get('#questionWord').hidden, true);
   assert.equal(app.elements.get('#questionPicture').hidden, true);
   assert.equal(app.elements.get('#equation').hidden, true);
-  assert.equal(app.elements.get('#questionVisual').hidden, true, 'a question with no visual shows none');
-  assert.equal(app.elements.get('#questionPrompt').textContent.replace(/\s+/g, ' ').trim().startsWith('Which number is the biggest?'), true);
+  const first = game.getState().question;
+  assert.equal(app.elements.get('#questionVisual').hidden, !first.visual, 'a question with no visual shows none');
+  assert.equal(app.elements.get('#questionPrompt').textContent.replace(/\s+/g, ' ').trim().startsWith(first.promptEn), true);
   app.levelButtons.find(button => button.dataset.level === 'harder').click();
   assert.equal(app.elements.get('#arenaMessage').textContent, I18N.levelChosenMessage('harder', 'en', 'math2'));
   assert.notEqual(I18N.levelChosenMessage('harder', 'en', 'math2'), I18N.levelChosenMessage('harder', 'en', 'math'));
@@ -4137,4 +4140,56 @@ test('a question that carries a visual has math2-visuals.js draw it above the an
   app.levelButtons.find(button => button.dataset.level === 'harder').click();
   assert.equal(container.hidden, true, 'an unknown picture type is skipped, not drawn half-way');
   assert.equal(container.children.length, 0);
+});
+
+test('a make-ten question draws its ten-frame above the number buttons, and the next question clears it', () => {
+  const game = createGame(seededRandom(11));
+  const app = createAppFixture(game);
+  app.startButton.click();
+  app.topicTabs.find(tab => tab.dataset.topic === 'math2').click();
+  const container = app.elements.get('#questionVisual');
+  let seen = 0;
+  for (let draws = 0; draws < 40 && seen < 3; draws += 1) {
+    const question = game.getState().question;
+    const frame = container.children[0];
+    if (question.kind === 'make-ten') {
+      seen += 1;
+      assert.equal(container.hidden, false);
+      assert.equal(frame.className, 'ten-frames');
+      assert.equal(frame.children.length, 1);
+      assert.equal(frame.children[0].children.filter(node => node.attributes.class === 'ten-frame-counter').length, question.visual.counts[0]);
+      assert.equal(app.elements.get('#equation').hidden, true, 'Easy shows the frame without an equation');
+    } else {
+      assert.equal(container.hidden, true, 'a question without a frame clears the last one');
+    }
+    clickAnswer(app, game, true);
+    endSpeech(app);
+    app.nextButton.click();
+  }
+  assert.equal(seen, 3, 'make ten comes up on Math 2 Easy');
+  app.levelButtons.find(button => button.dataset.level === 'harder').click();
+  for (let draws = 0; draws < 40; draws += 1) {
+    const question = game.getState().question;
+    if (question.kind === 'missing-addend') {
+      assert.equal(container.children[0].children.length, 1, 'Harder shows the frame');
+      assert.equal(app.elements.get('#equation').textContent, question.display);
+      assert.equal(app.elements.get('#equation').hidden, false);
+      break;
+    }
+    clickAnswer(app, game, true);
+    endSpeech(app);
+    app.nextButton.click();
+  }
+  app.levelButtons.find(button => button.dataset.level === 'super').click();
+  for (let draws = 0; draws < 40; draws += 1) {
+    const question = game.getState().question;
+    if (question.kind === 'missing-addend') {
+      assert.equal(container.hidden, true, 'Super shows the equation only');
+      assert.match(app.elements.get('#equation').textContent, /\?.*= 10$/);
+      break;
+    }
+    clickAnswer(app, game, true);
+    endSpeech(app);
+    app.nextButton.click();
+  }
 });

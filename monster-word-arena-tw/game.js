@@ -333,6 +333,8 @@
   }
 
   function wrongOperationResult(problem) {
+    // A Math 2 question may name the one wrong number a child is most likely to tap (see the ten-frame kinds below).
+    if (problem.mixedUp !== undefined) return problem.mixedUp;
     if (problem.op === 'add') return Math.abs(problem.left - problem.right);
     if (problem.op === 'take') return problem.from + problem.take;
     return null;
@@ -469,8 +471,56 @@
     return { key: keyOf(choices), ...COMPARE_PROMPTS[direction], answer, choices, range };
   }
 
+  // Make ten. Easy shows a ten-frame with some counters and asks how many more fill it; Harder shows the frame and the
+  // equation ("3 + ? = 10"); Super shows only the equation, with the blank sometimes first ("? + 3 = 10"). Both kinds
+  // share one spoken prompt each, so the clip never gives the answer. The most likely wrong tap is the number already
+  // there (counting the counters instead of the empty cells), so Harder and Super offer it half the time.
+  const TEN_PROMPTS = {
+    more: { audioId: 'math2-ten-more', promptZh: '還要再加幾個，就湊成十？', promptEn: 'How many more make ten?', promptJa: 'あといくつで、じゅうになるかな？' },
+    missing: { audioId: 'math2-ten-missing', promptZh: '空格裡要放哪一個數字，才能湊成十？', promptEn: 'Which number fills the blank to make ten?', promptJa: 'あいているところにいれると、じゅうになるかずは、どれかな？' },
+  };
+  const TEN_RANGE = { min: 0, max: 10 };
+  // Counters already in the frame (the first addend): never none and never full, so there is always something to add.
+  const TEN_COUNTS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+  function tenChoices(shown, level, random) {
+    return numberOptions({ answer: 10 - shown, mixedUp: shown, range: TEN_RANGE }, level, random);
+  }
+
+  function makeTenDraft(random, previousKey, level) {
+    const shown = pickFresh(TEN_COUNTS, random, previousKey, count => `math2-make-ten-${count}`);
+    return {
+      key: `math2-make-ten-${shown}`,
+      ...TEN_PROMPTS.more,
+      answer: 10 - shown,
+      choices: tenChoices(shown, level, random),
+      range: TEN_RANGE,
+      visual: { type: 'ten-frame', counts: [shown] },
+    };
+  }
+
+  function missingAddendDraft(random, previousKey, level) {
+    const frameShown = level !== 'super';
+    // Harder always writes "3 + ? = 10"; Super also writes "? + 3 = 10".
+    const sides = frameShown ? ['first'] : ['first', 'second'];
+    const problems = TEN_COUNTS.flatMap(shown => sides.map(side => ({ shown, side })));
+    const keyOf = ({ shown, side }) => `math2-missing-ten-${side}-${shown}`;
+    const { shown, side } = pickFresh(problems, random, previousKey, keyOf);
+    return {
+      key: keyOf({ shown, side }),
+      ...TEN_PROMPTS.missing,
+      answer: 10 - shown,
+      choices: tenChoices(shown, level, random),
+      range: TEN_RANGE,
+      display: side === 'first' ? `${shown} + ? = 10` : `? + ${shown} = 10`,
+      visual: frameShown ? { type: 'ten-frame', counts: [shown] } : null,
+    };
+  }
+
   const MATH2_KINDS = [
     { kind: 'compare', audioIds: ['math2-bigger', 'math2-smaller'], generators: { easy: compareDraft, harder: compareDraft, super: compareDraft } },
+    { kind: 'make-ten', audioIds: ['math2-ten-more'], generators: { easy: makeTenDraft } },
+    { kind: 'missing-addend', audioIds: ['math2-ten-missing'], generators: { harder: missingAddendDraft, super: missingAddendDraft } },
   ];
 
   // Like plus and minus on Math: the same kind is never asked three times in a row while another is on offer.
