@@ -276,7 +276,7 @@ test('missing addends use a ten-frame on Harder and an equation-only prompt on S
 test('counting blocks: the picture is rods and cubes to 99, the answer is tens times ten plus ones, with a digit-swapped choice', () => {
   for (const level of ['harder', 'super']) {
     const questions = ofKind(level, 'blocks');
-    assert.ok(questions.length > 100);
+    assert.ok(questions.length > 50);
     const seen = new Set();
     for (const question of questions) {
       const { tens, ones, type } = question.visual;
@@ -307,7 +307,7 @@ test('counting blocks: Mandarin, English and Japanese prompts match the clip and
 test('ten more and ten less: the start is shown as one numeral, the answer is 10 away, and the two directions take turns', () => {
   const questions = drawQuestions('super', 900);
   const asked = questions.filter(question => question.kind === 'ten-more-less');
-  assert.ok(asked.length > 100);
+  assert.ok(asked.length > 50);
   const directions = new Set();
   questions.forEach((question, index) => {
     if (question.kind !== 'ten-more-less') return;

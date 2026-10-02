@@ -4197,7 +4197,9 @@ test('a make-ten question draws its ten-frame above the number buttons, and the 
         assert.equal(app.elements.get('#equation').textContent, question.display);
         break;
       }
-      clickAnswer(app, game, true); endSpeech(app); app.nextButton.click();
+      clickAnswer(app, game, true); endSpeech(app);
+      if (game.getState().finished) app.elements.get('#tryAgainButton').click();
+      else app.nextButton.click();
     }
     assert.equal(found, true, `${level} reaches missing addend`);
   }
