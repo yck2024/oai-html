@@ -100,6 +100,9 @@
     diagramHint: { en: 'Tap it on the picture', zh: '在圖上點一點', ja: 'えの　なかで　たっぷしてね' },
     diagramGroupLabel: { en: 'Picture of a child. Tap the part you hear.', zh: '小朋友的圖。點一點你聽到的身體部位。', ja: 'こどもの　え。きいた　ところを　たっぷしてね。' },
     farmGroupLabel: { en: 'Picture of a farm. Tap the animal you hear.', zh: '農場的圖。點一點你聽到的動物。', ja: 'のうじょうの　え。きいた　どうぶつを　たっぷしてね。' },
+    // Math 2's number line, drawn for each question (see numberLineDiagram in game.js).
+    lineHint: { en: 'Tap the line where it goes', zh: '在線上點一點', ja: 'せんの　うえで　たっぷしてね' },
+    lineGroupLabel: { en: 'A number line with a dino at the start. Tap the tick where the number goes.', zh: '有小恐龍的數線。點一點數字要放的位置。', ja: 'きょうりゅうが　いる　かずの　せん。かずが　はいる　ところを　たっぷしてね。' },
     answerGroupLabelWord: { en: 'Choose a word', zh: '選一個詞', ja: 'ことばを　えらんでね' },
     answerGroupLabelNumber: { en: 'Choose a number', zh: '選一個數字', ja: 'かずを　えらんでね' },
     answerGroupLabelTime: { en: 'Choose a time', zh: '選一個時間', ja: 'じかんを　えらんでね' },

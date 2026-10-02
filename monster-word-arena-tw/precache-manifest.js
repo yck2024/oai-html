@@ -293,6 +293,7 @@
     "audio/en/math2-clock-find-9-00.mp3",
     "audio/en/math2-clock-find-9-30.mp3",
     "audio/en/math2-clock-what.mp3",
+    "audio/en/math2-line-where.mp3",
     "audio/en/math2-sequence-backward.mp3",
     "audio/en/math2-sequence-jumps.mp3",
     "audio/en/math2-sequence-missing.mp3",
@@ -740,6 +741,7 @@
     "audio/ja/math2-clock-find-9-00.mp3",
     "audio/ja/math2-clock-find-9-30.mp3",
     "audio/ja/math2-clock-what.mp3",
+    "audio/ja/math2-line-where.mp3",
     "audio/ja/math2-sequence-backward.mp3",
     "audio/ja/math2-sequence-jumps.mp3",
     "audio/ja/math2-sequence-missing.mp3",
@@ -1188,6 +1190,7 @@
     "audio/zh/math2-clock-find-9-00.mp3",
     "audio/zh/math2-clock-find-9-30.mp3",
     "audio/zh/math2-clock-what.mp3",
+    "audio/zh/math2-line-where.mp3",
     "audio/zh/math2-sequence-backward.mp3",
     "audio/zh/math2-sequence-jumps.mp3",
     "audio/zh/math2-sequence-missing.mp3",
@@ -1445,5 +1448,5 @@
     "audio/zh/word-weather-thunder.mp3",
     "audio/zh/word-weather-windy.mp3"
   ],
-  "MEDIA_VERSION": "6209007ae4d2"
+  "MEDIA_VERSION": "fda3def779f8"
 }));

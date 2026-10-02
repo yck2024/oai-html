@@ -155,6 +155,41 @@
       return row;
     },
 
+    // A number line, drawn from a table of ticks: visual = { type: 'number-line', width, height, y, ticks: [{ value, x, labelled }] }.
+    // x and y are fractions of the picture, so the ticks sit exactly where the question's tap regions are. Only the
+    // ticks marked `labelled` are written under the line (the anchors a child counts along from); a dino stands at the
+    // left end. The dino is the arena's own art (see .champion-art in game.css) and falls back to the emoji there.
+    'number-line'(visual, document) {
+      const { width = 1000, height = 380, y = 0.7 } = visual;
+      const ticks = visual.ticks || [];
+      const box = document.createElement('div');
+      box.className = 'number-line';
+      const svg = svgElement(document, 'svg', { viewBox: `0 0 ${width} ${height}`, class: 'number-line-svg', 'aria-hidden': 'true', focusable: 'false' });
+      if (ticks.length) {
+        svg.append(svgElement(document, 'line', { class: 'number-line-axis', x1: round(ticks[0].x * width), y1: round(y * height), x2: round(ticks[ticks.length - 1].x * width), y2: round(y * height) }));
+      }
+      ticks.forEach(tick => {
+        const x = round(tick.x * width);
+        const reach = tick.labelled ? 34 : 20;
+        svg.append(svgElement(document, 'line', { class: tick.labelled ? 'number-line-tick number-line-major' : 'number-line-tick', x1: x, y1: round(y * height - reach), x2: x, y2: round(y * height + reach) }));
+        if (!tick.labelled) return;
+        const label = svgElement(document, 'text', { class: 'number-line-label', x, y: round(y * height + 80), 'text-anchor': 'middle', 'dominant-baseline': 'central' });
+        label.textContent = String(tick.value);
+        svg.append(label);
+      });
+      const dino = document.createElement('span');
+      dino.className = 'number-line-dino champion-art';
+      dino.dataset.character = 'dino';
+      dino.dataset.pose = 'ready';
+      dino.setAttribute('aria-hidden', 'true');
+      const fallback = document.createElement('span');
+      fallback.className = 'art-fallback';
+      fallback.textContent = '🦖';
+      dino.append(fallback);
+      box.append(svg, dino);
+      return box;
+    },
+
     // A round clock with the numbers 1-12 and two hands: visual = { type: 'clock', hour: 3, minute: 30 }. The short, thick
     // hour hand and the long, thin minute hand differ in colour as well as length. Only :00 and :30 are asked today,
     // but the minute hand follows any minute.
