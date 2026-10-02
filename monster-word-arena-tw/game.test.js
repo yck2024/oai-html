@@ -1357,8 +1357,8 @@ test('every registered Math 2 prompt is reached at a level where its kind is off
   assert.deepEqual([...reached].sort(), [...MATH2_AUDIO_IDS].sort());
 });
 
-// The clips every Math 2 kind says it can ask for: a later card registers its kind and these follow, with no test edit.
-const MATH2_AUDIO_IDS = MATH2_KINDS.flatMap(entry => entry.audioIds);
+// The clips every Math 2 kind says it can ask for (kinds may share a clip): a later card registers its kind and these follow, with no test edit.
+const MATH2_AUDIO_IDS = [...new Set(MATH2_KINDS.flatMap(entry => entry.audioIds))];
 
 test('every math and vocabulary prompt has bundled English, Taiwan Mandarin, and Japanese audio', () => {
   const expected = [
@@ -4197,7 +4197,9 @@ test('a make-ten question draws its ten-frame above the number buttons, and the 
         assert.equal(app.elements.get('#equation').textContent, question.display);
         break;
       }
-      clickAnswer(app, game, true); endSpeech(app); app.nextButton.click();
+      clickAnswer(app, game, true); endSpeech(app);
+      if (game.getState().finished) app.elements.get('#tryAgainButton').click();
+      else app.nextButton.click();
     }
     assert.equal(found, true, `${level} reaches missing addend`);
   }
@@ -4224,5 +4226,65 @@ test('a sequence card renders its missing tile at every level, narrates it, and 
     app.topicTabs.find(button => button.dataset.topic === 'math').click();
     assert.equal(container.hidden, true);
     assert.equal(container.children.length, 0, 'no stale sequence remains on Math');
+  }
+});
+
+// A game on Math 2 at a level, moved on until it asks the wanted kind (the app is handed this game).
+function math2GameAsking(kind, level, seed = 12) {
+  const game = createGame(seededRandom(seed));
+  game.chooseTopic('math2');
+  game.chooseLevel(level);
+  for (let draw = 0; draw < 200 && game.getState().question.kind !== kind; draw += 1) game.chooseTopic('math2');
+  assert.equal(game.getState().question.kind, kind);
+  return game;
+}
+
+test('reading a clock draws the clock above time-in-words buttons, in the language on screen', () => {
+  const game = math2GameAsking('clock-half', 'harder');
+  const app = createAppFixture(game);
+  app.startButton.click();
+  const { question } = game.getState();
+  const container = app.elements.get('#questionVisual');
+  assert.equal(container.hidden, false);
+  assert.equal(container.children[0].tagName, 'SVG');
+  assert.equal(container.children[0].attributes.class, 'clock-face');
+  const buttons = [...app.answerOptions.children];
+  assert.equal(buttons.length, CHOICE_COUNT.harder);
+  assert.ok(buttons.every(button => button.children.length === 1 && button.children[0].className === 'time-choice' && !button.classList.contains('picture-only')));
+  assert.deepEqual(buttons.map(button => button.children[0].textContent), question.options.map(option => option.en));
+  assert.equal(app.answerOptions.attributes['aria-label'], I18N.STRINGS.answerGroupLabelTime.en);
+  assert.match(app.elements.get('#questionPrompt').textContent, /What time is it\?/);
+  app.textLanguageButtons.find(button => button.dataset.textLanguage === 'zh').click();
+  assert.deepEqual([...app.answerOptions.children].map(button => button.children[0].textContent), question.options.map(option => option.zh));
+  clickAnswer(app, game, true);
+  assert.equal(game.getState().stars, 1);
+  assert.equal(app.elements.get('#echoButton').hidden, true, 'a time answer has no number to echo');
+});
+
+test('finding a clock shows clock faces as the buttons, each named by its time, and a wrong face costs a heart', () => {
+  const game = math2GameAsking('clock-find', 'super');
+  const app = createAppFixture(game);
+  app.startButton.click();
+  const { question } = game.getState();
+  assert.equal(app.elements.get('#questionVisual').hidden, true, 'the faces are the answers, so no clock is shown above them');
+  const buttons = [...app.answerOptions.children];
+  assert.equal(buttons.length, CHOICE_COUNT.super);
+  for (const [index, button] of buttons.entries()) {
+    assert.equal(button.classList.contains('clock-option'), true);
+    assert.equal(button.children.length, 1);
+    assert.equal(button.children[0].tagName, 'SVG');
+    assert.equal(button.attributes['aria-label'], question.options[index].en);
+  }
+  assert.equal(app.answerOptions.attributes['aria-label'], I18N.STRINGS.answerGroupLabelClock.en);
+  assert.match(app.elements.get('#questionPrompt').textContent, /^Find the clock that says (\d+ o'clock|half past \d+)\./);
+  clickAnswer(app, game, false);
+  assert.equal(game.getState().hearts, HEARTS_BY_LEVEL.super - 1);
+  assert.ok(answerButtons(app).some(button => button.classList.contains('right-answer')));
+});
+
+test('the clock labels read in every language', () => {
+  for (const key of ['answerGroupLabelTime', 'answerGroupLabelClock']) {
+    for (const language of ['en', 'zh', 'ja']) assert.ok(I18N.STRINGS[key][language], `${key} in ${language}`);
+    assert.doesNotMatch(I18N.STRINGS[key].ja, /[ァ-ヿ㐀-鿿]/, `${key} Japanese is hiragana`);
   }
 });

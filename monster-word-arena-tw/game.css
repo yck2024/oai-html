@@ -274,6 +274,18 @@ h1 { margin: 4px 0 4px; color: #41405e; font-size: clamp(31px, 5vw, 46px); line-
 .answer-option:active:not(:disabled) { transform: translateY(1px); }
 .answer-option:disabled { cursor: default; }
 .number-choice { color: #63568a; font-size: 31px; font-variant-numeric: tabular-nums; }
+.time-choice { color: #63568a; font-size: 22px; line-height: 1.15; text-align: center; overflow-wrap: anywhere; }
+.clock-face { display: block; width: 100%; height: auto; }
+.clock-rim { fill: #fff; stroke: #63568a; stroke-width: 6; }
+.clock-tick { stroke: #b9aed6; stroke-width: 3; stroke-linecap: round; }
+.clock-number { fill: #4b4c61; font-size: 25px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.clock-hand { stroke-linecap: round; }
+.clock-hour-hand { stroke: #63568a; stroke-width: 11; }
+.clock-minute-hand { stroke: #e0734f; stroke-width: 7; }
+.clock-centre { fill: #4b4c61; }
+.question-visual .clock-face { width: clamp(110px, 30vh, 170px); margin: 0 auto; }
+.answer-option.clock-option { min-height: 0; padding: 6px; }
+.clock-option .clock-face { width: min(100%, 118px); margin: 0 auto; }
 .color-swatch { width: 24px; height: 24px; border: 2px solid #ffffff; border-radius: 50%; box-shadow: 0 0 0 1px #b9b5af; }
 .question-swatch { display: block; width: 64px; height: 64px; margin: 4px auto; border-width: 4px; }
 .color-label { font-size: 11px; line-height: 1.2; }

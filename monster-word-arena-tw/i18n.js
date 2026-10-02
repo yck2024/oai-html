@@ -102,6 +102,8 @@
     farmGroupLabel: { en: 'Picture of a farm. Tap the animal you hear.', zh: '農場的圖。點一點你聽到的動物。', ja: 'のうじょうの　え。きいた　どうぶつを　たっぷしてね。' },
     answerGroupLabelWord: { en: 'Choose a word', zh: '選一個詞', ja: 'ことばを　えらんでね' },
     answerGroupLabelNumber: { en: 'Choose a number', zh: '選一個數字', ja: 'かずを　えらんでね' },
+    answerGroupLabelTime: { en: 'Choose a time', zh: '選一個時間', ja: 'じかんを　えらんでね' },
+    answerGroupLabelClock: { en: 'Choose a clock', zh: '選一個時鐘', ja: 'とけいを　えらんでね' },
     answerGroupLabelPicture: { en: 'Choose a picture', zh: '選一張圖', ja: 'えを　えらんでね' },
     feedbackDefault: { en: 'No rush—thinking is a superpower!', zh: '慢慢想，你最棒！', ja: 'あわてなくて　いいよ、かんがえるのが　とくいだね！' },
     // A wrong tap ends the question: the right choice is shown, a heart floats away (and a star hops back when there
