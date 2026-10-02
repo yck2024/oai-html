@@ -267,7 +267,7 @@
     'break-goodbye': ['reaction-break-goodbye-1'],
   };
   const EGG = '🥚';
-  // Topics whose answers are numbers: they show number buttons, speak a numeric prompt, and have no word to echo.
+  // Math topics show number buttons and speak a numeric prompt. Only Math 2 echoes number answers.
   const MATH_TOPICS = ['math', 'math2'];
   const isMathTopic = topic => MATH_TOPICS.includes(topic);
   // The biggest answer a Math question or choice can show. A problem may carry its own `range` ({ min, max }) instead,
@@ -817,6 +817,9 @@
       visual: draft.visual || null,
       ...(draft.answerStyle ? { answerStyle: draft.answerStyle } : { range: draft.range }),
       answerId: String(draft.answer),
+      // All numeric Math 2 kinds share the word-echo path. Non-number answers (e.g. clock times) do not.
+      ...(Number.isInteger(draft.answer) && draft.answer >= 0 && draft.answer <= 100
+        ? { wordAudioId: `word-number-${draft.answer}` } : {}),
       options: draft.options || shuffled(draft.choices.map(value => ({
         id: String(value), zh: String(value), en: String(value), ja: String(value), icon: '⭐',
       })), random),

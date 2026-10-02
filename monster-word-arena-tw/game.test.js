@@ -3682,7 +3682,8 @@ function clipsPlayedSince(app, index) {
 test('each bundled word-only clip covers a word in all three languages, and word questions name it', () => {
   const expected = WORD_TOPIC_IDS.flatMap(topic => WORD_TOPICS[topic].words.map(word => `word-${topic}-${word.id}`));
   assert.equal(expected.length, 76);
-  assert.deepEqual(Object.keys(words).sort(), expected.sort(), 'words.json has one entry per supported word-only clip');
+  const numberIds = Array.from({ length: 101 }, (_, number) => `word-number-${number}`);
+  assert.deepEqual(Object.keys(words).sort(), [...expected, ...numberIds].sort(), 'words.json covers supported words and Math 2 number echoes');
   for (const [audioId, translations] of Object.entries(words)) {
     for (const language of ['en', 'zh', 'ja']) {
       assert.ok(translations[language], `${audioId} has ${language} text`);
@@ -4133,7 +4134,7 @@ test('a Math 2 answer counts like any other: a right tap earns a star and a miss
   app.topicTabs.find(tab => tab.dataset.topic === 'math2').click();
   clickAnswer(app, game, true);
   assert.equal(game.getState().stars, 1);
-  assert.equal(app.elements.get('#echoButton').hidden, true, 'a number answer has no word to echo');
+  assert.equal(app.elements.get('#echoButton').hidden, false, 'a Math 2 number answer can be replayed');
   endSpeech(app);
   app.nextButton.click();
   clickAnswer(app, game, false);
@@ -4287,4 +4288,160 @@ test('the clock labels read in every language', () => {
     for (const language of ['en', 'zh', 'ja']) assert.ok(I18N.STRINGS[key][language], `${key} in ${language}`);
     assert.doesNotMatch(I18N.STRINGS[key].ja, /[ァ-ヿ㐀-鿿]/, `${key} Japanese is hiragana`);
   }
+});
+// Math 2 reuses the word echo; today's Math remains covered by its unchanged no-echo tests.
+test('every numeric Math 2 answer from 0 to 100 has an echo; non-number answers do not', () => {
+  const original = [...MATH2_KINDS];
+  try {
+    for (const answer of [...Array.from({ length: 101 }, (_, n) => n), '2:30', -1, 101, 1.5]) {
+      const draft = () => ({ key: `echo-${answer}`, audioId: 'math2-bigger', answer, choices: [answer], range: { min: 0, max: 100 } });
+      MATH2_KINDS.splice(0, MATH2_KINDS.length, { kind: 'echo-test', generators: Object.fromEntries(LEVELS.map(level => [level, draft])) });
+      const game = createGame(seededRandom(1));
+      game.chooseTopic('math2');
+      for (const level of LEVELS) {
+        game.chooseLevel(level);
+        const question = game.getState().question;
+        const numeric = Number.isInteger(answer) && answer >= 0 && answer <= 100;
+        assert.equal(question.wordAudioId, numeric ? `word-number-${answer}` : undefined);
+        if (numeric) assert.ok(words[question.wordAudioId]);
+      }
+    }
+  } finally {
+    MATH2_KINDS.splice(0, MATH2_KINDS.length, ...original);
+  }
+});
+
+test('Math 2 correct answers speak only the answer number, pulse it, and replay it in each voice', () => {
+  for (const language of ['en', 'zh', 'ja']) {
+    const { game, app } = wordQuestionApp('math2');
+    app.textLanguageButtons.find(button => button.dataset.textLanguage === language).click();
+    const question = game.getState().question;
+    const before = app.played.length;
+    clickAnswer(app, game, true);
+    const right = answerButtons(app).find(button => button.dataset.choice === question.answerId);
+    const echo = app.elements.get('#echoButton');
+    assert.equal(echo.hidden, false);
+    assert.equal(app.elements.get('#echoWord').textContent, question.answerId);
+    assert.match(echo.attributes['aria-label'], new RegExp(question.answerId));
+    endSpeech(app);
+    assert.deepEqual(clipsPlayedSince(app, before).slice(1), [`${language}/word-number-${question.answerId}`]);
+    assert.ok(right.classList.contains('is-echoing'));
+    endSpeech(app);
+    assert.equal(right.classList.contains('is-echoing'), false);
+    const replayStart = app.played.length;
+    echo.click();
+    assert.deepEqual(clipsPlayedSince(app, replayStart), [`${language}/word-number-${question.answerId}`]);
+    assert.ok(right.classList.contains('is-echoing'));
+  }
+});
+
+test('Math 2 misses echo the right number, and a second-chance tap waits for it without awarding a star', () => {
+  const { game, app } = wordQuestionApp('math2');
+  const question = game.getState().question;
+  clickAnswer(app, game, false);
+  const right = answerButtons(app).find(button => button.dataset.choice === question.answerId);
+  right.click();
+  assert.equal(game.getState().question.key, question.key);
+  endSpeech(app);
+  assert.equal(app.played.at(-1), `./audio/en/word-number-${question.answerId}.mp3`);
+  assert.ok(right.classList.contains('is-echoing'));
+  assert.equal(game.getState().question.key, question.key);
+  endSpeech(app);
+  assert.notEqual(game.getState().question.key, question.key);
+  assert.equal(game.getState().hearts, HEARTS_BY_LEVEL.easy - 1);
+  assert.equal(game.getState().stars, 0);
+});
+
+test('Math 2 final answers finish their number echo before showing the win or loss panel', () => {
+  for (const win of [true, false]) {
+    const { game, app } = wordQuestionApp('math2');
+    const turns = win ? GOAL_BY_LEVEL.easy : HEARTS_BY_LEVEL.easy;
+    for (let turn = 1; turn < turns; turn += 1) {
+      clickAnswer(app, game, win);
+      endSpeech(app);
+      endSpeech(app);
+      if (win) app.nextButton.click();
+      else answerButtons(app).find(button => button.dataset.choice === game.getState().question.answerId).click();
+    }
+    const question = game.getState().question;
+    clickAnswer(app, game, win);
+    const panel = app.elements.get(win ? '#finishPanel' : '#lostPanel');
+    assert.equal(panel.hidden, true);
+    endSpeech(app);
+    assert.equal(app.played.at(-1), `./audio/en/word-number-${question.answerId}.mp3`);
+    assert.equal(panel.hidden, true);
+    endSpeech(app);
+    assert.equal(panel.hidden, false);
+  }
+});
+
+test('muted Math 2 answers stay playable and hide the number replay', () => {
+  const { game, app } = wordQuestionApp('math2');
+  app.muteButton.click();
+  const before = app.played.length;
+  clickAnswer(app, game, false);
+  assert.equal(app.elements.get('#echoButton').hidden, true);
+  assert.equal(app.played.length, before);
+  const key = game.getState().question.key;
+  answerButtons(app).find(button => button.dataset.choice === game.getState().question.answerId).click();
+  assert.notEqual(game.getState().question.key, key);
+  clickAnswer(app, game, true);
+  app.nextButton.click();
+  assert.equal(app.played.length, before);
+});
+
+test('Math 2 number words cover counting conventions and remain words alone', () => {
+  assert.equal(words['word-number-0'].en, 'zero');
+  assert.equal(words['word-number-2'].zh, '二');
+  assert.equal(words['word-number-100'].en, 'one hundred');
+  assert.equal(words['word-number-100'].zh, '一百');
+  assert.equal(words['word-number-100'].ja, 'ひゃく');
+  const digits = '零一二三四五六七八九';
+  for (let number = 0; number <= 100; number += 1) {
+    const translations = words[`word-number-${number}`];
+    const zh = number < 10 ? digits[number] : number === 100 ? '一百'
+      : `${number >= 20 ? digits[Math.floor(number / 10)] : ''}十${number % 10 ? digits[number % 10] : ''}`;
+    assert.equal(translations.zh, zh);
+    assert.doesNotMatch(translations.zh, /兩/);
+    assert.doesNotMatch(translations.ja, /[ァ-ヿ㐀-鿿]/, 'Japanese number words use counting kana');
+    for (const text of Object.values(translations)) assert.doesNotMatch(text, /[?!.！？。]/, 'only the number, never a sentence');
+  }
+});
+
+test('Math 2 Next waits for the number echo to start, then a topic switch cancels it', () => {
+  const { game, app } = wordQuestionApp('math2');
+  const key = game.getState().question.key;
+  clickAnswer(app, game, true);
+  app.nextButton.click();
+  assert.equal(game.getState().question.key, key, 'Next waits for the echo to start');
+  endSpeech(app);
+  assert.notEqual(game.getState().question.key, key);
+  assert.equal(app.elements.get('#echoButton').hidden, true);
+  clickAnswer(app, game, true);
+  endSpeech(app);
+  app.topicTabs.find(tab => tab.dataset.topic === 'math').click();
+  const before = app.played.length;
+  endSpeech(app);
+  assert.equal(app.played.length, before, 'the cancelled echo cannot resume');
+  assert.equal(game.getState().question.wordAudioId, undefined);
+});
+
+test('Math 2 optional second spoken language echoes numbers only after correct answers', () => {
+  const storage = new FakeLocalStorage();
+  storage.setItem('monsterWordArena.settings.v1', JSON.stringify({ v: 2, textLanguage: 'en', secondLanguage: 'zh', secondLanguageManual: false, voiceOverride: false, voiceLanguage: 'en', echoLanguage: 'ja', speechMuted: false, allowedLevels: LEVELS }));
+  const { game, app } = wordQuestionApp('math2', { localStorage: storage });
+  const question = game.getState().question;
+  const before = app.played.length;
+  clickAnswer(app, game, true);
+  endSpeech(app);
+  endSpeech(app);
+  assert.deepEqual(clipsPlayedSince(app, before).slice(1), [`en/${question.wordAudioId}`, `ja/${question.wordAudioId}`]);
+  endSpeech(app);
+  app.nextButton.click();
+  const missed = game.getState().question;
+  const missStart = app.played.length;
+  clickAnswer(app, game, false);
+  endSpeech(app);
+  endSpeech(app);
+  assert.deepEqual(clipsPlayedSince(app, missStart).slice(1), [`en/${missed.wordAudioId}`]);
 });

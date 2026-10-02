@@ -378,5 +378,510 @@
     "en": "thunder",
     "zh": "打雷",
     "ja": "かみなり"
+  },
+  "word-number-0": {
+    "en": "zero",
+    "zh": "零",
+    "ja": "れい"
+  },
+  "word-number-1": {
+    "en": "one",
+    "zh": "一",
+    "ja": "いち"
+  },
+  "word-number-2": {
+    "en": "two",
+    "zh": "二",
+    "ja": "に"
+  },
+  "word-number-3": {
+    "en": "three",
+    "zh": "三",
+    "ja": "さん"
+  },
+  "word-number-4": {
+    "en": "four",
+    "zh": "四",
+    "ja": "よん"
+  },
+  "word-number-5": {
+    "en": "five",
+    "zh": "五",
+    "ja": "ご"
+  },
+  "word-number-6": {
+    "en": "six",
+    "zh": "六",
+    "ja": "ろく"
+  },
+  "word-number-7": {
+    "en": "seven",
+    "zh": "七",
+    "ja": "なな"
+  },
+  "word-number-8": {
+    "en": "eight",
+    "zh": "八",
+    "ja": "はち"
+  },
+  "word-number-9": {
+    "en": "nine",
+    "zh": "九",
+    "ja": "きゅう"
+  },
+  "word-number-10": {
+    "en": "ten",
+    "zh": "十",
+    "ja": "じゅう"
+  },
+  "word-number-11": {
+    "en": "eleven",
+    "zh": "十一",
+    "ja": "じゅういち"
+  },
+  "word-number-12": {
+    "en": "twelve",
+    "zh": "十二",
+    "ja": "じゅうに"
+  },
+  "word-number-13": {
+    "en": "thirteen",
+    "zh": "十三",
+    "ja": "じゅうさん"
+  },
+  "word-number-14": {
+    "en": "fourteen",
+    "zh": "十四",
+    "ja": "じゅうよん"
+  },
+  "word-number-15": {
+    "en": "fifteen",
+    "zh": "十五",
+    "ja": "じゅうご"
+  },
+  "word-number-16": {
+    "en": "sixteen",
+    "zh": "十六",
+    "ja": "じゅうろく"
+  },
+  "word-number-17": {
+    "en": "seventeen",
+    "zh": "十七",
+    "ja": "じゅうなな"
+  },
+  "word-number-18": {
+    "en": "eighteen",
+    "zh": "十八",
+    "ja": "じゅうはち"
+  },
+  "word-number-19": {
+    "en": "nineteen",
+    "zh": "十九",
+    "ja": "じゅうきゅう"
+  },
+  "word-number-20": {
+    "en": "twenty",
+    "zh": "二十",
+    "ja": "にじゅう"
+  },
+  "word-number-21": {
+    "en": "twenty-one",
+    "zh": "二十一",
+    "ja": "にじゅういち"
+  },
+  "word-number-22": {
+    "en": "twenty-two",
+    "zh": "二十二",
+    "ja": "にじゅうに"
+  },
+  "word-number-23": {
+    "en": "twenty-three",
+    "zh": "二十三",
+    "ja": "にじゅうさん"
+  },
+  "word-number-24": {
+    "en": "twenty-four",
+    "zh": "二十四",
+    "ja": "にじゅうよん"
+  },
+  "word-number-25": {
+    "en": "twenty-five",
+    "zh": "二十五",
+    "ja": "にじゅうご"
+  },
+  "word-number-26": {
+    "en": "twenty-six",
+    "zh": "二十六",
+    "ja": "にじゅうろく"
+  },
+  "word-number-27": {
+    "en": "twenty-seven",
+    "zh": "二十七",
+    "ja": "にじゅうなな"
+  },
+  "word-number-28": {
+    "en": "twenty-eight",
+    "zh": "二十八",
+    "ja": "にじゅうはち"
+  },
+  "word-number-29": {
+    "en": "twenty-nine",
+    "zh": "二十九",
+    "ja": "にじゅうきゅう"
+  },
+  "word-number-30": {
+    "en": "thirty",
+    "zh": "三十",
+    "ja": "さんじゅう"
+  },
+  "word-number-31": {
+    "en": "thirty-one",
+    "zh": "三十一",
+    "ja": "さんじゅういち"
+  },
+  "word-number-32": {
+    "en": "thirty-two",
+    "zh": "三十二",
+    "ja": "さんじゅうに"
+  },
+  "word-number-33": {
+    "en": "thirty-three",
+    "zh": "三十三",
+    "ja": "さんじゅうさん"
+  },
+  "word-number-34": {
+    "en": "thirty-four",
+    "zh": "三十四",
+    "ja": "さんじゅうよん"
+  },
+  "word-number-35": {
+    "en": "thirty-five",
+    "zh": "三十五",
+    "ja": "さんじゅうご"
+  },
+  "word-number-36": {
+    "en": "thirty-six",
+    "zh": "三十六",
+    "ja": "さんじゅうろく"
+  },
+  "word-number-37": {
+    "en": "thirty-seven",
+    "zh": "三十七",
+    "ja": "さんじゅうなな"
+  },
+  "word-number-38": {
+    "en": "thirty-eight",
+    "zh": "三十八",
+    "ja": "さんじゅうはち"
+  },
+  "word-number-39": {
+    "en": "thirty-nine",
+    "zh": "三十九",
+    "ja": "さんじゅうきゅう"
+  },
+  "word-number-40": {
+    "en": "forty",
+    "zh": "四十",
+    "ja": "よんじゅう"
+  },
+  "word-number-41": {
+    "en": "forty-one",
+    "zh": "四十一",
+    "ja": "よんじゅういち"
+  },
+  "word-number-42": {
+    "en": "forty-two",
+    "zh": "四十二",
+    "ja": "よんじゅうに"
+  },
+  "word-number-43": {
+    "en": "forty-three",
+    "zh": "四十三",
+    "ja": "よんじゅうさん"
+  },
+  "word-number-44": {
+    "en": "forty-four",
+    "zh": "四十四",
+    "ja": "よんじゅうよん"
+  },
+  "word-number-45": {
+    "en": "forty-five",
+    "zh": "四十五",
+    "ja": "よんじゅうご"
+  },
+  "word-number-46": {
+    "en": "forty-six",
+    "zh": "四十六",
+    "ja": "よんじゅうろく"
+  },
+  "word-number-47": {
+    "en": "forty-seven",
+    "zh": "四十七",
+    "ja": "よんじゅうなな"
+  },
+  "word-number-48": {
+    "en": "forty-eight",
+    "zh": "四十八",
+    "ja": "よんじゅうはち"
+  },
+  "word-number-49": {
+    "en": "forty-nine",
+    "zh": "四十九",
+    "ja": "よんじゅうきゅう"
+  },
+  "word-number-50": {
+    "en": "fifty",
+    "zh": "五十",
+    "ja": "ごじゅう"
+  },
+  "word-number-51": {
+    "en": "fifty-one",
+    "zh": "五十一",
+    "ja": "ごじゅういち"
+  },
+  "word-number-52": {
+    "en": "fifty-two",
+    "zh": "五十二",
+    "ja": "ごじゅうに"
+  },
+  "word-number-53": {
+    "en": "fifty-three",
+    "zh": "五十三",
+    "ja": "ごじゅうさん"
+  },
+  "word-number-54": {
+    "en": "fifty-four",
+    "zh": "五十四",
+    "ja": "ごじゅうよん"
+  },
+  "word-number-55": {
+    "en": "fifty-five",
+    "zh": "五十五",
+    "ja": "ごじゅうご"
+  },
+  "word-number-56": {
+    "en": "fifty-six",
+    "zh": "五十六",
+    "ja": "ごじゅうろく"
+  },
+  "word-number-57": {
+    "en": "fifty-seven",
+    "zh": "五十七",
+    "ja": "ごじゅうなな"
+  },
+  "word-number-58": {
+    "en": "fifty-eight",
+    "zh": "五十八",
+    "ja": "ごじゅうはち"
+  },
+  "word-number-59": {
+    "en": "fifty-nine",
+    "zh": "五十九",
+    "ja": "ごじゅうきゅう"
+  },
+  "word-number-60": {
+    "en": "sixty",
+    "zh": "六十",
+    "ja": "ろくじゅう"
+  },
+  "word-number-61": {
+    "en": "sixty-one",
+    "zh": "六十一",
+    "ja": "ろくじゅういち"
+  },
+  "word-number-62": {
+    "en": "sixty-two",
+    "zh": "六十二",
+    "ja": "ろくじゅうに"
+  },
+  "word-number-63": {
+    "en": "sixty-three",
+    "zh": "六十三",
+    "ja": "ろくじゅうさん"
+  },
+  "word-number-64": {
+    "en": "sixty-four",
+    "zh": "六十四",
+    "ja": "ろくじゅうよん"
+  },
+  "word-number-65": {
+    "en": "sixty-five",
+    "zh": "六十五",
+    "ja": "ろくじゅうご"
+  },
+  "word-number-66": {
+    "en": "sixty-six",
+    "zh": "六十六",
+    "ja": "ろくじゅうろく"
+  },
+  "word-number-67": {
+    "en": "sixty-seven",
+    "zh": "六十七",
+    "ja": "ろくじゅうなな"
+  },
+  "word-number-68": {
+    "en": "sixty-eight",
+    "zh": "六十八",
+    "ja": "ろくじゅうはち"
+  },
+  "word-number-69": {
+    "en": "sixty-nine",
+    "zh": "六十九",
+    "ja": "ろくじゅうきゅう"
+  },
+  "word-number-70": {
+    "en": "seventy",
+    "zh": "七十",
+    "ja": "ななじゅう"
+  },
+  "word-number-71": {
+    "en": "seventy-one",
+    "zh": "七十一",
+    "ja": "ななじゅういち"
+  },
+  "word-number-72": {
+    "en": "seventy-two",
+    "zh": "七十二",
+    "ja": "ななじゅうに"
+  },
+  "word-number-73": {
+    "en": "seventy-three",
+    "zh": "七十三",
+    "ja": "ななじゅうさん"
+  },
+  "word-number-74": {
+    "en": "seventy-four",
+    "zh": "七十四",
+    "ja": "ななじゅうよん"
+  },
+  "word-number-75": {
+    "en": "seventy-five",
+    "zh": "七十五",
+    "ja": "ななじゅうご"
+  },
+  "word-number-76": {
+    "en": "seventy-six",
+    "zh": "七十六",
+    "ja": "ななじゅうろく"
+  },
+  "word-number-77": {
+    "en": "seventy-seven",
+    "zh": "七十七",
+    "ja": "ななじゅうなな"
+  },
+  "word-number-78": {
+    "en": "seventy-eight",
+    "zh": "七十八",
+    "ja": "ななじゅうはち"
+  },
+  "word-number-79": {
+    "en": "seventy-nine",
+    "zh": "七十九",
+    "ja": "ななじゅうきゅう"
+  },
+  "word-number-80": {
+    "en": "eighty",
+    "zh": "八十",
+    "ja": "はちじゅう"
+  },
+  "word-number-81": {
+    "en": "eighty-one",
+    "zh": "八十一",
+    "ja": "はちじゅういち"
+  },
+  "word-number-82": {
+    "en": "eighty-two",
+    "zh": "八十二",
+    "ja": "はちじゅうに"
+  },
+  "word-number-83": {
+    "en": "eighty-three",
+    "zh": "八十三",
+    "ja": "はちじゅうさん"
+  },
+  "word-number-84": {
+    "en": "eighty-four",
+    "zh": "八十四",
+    "ja": "はちじゅうよん"
+  },
+  "word-number-85": {
+    "en": "eighty-five",
+    "zh": "八十五",
+    "ja": "はちじゅうご"
+  },
+  "word-number-86": {
+    "en": "eighty-six",
+    "zh": "八十六",
+    "ja": "はちじゅうろく"
+  },
+  "word-number-87": {
+    "en": "eighty-seven",
+    "zh": "八十七",
+    "ja": "はちじゅうなな"
+  },
+  "word-number-88": {
+    "en": "eighty-eight",
+    "zh": "八十八",
+    "ja": "はちじゅうはち"
+  },
+  "word-number-89": {
+    "en": "eighty-nine",
+    "zh": "八十九",
+    "ja": "はちじゅうきゅう"
+  },
+  "word-number-90": {
+    "en": "ninety",
+    "zh": "九十",
+    "ja": "きゅうじゅう"
+  },
+  "word-number-91": {
+    "en": "ninety-one",
+    "zh": "九十一",
+    "ja": "きゅうじゅういち"
+  },
+  "word-number-92": {
+    "en": "ninety-two",
+    "zh": "九十二",
+    "ja": "きゅうじゅうに"
+  },
+  "word-number-93": {
+    "en": "ninety-three",
+    "zh": "九十三",
+    "ja": "きゅうじゅうさん"
+  },
+  "word-number-94": {
+    "en": "ninety-four",
+    "zh": "九十四",
+    "ja": "きゅうじゅうよん"
+  },
+  "word-number-95": {
+    "en": "ninety-five",
+    "zh": "九十五",
+    "ja": "きゅうじゅうご"
+  },
+  "word-number-96": {
+    "en": "ninety-six",
+    "zh": "九十六",
+    "ja": "きゅうじゅうろく"
+  },
+  "word-number-97": {
+    "en": "ninety-seven",
+    "zh": "九十七",
+    "ja": "きゅうじゅうなな"
+  },
+  "word-number-98": {
+    "en": "ninety-eight",
+    "zh": "九十八",
+    "ja": "きゅうじゅうはち"
+  },
+  "word-number-99": {
+    "en": "ninety-nine",
+    "zh": "九十九",
+    "ja": "きゅうじゅうきゅう"
+  },
+  "word-number-100": {
+    "en": "one hundred",
+    "zh": "一百",
+    "ja": "ひゃく"
   }
 }
