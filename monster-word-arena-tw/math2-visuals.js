@@ -8,7 +8,6 @@
   const blockCount = value => Math.min(BLOCK_MAX, Math.max(0, Math.floor(Number(value)) || 0));
   const SVG_NS = 'http://www.w3.org/2000/svg';
   const FRAME_CELLS = 10;
-  const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
   const round = value => Math.round(value * 100) / 100;
   // A ten-frame is two rows of five cells. Counters fill it a row at a time, left to right, so five is a full top row
   // and a child can see "five and some more" without counting. Sizes are in viewBox units; CSS sets the drawn size.
@@ -18,7 +17,7 @@
   const FRAME_PAD = 5;
 
   function svgElement(document, tag, attributes = {}) {
-    const element = document.createElementNS(SVG_NAMESPACE, tag);
+    const element = document.createElementNS(SVG_NS, tag);
     Object.entries(attributes).forEach(([name, value]) => element.setAttribute(name, String(value)));
     return element;
   }
