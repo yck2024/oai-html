@@ -188,7 +188,7 @@
     return builder ? builder(visual, document) : null;
   }
 
-  const api = { BUILDERS, build, clockAngles };
+  const api = { BUILDERS, build };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof window !== 'undefined') window.FriendlyArenaMath2Visuals = api;
 })();

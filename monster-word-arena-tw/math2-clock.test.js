@@ -181,16 +181,22 @@ function fakeSvgDocument() {
   return { createElementNS: make, createElement: tag => make(null, tag) };
 }
 
-test('the clock hands point where the time is: at half past the hour hand sits halfway between two numbers', () => {
-  assert.deepEqual(visuals.clockAngles(3, 0), { hour: 90, minute: 0 });
-  assert.deepEqual(visuals.clockAngles(3, 30), { hour: 105, minute: 180 });
-  assert.deepEqual(visuals.clockAngles(12, 0), { hour: 0, minute: 0 });
-  assert.deepEqual(visuals.clockAngles(12, 30), { hour: 15, minute: 180 });
-  assert.deepEqual(visuals.clockAngles(6, 30), { hour: 195, minute: 180 });
+test('the rendered clock hands point to the hour and minute for every o\'clock and half past time', () => {
+  const angleOf = hand => {
+    const dx = Number(hand.attributes.x2) - 100;
+    const dy = 100 - Number(hand.attributes.y2);
+    return (Math.atan2(dx, dy) * 180 / Math.PI + 360) % 360;
+  };
   for (let hour = 1; hour <= 12; hour += 1) {
-    const between = visuals.clockAngles(hour, 30).hour;
-    const here = (hour % 12) * 30;
-    assert.equal(between - here, 15, `at ${hour}:30 the hour hand is halfway to the next number`);
+    for (const minute of [0, 30]) {
+      const clock = visuals.build({ type: 'clock', hour, minute }, fakeSvgDocument());
+      const hourHand = clock.children.find(child => child.attributes.class.includes('clock-hour-hand'));
+      const minuteHand = clock.children.find(child => child.attributes.class.includes('clock-minute-hand'));
+      const expectedHour = ((hour % 12) + minute / 60) * 30;
+      const expectedMinute = minute * 6;
+      assert.ok(Math.abs(angleOf(hourHand) - expectedHour) < 0.5, `${hour}:${minute} hour hand at ${angleOf(hourHand)}`);
+      assert.ok(Math.abs(angleOf(minuteHand) - expectedMinute) < 0.5, `${hour}:${minute} minute hand at ${angleOf(minuteHand)}`);
+    }
   }
 });
 
