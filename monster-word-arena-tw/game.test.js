@@ -4445,3 +4445,160 @@ test('Math 2 optional second spoken language echoes numbers only after correct a
   endSpeech(app);
   assert.deepEqual(clipsPlayedSince(app, missStart).slice(1), [`en/${missed.wordAudioId}`]);
 });
+
+
+// A page on a Math 2 number line question, with the picture drawn 340 CSS pixels wide, as on a phone.
+function numberLineApp(kind = 'number-line', level = 'harder', seed = 12) {
+  const game = math2GameAsking(kind, level, seed);
+  const app = createAppFixture(game);
+  app.startButton.click();
+  const stage = app.elements.get('#diagramStage');
+  const { diagram } = game.getState().question;
+  const size = { width: 340, height: 340 * (diagram.height / diagram.width) };
+  stage.getBoundingClientRect = () => ({ left: 0, top: 0, ...size });
+  const tickX = value => diagram.visual.ticks.find(tick => tick.value === Number(value)).x;
+  return {
+    game, app, stage, diagram, size, tickX,
+    marks: () => app.elements.get('#diagramMarks').children,
+    tapTick: value => stage.dispatch('click', { clientX: tickX(value) * size.width, clientY: (diagram.visual.y + 0.06) * size.height }),
+    spot: id => app.elements.get('#diagramSpots').children.find(button => button.dataset.choice === String(id)),
+  };
+}
+
+test('a number line question draws the line on the stage with one keyboard button per tick', () => {
+  const { game, app, diagram } = numberLineApp();
+  const { question } = game.getState();
+  assert.equal(app.elements.get('#faceDiagram').hidden, false);
+  assert.equal(app.answerOptions.hidden, true, 'no number buttons: the child taps the line');
+  assert.equal(app.elements.get('#questionVisual').hidden, true);
+  const drawn = app.elements.get('#diagramDrawn');
+  assert.equal(drawn.hidden, false);
+  assert.equal(drawn.children.length, 1);
+  assert.equal(drawn.children[0].className, 'number-line');
+  assert.equal(app.elements.get('#diagramArt').hidden, true, 'no bundled picture behind the line');
+  assert.equal(app.elements.get('#faceDiagram').dataset.diagram, 'number-line');
+  assert.equal(app.elements.get('#faceDiagram').attributes['aria-label'], I18N.STRINGS.lineGroupLabel.en);
+  assert.equal(app.elements.get('#answerHint').textContent, I18N.STRINGS.lineHint.en);
+  assert.match(app.elements.get('#questionPrompt').textContent, /^Where does \d+ go\?/);
+  const spots = app.elements.get('#diagramSpots').children;
+  assert.equal(spots.length, diagram.visual.ticks.length);
+  assert.deepEqual(spots.map(spot => spot.dataset.choice), question.options.map(option => option.id));
+  assert.deepEqual(spots.map(spot => spot.attributes['aria-label']), question.options.map(option => option.id));
+  const [cx, cy, rx] = diagram.parts[spots[3].dataset.choice].spot;
+  assert.equal(spots[3].style.left, `${(cx - rx) * 100}%`);
+  assert.equal(spots[3].style.width, `${rx * 200}%`);
+  assert.ok(cy > 0.5, 'the keyboard button is on the line');
+});
+
+test('the number line question speaks the number and then the shared question, in the narration language', () => {
+  const { game, app } = numberLineApp();
+  const { question } = game.getState();
+  assert.equal(app.played.at(-1), `./audio/en/word-number-${question.answerId}.mp3`);
+  endSpeech(app);
+  assert.equal(app.played.at(-1), './audio/en/math2-line-where.mp3');
+  assert.equal(app.played.length, 2);
+});
+
+test('tapping the right place on the line is correct, rings the tick, and shows the number', () => {
+  const { game, app, tapTick, marks } = numberLineApp();
+  const { question } = game.getState();
+  tapTick(question.answerId);
+  assert.equal(game.getState().solved, true);
+  assert.equal(game.getState().stars, 1);
+  assert.equal(marks().length, 1);
+  assert.ok(marks()[0].classList.contains('right-ring'));
+  const [cx, cy, rx, ry] = question.diagram.parts[question.answerId].rings[0];
+  assert.equal(marks()[0].style.left, `${(cx - rx) * 100}%`);
+  assert.equal(marks()[0].style.top, `${(cy - ry) * 100}%`);
+  assert.equal(marks()[0].style.width, `${rx * 200}%`);
+  assert.equal(app.elements.get('#diagramWord').textContent, question.answerId);
+});
+
+test('a wrong tick costs a heart and the right one is the second chance', () => {
+  const { game, app, tapTick, marks, spot } = numberLineApp();
+  const { question } = game.getState();
+  const wrong = Number(question.answerId) + 1;
+  tapTick(wrong);
+  const state = game.getState();
+  assert.equal(state.missed, true);
+  assert.equal(state.missedChoice, String(wrong));
+  assert.equal(state.hearts, HEARTS_BY_LEVEL.harder - 1);
+  assert.ok(marks().some(ring => ring.classList.contains('wrong-ring')), 'the tapped tick is ringed');
+  assert.ok(marks().some(ring => ring.classList.contains('right-ring') && ring.classList.contains('second-chance')), 'the right tick pulses');
+  assert.equal(spot(question.answerId).disabled, false);
+  const other = question.options.find(option => ![question.answerId, String(wrong)].includes(option.id));
+  assert.equal(spot(other.id).disabled, true, 'any other tick is ignored');
+  tapTick(Number(question.answerId));
+  endSpeech(app);
+  endSpeech(app);
+  assert.notEqual(game.getState().question.key, question.key, 'the right tick moves on');
+});
+
+test('a tap on empty sky above the line is not an answer and costs nothing', () => {
+  const { game, stage, size } = numberLineApp();
+  const before = game.getState();
+  stage.dispatch('click', { clientX: size.width * 0.5, clientY: 2 });
+  const after = game.getState();
+  assert.equal(after.missed, false);
+  assert.equal(after.solved, false);
+  assert.equal(after.hearts, before.hearts);
+});
+
+test('a keyboard or screen reader answers with a tick button, without the picture taking the tap too', () => {
+  const { game, app, spot, stage } = numberLineApp();
+  const { question } = game.getState();
+  const wrong = question.options.find(option => option.id !== question.answerId).id;
+  spot(wrong).click();
+  assert.equal(game.getState().missedChoice, wrong);
+  stage.dispatch('click', { target: spot(question.answerId), clientX: 0, clientY: 0 });
+  assert.equal(game.getState().missed, true, 'a click that came from a button is not also a tap on the picture');
+  spot(question.answerId).click();
+  endSpeech(app);
+  endSpeech(app);
+  assert.notEqual(game.getState().question.key, question.key);
+});
+
+test('the 0-100 line asks in tens and its keyboard buttons carry the tens', () => {
+  const { game, app, tapTick } = numberLineApp('number-line-tens', 'super');
+  const { question } = game.getState();
+  assert.equal(Number(question.answerId) % 10, 0);
+  assert.deepEqual(app.elements.get('#diagramSpots').children.map(spot => spot.dataset.choice), ['0', '10', '20', '30', '40', '50', '60', '70', '80', '90', '100']);
+  tapTick(question.answerId);
+  assert.equal(game.getState().solved, true);
+});
+
+test('the line gives way to the bundled picture of another topic, and comes back', () => {
+  const { game, app } = numberLineApp();
+  app.topicTabs.find(tab => tab.dataset.topic === 'animals').click();
+  assert.equal(game.getState().question.topic, 'animals');
+  assert.equal(app.elements.get('#diagramDrawn').hidden, true, 'the line is gone');
+  assert.equal(app.elements.get('#diagramDrawn').children.length, 0);
+  assert.equal(app.elements.get('#diagramArt').hidden, false, 'the farm picture is back');
+  assert.equal(app.elements.get('#faceDiagram').dataset.diagram, 'animals');
+  assert.equal(app.elements.get('#diagramSpots').children.length, 8);
+  assert.equal(app.elements.get('#answerHint').textContent, I18N.STRINGS.diagramHint.en);
+  app.topicTabs.find(tab => tab.dataset.topic === 'math2').click();
+  for (let draw = 0; draw < 200 && game.getState().question.kind !== 'number-line'; draw += 1) {
+    app.topicTabs.find(tab => tab.dataset.topic === 'math2').click();
+  }
+  assert.equal(game.getState().question.kind, 'number-line');
+  assert.equal(app.elements.get('#diagramDrawn').hidden, false);
+  assert.equal(app.elements.get('#diagramArt').hidden, true);
+});
+
+test('a number question that is not a line shows its number buttons and no stage', () => {
+  const game = math2GameAsking('compare', 'harder');
+  const app = createAppFixture(game);
+  app.startButton.click();
+  assert.equal(app.elements.get('#faceDiagram').hidden, true);
+  assert.equal(app.elements.get('#diagramDrawn').hidden, true);
+  assert.equal(app.answerOptions.hidden, false);
+  assert.equal(app.played.length, 1, 'one clip, not a sequence');
+});
+
+test('the line labels read in every language', () => {
+  for (const key of ['lineHint', 'lineGroupLabel']) {
+    for (const language of ['en', 'zh', 'ja']) assert.ok(I18N.STRINGS[key][language], `${key} in ${language}`);
+    assert.doesNotMatch(I18N.STRINGS[key].ja, /[ァ-ヿ㐀-鿿]/, `${key} Japanese is hiragana`);
+  }
+});

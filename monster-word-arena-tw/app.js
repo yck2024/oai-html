@@ -26,6 +26,7 @@
   const faceDiagram = document.querySelector('#faceDiagram');
   const diagramStage = document.querySelector('#diagramStage');
   const diagramArt = document.querySelector('#diagramArt');
+  const diagramDrawn = document.querySelector('#diagramDrawn');
   const diagramItems = document.querySelector('#diagramItems');
   const diagramMarks = document.querySelector('#diagramMarks');
   const diagramSpots = document.querySelector('#diagramSpots');
@@ -219,7 +220,10 @@
       return;
     }
     speechStatus.textContent = '';
-    speechPlayer.play(state.question.audioId, voiceLanguage);
+    // A question may be several clips in a row (the number, then the shared question).
+    const { audioId, audioSequence } = state.question;
+    if (audioSequence) speechPlayer.playSequence(audioSequence.map(id => ({ audioId: id, language: voiceLanguage })));
+    else speechPlayer.play(audioId, voiceLanguage);
   }
 
   // The item the child just answered (or should tap after a miss) pulses while its word is said.
@@ -538,7 +542,8 @@
   }
 
   // A picture question is asked on its topic's picture (the character, or the farm), unless that picture could not
-  // load (then the same parts are offered as picture choices, so the question stays playable).
+  // load (then the same parts are offered as picture choices, so the question stays playable). A question may bring its
+  // own picture instead (`question.diagram`, drawn in code), which cannot fail to load.
   const diagramFailed = new Set();
   diagramArt.addEventListener('error', () => {
     diagramFailed.add(diagramArt.dataset.diagram || 'face');
@@ -550,17 +555,26 @@
   if (diagramArt.complete && diagramArt.naturalWidth === 0) diagramFailed.add('face');
 
   function usesDiagram(question) {
-    return question.format === 'diagram' && !diagramFailed.has(question.topic);
+    return question.format === 'diagram' && (Boolean(question.diagram) || !diagramFailed.has(question.topic));
   }
 
   function diagramOf(question) {
-    return window.FriendlyArena.DIAGRAMS[question.topic];
+    return question.diagram || window.FriendlyArena.DIAGRAMS[question.topic];
   }
 
   // Shows the picture this question is asked on. The page starts on the character; the picture is swapped only when
   // the topic changes, and stays hidden until the new one has loaded so the previous topic's picture never flashes.
   function showDiagramPicture(question) {
     const diagram = diagramOf(question);
+    // A picture drawn in code takes the stage's place; the bundled picture is left as it was for the next topic picture.
+    const drawn = diagram.visual ? window.FriendlyArenaMath2Visuals.build(diagram.visual, document) : null;
+    diagramDrawn.replaceChildren(...(drawn ? [drawn] : []));
+    diagramDrawn.hidden = !drawn;
+    diagramArt.hidden = Boolean(drawn);
+    if (drawn) {
+      faceDiagram.dataset.diagram = diagram.visual.type;
+      return;
+    }
     faceDiagram.dataset.diagram = question.topic;
     if (diagramArt.dataset.diagram === question.topic || (!diagramArt.dataset.diagram && question.topic === 'face')) {
       diagramArt.dataset.diagram = question.topic;
@@ -654,7 +668,7 @@
   function makeDiagramSpots(question) {
     const { parts } = diagramOf(question);
     return question.options.map(option => {
-      const [cx, cy, rx, ry] = parts[option.id].regions[0];
+      const [cx, cy, rx, ry] = parts[option.id].spot || parts[option.id].regions[0];
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'diagram-spot';
@@ -675,12 +689,13 @@
     if (event.target?.dataset?.choice) return;
     const box = diagramStage.getBoundingClientRect();
     if (!box.width || !box.height) return;
+    const { question } = game.getState();
     const part = window.FriendlyArena.diagramPartAt(
       (event.clientX - box.left) / box.width,
       (event.clientY - box.top) / box.height,
       { width: box.width, height: box.height },
-      game.getState().question.topic,
-      game.getState().question.options.map(option => option.id),
+      question.diagram || question.topic,
+      question.options.map(option => option.id),
     );
     // A tap that lands on no part (the clothes, the empty background, the bare meadow) is not an answer and costs nothing.
     if (part) chooseAnswer(null, part);
@@ -731,12 +746,18 @@
     faceDiagram.hidden = !onDiagram;
     answerOptions.hidden = onDiagram;
     if (onDiagram) showDiagramPicture(question);
+    else {
+      diagramDrawn.replaceChildren();
+      diagramDrawn.hidden = true;
+    }
     diagramItems.replaceChildren(...(onDiagram ? makeDiagramItems(question) : []));
     diagramMarks.replaceChildren();
     diagramWord.hidden = true;
     diagramSpots.replaceChildren(...(onDiagram ? makeDiagramSpots(question) : []));
-    faceDiagram.setAttribute('aria-label', I18N.STRINGS[question.topic === 'face' ? 'diagramGroupLabel' : 'farmGroupLabel'][textLanguage]);
-    document.querySelector('#answerHint').textContent = (onDiagram ? I18N.STRINGS.diagramHint : I18N.STRINGS.answerHint)[textLanguage];
+    const groupLabelKey = (onDiagram && diagramOf(question).labelKey) || (question.topic === 'face' ? 'diagramGroupLabel' : 'farmGroupLabel');
+    faceDiagram.setAttribute('aria-label', I18N.STRINGS[groupLabelKey][textLanguage]);
+    const hintKey = onDiagram ? (diagramOf(question).hintKey || 'diagramHint') : 'answerHint';
+    document.querySelector('#answerHint').textContent = I18N.STRINGS[hintKey][textLanguage];
     // A picture question whose picture failed offers a few picture choices, like any other word question.
     const choices = question.fallbackOptions || question.options;
     answerOptions.replaceChildren(...(onDiagram ? [] : choices.map(option => makeAnswerButton(option, question))));

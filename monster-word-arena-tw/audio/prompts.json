@@ -1283,5 +1283,10 @@
     "en": "Find the clock that says half past twelve.",
     "zh": "哪一個鐘是十二點半？",
     "ja": "じゅうにじはんのとけいは、どれかな？"
+  },
+  "math2-line-where": {
+    "en": "Where does this number go?",
+    "zh": "這個數字要放在哪裡？",
+    "ja": "このかずは、どこにあるかな？"
   }
 }

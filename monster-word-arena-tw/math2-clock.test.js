@@ -54,7 +54,7 @@ test('the clock has no place on Easy; Harder reads o\'clock and half past; Super
 test('every clock time is worded the way each language says it, and Japanese stays in hiragana', () => {
   const seen = new Set();
   for (const level of ['harder', 'super']) {
-    for (const question of drawQuestions(level, 1200).filter(candidate => candidate.answerStyle)) {
+    for (const question of drawQuestions(level, 1200).filter(candidate => ['time', 'clock'].includes(candidate.answerStyle))) {
       for (const option of question.options) {
         const { hour, minute } = timeOf(option.id);
         assert.ok(hour >= 1 && hour <= 12 && (minute === 0 || minute === 30), `${option.id} is an hour with :00 or :30`);

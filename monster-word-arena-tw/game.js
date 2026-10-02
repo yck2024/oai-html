@@ -156,9 +156,10 @@
   // Which part a tap lands on, or null when it lands on no part (the clothes, the empty background, the bare
   // meadow). x and y are fractions of the picture; size ({ width, height } in CSS pixels) lets a small picture keep
   // every region at least minRadiusPx wide. Where regions overlap, the nearest normalized region wins. `topic` picks
-  // the picture; `ids` limits taps to parts asked about by this question.
+  // the picture; `ids` limits taps to parts asked about by this question. `topic` may instead be the picture itself
+  // (a question's own `diagram`, with `parts` and `minRadiusPx`), for a picture drawn in code for that question.
   function diagramPartAt(x, y, size = null, topic = 'face', ids = null) {
-    const diagram = DIAGRAMS[topic];
+    const diagram = typeof topic === 'string' ? DIAGRAMS[topic] : topic;
     if (!diagram) return null;
     let best = null;
     Object.entries(diagram.parts).forEach(([id, part]) => {
@@ -773,6 +774,76 @@
     };
   }
 
+  // Number line: a line drawn in code with a dino at the left end, and the child taps where the number goes. The question
+  // supplies its own picture and tap regions (`diagram`, in the same shape DIAGRAMS uses): every tick is a part, its
+  // region a tall strip as wide as the gap to its neighbours (and never narrower than minRadiusPx, so a finger lands on
+  // the nearest tick), and its ring a small circle round the tick. The picture is plain data too: `visual` lists the
+  // ticks where they sit, so what is drawn and what is tappable come from one table.
+  const LINE_SHAPE = { width: 1000, height: 380, pad: 0.07, y: 0.7 };
+  const LINE_TARGETS = {
+    // Anchors (0, 5, 10 ...) are written under the line and are never asked, so the child has to count along the ticks.
+    tenth: { min: 0, max: 10, step: 1, anchors: [0, 5, 10] },
+    twentieth: { min: 0, max: 20, step: 1, anchors: [0, 5, 10, 15, 20] },
+    tens: { min: 0, max: 100, step: 10, anchors: [0, 50, 100] },
+  };
+  // Where the number is spoken first in each language: the number, then "Where does this number go?" (the shared clip).
+  const LINE_WHERE = { audioId: 'math2-line-where' };
+  const linePrompts = value => ({
+    promptZh: `${value} 要放在哪裡？`,
+    promptEn: `Where does ${value} go?`,
+    promptJa: `${value}は、どこかな？`,
+  });
+  const roundTo = (value, places = 4) => Math.round(value * 10 ** places) / 10 ** places;
+
+  function numberLineDiagram({ min, max, step, anchors }) {
+    const { width, height, pad, y } = LINE_SHAPE;
+    const values = [];
+    for (let value = min; value <= max; value += step) values.push(value);
+    const xOf = value => roundTo(pad + ((1 - 2 * pad) * (value - min)) / (max - min));
+    const gap = (1 - 2 * pad) / (values.length - 1);
+    const ringRx = roundTo(Math.min(0.03, gap * 0.5));
+    const parts = {};
+    values.forEach(value => {
+      const x = xOf(value);
+      parts[String(value)] = {
+        regions: [[x, roundTo(y + 0.06), roundTo(gap / 2), 0.2]],
+        rings: [[x, y, ringRx, roundTo((ringRx * width) / height)]],
+        // The keyboard button sits on the tick itself, not on the tall strip that catches taps.
+        spot: [x, y, ringRx, roundTo((ringRx * width) / height)],
+      };
+    });
+    return {
+      width,
+      height,
+      minRadiusPx: 22,
+      labelKey: 'lineGroupLabel',
+      hintKey: 'lineHint',
+      visual: { type: 'number-line', width, height, y, ticks: values.map(value => ({ value, x: xOf(value), labelled: anchors.includes(value) })) },
+      parts,
+    };
+  }
+
+  function numberLineDraft(shape, keyPrefix) {
+    const { min, max, step, anchors } = LINE_TARGETS[shape];
+    const targets = [];
+    for (let value = min; value <= max; value += step) if (!anchors.includes(value)) targets.push(value);
+    return (random, previousKey) => {
+      const answer = pickFresh(targets, random, previousKey, value => `${keyPrefix}-${value}`);
+      const diagram = numberLineDiagram(LINE_TARGETS[shape]);
+      return {
+        key: `${keyPrefix}-${answer}`,
+        ...LINE_WHERE,
+        // The numeral is on screen in the prompt; the clips are the number alone, then the shared question.
+        audioSequence: [`word-number-${answer}`, LINE_WHERE.audioId],
+        ...linePrompts(answer),
+        answer,
+        answerStyle: 'line',
+        diagram,
+        options: Object.keys(diagram.parts).map(id => ({ id, zh: id, en: id, ja: id, icon: '⭐' })),
+      };
+    };
+  }
+
   const MATH2_KINDS = [
     { kind: 'compare', audioIds: ['math2-bigger', 'math2-smaller'], generators: { easy: compareDraft, harder: compareDraft, super: compareDraft } },
     { kind: 'make-ten', audioIds: ['math2-ten-more'], generators: { easy: makeTenDraft } },
@@ -785,6 +856,8 @@
     { kind: 'clock-oclock', audioIds: [CLOCK_WHAT.audioId], generators: { harder: clockReadDraft(0) } },
     { kind: 'clock-half', audioIds: [CLOCK_WHAT.audioId], generators: { harder: clockReadDraft(30), super: clockReadDraft(30) } },
     { kind: 'clock-find', audioIds: CLOCK_FIND_IDS, generators: { super: clockFindDraft } },
+    { kind: 'number-line', audioIds: [LINE_WHERE.audioId], generators: { harder: numberLineDraft('tenth', 'math2-line-10'), super: numberLineDraft('twentieth', 'math2-line-20') } },
+    { kind: 'number-line-tens', audioIds: [LINE_WHERE.audioId], generators: { super: numberLineDraft('tens', 'math2-line-100') } },
   ];
 
   // Like plus and minus on Math: the same kind is never asked three times in a row while another is on offer.
@@ -815,6 +888,9 @@
       dense: false,
       // Plain data that app.js hands to math2-visuals.js to draw; null when the question is only its number buttons.
       visual: draft.visual || null,
+      // A number line carries the picture it is asked on, and speaks the number clip and the shared clip in order.
+      ...(draft.diagram ? { format: 'diagram', diagram: draft.diagram } : {}),
+      ...(draft.audioSequence ? { audioSequence: draft.audioSequence } : {}),
       ...(draft.answerStyle ? { answerStyle: draft.answerStyle } : { range: draft.range }),
       answerId: String(draft.answer),
       // All numeric Math 2 kinds share the word-echo path. Non-number answers (e.g. clock times) do not.

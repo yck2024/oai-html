@@ -310,6 +310,19 @@ h1 { margin: 4px 0 4px; color: #41405e; font-size: clamp(31px, 5vw, 46px); line-
 .diagram-stage { position: relative; container-type: inline-size; width: calc(var(--diagram-height) * var(--diagram-w) / var(--diagram-h)); max-width: 100%; aspect-ratio: var(--diagram-w) / var(--diagram-h); margin: 0 auto; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .diagram-art { display: block; width: 100%; height: 100%; pointer-events: none; -webkit-user-drag: none; }
 .diagram-art.is-loading { opacity: 0; }
+.diagram-art[hidden] { display: none; }
+/* A picture drawn in code for one question (Math 2's number line) takes the bundled picture's place. */
+.diagram-drawn { position: absolute; inset: 0; pointer-events: none; }
+.face-diagram[data-diagram="number-line"] { --diagram-w: 1000; --diagram-h: 380; }
+.face-diagram[data-diagram="number-line"] .diagram-stage { max-width: min(100%, 640px); }
+.face-diagram[data-diagram="number-line"] .diagram-ring { border-width: 3px; }
+.number-line { position: relative; width: 100%; height: 100%; }
+.number-line-svg { display: block; width: 100%; height: 100%; }
+.number-line-axis { stroke: #8f82b8; stroke-width: 10; stroke-linecap: round; }
+.number-line-tick { stroke: #8f82b8; stroke-width: 6; stroke-linecap: round; }
+.number-line-major { stroke: #63568a; stroke-width: 9; }
+.number-line-label { fill: #4b4c61; font-size: 62px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.number-line-dino { position: absolute; left: 0; bottom: 38%; width: 17%; aspect-ratio: 1; }
 .diagram-marks, .diagram-spots, .diagram-items { position: absolute; inset: 0; pointer-events: none; }
 /* A scene's animals: the topic's own icons, drawn where the layout table puts them (the picture takes the taps). */
 .diagram-item { position: absolute; display: block; pointer-events: none; }
